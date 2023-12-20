@@ -1,7 +1,6 @@
 <ng-container
   *ngIf="{
-    open: sidebarService.open$ | async,
-    isOverlay: sidebarService.isOverlay$ | async
+    open: sidebarService.open$ | async
   } as data"
 >
   <div
@@ -20,9 +19,7 @@
     </nav>
   </div>
   <div class="tw-group tw-flex tw-w-full" [ngClass]="data.open ? 'sidebar-open' : 'sidebar-closed'">
-    <aside
-      id="bit-sidebar"
-      class="tw-fixed tw-inset-y-0 tw-left-0 tw-z-20 tw-flex tw-h-screen tw-flex-col tw-overscroll-none tw-overflow-auto tw-bg-background-alt3 group-[.sidebar-open]:tw-w-60 md:tw-sticky"
+    <bit-sidebar
       [ngStyle]="
         variant === 'secondary' && {
           '--color-text-alt2': 'var(--color-text-main)',
@@ -31,30 +28,9 @@
           '--color-secondary-300': 'var(--color-secondary-500)'
         }
       "
-      [cdkTrapFocus]="data.isOverlay"
-      [attr.role]="data.isOverlay ? 'dialog' : null"
-      [attr.aria-modal]="data.isOverlay"
-      (keydown)="handleKeyDown($event)"
     >
       <ng-content select="[slot=sidebar]"></ng-content>
-      <div class="tw-sticky tw-bottom-0 tw-left-0 tw-mt-auto tw-w-full tw-bg-background-alt3">
-        <bit-nav-divider></bit-nav-divider>
-        <div class="tw-mx-0.5 tw-my-4 tw-w-[3.75rem]">
-          <button
-            id="bit-sidebar-toggle-button"
-            type="button"
-            class="tw-mx-auto tw-block tw-max-w-fit"
-            [bitIconButton]="data.open ? 'bwi-angle-left' : 'bwi-angle-right'"
-            buttonType="light"
-            size="small"
-            (click)="sidebarService.toggle()"
-            [attr.aria-label]="'toggleSideNavigation' | i18n"
-            [attr.aria-expanded]="data.open"
-            aria-controls="bit-sidebar"
-          ></button>
-        </div>
-      </div>
-    </aside>
+    </bit-sidebar>
     <main
       [id]="mainContentId"
       tabindex="-1"

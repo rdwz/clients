@@ -1,0 +1,31 @@
+<aside
+  *ngIf="{
+    open: sidebarService.open$ | async,
+    isOverlay: sidebarService.isOverlay$ | async
+  } as data"
+  id="bit-sidebar"
+  class="tw-fixed tw-inset-y-0 tw-left-0 tw-z-20 tw-flex tw-h-screen tw-flex-col tw-overscroll-none tw-overflow-auto tw-bg-background-alt3 group-[.sidebar-open]:tw-w-60 md:tw-sticky"
+  [cdkTrapFocus]="data.isOverlay"
+  [attr.role]="data.isOverlay ? 'dialog' : null"
+  [attr.aria-modal]="data.isOverlay"
+  (keydown)="handleKeyDown($event)"
+>
+  <ng-content></ng-content>
+  <div class="tw-sticky tw-bottom-0 tw-left-0 tw-mt-auto tw-w-full tw-bg-background-alt3">
+    <bit-nav-divider></bit-nav-divider>
+    <div class="tw-mx-0.5 tw-my-4 tw-w-[3.75rem]">
+      <button
+        id="bit-sidebar-toggle-button"
+        type="button"
+        class="tw-mx-auto tw-block tw-max-w-fit"
+        [bitIconButton]="data.open ? 'bwi-angle-left' : 'bwi-angle-right'"
+        buttonType="light"
+        size="small"
+        (click)="sidebarService.toggle()"
+        [attr.aria-label]="'toggleSideNavigation' | i18n"
+        [attr.aria-expanded]="data.open"
+        aria-controls="bit-sidebar"
+      ></button>
+    </div>
+  </div>
+</aside>

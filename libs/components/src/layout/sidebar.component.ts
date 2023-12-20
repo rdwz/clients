@@ -1,26 +1,32 @@
+import { A11yModule } from "@angular/cdk/a11y";
 import { CommonModule } from "@angular/common";
-import { Component, Input } from "@angular/core";
+import { Component } from "@angular/core";
 import { RouterModule } from "@angular/router";
 
+import { IconButtonModule } from "../icon-button";
 import { LinkModule } from "../link";
+import { NavigationModule } from "../navigation";
 import { SharedModule } from "../shared";
 
-import { SidebarComponent } from "./sidebar.component";
 import { SidebarService } from "./sidebar.service";
 
 export type LayoutVariant = "primary" | "secondary";
 
 @Component({
-  selector: "bit-layout",
-  templateUrl: "layout.component.html",
+  selector: "bit-sidebar",
+  templateUrl: "sidebar.component.html",
   standalone: true,
-  imports: [CommonModule, SharedModule, LinkModule, RouterModule, SidebarComponent],
+  imports: [
+    CommonModule,
+    SharedModule,
+    NavigationModule,
+    A11yModule,
+    IconButtonModule,
+    LinkModule,
+    RouterModule,
+  ],
 })
-export class LayoutComponent {
-  protected mainContentId = "main-content";
-
-  @Input() variant: LayoutVariant = "primary";
-
+export class SidebarComponent {
   constructor(protected sidebarService: SidebarService) {}
 
   protected handleKeyDown = (event: KeyboardEvent) => {
@@ -32,7 +38,4 @@ export class LayoutComponent {
 
     return true;
   };
-  focusMainContent() {
-    document.getElementById(this.mainContentId)?.focus();
-  }
 }
