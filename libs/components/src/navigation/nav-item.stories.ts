@@ -1,7 +1,12 @@
 import { RouterTestingModule } from "@angular/router/testing";
 import { StoryObj, Meta, moduleMetadata } from "@storybook/angular";
 
+import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
+
 import { IconButtonModule } from "../icon-button";
+import { LayoutComponent } from "../layout";
+import { I18nMockService } from "../utils/i18n-mock.service";
+import { positionFixedWrapperDecorator } from "../utils/position-fixed-wrapper-decorator";
 
 import { NavItemComponent } from "./nav-item.component";
 import { NavigationModule } from "./navigation.module";
@@ -10,9 +15,25 @@ export default {
   title: "Component Library/Nav/Nav Item",
   component: NavItemComponent,
   decorators: [
+    positionFixedWrapperDecorator(
+      (story) => `<bit-layout><div slot="sidebar">${story}</div></bit-layout>`,
+    ),
     moduleMetadata({
       declarations: [],
-      imports: [RouterTestingModule, IconButtonModule, NavigationModule],
+      imports: [RouterTestingModule, IconButtonModule, NavigationModule, LayoutComponent],
+      providers: [
+        {
+          provide: I18nService,
+          useFactory: () => {
+            return new I18nMockService({
+              submenu: "submenu",
+              toggleCollapse: "toggle collapse",
+              toggleSideNavigation: "Toggle side navigation",
+              skipToContent: "Skip to content",
+            });
+          },
+        },
+      ],
     }),
   ],
   parameters: {

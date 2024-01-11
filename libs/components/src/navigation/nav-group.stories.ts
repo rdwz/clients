@@ -3,8 +3,10 @@ import { StoryObj, Meta, moduleMetadata } from "@storybook/angular";
 
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 
+import { LayoutComponent } from "../layout";
 import { SharedModule } from "../shared/shared.module";
 import { I18nMockService } from "../utils/i18n-mock.service";
+import { positionFixedWrapperDecorator } from "../utils/position-fixed-wrapper-decorator";
 
 import { NavGroupComponent } from "./nav-group.component";
 import { NavigationModule } from "./navigation.module";
@@ -13,8 +15,11 @@ export default {
   title: "Component Library/Nav/Nav Group",
   component: NavGroupComponent,
   decorators: [
+    positionFixedWrapperDecorator(
+      (story) => `<bit-layout><div slot="sidebar">${story}</div></bit-layout>`,
+    ),
     moduleMetadata({
-      imports: [SharedModule, RouterTestingModule, NavigationModule],
+      imports: [SharedModule, RouterTestingModule, NavigationModule, LayoutComponent],
       providers: [
         {
           provide: I18nService,
@@ -22,6 +27,8 @@ export default {
             return new I18nMockService({
               submenu: "submenu",
               toggleCollapse: "toggle collapse",
+              toggleSideNavigation: "Toggle side navigation",
+              skipToContent: "Skip to content",
             });
           },
         },

@@ -1,5 +1,5 @@
 import { RouterTestingModule } from "@angular/router/testing";
-import { Meta, StoryObj, componentWrapperDecorator, moduleMetadata } from "@storybook/angular";
+import { Meta, StoryObj, moduleMetadata } from "@storybook/angular";
 import { userEvent } from "@storybook/testing-library";
 
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
@@ -7,6 +7,7 @@ import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.servic
 import { CalloutModule } from "../callout";
 import { NavigationModule } from "../navigation";
 import { I18nMockService } from "../utils/i18n-mock.service";
+import { positionFixedWrapperDecorator } from "../utils/position-fixed-wrapper-decorator";
 
 import { LayoutComponent } from "./layout.component";
 
@@ -14,16 +15,7 @@ export default {
   title: "Component Library/Layout",
   component: LayoutComponent,
   decorators: [
-    componentWrapperDecorator(
-      /**
-       * Applying a CSS transform makes a `position: fixed` element act like it is `position: relative`
-       * https://github.com/storybookjs/storybook/issues/8011#issue-490251969
-       */
-      (story) =>
-        /* HTML */ `<div class="tw-scale-100 tw-border-2 tw-border-solid tw-border-[red]">
-          ${story}
-        </div>`,
-    ),
+    positionFixedWrapperDecorator(),
     moduleMetadata({
       imports: [NavigationModule, RouterTestingModule, CalloutModule],
       providers: [
