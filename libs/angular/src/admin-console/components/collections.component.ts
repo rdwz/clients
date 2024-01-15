@@ -60,7 +60,7 @@ export class CollectionsComponent implements OnInit {
         this.i18nService.t("errorOccurred"),
         this.i18nService.t("selectOneCollection"),
       );
-      return;
+      return false;
     }
     this.cipherDomain.collectionIds = selectedCollectionIds;
     try {
@@ -71,6 +71,7 @@ export class CollectionsComponent implements OnInit {
       return true;
     } catch (e) {
       this.logService.error(e);
+      return false;
     }
   }
 

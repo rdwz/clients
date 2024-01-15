@@ -32,8 +32,9 @@ export class CollectionsComponent extends BaseCollectionsComponent implements On
     const success = await super.submit();
     if (success) {
       this.dialogRef.close(CollectionsDialogResult.Saved);
+      return true;
     }
-    return;
+    return false;
   }
 
   check(c: CollectionView, select?: boolean) {
