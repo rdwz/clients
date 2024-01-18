@@ -12,9 +12,9 @@ import {
 import { PermissionsApi } from "@bitwarden/common/admin-console/models/api/permissions.api";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
 import { ProductType } from "@bitwarden/common/enums";
-import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
+import { CollectionService } from "@bitwarden/common/vault/abstractions/collection.service";
 import { CollectionView } from "@bitwarden/common/vault/models/view/collection.view";
 import { DialogService } from "@bitwarden/components";
 
@@ -138,7 +138,7 @@ export class MemberDialogComponent implements OnInit, OnDestroy {
     private userService: UserAdminService,
     private organizationUserService: OrganizationUserService,
     private dialogService: DialogService,
-    private configService: ConfigServiceAbstraction,
+    private collectionService: CollectionService,
   ) {}
 
   async ngOnInit() {
@@ -166,9 +166,10 @@ export class MemberDialogComponent implements OnInit, OnDestroy {
         ? this.userService.get(this.params.organizationId, this.params.organizationUserId)
         : of(null),
       groups: groups$,
+      syncedCollections: this.collectionService.getAllDecrypted(),
     })
       .pipe(takeUntil(this.destroy$))
-      .subscribe(({ organization, collections, userDetails, groups }) => {
+      .subscribe(({ organization, collections, userDetails, groups, syncedCollections }) => {
         this.organization = organization;
         this.canUseCustomPermissions = organization.useCustomPermissions;
         this.canUseSecretsManager = organization.useSecretsManager && flagEnabled("secretsManager");
@@ -187,9 +188,18 @@ export class MemberDialogComponent implements OnInit, OnDestroy {
         emailsControl.setValidators(emailsControlValidators);
         emailsControl.updateValueAndValidity();
 
-        this.collectionAccessItems = [].concat(
-          collections.map((c) => mapCollectionToAccessItemView(c)),
-        );
+        // TODO: need to combine CollectionDetailsView and CollectionAdminView
+        // for now just marry it up from sync data as a hack
+        collections = collections.map((c) => {
+          const sc = syncedCollections.find((sc) => sc.id == c.id);
+          c.manage = sc?.manage ?? false;
+          return c;
+        });
+
+        // TODO: restore this to cover the case where it's a new user
+        // this.collectionAccessItems = [].concat(
+        //   collections.map((c) => mapCollectionToAccessItemView(c)),
+        // );
 
         this.groupAccessItems = [].concat(
           groups.map<AccessItemView>((g) => mapGroupToAccessItemView(g)),
@@ -243,13 +253,24 @@ export class MemberDialogComponent implements OnInit, OnDestroy {
               }),
             );
 
+          const accessSelections = mapToAccessSelections(userDetails);
+
+          // Need to supply the CollectionAccessSelectionView so that we see the user's permissions even if it's greyed out
+          this.collectionAccessItems = [].concat(
+            collections.map((c) =>
+              mapCollectionToAccessItemView(
+                c,
+                c.users.find((as) => as.id === userDetails.id),
+              ),
+            ),
+          );
+
           this.collectionAccessItems = this.collectionAccessItems.concat(
             collectionsFromGroups.map(({ collection, accessSelection, group }) =>
               mapCollectionToAccessItemView(collection, accessSelection, group),
             ),
           );
 
-          const accessSelections = mapToAccessSelections(userDetails);
           const groupAccessSelections = mapToGroupAccessSelections(userDetails.groups);
 
           this.formGroup.removeControl("emails");
@@ -532,7 +553,7 @@ function mapCollectionToAccessItemView(
     id: group ? `${collection.id}-${group.id}` : collection.id,
     labelName: collection.name,
     listName: collection.name,
-    readonly: group !== undefined,
+    readonly: group !== undefined || !collection.manage,
     readonlyPermission: accessSelection ? convertToPermission(accessSelection) : undefined,
     viaGroupName: group?.name,
   };
