@@ -1,7 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 
 import { SettingsService } from "@bitwarden/common/abstractions/settings.service";
-import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
@@ -9,7 +8,7 @@ import { StateService } from "@bitwarden/common/platform/abstractions/state.serv
 import { UriMatchType } from "@bitwarden/common/vault/enums";
 
 import { BrowserApi } from "../../../platform/browser/browser-api";
-import { flagEnabled } from "../../../platform/flags";
+import { enableAccountSwitching } from "../../../platform/flags";
 import { AutofillService } from "../../services/abstractions/autofill.service";
 import { AutofillOverlayVisibility } from "../../utils/autofill-overlay.enum";
 
@@ -18,7 +17,6 @@ import { AutofillOverlayVisibility } from "../../utils/autofill-overlay.enum";
   templateUrl: "autofill.component.html",
 })
 export class AutofillComponent implements OnInit {
-  protected isAutoFillOverlayFlagEnabled = false;
   protected autoFillOverlayVisibility: number;
   protected autoFillOverlayVisibilityOptions: any[];
   protected disablePasswordManagerLink: string;
@@ -65,14 +63,11 @@ export class AutofillComponent implements OnInit {
       { name: i18nService.t("never"), value: UriMatchType.Never },
     ];
 
-    this.accountSwitcherEnabled = flagEnabled("accountSwitching");
+    this.accountSwitcherEnabled = enableAccountSwitching();
     this.disablePasswordManagerLink = this.getDisablePasswordManagerLink();
   }
 
   async ngOnInit() {
-    this.isAutoFillOverlayFlagEnabled = await this.configService.getFeatureFlag<boolean>(
-      FeatureFlag.AutofillOverlay,
-    );
     this.autoFillOverlayVisibility =
       (await this.settingsService.getAutoFillOverlayVisibility()) || AutofillOverlayVisibility.Off;
 
