@@ -75,6 +75,7 @@ export type AccessItemValue = {
   id: string;
   permission?: CollectionPermission;
   type: AccessItemType;
+  includeIfReadonly?: boolean;
 };
 
 export type Permission = {
