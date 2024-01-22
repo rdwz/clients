@@ -266,30 +266,26 @@ export class AccessSelectorComponent implements ControlValueAccessor, OnInit, On
   async ngOnInit() {
     this.permissionList = getPermissionList(this.flexibleCollectionsEnabled);
     // Watch the internal formArray for changes and propagate them
-    this.selectionList.formArray.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((formValue) => {
-        if (!this.notifyOnChange || this.pauseChangeNotification) {
-          return;
-        }
-        // Disabled form arrays emit values for disabled controls, we override this to emit an empty array to avoid
-        // emitting values for disabled controls that are "readonly" in the table
-        if (this.selectionList.formArray.disabled) {
-          this.notifyOnChange([]);
-          return;
-        }
+    this.selectionList.formArray.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((v) => {
+      if (!this.notifyOnChange || this.pauseChangeNotification) {
+        return;
+      }
+      // Disabled form arrays emit values for disabled controls, we override this to emit an empty array to avoid
+      // emitting values for disabled controls that are "readonly" in the table
+      if (this.selectionList.formArray.disabled) {
+        this.notifyOnChange([]);
+        return;
+      }
 
-        // Some values are included even if their formControls are disabled. Get these and add them back in
-        // TODO: actually set this property somewhere - this is for disabling the sole user with Can Manage
-        const includeIfReadonly = this.selectionList.formArray
-          .getRawValue()
-          .filter(
-            (rawValue) =>
-              rawValue.includeIfReadonly && !formValue.some((fv) => fv.id !== rawValue.id),
-          );
+      // Members are always included even if disabled - remove members and add back in
+      const selectionWithoutMembers = v.filter((v) => v.type !== AccessItemType.Member);
+      const allSelectedMembers = this.selectionList.formArray
+        .getRawValue()
+        .filter((v) => v.type === AccessItemType.Member);
+      const updatedValue = [...selectionWithoutMembers, ...allSelectedMembers];
 
-        this.notifyOnChange([...formValue, ...includeIfReadonly]);
-      });
+      this.notifyOnChange(updatedValue);
+    });
   }
 
   ngOnDestroy() {
