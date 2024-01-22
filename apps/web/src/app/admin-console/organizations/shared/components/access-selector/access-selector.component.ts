@@ -276,15 +276,7 @@ export class AccessSelectorComponent implements ControlValueAccessor, OnInit, On
         this.notifyOnChange([]);
         return;
       }
-
-      // Members are always included even if disabled - remove members and add back in
-      const selectionWithoutMembers = v.filter((v) => v.type !== AccessItemType.Member);
-      const allSelectedMembers = this.selectionList.formArray
-        .getRawValue()
-        .filter((v) => v.type === AccessItemType.Member);
-      const updatedValue = [...selectionWithoutMembers, ...allSelectedMembers];
-
-      this.notifyOnChange(updatedValue);
+      this.notifyOnChange(v);
     });
   }
 
