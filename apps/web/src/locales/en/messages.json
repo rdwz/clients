@@ -7325,8 +7325,8 @@
   "allowAdminAccessToAllCollectionItemsDesc": {
     "message": "Owners and admins can manage all collections and items"
   },
-  "collectionManagementUpdated": {
-    "message": "Collection management behavior saved"
+  "updatedCollectionManagement": {
+    "message": "Updated collection management setting"
   },
   "passwordManagerPlanPrice": {
     "message": "Password Manager plan price"
@@ -7392,12 +7392,6 @@
   "skipToContent": {
     "message": "Skip to content"
   },
-  "customBillingStart": {
-    "message": "Custom billing is not reflected. Visit the "
-  },
-  "customBillingEnd": {
-    "message": " page for latest invoicing."
-  },
   "managePermissionRequired": {
     "message": "At least one member or group must have can manage permission."
   },
@@ -7453,5 +7447,26 @@
   "commonImportFormats": {
     "message": "Common formats",
     "description": "Label indicating the most common import formats"
+  },
+  "maintainYourSubscription": {
+    "message": "To maintain your subscription for $ORG$, ",
+    "description": "This will be used as part of a larger sentence, broken up to include links. The full sentence will read 'To maintain your subscription for $ORG$, add a payment method.'",
+    "placeholders": {
+      "org": {
+        "content": "$1",
+        "example": "Example Inc."
+      }
+    }
+  },
+  "addAPaymentMethod": {
+    "message": "add a payment method",
+    "description": "This will be used as part of a larger sentence, broken up to include links. The full sentence will read 'To maintain your subscription for $ORG$, add a payment method.'"
+  },
+  "collectionEnhancementsDesc": {
+    "message": "Add new settings and permissions for additional flexibility. Replace the Manager role with the \"can manage\" permission, and introduce options to allow users to create collections as well as restrict administrative access to collections.",
+    "description": "This describes new features and improvements for user roles and collections"
+  },
+  "collectionEnhancementsLearnMore": {
+    "message": "Learn more about collection management"
   }
 }
