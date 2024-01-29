@@ -616,11 +616,19 @@ export class SettingsComponent implements OnInit {
     }
 
     await this.stateService.setEnableBrowserIntegration(this.form.value.enableBrowserIntegration);
-    this.messagingService.send(
-      this.form.value.enableBrowserIntegration
-        ? "enableBrowserIntegration"
-        : "disableBrowserIntegration",
+
+    const errorResult = await ipc.platform.nativeMessaging.manifests.generate(
+      this.form.value.enableBrowserIntegration,
     );
+    if (errorResult !== null) {
+      await this.dialogService.openSimpleDialog({
+        title: { key: "browserIntegrationErrorTitle" },
+        content: { key: "browserIntegrationErrorDesc" },
+        acceptButtonText: { key: "ok" },
+        cancelButtonText: null,
+        type: "danger",
+      });
+    }
 
     if (!this.form.value.enableBrowserIntegration) {
       this.form.controls.enableBrowserIntegrationFingerprint.setValue(false);
@@ -637,11 +645,18 @@ export class SettingsComponent implements OnInit {
       await this.stateService.setDuckDuckGoSharedKey(null);
     }
 
-    this.messagingService.send(
-      this.form.value.enableDuckDuckGoBrowserIntegration
-        ? "enableDuckDuckGoBrowserIntegration"
-        : "disableDuckDuckGoBrowserIntegration",
+    const errorResult = await ipc.platform.nativeMessaging.manifests.generateDuckDuckGo(
+      this.form.value.enableDuckDuckGoBrowserIntegration,
     );
+    if (errorResult !== null) {
+      await this.dialogService.openSimpleDialog({
+        title: { key: "browserIntegrationUnsupportedTitle" },
+        content: errorResult.message,
+        acceptButtonText: { key: "ok" },
+        cancelButtonText: null,
+        type: "warning",
+      });
+    }
   }
 
   async saveBrowserIntegrationFingerprint() {

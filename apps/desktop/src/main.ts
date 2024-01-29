@@ -216,10 +216,10 @@ export class Main {
         if (browserIntegrationEnabled || ddgIntegrationEnabled) {
           // Re-register the native messaging host integrations on startup, in case they are not present
           if (browserIntegrationEnabled) {
-            this.nativeMessagingMain.generateManifests();
+            this.nativeMessagingMain.generateManifests().catch(this.logService.error);
           }
           if (ddgIntegrationEnabled) {
-            this.nativeMessagingMain.generateDdgManifests();
+            this.nativeMessagingMain.generateDdgManifests().catch(this.logService.error);
           }
           this.nativeMessagingMain.listen();
         }
