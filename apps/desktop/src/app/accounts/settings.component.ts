@@ -14,6 +14,7 @@ import { DeviceType } from "@bitwarden/common/enums";
 import { VaultTimeoutAction } from "@bitwarden/common/enums/vault-timeout-action.enum";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
+import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { ThemeType, KeySuffixOptions } from "@bitwarden/common/platform/enums";
@@ -118,6 +119,7 @@ export class SettingsComponent implements OnInit {
     private settingsService: SettingsService,
     private dialogService: DialogService,
     private userVerificationService: UserVerificationServiceAbstraction,
+    private logService: LogService,
   ) {
     const isMac = this.platformUtilsService.getDevice() === DeviceType.MacOsDesktop;
 
@@ -621,6 +623,7 @@ export class SettingsComponent implements OnInit {
       this.form.value.enableBrowserIntegration,
     );
     if (errorResult !== null) {
+      this.logService.error("Error in browser integration: " + errorResult);
       await this.dialogService.openSimpleDialog({
         title: { key: "browserIntegrationErrorTitle" },
         content: { key: "browserIntegrationErrorDesc" },
@@ -649,6 +652,7 @@ export class SettingsComponent implements OnInit {
       this.form.value.enableDuckDuckGoBrowserIntegration,
     );
     if (errorResult !== null) {
+      this.logService.error("Error in DDG browser integration: " + errorResult);
       await this.dialogService.openSimpleDialog({
         title: { key: "browserIntegrationUnsupportedTitle" },
         content: errorResult.message,
