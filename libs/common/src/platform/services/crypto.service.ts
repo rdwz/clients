@@ -1,16 +1,15 @@
 import * as bigInt from "big-integer";
-import { firstValueFrom, map } from "rxjs";
+import { Observable, firstValueFrom, map } from "rxjs";
 
 import { EncryptedOrganizationKeyData } from "../../admin-console/models/data/encrypted-organization-key.data";
-import { BaseEncryptedOrganizationKey } from "../../admin-console/models/domain/encrypted-organization-key";
 import { ProfileOrganizationResponse } from "../../admin-console/models/response/profile-organization.response";
 import { ProfileProviderOrganizationResponse } from "../../admin-console/models/response/profile-provider-organization.response";
 import { ProfileProviderResponse } from "../../admin-console/models/response/profile-provider.response";
 import { AccountService } from "../../auth/abstractions/account.service";
 import { KdfConfig } from "../../auth/models/domain/kdf-config";
 import { Utils } from "../../platform/misc/utils";
-import { UserId } from "../../types/guid";
-import { UserKey, MasterKey, OrgKey, ProviderKey, PinKey, CipherKey } from "../../types/key";
+import { OrganizationId, ProviderId, UserId } from "../../types/guid";
+import { OrgKey, UserKey, MasterKey, ProviderKey, PinKey, CipherKey } from "../../types/key";
 import { CryptoFunctionService } from "../abstractions/crypto-function.service";
 import { CryptoService as CryptoServiceAbstraction } from "../abstractions/crypto.service";
 import { EncryptService } from "../abstractions/encrypt.service";
@@ -30,16 +29,30 @@ import {
 import { sequentialize } from "../misc/sequentialize";
 import { EFFLongWordList } from "../misc/wordlist";
 import { EncArrayBuffer } from "../models/domain/enc-array-buffer";
-import { EncString } from "../models/domain/enc-string";
+import { EncString, EncryptedString } from "../models/domain/enc-string";
 import { SymmetricCryptoKey } from "../models/domain/symmetric-crypto-key";
-import { ActiveUserState, CRYPTO_DISK, KeyDefinition, StateProvider } from "../state";
+import { ActiveUserState, DerivedState, StateProvider } from "../state";
 
-export const USER_EVER_HAD_USER_KEY = new KeyDefinition<boolean>(CRYPTO_DISK, "everHadUserKey", {
-  deserializer: (obj) => obj,
-});
+import {
+  USER_ENCRYPTED_ORGANIZATION_KEYS,
+  USER_ORGANIZATION_KEYS,
+} from "./key-state/org-keys.state";
+import { USER_ENCRYPTED_PROVIDER_KEYS, USER_PROVIDER_KEYS } from "./key-state/provider-keys.state";
+import { USER_EVER_HAD_USER_KEY } from "./key-state/user-key.state";
 
 export class CryptoService implements CryptoServiceAbstraction {
-  private activeUserEverHadUserKey: ActiveUserState<boolean>;
+  private readonly activeUserEverHadUserKey: ActiveUserState<boolean>;
+  private readonly activeUserEncryptedOrgKeysState: ActiveUserState<
+    Record<OrganizationId, EncryptedOrganizationKeyData>
+  >;
+  private readonly activeUserOrgKeysState: DerivedState<Record<OrganizationId, OrgKey>>;
+  private readonly activeUserEncryptedProviderKeysState: ActiveUserState<
+    Record<ProviderId, EncryptedString>
+  >;
+  private readonly activeUserProviderKeysState: DerivedState<Record<OrganizationId, ProviderKey>>;
+
+  readonly activeUserOrgKeys$: Observable<Record<OrganizationId, OrgKey>>;
+  readonly activeUserProviderKeys$: Observable<Record<ProviderId, ProviderKey>>;
 
   readonly everHadUserKey$;
 
@@ -53,8 +66,26 @@ export class CryptoService implements CryptoServiceAbstraction {
     protected stateProvider: StateProvider,
   ) {
     this.activeUserEverHadUserKey = stateProvider.getActive(USER_EVER_HAD_USER_KEY);
+    this.activeUserEncryptedOrgKeysState = stateProvider.getActive(
+      USER_ENCRYPTED_ORGANIZATION_KEYS,
+    );
+    this.activeUserOrgKeysState = stateProvider.getDerived(
+      this.activeUserEncryptedOrgKeysState.state$,
+      USER_ORGANIZATION_KEYS,
+      { cryptoService: this },
+    );
+    this.activeUserEncryptedProviderKeysState = stateProvider.getActive(
+      USER_ENCRYPTED_PROVIDER_KEYS,
+    );
+    this.activeUserProviderKeysState = stateProvider.getDerived(
+      this.activeUserEncryptedProviderKeysState.state$,
+      USER_PROVIDER_KEYS,
+      { encryptService: this.encryptService, cryptoService: this },
+    );
 
     this.everHadUserKey$ = this.activeUserEverHadUserKey.state$.pipe(map((x) => x ?? false));
+    this.activeUserOrgKeys$ = this.activeUserOrgKeysState.state$; // null handled by `derive` function
+    this.activeUserProviderKeys$ = this.activeUserProviderKeysState.state$; // null handled by `derive` function
   }
 
   async setUserKey(key: UserKey, userId?: UserId): Promise<void> {
@@ -150,11 +181,19 @@ export class CryptoService implements CryptoServiceAbstraction {
 
   async clearStoredUserKey(keySuffix: KeySuffixOptions, userId?: UserId): Promise<void> {
     if (keySuffix === KeySuffixOptions.Auto) {
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.stateService.setUserKeyAutoUnlock(null, { userId: userId });
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.clearDeprecatedKeys(KeySuffixOptions.Auto, userId);
     }
     if (keySuffix === KeySuffixOptions.Pin) {
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.stateService.setPinKeyEncryptedUserKeyEphemeral(null, { userId: userId });
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.clearDeprecatedKeys(KeySuffixOptions.Pin, userId);
     }
   }
@@ -320,72 +359,37 @@ export class CryptoService implements CryptoServiceAbstraction {
     orgs: ProfileOrganizationResponse[] = [],
     providerOrgs: ProfileProviderOrganizationResponse[] = [],
   ): Promise<void> {
-    const encOrgKeyData: { [orgId: string]: EncryptedOrganizationKeyData } = {};
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.activeUserEncryptedOrgKeysState.update((_) => {
+      const encOrgKeyData: { [orgId: string]: EncryptedOrganizationKeyData } = {};
 
-    orgs.forEach((org) => {
-      encOrgKeyData[org.id] = {
-        type: "organization",
-        key: org.key,
-      };
+      orgs.forEach((org) => {
+        encOrgKeyData[org.id] = {
+          type: "organization",
+          key: org.key,
+        };
+      });
+
+      providerOrgs.forEach((org) => {
+        encOrgKeyData[org.id] = {
+          type: "provider",
+          providerId: org.providerId,
+          key: org.key,
+        };
+      });
+
+      return encOrgKeyData;
     });
-
-    providerOrgs.forEach((org) => {
-      encOrgKeyData[org.id] = {
-        type: "provider",
-        providerId: org.providerId,
-        key: org.key,
-      };
-    });
-
-    await this.stateService.setDecryptedOrganizationKeys(null);
-    return await this.stateService.setEncryptedOrganizationKeys(encOrgKeyData);
   }
 
-  async getOrgKey(orgId: string): Promise<OrgKey> {
-    if (orgId == null) {
-      return null;
-    }
-
-    const orgKeys = await this.getOrgKeys();
-    if (orgKeys == null || !orgKeys.has(orgId)) {
-      return null;
-    }
-
-    return orgKeys.get(orgId);
+  async getOrgKey(orgId: OrganizationId): Promise<OrgKey> {
+    return (await firstValueFrom(this.activeUserOrgKeys$))[orgId];
   }
 
   @sequentialize(() => "getOrgKeys")
-  async getOrgKeys(): Promise<Map<string, OrgKey>> {
-    const result: Map<string, OrgKey> = new Map<string, OrgKey>();
-    const decryptedOrganizationKeys = await this.stateService.getDecryptedOrganizationKeys();
-    if (decryptedOrganizationKeys != null && decryptedOrganizationKeys.size > 0) {
-      return decryptedOrganizationKeys as Map<string, OrgKey>;
-    }
-
-    const encOrgKeyData = await this.stateService.getEncryptedOrganizationKeys();
-    if (encOrgKeyData == null) {
-      return result;
-    }
-
-    let setKey = false;
-
-    for (const orgId of Object.keys(encOrgKeyData)) {
-      if (result.has(orgId)) {
-        continue;
-      }
-
-      const encOrgKey = BaseEncryptedOrganizationKey.fromData(encOrgKeyData[orgId]);
-      const decOrgKey = (await encOrgKey.decrypt(this)) as OrgKey;
-      result.set(orgId, decOrgKey);
-
-      setKey = true;
-    }
-
-    if (setKey) {
-      await this.stateService.setDecryptedOrganizationKeys(result);
-    }
-
-    return result;
+  async getOrgKeys(): Promise<Record<string, OrgKey>> {
+    return await firstValueFrom(this.activeUserOrgKeys$);
   }
 
   async makeDataEncKey<T extends OrgKey | UserKey>(
@@ -400,72 +404,63 @@ export class CryptoService implements CryptoServiceAbstraction {
   }
 
   async clearOrgKeys(memoryOnly?: boolean, userId?: UserId): Promise<void> {
-    await this.stateService.setDecryptedOrganizationKeys(null, { userId: userId });
-    if (!memoryOnly) {
-      await this.stateService.setEncryptedOrganizationKeys(null, { userId: userId });
+    const activeUserId = (await firstValueFrom(this.accountService.activeAccount$))?.id;
+    const userIdIsActive = userId == null || userId === activeUserId;
+    if (memoryOnly && userIdIsActive) {
+      // org keys are only cached for active users
+      await this.activeUserOrgKeysState.forceValue({});
+    } else {
+      if (userId == null && activeUserId == null) {
+        // nothing to do
+        return;
+      }
+      await this.stateProvider
+        .getUser(userId ?? activeUserId, USER_ENCRYPTED_ORGANIZATION_KEYS)
+        .update(() => null);
     }
   }
 
   async setProviderKeys(providers: ProfileProviderResponse[]): Promise<void> {
-    const providerKeys: any = {};
-    providers.forEach((provider) => {
-      providerKeys[provider.id] = provider.key;
-    });
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.activeUserEncryptedProviderKeysState.update((_) => {
+      const encProviderKeys: { [providerId: ProviderId]: EncryptedString } = {};
 
-    await this.stateService.setDecryptedProviderKeys(null);
-    return await this.stateService.setEncryptedProviderKeys(providerKeys);
+      providers.forEach((provider) => {
+        encProviderKeys[provider.id as ProviderId] = provider.key as EncryptedString;
+      });
+
+      return encProviderKeys;
+    });
   }
 
-  async getProviderKey(providerId: string): Promise<ProviderKey> {
+  async getProviderKey(providerId: ProviderId): Promise<ProviderKey> {
     if (providerId == null) {
       return null;
     }
 
-    const providerKeys = await this.getProviderKeys();
-    if (providerKeys == null || !providerKeys.has(providerId)) {
-      return null;
-    }
-
-    return providerKeys.get(providerId);
+    return (await firstValueFrom(this.activeUserProviderKeys$))[providerId] ?? null;
   }
 
   @sequentialize(() => "getProviderKeys")
-  async getProviderKeys(): Promise<Map<string, ProviderKey>> {
-    const providerKeys: Map<string, ProviderKey> = new Map<string, ProviderKey>();
-    const decryptedProviderKeys = await this.stateService.getDecryptedProviderKeys();
-    if (decryptedProviderKeys != null && decryptedProviderKeys.size > 0) {
-      return decryptedProviderKeys as Map<string, ProviderKey>;
-    }
-
-    const encProviderKeys = await this.stateService.getEncryptedProviderKeys();
-    if (encProviderKeys == null) {
-      return null;
-    }
-
-    let setKey = false;
-
-    for (const orgId in encProviderKeys) {
-      // eslint-disable-next-line
-      if (!encProviderKeys.hasOwnProperty(orgId)) {
-        continue;
-      }
-
-      const decValue = await this.rsaDecrypt(encProviderKeys[orgId]);
-      providerKeys.set(orgId, new SymmetricCryptoKey(decValue) as ProviderKey);
-      setKey = true;
-    }
-
-    if (setKey) {
-      await this.stateService.setDecryptedProviderKeys(providerKeys);
-    }
-
-    return providerKeys;
+  async getProviderKeys(): Promise<Record<ProviderId, ProviderKey>> {
+    return await firstValueFrom(this.activeUserProviderKeys$);
   }
 
   async clearProviderKeys(memoryOnly?: boolean, userId?: UserId): Promise<void> {
-    await this.stateService.setDecryptedProviderKeys(null, { userId: userId });
-    if (!memoryOnly) {
-      await this.stateService.setEncryptedProviderKeys(null, { userId: userId });
+    const activeUserId = (await firstValueFrom(this.accountService.activeAccount$))?.id;
+    const userIdIsActive = userId == null || userId === activeUserId;
+    if (memoryOnly && userIdIsActive) {
+      // provider keys are only cached for active users
+      await this.activeUserProviderKeysState.forceValue({});
+    } else {
+      if (userId == null && activeUserId == null) {
+        // nothing to do
+        return;
+      }
+      await this.stateProvider
+        .getUser(userId ?? activeUserId, USER_ENCRYPTED_PROVIDER_KEYS)
+        .update(() => null);
     }
   }
 
@@ -630,6 +625,7 @@ export class CryptoService implements CryptoServiceAbstraction {
     await this.clearProviderKeys(false, userId);
     await this.clearKeyPair(false, userId);
     await this.clearPinKeys(userId);
+    await this.activeUserEverHadUserKey.update(() => null);
   }
 
   async rsaEncrypt(data: Uint8Array, publicKey?: Uint8Array): Promise<EncString> {

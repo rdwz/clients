@@ -172,6 +172,7 @@ const plugins = [
     BRAINTREE_KEY: envConfig["braintreeKey"] ?? "",
     PAYPAL_CONFIG: envConfig["paypal"] ?? {},
     FLAGS: envConfig["flags"] ?? {},
+    DEV_FLAGS: NODE_ENV === "development" ? envConfig["devFlags"] : {},
   }),
   new AngularWebpackPlugin({
     tsConfigPath: "tsconfig.json",
@@ -270,6 +271,7 @@ const devServer =
                   https://*.duosecurity.com
                 ;connect-src
                   'self'
+                  ${envConfig.dev.wsConnectSrc ?? ""}
                   wss://notifications.bitwarden.com
                   https://notifications.bitwarden.com
                   https://cdn.bitwarden.net
