@@ -188,24 +188,22 @@ export class MemberDialogComponent implements OnInit, OnDestroy {
         emailsControl.setValidators(emailsControlValidators);
         emailsControl.updateValueAndValidity();
 
-        // TODO: need to combine CollectionDetailsView and CollectionAdminView
-        // for now just marry it up from sync data as a hack
+        // This is a workaround that will be replaced by AC-2084
+        // AC-2084 should add an endpoint that returns ALL collections,
+        // optionally including permissions if the user is assigned
+        // For now we just match it up with synced data as a hack
         collections = collections.map((c) => {
           const sc = syncedCollections.find((sc) => sc.id == c.id);
           c.manage = sc?.manage ?? false;
           return c;
         });
 
-        // TODO: restore this to cover the case where it's a new user
-        // this.collectionAccessItems = [].concat(
-        //   collections.map((c) => mapCollectionToAccessItemView(c)),
-        // );
-
         this.groupAccessItems = [].concat(
           groups.map<AccessItemView>((g) => mapGroupToAccessItemView(g)),
         );
 
         if (this.params.organizationUserId) {
+          // Editing existing user
           if (!userDetails) {
             throw new Error("Could not find user to edit.");
           }
@@ -282,6 +280,11 @@ export class MemberDialogComponent implements OnInit, OnDestroy {
             accessSecretsManager: userDetails.accessSecretsManager,
             groups: groupAccessSelections,
           });
+        } else {
+          // Creating new user
+          this.collectionAccessItems = [].concat(
+            collections.map((c) => mapCollectionToAccessItemView(c)),
+          );
         }
 
         this.loading = false;
