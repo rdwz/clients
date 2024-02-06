@@ -12,17 +12,18 @@ import { PolicyType } from "@bitwarden/common/admin-console/enums";
 import { UserVerificationService as UserVerificationServiceAbstraction } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
 import { DeviceType } from "@bitwarden/common/enums";
 import { VaultTimeoutAction } from "@bitwarden/common/enums/vault-timeout-action.enum";
-import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
+import { BiometricStateService } from "@bitwarden/common/platform/biometrics/biometric-state.service";
 import { ThemeType, KeySuffixOptions } from "@bitwarden/common/platform/enums";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { DialogService } from "@bitwarden/components";
 
 import { SetPinComponent } from "../../auth/components/set-pin.component";
 import { flagEnabled } from "../../platform/flags";
+import { ElectronCryptoService } from "../../platform/services/electron-crypto.service";
 import { ElectronStateService } from "../../platform/services/electron-state.service.abstraction";
 @Component({
   selector: "app-settings",
@@ -113,12 +114,13 @@ export class SettingsComponent implements OnInit {
     private vaultTimeoutSettingsService: VaultTimeoutSettingsService,
     private stateService: ElectronStateService,
     private messagingService: MessagingService,
-    private cryptoService: CryptoService,
+    private cryptoService: ElectronCryptoService,
     private modalService: ModalService,
     private themingService: AbstractThemingService,
     private settingsService: SettingsService,
     private dialogService: DialogService,
     private userVerificationService: UserVerificationServiceAbstraction,
+    private biometricStateService: BiometricStateService,
     private logService: LogService,
   ) {
     const isMac = this.platformUtilsService.getDevice() === DeviceType.MacOsDesktop;
@@ -244,8 +246,9 @@ export class SettingsComponent implements OnInit {
       pin: this.userHasPinSet,
       biometric: await this.vaultTimeoutSettingsService.isBiometricLockSet(),
       autoPromptBiometrics: !(await this.stateService.getDisableAutoBiometricsPrompt()),
-      requirePasswordOnStart:
-        (await this.stateService.getBiometricRequirePasswordOnStart()) ?? false,
+      requirePasswordOnStart: await firstValueFrom(
+        this.biometricStateService.requirePasswordOnStart$,
+      ),
       approveLoginRequests: (await this.stateService.getApproveLoginRequests()) ?? false,
       clearClipboard: await this.stateService.getClearClipboard(),
       minimizeOnCopyToClipboard: await this.stateService.getMinimizeOnCopyToClipboard(),
@@ -456,7 +459,7 @@ export class SettingsComponent implements OnInit {
         this.form.controls.requirePasswordOnStart.setValue(true);
         this.form.controls.autoPromptBiometrics.setValue(false);
         await this.stateService.setDisableAutoBiometricsPrompt(true);
-        await this.stateService.setBiometricRequirePasswordOnStart(true);
+        await this.cryptoService.setBiometricClientKeyHalf();
         await this.stateService.setDismissedBiometricRequirePasswordOnStart();
       }
       await this.cryptoService.refreshAdditionalKeys();
@@ -490,10 +493,9 @@ export class SettingsComponent implements OnInit {
       this.form.controls.autoPromptBiometrics.setValue(false);
       await this.updateAutoPromptBiometrics();
 
-      await this.stateService.setBiometricRequirePasswordOnStart(true);
+      await this.cryptoService.setBiometricClientKeyHalf();
     } else {
-      await this.stateService.setBiometricRequirePasswordOnStart(false);
-      await this.stateService.setBiometricEncryptionClientKeyHalf(null);
+      await this.cryptoService.removeBiometricClientKeyHalf();
     }
     await this.stateService.setDismissedBiometricRequirePasswordOnStart();
     await this.cryptoService.refreshAdditionalKeys();

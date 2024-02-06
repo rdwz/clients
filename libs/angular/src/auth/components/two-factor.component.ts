@@ -5,8 +5,8 @@ import { first } from "rxjs/operators";
 
 // eslint-disable-next-line no-restricted-imports
 import { WINDOW } from "@bitwarden/angular/services/injection-tokens";
+import { LoginStrategyServiceAbstraction } from "@bitwarden/auth/common";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
-import { AuthService } from "@bitwarden/common/auth/abstractions/auth.service";
 import { LoginService } from "@bitwarden/common/auth/abstractions/login.service";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
 import { TwoFactorProviderType } from "@bitwarden/common/auth/enums/two-factor-provider-type";
@@ -44,6 +44,11 @@ export class TwoFactorComponent extends CaptchaProtectedComponent implements OnI
   formPromise: Promise<any>;
   emailPromise: Promise<any>;
   orgIdentifier: string = null;
+
+  duoFrameless = false;
+  duoFramelessUrl: string = null;
+  duoResultListenerInitialized = false;
+
   onSuccessfulLogin: () => Promise<void>;
   onSuccessfulLoginNavigate: () => Promise<void>;
 
@@ -57,8 +62,15 @@ export class TwoFactorComponent extends CaptchaProtectedComponent implements OnI
   protected forcePasswordResetRoute = "update-temp-password";
   protected successRoute = "vault";
 
+  get isDuoProvider(): boolean {
+    return (
+      this.selectedProviderType === TwoFactorProviderType.Duo ||
+      this.selectedProviderType === TwoFactorProviderType.OrganizationDuo
+    );
+  }
+
   constructor(
-    protected authService: AuthService,
+    protected loginStrategyService: LoginStrategyServiceAbstraction,
     protected router: Router,
     protected i18nService: I18nService,
     protected apiService: ApiService,
@@ -148,20 +160,42 @@ export class TwoFactorComponent extends CaptchaProtectedComponent implements OnI
         break;
       case TwoFactorProviderType.Duo:
       case TwoFactorProviderType.OrganizationDuo:
-        setTimeout(() => {
-          DuoWebSDK.init({
-            iframe: undefined,
-            host: providerData.Host,
-            sig_request: providerData.Signature,
-            submit_callback: async (f: HTMLFormElement) => {
-              const sig = f.querySelector('input[name="sig_response"]') as HTMLInputElement;
-              if (sig != null) {
-                this.token = sig.value;
-                await this.submit();
-              }
-            },
-          });
-        }, 0);
+        // 2 Duo 2FA flows available
+        // 1. Duo Web SDK (iframe) - existing, to be deprecated
+        // 2. Duo Frameless (new tab) - new
+
+        // AuthUrl only exists for new Duo Frameless flow
+        if (providerData.AuthUrl) {
+          this.duoFrameless = true;
+          // Setup listener for duo-redirect.ts connector to send back the code
+
+          if (!this.duoResultListenerInitialized) {
+            // setup client specific duo result listener
+            this.setupDuoResultListener();
+            this.duoResultListenerInitialized = true;
+          }
+
+          // flow must be launched by user so they can choose to remember the device or not.
+          this.duoFramelessUrl = providerData.AuthUrl;
+        } else {
+          // Duo Web SDK (iframe) flow
+          // TODO: remove when we remove the "duo-redirect" feature flag
+          setTimeout(() => {
+            DuoWebSDK.init({
+              iframe: undefined,
+              host: providerData.Host,
+              sig_request: providerData.Signature,
+              submit_callback: async (f: HTMLFormElement) => {
+                const sig = f.querySelector('input[name="sig_response"]') as HTMLInputElement;
+                if (sig != null) {
+                  this.token = sig.value;
+                  await this.submit();
+                }
+              },
+            });
+          }, 0);
+        }
+
         break;
       case TwoFactorProviderType.Email:
         this.twoFactorEmail = providerData.Email;
@@ -209,7 +243,7 @@ export class TwoFactorComponent extends CaptchaProtectedComponent implements OnI
   }
 
   async doSubmit() {
-    this.formPromise = this.authService.logInTwoFactor(
+    this.formPromise = this.loginStrategyService.logInTwoFactor(
       new TokenTwoFactorRequest(this.selectedProviderType, this.token, this.remember),
       this.captchaToken,
     );
@@ -230,6 +264,9 @@ export class TwoFactorComponent extends CaptchaProtectedComponent implements OnI
     );
     return true;
   }
+
+  // Each client will have own implementation
+  protected setupDuoResultListener(): void {}
 
   private async handleLoginResponse(authResult: AuthResult) {
     if (this.handleCaptchaRequired(authResult)) {
@@ -387,7 +424,7 @@ export class TwoFactorComponent extends CaptchaProtectedComponent implements OnI
       return;
     }
 
-    if (this.authService.email == null) {
+    if (this.loginStrategyService.email == null) {
       this.platformUtilsService.showToast(
         "error",
         this.i18nService.t("errorOccurred"),
@@ -398,12 +435,12 @@ export class TwoFactorComponent extends CaptchaProtectedComponent implements OnI
 
     try {
       const request = new TwoFactorEmailRequest();
-      request.email = this.authService.email;
-      request.masterPasswordHash = this.authService.masterPasswordHash;
-      request.ssoEmail2FaSessionToken = this.authService.ssoEmail2FaSessionToken;
+      request.email = this.loginStrategyService.email;
+      request.masterPasswordHash = this.loginStrategyService.masterPasswordHash;
+      request.ssoEmail2FaSessionToken = this.loginStrategyService.ssoEmail2FaSessionToken;
       request.deviceIdentifier = await this.appIdService.getAppId();
-      request.authRequestAccessCode = this.authService.accessCode;
-      request.authRequestId = this.authService.authRequestId;
+      request.authRequestAccessCode = this.loginStrategyService.accessCode;
+      request.authRequestId = this.loginStrategyService.authRequestId;
       this.emailPromise = this.apiService.postTwoFactorEmail(request);
       await this.emailPromise;
       if (doToast) {
@@ -439,14 +476,22 @@ export class TwoFactorComponent extends CaptchaProtectedComponent implements OnI
 
   get authing(): boolean {
     return (
-      this.authService.authingWithPassword() ||
-      this.authService.authingWithSso() ||
-      this.authService.authingWithUserApiKey() ||
-      this.authService.authingWithPasswordless()
+      this.loginStrategyService.authingWithPassword() ||
+      this.loginStrategyService.authingWithSso() ||
+      this.loginStrategyService.authingWithUserApiKey() ||
+      this.loginStrategyService.authingWithPasswordless()
     );
   }
 
   get needsLock(): boolean {
-    return this.authService.authingWithSso() || this.authService.authingWithUserApiKey();
+    return (
+      this.loginStrategyService.authingWithSso() ||
+      this.loginStrategyService.authingWithUserApiKey()
+    );
+  }
+
+  launchDuoFrameless() {
+    // Launch Duo Frameless flow in new tab
+    this.platformUtilsService.launchUri(this.duoFramelessUrl);
   }
 }

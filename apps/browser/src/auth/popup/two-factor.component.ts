@@ -1,11 +1,12 @@
 import { Component, Inject } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
-import { first } from "rxjs/operators";
+import { Subject, Subscription } from "rxjs";
+import { filter, first, takeUntil } from "rxjs/operators";
 
 import { TwoFactorComponent as BaseTwoFactorComponent } from "@bitwarden/angular/auth/components/two-factor.component";
 import { WINDOW } from "@bitwarden/angular/services/injection-tokens";
+import { LoginStrategyServiceAbstraction } from "@bitwarden/auth/common";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
-import { AuthService } from "@bitwarden/common/auth/abstractions/auth.service";
 import { LoginService } from "@bitwarden/common/auth/abstractions/login.service";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
 import { TwoFactorProviderType } from "@bitwarden/common/auth/enums/two-factor-provider-type";
@@ -22,6 +23,7 @@ import { SyncService } from "@bitwarden/common/vault/abstractions/sync/sync.serv
 import { DialogService } from "@bitwarden/components";
 
 import { BrowserApi } from "../../platform/browser/browser-api";
+import { ZonedMessageListenerService } from "../../platform/browser/zoned-message-listener.service";
 import BrowserPopupUtils from "../../platform/popup/browser-popup-utils";
 
 import { closeTwoFactorAuthPopout } from "./utils/auth-popout-window";
@@ -33,8 +35,11 @@ const BroadcasterSubscriptionId = "TwoFactorComponent";
   templateUrl: "two-factor.component.html",
 })
 export class TwoFactorComponent extends BaseTwoFactorComponent {
+  private destroy$ = new Subject<void>();
+  inPopout = BrowserPopupUtils.inPopout(window);
+
   constructor(
-    authService: AuthService,
+    loginStrategyService: LoginStrategyServiceAbstraction,
     router: Router,
     i18nService: I18nService,
     apiService: ApiService,
@@ -52,9 +57,10 @@ export class TwoFactorComponent extends BaseTwoFactorComponent {
     configService: ConfigServiceAbstraction,
     private dialogService: DialogService,
     @Inject(WINDOW) protected win: Window,
+    private browserMessagingApi: ZonedMessageListenerService,
   ) {
     super(
-      authService,
+      loginStrategyService,
       router,
       i18nService,
       apiService,
@@ -158,6 +164,9 @@ export class TwoFactorComponent extends BaseTwoFactorComponent {
   }
 
   async ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+
     this.broadcasterService.unsubscribe(BroadcasterSubscriptionId);
 
     if (this.selectedProviderType === TwoFactorProviderType.WebAuthn && (await this.isLinux())) {
@@ -182,7 +191,30 @@ export class TwoFactorComponent extends BaseTwoFactorComponent {
     }
   }
 
+  async popoutCurrentPage() {
+    await BrowserPopupUtils.openCurrentPagePopout(window);
+  }
+
   async isLinux() {
     return (await BrowserApi.getPlatformInfo()).os === "linux";
+  }
+
+  duoResultSubscription: Subscription;
+
+  protected override setupDuoResultListener() {
+    if (!this.duoResultSubscription) {
+      this.duoResultSubscription = this.browserMessagingApi
+        .messageListener$()
+        .pipe(
+          filter((msg: any) => msg.command === "duoResult"),
+          takeUntil(this.destroy$),
+        )
+        .subscribe((msg: { command: string; code: string }) => {
+          this.token = msg.code;
+          // This floating promise is intentional. We don't need to await the submit + awaiting in a subscription is not recommended.
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          this.submit();
+        });
+    }
   }
 }
