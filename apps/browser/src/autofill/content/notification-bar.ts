@@ -1,9 +1,12 @@
-import AddLoginRuntimeMessage from "../../background/models/addLoginRuntimeMessage";
-import ChangePasswordRuntimeMessage from "../../background/models/changePasswordRuntimeMessage";
+import {
+  AddLoginMessageData,
+  ChangePasswordMessageData,
+} from "../background/abstractions/notification.background";
 import AutofillField from "../models/autofill-field";
 import { WatchedForm } from "../models/watched-form";
 import { FormData } from "../services/abstractions/autofill.service";
-import { UserSettings } from "../types";
+import { GlobalSettings, UserSettings } from "../types";
+import { getFromLocalStorage, setupExtensionDisconnectAction } from "../utils";
 
 interface HTMLElementWithFormOpId extends HTMLElement {
   formOpId: string;
@@ -27,67 +30,15 @@ interface HTMLElementWithFormOpId extends HTMLElement {
  * and async scripts to finish loading.
  * https://developer.mozilla.org/en-US/docs/Web/API/Window/DOMContentLoaded_event
  */
-document.addEventListener("DOMContentLoaded", async (event) => {
-  // These are preferences for whether to show the notification bar based on the user's settings
-  // and they are set in the Settings > Options page in the browser extension.
-  let disabledAddLoginNotification = false;
-  let disabledChangedPasswordNotification = false;
-  let showNotificationBar = true;
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", loadNotificationBar);
+} else {
+  // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  loadNotificationBar();
+}
 
-  // Look up the active user id from storage
-  const activeUserIdKey = "activeUserId";
-  let activeUserId: string;
-  await chrome.storage.local.get(activeUserIdKey, (obj: any) => {
-    if (obj == null || obj[activeUserIdKey] == null) {
-      return;
-    }
-    activeUserId = obj[activeUserIdKey];
-  });
-
-  // Look up the user's settings from storage
-  await chrome.storage.local.get(activeUserId, (obj: any) => {
-    if (obj?.[activeUserId] == null) {
-      return;
-    }
-
-    const userSettings: UserSettings = obj[activeUserId].settings;
-
-    // Do not show the notification bar on the Bitwarden vault
-    // because they can add logins and change passwords there
-    if (window.location.origin === userSettings.serverConfig.environment.vault) {
-      showNotificationBar = false;
-
-      return;
-    }
-
-    // NeverDomains is a dictionary of domains that the user has chosen to never
-    // show the notification bar on (for login detail collection or password change).
-    // It is managed in the Settings > Excluded Domains page in the browser extension.
-    // Example: '{"bitwarden.com":null}'
-    const excludedDomainsDict = userSettings.neverDomains;
-
-    if (
-      excludedDomainsDict != null &&
-      // eslint-disable-next-line
-      excludedDomainsDict.hasOwnProperty(window.location.hostname)
-    ) {
-      return;
-    }
-
-    // Set local disabled preferences
-    disabledAddLoginNotification = userSettings.disableAddLoginNotification;
-    disabledChangedPasswordNotification = userSettings.disableChangedPasswordNotification;
-
-    if (!disabledAddLoginNotification || !disabledChangedPasswordNotification) {
-      // If the user has not disabled both notifications, then handle the initial page change (null -> actual page)
-      handlePageChange();
-    }
-  });
-
-  if (!showNotificationBar) {
-    return;
-  }
-
+async function loadNotificationBar() {
   // Initialize required variables and set default values
   const watchedForms: WatchedForm[] = [];
   let barType: string = null;
@@ -131,6 +82,59 @@ document.addEventListener("DOMContentLoaded", async (event) => {
     "save",
   ]);
   const changePasswordButtonContainsNames = new Set(["pass", "change", "contras", "senha"]);
+
+  // These are preferences for whether to show the notification bar based on the user's settings
+  // and they are set in the Settings > Options page in the browser extension.
+  let disabledAddLoginNotification = false;
+  let disabledChangedPasswordNotification = false;
+  let showNotificationBar = true;
+
+  // Look up the active user id from storage
+  const activeUserIdKey = "activeUserId";
+  const globalStorageKey = "global";
+  let activeUserId: string;
+
+  const activeUserStorageValue = await getFromLocalStorage(activeUserIdKey);
+  if (activeUserStorageValue[activeUserIdKey]) {
+    activeUserId = activeUserStorageValue[activeUserIdKey];
+  }
+
+  // Look up the user's settings from storage
+  const userSettingsStorageValue = await getFromLocalStorage(activeUserId);
+  if (userSettingsStorageValue[activeUserId]) {
+    const userSettings: UserSettings = userSettingsStorageValue[activeUserId].settings;
+    const globalSettings: GlobalSettings = (await getFromLocalStorage(globalStorageKey))[
+      globalStorageKey
+    ];
+
+    // Do not show the notification bar on the Bitwarden vault
+    // because they can add logins and change passwords there
+    if (window.location.origin === userSettings.serverConfig.environment.vault) {
+      showNotificationBar = false;
+    } else {
+      // NeverDomains is a dictionary of domains that the user has chosen to never
+      // show the notification bar on (for login detail collection or password change).
+      // It is managed in the Settings > Excluded Domains page in the browser extension.
+      // Example: '{"bitwarden.com":null}'
+      const excludedDomainsDict = globalSettings.neverDomains;
+      if (!excludedDomainsDict || !(window.location.hostname in excludedDomainsDict)) {
+        // Set local disabled preferences
+        disabledAddLoginNotification = globalSettings.disableAddLoginNotification;
+        disabledChangedPasswordNotification = globalSettings.disableChangedPasswordNotification;
+
+        if (!disabledAddLoginNotification || !disabledChangedPasswordNotification) {
+          // If the user has not disabled both notifications, then handle the initial page change (null -> actual page)
+          handlePageChange();
+        }
+      }
+    }
+  }
+
+  setupExtensionDisconnectAction(handleExtensionDisconnection);
+
+  if (!showNotificationBar) {
+    return;
+  }
 
   // Message Processing
 
@@ -332,6 +336,10 @@ document.addEventListener("DOMContentLoaded", async (event) => {
       // On first load or page change, start observing the DOM as early as possible
       // to avoid missing any forms that are added after the page loads
       observeDom();
+
+      sendPlatformMessage({
+        command: "checkNotificationQueue",
+      });
     }
 
     // This is a safeguard in case the observer misses a SPA page change.
@@ -359,9 +367,9 @@ document.addEventListener("DOMContentLoaded", async (event) => {
    * `main.background.ts : collectPageDetailsForContentScript`
    *
    * (3) `main.background.ts : collectPageDetailsForContentScript`
-   * sends a message with command `collectPageDetails` to the `autofill.js` content script
+   * sends a message with command `collectPageDetails` to the `autofill-init.js` content script
    *
-   * (4) `autofill.js` content script runs a `collect(document)` method.
+   * (4) `autofill-init.js` content script runs a `collect(document)` method.
    * The result is sent via message with command `collectPageDetailsResponse` to `notification.background.ts : processMessage(...)`
    *
    * (5) `notification.background.ts : processMessage(...)` gathers forms with password fields and passes them and the page details
@@ -406,7 +414,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
       // If the form could not be retrieved by its HTML ID, retrieve it by its index pulled from the opid
       if (formEl == null) {
         // opid stands for OnePassword ID - uniquely ID's an element on a page
-        // and is generated in `autofill.js`
+        // and is generated in `autofill-init.js`
         // Each form has an opid and each element has an opid and its parent form opid
         const index = parseInt(f.form.opid.split("__")[2], null);
         formEl = document.getElementsByTagName("form")[index];
@@ -447,7 +455,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
     // know what type of form we are watching
     const submitButton = getSubmitButton(
       form,
-      unionSets(logInButtonNames, changePasswordButtonNames)
+      unionSets(logInButtonNames, changePasswordButtonNames),
     );
 
     if (submitButton != null) {
@@ -477,7 +485,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
         watchedForm.formEl,
         watchedForm.data.password,
         inputs,
-        true // Only do fallback if we have expect to find a single password field
+        true, // Only do fallback if we have expect to find a single password field
       );
     } else if (watchedForm.data.passwords != null) {
       // if we didn't find a username field, try to locate multiple password fields
@@ -501,7 +509,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
     form: HTMLFormElement,
     passwordData: AutofillField,
     inputs: HTMLInputElement[],
-    doLastFallback: boolean
+    doLastFallback: boolean,
   ): HTMLInputElement {
     let el = locateField(form, passwordData, inputs);
     if (el != null && el.type !== "password") {
@@ -523,7 +531,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
   function locateField(
     form: HTMLFormElement,
     fieldData: AutofillField,
-    inputs: HTMLInputElement[]
+    inputs: HTMLInputElement[],
   ): HTMLInputElement | null {
     // If we have no field data, we cannot locate the field
     if (fieldData == null) {
@@ -605,7 +613,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
         watchedForms[i].passwordEl != null
       ) {
         // Create a login object from the form data
-        const login: AddLoginRuntimeMessage = {
+        const login: AddLoginMessageData = {
           username: watchedForms[i].usernameEl.value,
           password: watchedForms[i].passwordEl.value,
           url: document.URL,
@@ -618,7 +626,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
           processedForm(form);
           sendPlatformMessage({
             command: "bgAddLogin",
-            login: login,
+            login,
           });
           break;
         } else if (
@@ -669,7 +677,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
             // Check if the submit button contains any of the change password button names as a safeguard
             const buttonText = getButtonText(getSubmitButton(form, changePasswordButtonNames));
             const matches = Array.from(changePasswordButtonContainsNames).filter(
-              (n) => buttonText.indexOf(n) > -1
+              (n) => buttonText.indexOf(n) > -1,
             );
 
             if (matches.length > 0) {
@@ -688,15 +696,12 @@ document.addEventListener("DOMContentLoaded", async (event) => {
 
           // Send a message to the `notification.background.ts` background script to notify the user that their password has changed
           // which eventually calls the `processMessage(...)` method in this script with command `openNotificationBar`
-          const changePasswordRuntimeMessage: ChangePasswordRuntimeMessage = {
+          const data: ChangePasswordMessageData = {
             newPassword: newPass,
             currentPassword: curPass,
             url: document.URL,
           };
-          sendPlatformMessage({
-            command: "bgChangedPassword",
-            data: changePasswordRuntimeMessage,
-          });
+          sendPlatformMessage({ command: "bgChangedPassword", data });
           break;
         }
       }
@@ -746,8 +751,8 @@ document.addEventListener("DOMContentLoaded", async (event) => {
     if (submitButton == null) {
       const possibleSubmitButtons = Array.from(
         wrappingEl.querySelectorAll(
-          'a, span, button[type="button"], ' + 'input[type="button"], button:not([type])'
-        )
+          'a, span, button[type="button"], ' + 'input[type="button"], button:not([type])',
+        ),
       ) as HTMLElement[];
       let typelessButton: HTMLElement = null;
       // Loop through all possible submit buttons and find the first one that matches a submit button name
@@ -843,6 +848,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
       theme: typeData.theme,
       removeIndividualVault: typeData.removeIndividualVault,
       webVaultURL: typeData.webVaultURL,
+      importType: typeData.importType,
     };
     const barQueryString = new URLSearchParams(barQueryParams).toString();
     const barPage = "notification/bar.html?" + barQueryString;
@@ -863,7 +869,7 @@ document.addEventListener("DOMContentLoaded", async (event) => {
       return;
     }
 
-    const barPageUrl: string = chrome.extension.getURL(barPage);
+    const barPageUrl: string = chrome.runtime.getURL(barPage);
 
     const iframe = document.createElement("iframe");
     iframe.style.cssText = "height: 42px; width: 100%; border: 0; min-height: initial;";
@@ -937,6 +943,8 @@ document.addEventListener("DOMContentLoaded", async (event) => {
 
   // Helper Functions
   function sendPlatformMessage(msg: any) {
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     chrome.runtime.sendMessage(msg);
   }
 
@@ -967,8 +975,8 @@ document.addEventListener("DOMContentLoaded", async (event) => {
    * @param {HTMLElement} el
    * @returns {boolean} Returns `true` if the element is visible and `false` otherwise
    *
-   * Copied from autofill.js and converted to TypeScript;
-   * TODO: could be refactored to be in a shared location if autofill.js is converted to TS
+   * Copied from autofill-init.js and converted to TypeScript;
+   * TODO: could be refactored to be in a shared location if autofill-init.js is converted to TS
    */
   function isElementVisible(el: HTMLElement): boolean {
     let theEl: Node | null = el;
@@ -1001,5 +1009,23 @@ document.addEventListener("DOMContentLoaded", async (event) => {
     return theEl === document;
   }
 
+  function handleExtensionDisconnection(port: chrome.runtime.Port) {
+    closeBar(false);
+    clearTimeout(domObservationCollectTimeoutId);
+    clearTimeout(collectPageDetailsTimeoutId);
+    clearTimeout(handlePageChangeTimeoutId);
+    observer?.disconnect();
+    observer = null;
+    watchedForms.forEach((wf: WatchedForm) => {
+      const form = wf.formEl;
+      form.removeEventListener("submit", formSubmitted, false);
+      const submitButton = getSubmitButton(
+        form,
+        unionSets(logInButtonNames, changePasswordButtonNames),
+      );
+      submitButton?.removeEventListener("click", formSubmitted, false);
+    });
+  }
+
   // End Helper Functions
-});
+}

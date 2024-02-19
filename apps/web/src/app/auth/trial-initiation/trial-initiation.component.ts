@@ -3,7 +3,7 @@ import { TitleCasePipe } from "@angular/common";
 import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { UntypedFormBuilder, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
-import { first, Subject, takeUntil } from "rxjs";
+import { Subject, takeUntil } from "rxjs";
 
 import { PolicyApiServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/policy/policy-api.service.abstraction";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
@@ -18,12 +18,14 @@ import { LogService } from "@bitwarden/common/platform/abstractions/log.service"
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
 
 import { RouterService } from "./../../core/router.service";
+import { SubscriptionType } from "./secrets-manager/secrets-manager-trial-billing-step.component";
 import { VerticalStepperComponent } from "./vertical-stepper/vertical-stepper.component";
 
 enum ValidOrgParams {
   families = "families",
   enterprise = "enterprise",
   teams = "teams",
+  teamsStarter = "teamsStarter",
   individual = "individual",
   premium = "premium",
   free = "free",
@@ -34,6 +36,7 @@ enum ValidLayoutParams {
   teams = "teams",
   teams1 = "teams1",
   teams2 = "teams2",
+  teams3 = "teams3",
   enterprise = "enterprise",
   enterprise1 = "enterprise1",
   enterprise2 = "enterprise2",
@@ -42,6 +45,7 @@ enum ValidLayoutParams {
   cnetcmpgnteams = "cnetcmpgnteams",
   abmenterprise = "abmenterprise",
   abmteams = "abmteams",
+  secretsManager = "secretsManager",
 }
 
 @Component({
@@ -50,6 +54,7 @@ enum ValidLayoutParams {
 })
 export class TrialInitiationComponent implements OnInit, OnDestroy {
   email = "";
+  fromOrgInvite = false;
   org = "";
   orgInfoSubLabel = "";
   orgId = "";
@@ -64,6 +69,7 @@ export class TrialInitiationComponent implements OnInit, OnDestroy {
   enforcedPolicyOptions: MasterPasswordPolicyOptions;
   trialFlowOrgs: string[] = [
     ValidOrgParams.teams,
+    ValidOrgParams.teamsStarter,
     ValidOrgParams.enterprise,
     ValidOrgParams.families,
   ];
@@ -73,6 +79,7 @@ export class TrialInitiationComponent implements OnInit, OnDestroy {
     ValidOrgParams.individual,
   ];
   layouts = ValidLayoutParams;
+  orgTypes = ValidOrgParams;
   referenceData: ReferenceEventRequest;
   @ViewChild("stepper", { static: false }) verticalStepper: VerticalStepperComponent;
 
@@ -116,15 +123,15 @@ export class TrialInitiationComponent implements OnInit, OnDestroy {
     private policyApiService: PolicyApiServiceAbstraction,
     private policyService: PolicyService,
     private i18nService: I18nService,
-    private routerService: RouterService
+    private routerService: RouterService,
   ) {}
 
   async ngOnInit(): Promise<void> {
-    // eslint-disable-next-line rxjs-angular/prefer-takeuntil
-    this.route.queryParams.pipe(first()).subscribe((qParams) => {
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe((qParams) => {
       this.referenceData = new ReferenceEventRequest();
       if (qParams.email != null && qParams.email.indexOf("@") > -1) {
         this.email = qParams.email;
+        this.fromOrgInvite = qParams.fromOrgInvite === "true";
       }
 
       this.referenceDataId = qParams.reference;
@@ -136,13 +143,16 @@ export class TrialInitiationComponent implements OnInit, OnDestroy {
 
       if (this.trialFlowOrgs.includes(qParams.org)) {
         this.org = qParams.org;
-        this.orgLabel = this.titleCasePipe.transform(this.org);
+        this.orgLabel = this.titleCasePipe.transform(this.orgDisplayName);
         this.useTrialStepper = true;
         this.referenceData.flow = qParams.org;
 
         if (this.org === ValidOrgParams.families) {
           this.plan = PlanType.FamiliesAnnually;
           this.product = ProductType.Families;
+        } else if (this.org === ValidOrgParams.teamsStarter) {
+          this.plan = PlanType.TeamsStarter;
+          this.product = ProductType.TeamsStarter;
         } else if (this.org === ValidOrgParams.teams) {
           this.plan = PlanType.TeamsAnnually;
           this.product = ProductType.Teams;
@@ -170,7 +180,7 @@ export class TrialInitiationComponent implements OnInit, OnDestroy {
           invite.organizationId,
           invite.token,
           invite.email,
-          invite.organizationUserId
+          invite.organizationUserId,
         );
         if (policies.data != null) {
           const policiesData = policies.data.map((p) => new PolicyData(p));
@@ -206,7 +216,9 @@ export class TrialInitiationComponent implements OnInit, OnDestroy {
     // Set org info sub label
     if (event.selectedIndex === 1 && this.orgInfoFormGroup.controls.name.value === "") {
       this.orgInfoSubLabel =
-        "Enter your " + this.titleCasePipe.transform(this.org) + " organization information";
+        "Enter your " +
+        this.titleCasePipe.transform(this.orgDisplayName) +
+        " organization information";
     } else if (event.previouslySelectedIndex === 1) {
       this.orgInfoSubLabel = this.orgInfoFormGroup.controls.name.value;
     }
@@ -230,15 +242,36 @@ export class TrialInitiationComponent implements OnInit, OnDestroy {
   }
 
   navigateToOrgVault() {
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.router.navigate(["organizations", this.orgId, "vault"]);
   }
 
   navigateToOrgInvite() {
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.router.navigate(["organizations", this.orgId, "members"]);
   }
 
   previousStep() {
     this.verticalStepper.previous();
+  }
+
+  get orgDisplayName() {
+    if (this.org === "teamsStarter") {
+      return "Teams Starter";
+    }
+
+    return this.org;
+  }
+
+  get freeTrialText() {
+    const translationKey =
+      this.layout === this.layouts.secretsManager
+        ? "startYour7DayFreeTrialOfBitwardenSecretsManagerFor"
+        : "startYour7DayFreeTrialOfBitwardenFor";
+
+    return this.i18nService.t(translationKey, this.org);
   }
 
   private setupFamilySponsorship(sponsorshipToken: string) {
@@ -249,4 +282,6 @@ export class TrialInitiationComponent implements OnInit, OnDestroy {
       this.routerService.setPreviousUrl(route.toString());
     }
   }
+
+  protected readonly SubscriptionType = SubscriptionType;
 }

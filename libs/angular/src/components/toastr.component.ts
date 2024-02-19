@@ -35,7 +35,10 @@ import { BitToastComponent } from "@bitwarden/components";
   preserveWhitespaces: false,
 })
 export class BitwardenToast extends BaseToast {
-  constructor(protected toastrService: ToastrService, public toastPackage: ToastPackage) {
+  constructor(
+    protected toastrService: ToastrService,
+    public toastPackage: ToastPackage,
+  ) {
     super(toastrService, toastPackage);
   }
 }

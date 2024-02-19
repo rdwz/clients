@@ -2,6 +2,7 @@ import { Component, NgZone } from "@angular/core";
 import { Router } from "@angular/router";
 
 import { LockComponent as BaseLockComponent } from "@bitwarden/angular/auth/components/lock.component";
+import { PinCryptoServiceAbstraction } from "@bitwarden/auth/common";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
 import { VaultTimeoutService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout.service";
@@ -22,6 +23,8 @@ import { PasswordStrengthServiceAbstraction } from "@bitwarden/common/tools/pass
 import { DialogService } from "@bitwarden/components";
 
 import { BiometricErrors, BiometricErrorTypes } from "../../models/biometricErrors";
+import { BrowserRouterService } from "../../platform/popup/services/browser-router.service";
+import { fido2PopoutSessionData$ } from "../../vault/popup/utils/fido2-popout-session-data";
 
 @Component({
   selector: "app-lock",
@@ -32,6 +35,7 @@ export class LockComponent extends BaseLockComponent {
 
   biometricError: string;
   pendingBiometric = false;
+  fido2PopoutSessionData$ = fido2PopoutSessionData$();
 
   constructor(
     router: Router,
@@ -52,7 +56,9 @@ export class LockComponent extends BaseLockComponent {
     private authService: AuthService,
     dialogService: DialogService,
     deviceTrustCryptoService: DeviceTrustCryptoServiceAbstraction,
-    userVerificationService: UserVerificationService
+    userVerificationService: UserVerificationService,
+    pinCryptoService: PinCryptoServiceAbstraction,
+    private routerService: BrowserRouterService,
   ) {
     super(
       router,
@@ -72,10 +78,24 @@ export class LockComponent extends BaseLockComponent {
       passwordStrengthService,
       dialogService,
       deviceTrustCryptoService,
-      userVerificationService
+      userVerificationService,
+      pinCryptoService,
     );
     this.successRoute = "/tabs/current";
     this.isInitialLockScreen = (window as any).previousPopupUrl == null;
+
+    super.onSuccessfulSubmit = async () => {
+      const previousUrl = this.routerService.getPreviousUrl();
+      if (previousUrl) {
+        // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.router.navigateByUrl(previousUrl);
+      } else {
+        // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.router.navigate([this.successRoute]);
+      }
+    };
   }
 
   async ngOnInit() {

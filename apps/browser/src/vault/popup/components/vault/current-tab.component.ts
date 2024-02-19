@@ -1,25 +1,27 @@
 import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { Router } from "@angular/router";
-import { Subject } from "rxjs";
+import { Subject, firstValueFrom } from "rxjs";
 import { debounceTime, takeUntil } from "rxjs/operators";
 
 import { SearchService } from "@bitwarden/common/abstractions/search.service";
 import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
+import { AutofillSettingsServiceAbstraction } from "@bitwarden/common/autofill/services/autofill-settings.service";
 import { BroadcasterService } from "@bitwarden/common/platform/abstractions/broadcaster.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
-import { PasswordRepromptService } from "@bitwarden/common/vault/abstractions/password-reprompt.service";
 import { SyncService } from "@bitwarden/common/vault/abstractions/sync/sync.service.abstraction";
+import { CipherType } from "@bitwarden/common/vault/enums";
 import { CipherRepromptType } from "@bitwarden/common/vault/enums/cipher-reprompt-type";
-import { CipherType } from "@bitwarden/common/vault/enums/cipher-type";
 import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
+import { PasswordRepromptService } from "@bitwarden/vault";
 
 import { AutofillService } from "../../../../autofill/services/abstractions/autofill.service";
+import { AutofillOverlayVisibility } from "../../../../autofill/utils/autofill-overlay.enum";
 import { BrowserApi } from "../../../../platform/browser/browser-api";
-import { PopupUtilsService } from "../../../../popup/services/popup-utils.service";
+import BrowserPopupUtils from "../../../../platform/popup/browser-popup-utils";
 import { VaultFilterService } from "../../../services/vault-filter.service";
 
 const BroadcasterSubscriptionId = "CurrentTabComponent";
@@ -55,7 +57,6 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
   constructor(
     private platformUtilsService: PlatformUtilsService,
     private cipherService: CipherService,
-    private popupUtilsService: PopupUtilsService,
     private autofillService: AutofillService,
     private i18nService: I18nService,
     private router: Router,
@@ -65,21 +66,26 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
     private syncService: SyncService,
     private searchService: SearchService,
     private stateService: StateService,
+    private autofillSettingsService: AutofillSettingsServiceAbstraction,
     private passwordRepromptService: PasswordRepromptService,
     private organizationService: OrganizationService,
-    private vaultFilterService: VaultFilterService
+    private vaultFilterService: VaultFilterService,
   ) {}
 
   async ngOnInit() {
     this.searchTypeSearch = !this.platformUtilsService.isSafari();
-    this.inSidebar = this.popupUtilsService.inSidebar(window);
+    this.inSidebar = BrowserPopupUtils.inSidebar(window);
 
     this.broadcasterService.subscribe(BroadcasterSubscriptionId, (message: any) => {
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.ngZone.run(async () => {
         switch (message.command) {
           case "syncCompleted":
             if (this.isLoading) {
               window.setTimeout(() => {
+                // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.load();
               }, 500);
             }
@@ -118,13 +124,13 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
       .subscribe(() => this.searchVault());
 
     // activate autofill on page load if policy is set
-    if (await this.stateService.getActivateAutoFillOnPageLoadFromPolicy()) {
-      await this.stateService.setEnableAutoFillOnPageLoad(true);
-      await this.stateService.setActivateAutoFillOnPageLoadFromPolicy(false);
+    if (await this.getActivateAutofillOnPageLoadFromPolicy()) {
+      await this.autofillSettingsService.setAutofillOnPageLoad(true);
+      await this.autofillSettingsService.setActivateAutofillOnPageLoadFromPolicy(false);
       this.platformUtilsService.showToast(
         "info",
         null,
-        this.i18nService.t("autofillPageLoadPolicyActivated")
+        this.i18nService.t("autofillPageLoadPolicyActivated"),
       );
     }
   }
@@ -142,6 +148,8 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
   }
 
   addCipher() {
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.router.navigate(["/add-cipher"], {
       queryParams: {
         name: this.hostname,
@@ -152,6 +160,8 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
   }
 
   viewCipher(cipher: CipherView) {
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.router.navigate(["/view-cipher"], { queryParams: { cipherId: cipher.id } });
   }
 
@@ -185,7 +195,7 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
       if (this.totpCode != null) {
         this.platformUtilsService.copyToClipboard(this.totpCode, { window: window });
       }
-      if (this.popupUtilsService.inPopup(window)) {
+      if (BrowserPopupUtils.inPopup(window)) {
         if (!closePopupDelay) {
           if (this.platformUtilsService.isFirefox() || this.platformUtilsService.isSafari()) {
             BrowserApi.closePopup(window);
@@ -210,6 +220,8 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.router.navigate(["/tabs/vault"], { queryParams: { searchText: this.searchText } });
   }
 
@@ -233,6 +245,8 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
 
     this.hostname = Utils.getHostname(this.url);
     this.pageDetails = [];
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     BrowserApi.tabSendMessage(this.tab, {
       command: "collectPageDetails",
       tab: this.tab,
@@ -252,7 +266,7 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
 
     const ciphers = await this.cipherService.getAllDecryptedForUrl(
       this.url,
-      otherTypes.length > 0 ? otherTypes : null
+      otherTypes.length > 0 ? otherTypes : null,
     );
 
     this.loginCiphers = [];
@@ -278,25 +292,36 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
     });
 
     this.loginCiphers = this.loginCiphers.sort((a, b) =>
-      this.cipherService.sortCiphersByLastUsedThenName(a, b)
+      this.cipherService.sortCiphersByLastUsedThenName(a, b),
     );
     this.isLoading = this.loaded = true;
   }
 
   async goToSettings() {
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.router.navigate(["autofill"]);
   }
 
+  private async getActivateAutofillOnPageLoadFromPolicy(): Promise<boolean> {
+    return await firstValueFrom(this.autofillSettingsService.activateAutofillOnPageLoadFromPolicy$);
+  }
+
   async dismissCallout() {
-    await this.stateService.setDismissedAutofillCallout(true);
+    await this.autofillSettingsService.setAutofillOnPageLoadCalloutIsDismissed(true);
     this.showHowToAutofill = false;
   }
 
   private async setCallout() {
+    const inlineMenuVisibilityIsOff =
+      (await firstValueFrom(this.autofillSettingsService.inlineMenuVisibility$)) ===
+      AutofillOverlayVisibility.Off;
+
     this.showHowToAutofill =
       this.loginCiphers.length > 0 &&
-      !(await this.stateService.getEnableAutoFillOnPageLoad()) &&
-      !(await this.stateService.getDismissedAutofillCallout());
+      inlineMenuVisibilityIsOff &&
+      !(await firstValueFrom(this.autofillSettingsService.autofillOnPageLoad$)) &&
+      !(await firstValueFrom(this.autofillSettingsService.autofillOnPageLoadCalloutIsDismissed$));
 
     if (this.showHowToAutofill) {
       const autofillCommand = await this.platformUtilsService.getAutofillKeyboardShortcut();

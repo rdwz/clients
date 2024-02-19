@@ -1,4 +1,6 @@
 <div class="container page-content">
+  <app-vault-onboarding [ciphers]="ciphers" (onAddCipher)="addCipher()"> </app-vault-onboarding>
+
   <div class="row">
     <div class="col-3">
       <div class="groupings">
@@ -25,6 +27,8 @@
         (onAddCipher)="addCipher()"
         (onAddCollection)="addCollection()"
         (onAddFolder)="addFolder()"
+        (onEditCollection)="editCollection(selectedCollection.node, $event.tab)"
+        (onDeleteCollection)="deleteCollection(selectedCollection.node)"
       ></app-vault-header>
       <app-callout type="warning" *ngIf="activeFilter.isDeleted" icon="bwi-exclamation-triangle">
         {{ trashCleanupWarning }}
@@ -42,9 +46,10 @@
         [showBulkMove]="showBulkMove"
         [showBulkTrashOptions]="filter.type === 'trash'"
         [useEvents]="false"
-        [editableCollections]="false"
         [cloneableOrganizationCiphers]="false"
+        [showAdminActions]="false"
         (onEvent)="onVaultItemsEvent($event)"
+        [showBulkEditCollectionAccess]="showBulkCollectionAccess$ | async"
       >
       </app-vault-items>
       <div
@@ -77,19 +82,6 @@
       </div>
     </div>
     <div class="col-3">
-      <div class="card border-warning mb-4" *ngIf="showUpdateKey">
-        <div class="card-header bg-warning text-white">
-          <i class="bwi bwi-exclamation-triangle bwi-fw" aria-hidden="true"></i>
-          {{ "updateKeyTitle" | i18n }}
-        </div>
-        <div class="card-body">
-          <p>{{ "updateEncryptionKeyShortDesc" | i18n }}</p>
-          <button class="btn btn-block btn-outline-secondary" type="button" (click)="updateKey()">
-            {{ "updateEncryptionKey" | i18n }}
-          </button>
-        </div>
-      </div>
-
       <app-low-kdf class="d-block mb-4" *ngIf="showLowKdf"> </app-low-kdf>
 
       <app-verify-email
@@ -109,7 +101,7 @@
             class="btn btn-block btn-outline-secondary"
             target="_blank"
             href="https://browser-update.org/update-browser.html"
-            rel="noopener"
+            rel="noreferrer"
           >
             {{ "updateBrowser" | i18n }}
           </a>

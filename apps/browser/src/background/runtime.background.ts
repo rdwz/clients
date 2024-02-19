@@ -1,25 +1,36 @@
 import { NotificationsService } from "@bitwarden/common/abstractions/notifications.service";
+import { AutofillSettingsServiceAbstraction } from "@bitwarden/common/autofill/services/autofill-settings.service";
 import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { SystemService } from "@bitwarden/common/platform/abstractions/system.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
+import { CipherType } from "@bitwarden/common/vault/enums";
 
+import {
+  closeUnlockPopout,
+  openSsoAuthResultPopout,
+  openTwoFactorAuthPopout,
+} from "../auth/popup/utils/auth-popout-window";
+import { LockedVaultPendingNotificationsData } from "../autofill/background/abstractions/notification.background";
 import { AutofillService } from "../autofill/services/abstractions/autofill.service";
+import { AutofillOverlayVisibility } from "../autofill/utils/autofill-overlay.enum";
 import { BrowserApi } from "../platform/browser/browser-api";
-import { BrowserPopoutWindowService } from "../platform/popup/abstractions/browser-popout-window.service";
+import { BrowserStateService } from "../platform/services/abstractions/browser-state.service";
 import { BrowserEnvironmentService } from "../platform/services/browser-environment.service";
 import BrowserPlatformUtilsService from "../platform/services/browser-platform-utils.service";
+import { AbortManager } from "../vault/background/abort-manager";
+import { Fido2Service } from "../vault/services/abstractions/fido2.service";
 
 import MainBackground from "./main.background";
-import LockedVaultPendingNotificationsItem from "./models/lockedVaultPendingNotificationsItem";
 
 export default class RuntimeBackground {
   private autofillTimeout: any;
   private pageDetailsToAutoFill: any[] = [];
   private onInstalledReason: string = null;
-  private lockedVaultPendingNotifications: LockedVaultPendingNotificationsItem[] = [];
+  private lockedVaultPendingNotifications: LockedVaultPendingNotificationsData[] = [];
+  private abortManager = new AbortManager();
 
   constructor(
     private main: MainBackground,
@@ -27,12 +38,14 @@ export default class RuntimeBackground {
     private platformUtilsService: BrowserPlatformUtilsService,
     private i18nService: I18nService,
     private notificationsService: NotificationsService,
+    private stateService: BrowserStateService,
+    private autofillSettingsService: AutofillSettingsServiceAbstraction,
     private systemService: SystemService,
     private environmentService: BrowserEnvironmentService,
     private messagingService: MessagingService,
     private logService: LogService,
     private configService: ConfigServiceAbstraction,
-    private browserPopoutWindowService: BrowserPopoutWindowService
+    private fido2Service: Fido2Service,
   ) {
     // onInstalled listener must be wired up before anything else, so we do it in the ctor
     chrome.runtime.onInstalled.addListener((details: any) => {
@@ -46,12 +59,29 @@ export default class RuntimeBackground {
     }
 
     await this.checkOnInstalled();
-    const backgroundMessageListener = async (
+    const backgroundMessageListener = (
       msg: any,
       sender: chrome.runtime.MessageSender,
-      sendResponse: any
+      sendResponse: any,
     ) => {
-      await this.processMessage(msg, sender, sendResponse);
+      const messagesWithResponse = [
+        "checkFido2FeatureEnabled",
+        "fido2RegisterCredentialRequest",
+        "fido2GetCredentialRequest",
+      ];
+
+      if (messagesWithResponse.includes(msg.command)) {
+        this.processMessage(msg, sender).then(
+          (value) => sendResponse({ result: value }),
+          (error) => sendResponse({ error: { ...error, message: error.message } }),
+        );
+        return true;
+      }
+
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.processMessage(msg, sender);
+      return false;
     };
 
     BrowserApi.messageListener("runtime.background", backgroundMessageListener);
@@ -60,22 +90,20 @@ export default class RuntimeBackground {
     }
   }
 
-  async processMessage(msg: any, sender: chrome.runtime.MessageSender, sendResponse: any) {
-    const cipherId = msg.data?.cipherId;
-
+  async processMessage(msg: any, sender: chrome.runtime.MessageSender) {
     switch (msg.command) {
       case "loggedIn":
       case "unlocked": {
-        let item: LockedVaultPendingNotificationsItem;
+        let item: LockedVaultPendingNotificationsData;
 
         if (this.lockedVaultPendingNotifications?.length > 0) {
           item = this.lockedVaultPendingNotifications.pop();
-          await this.browserPopoutWindowService.closeUnlockPrompt();
+          await closeUnlockPopout();
         }
 
+        await this.notificationsService.updateConnection(msg.command === "loggedIn");
         await this.main.refreshBadge();
         await this.main.refreshMenu(false);
-        this.notificationsService.updateConnection(msg.command === "unlocked");
         this.systemService.cancelProcessReload();
 
         if (item) {
@@ -84,7 +112,7 @@ export default class RuntimeBackground {
           await BrowserApi.tabSendMessageData(
             item.commandToRetry.sender.tab,
             "unlockCompleted",
-            item
+            item,
           );
         }
         break;
@@ -101,39 +129,17 @@ export default class RuntimeBackground {
             await this.main.refreshBadge();
             await this.main.refreshMenu();
           }, 2000);
+          // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
           this.main.avatarUpdateService.loadColorFromState();
-          this.configService.fetchServerConfig();
+          this.configService.triggerServerConfigFetch();
         }
         break;
       case "openPopup":
         await this.main.openPopup();
         break;
-      case "promptForLogin":
-      case "bgReopenPromptForLogin":
-        await this.browserPopoutWindowService.openUnlockPrompt(sender.tab?.windowId);
-        break;
-      case "passwordReprompt":
-        if (cipherId) {
-          await this.browserPopoutWindowService.openPasswordRepromptPrompt(sender.tab?.windowId, {
-            cipherId: cipherId,
-            senderTabId: sender.tab.id,
-            action: msg.data?.action,
-          });
-        }
-        break;
-      case "openAddEditCipher": {
-        const addEditCipherUrl =
-          cipherId == null
-            ? "popup/index.html#/edit-cipher"
-            : "popup/index.html#/edit-cipher?cipherId=" + cipherId;
-
-        BrowserApi.openBitwardenExtensionTab(addEditCipherUrl, true);
-        break;
-      }
-      case "closeTab":
-        setTimeout(() => {
-          BrowserApi.closeBitwardenExtensionTab();
-        }, msg.delay ?? 0);
+      case "triggerAutofillScriptInjection":
+        await this.autofillService.injectAutofillScripts(sender.tab, sender.frameId);
         break;
       case "bgCollectPageDetails":
         await this.main.collectPageDetailsForContentScript(sender.tab, msg.sender, sender.frameId);
@@ -152,6 +158,9 @@ export default class RuntimeBackground {
         switch (msg.sender) {
           case "autofiller":
           case "autofill_cmd": {
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.stateService.setLastActive(new Date().getTime());
             const totpCode = await this.autofillService.doAutoFillActiveTab(
               [
                 {
@@ -160,11 +169,39 @@ export default class RuntimeBackground {
                   details: msg.details,
                 },
               ],
-              msg.sender === "autofill_cmd"
+              msg.sender === "autofill_cmd",
             );
             if (totpCode != null) {
               this.platformUtilsService.copyToClipboard(totpCode, { window: window });
             }
+            break;
+          }
+          case "autofill_card": {
+            await this.autofillService.doAutoFillActiveTab(
+              [
+                {
+                  frameId: sender.frameId,
+                  tab: msg.tab,
+                  details: msg.details,
+                },
+              ],
+              false,
+              CipherType.Card,
+            );
+            break;
+          }
+          case "autofill_identity": {
+            await this.autofillService.doAutoFillActiveTab(
+              [
+                {
+                  frameId: sender.frameId,
+                  tab: msg.tab,
+                  details: msg.details,
+                },
+              ],
+              false,
+              CipherType.Identity,
+            );
             break;
           }
           case "contextMenu":
@@ -187,15 +224,17 @@ export default class RuntimeBackground {
           return;
         }
 
-        try {
-          BrowserApi.createNewTab(
-            "popup/index.html?uilocation=popout#/sso?code=" +
-              encodeURIComponent(msg.code) +
-              "&state=" +
-              encodeURIComponent(msg.state)
-          );
-        } catch {
-          this.logService.error("Unable to open sso popout tab");
+        if (msg.lastpass) {
+          this.messagingService.send("importCallbackLastPass", {
+            code: msg.code,
+            state: msg.state,
+          });
+        } else {
+          try {
+            await openSsoAuthResultPopout(msg);
+          } catch {
+            this.logService.error("Unable to open sso popout tab");
+          }
         }
         break;
       }
@@ -206,10 +245,7 @@ export default class RuntimeBackground {
           return;
         }
 
-        const params =
-          `webAuthnResponse=${encodeURIComponent(msg.data)};` +
-          `remember=${encodeURIComponent(msg.remember)}`;
-        BrowserApi.openBitwardenExtensionTab(`popup/index.html#/2fa;${params}`, false);
+        await openTwoFactorAuthPopout(msg);
         break;
       }
       case "reloadPopup":
@@ -227,8 +263,49 @@ export default class RuntimeBackground {
       case "getClickedElementResponse":
         this.platformUtilsService.copyToClipboard(msg.identifier, { window: window });
         break;
-      default:
+      case "triggerFido2ContentScriptInjection":
+        await this.fido2Service.injectFido2ContentScripts(sender);
         break;
+      case "fido2AbortRequest":
+        this.abortManager.abort(msg.abortedRequestId);
+        break;
+      case "checkFido2FeatureEnabled":
+        return await this.main.fido2ClientService.isFido2FeatureEnabled(msg.hostname, msg.origin);
+      case "fido2RegisterCredentialRequest":
+        return await this.abortManager.runWithAbortController(
+          msg.requestId,
+          async (abortController) => {
+            try {
+              return await this.main.fido2ClientService.createCredential(
+                msg.data,
+                sender.tab,
+                abortController,
+              );
+            } finally {
+              await BrowserApi.focusTab(sender.tab.id);
+              await BrowserApi.focusWindow(sender.tab.windowId);
+            }
+          },
+        );
+      case "fido2GetCredentialRequest":
+        return await this.abortManager.runWithAbortController(
+          msg.requestId,
+          async (abortController) => {
+            try {
+              return await this.main.fido2ClientService.assertCredential(
+                msg.data,
+                sender.tab,
+                abortController,
+              );
+            } finally {
+              await BrowserApi.focusTab(sender.tab.id);
+              await BrowserApi.focusWindow(sender.tab.windowId);
+            }
+          },
+        );
+      case "switchAccount": {
+        await this.main.switchAccount(msg.userId);
+      }
     }
   }
 
@@ -252,9 +329,18 @@ export default class RuntimeBackground {
 
   private async checkOnInstalled() {
     setTimeout(async () => {
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.autofillService.loadAutofillScriptsOnInstall();
+
       if (this.onInstalledReason != null) {
         if (this.onInstalledReason === "install") {
+          // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
           BrowserApi.createNewTab("https://bitwarden.com/browser-start/");
+          await this.autofillSettingsService.setInlineMenuVisibility(
+            AutofillOverlayVisibility.OnFieldFocus,
+          );
 
           if (await this.environmentService.hasManagedEnvironment()) {
             await this.environmentService.setUrlsToManagedEnvironment();

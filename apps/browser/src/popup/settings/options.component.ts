@@ -1,12 +1,17 @@
 import { Component, OnInit } from "@angular/core";
+import { firstValueFrom } from "rxjs";
 
-import { AbstractThemingService } from "@bitwarden/angular/services/theming/theming.service.abstraction";
+import { AbstractThemingService } from "@bitwarden/angular/platform/services/theming/theming.service.abstraction";
 import { SettingsService } from "@bitwarden/common/abstractions/settings.service";
-import { TotpService } from "@bitwarden/common/abstractions/totp.service";
-import { ThemeType, UriMatchType } from "@bitwarden/common/enums";
+import { AutofillSettingsServiceAbstraction } from "@bitwarden/common/autofill/services/autofill-settings.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
+import { ThemeType } from "@bitwarden/common/platform/enums";
+import { VaultSettingsService } from "@bitwarden/common/vault/abstractions/vault-settings/vault-settings.service";
+import { UriMatchType } from "@bitwarden/common/vault/enums";
+
+import { enableAccountSwitching } from "../../platform/flags";
 
 @Component({
   selector: "app-options",
@@ -22,6 +27,7 @@ export class OptionsComponent implements OnInit {
   enableContextMenuItem = false;
   enableAddLoginNotification = false;
   enableChangedPasswordNotification = false;
+  enablePasskeys = true;
   showCardsCurrentTab = false;
   showIdentitiesCurrentTab = false;
   showClearClipboard = true;
@@ -34,14 +40,16 @@ export class OptionsComponent implements OnInit {
   showGeneral = true;
   showAutofill = true;
   showDisplay = true;
+  accountSwitcherEnabled = false;
 
   constructor(
     private messagingService: MessagingService,
     private stateService: StateService,
-    private totpService: TotpService,
+    private autofillSettingsService: AutofillSettingsServiceAbstraction,
     i18nService: I18nService,
     private themingService: AbstractThemingService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
+    private vaultSettingsService: VaultSettingsService,
   ) {
     this.themeOptions = [
       { name: i18nService.t("default"), value: ThemeType.System },
@@ -71,13 +79,18 @@ export class OptionsComponent implements OnInit {
       { name: i18nService.t("autoFillOnPageLoadYes"), value: true },
       { name: i18nService.t("autoFillOnPageLoadNo"), value: false },
     ];
+
+    this.accountSwitcherEnabled = enableAccountSwitching();
   }
 
   async ngOnInit() {
-    this.enableAutoFillOnPageLoad = await this.stateService.getEnableAutoFillOnPageLoad();
+    this.enableAutoFillOnPageLoad = await firstValueFrom(
+      this.autofillSettingsService.autofillOnPageLoad$,
+    );
 
-    this.autoFillOnPageLoadDefault =
-      (await this.stateService.getAutoFillOnPageLoadDefault()) ?? true;
+    this.autoFillOnPageLoadDefault = await firstValueFrom(
+      this.autofillSettingsService.autofillOnPageLoadDefault$,
+    );
 
     this.enableAddLoginNotification = !(await this.stateService.getDisableAddLoginNotification());
 
@@ -89,11 +102,13 @@ export class OptionsComponent implements OnInit {
     this.showCardsCurrentTab = !(await this.stateService.getDontShowCardsCurrentTab());
     this.showIdentitiesCurrentTab = !(await this.stateService.getDontShowIdentitiesCurrentTab());
 
-    this.enableAutoTotpCopy = !(await this.stateService.getDisableAutoTotpCopy());
+    this.enableAutoTotpCopy = await firstValueFrom(this.autofillSettingsService.autoCopyTotp$);
 
     this.enableFavicon = !this.settingsService.getDisableFavicon();
 
     this.enableBadgeCounter = !(await this.stateService.getDisableBadgeCounter());
+
+    this.enablePasskeys = await firstValueFrom(this.vaultSettingsService.enablePasskeys$);
 
     this.theme = await this.stateService.getTheme();
 
@@ -109,8 +124,12 @@ export class OptionsComponent implements OnInit {
 
   async updateChangedPasswordNotification() {
     await this.stateService.setDisableChangedPasswordNotification(
-      !this.enableChangedPasswordNotification
+      !this.enableChangedPasswordNotification,
     );
+  }
+
+  async updateEnablePasskeys() {
+    await this.vaultSettingsService.setEnablePasskeys(this.enablePasskeys);
   }
 
   async updateContextMenuItem() {
@@ -119,15 +138,15 @@ export class OptionsComponent implements OnInit {
   }
 
   async updateAutoTotpCopy() {
-    await this.stateService.setDisableAutoTotpCopy(!this.enableAutoTotpCopy);
+    await this.autofillSettingsService.setAutoCopyTotp(this.enableAutoTotpCopy);
   }
 
   async updateAutoFillOnPageLoad() {
-    await this.stateService.setEnableAutoFillOnPageLoad(this.enableAutoFillOnPageLoad);
+    await this.autofillSettingsService.setAutofillOnPageLoad(this.enableAutoFillOnPageLoad);
   }
 
   async updateAutoFillOnPageLoadDefault() {
-    await this.stateService.setAutoFillOnPageLoadDefault(this.autoFillOnPageLoadDefault);
+    await this.autofillSettingsService.setAutofillOnPageLoadDefault(this.autoFillOnPageLoadDefault);
   }
 
   async updateFavicon() {

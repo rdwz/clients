@@ -1,10 +1,11 @@
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom, timeout } from "rxjs";
 
 import { SearchService } from "../../abstractions/search.service";
 import { VaultTimeoutSettingsService } from "../../abstractions/vault-timeout/vault-timeout-settings.service";
 import { VaultTimeoutService as VaultTimeoutServiceAbstraction } from "../../abstractions/vault-timeout/vault-timeout.service";
 import { AuthService } from "../../auth/abstractions/auth.service";
 import { AuthenticationStatus } from "../../auth/enums/authentication-status";
+import { ClientType } from "../../enums";
 import { VaultTimeoutAction } from "../../enums/vault-timeout-action.enum";
 import { CryptoService } from "../../platform/abstractions/crypto.service";
 import { MessagingService } from "../../platform/abstractions/messaging.service";
@@ -29,7 +30,7 @@ export class VaultTimeoutService implements VaultTimeoutServiceAbstraction {
     private authService: AuthService,
     private vaultTimeoutSettingsService: VaultTimeoutSettingsService,
     private lockedCallback: (userId?: string) => Promise<void> = null,
-    private loggedOutCallback: (expired: boolean, userId?: string) => Promise<void> = null
+    private loggedOutCallback: (expired: boolean, userId?: string) => Promise<void> = null,
   ) {}
 
   async init(checkOnInterval: boolean) {
@@ -46,18 +47,21 @@ export class VaultTimeoutService implements VaultTimeoutServiceAbstraction {
   }
 
   startCheck() {
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.checkVaultTimeout();
     setInterval(() => this.checkVaultTimeout(), 10 * 1000); // check every 10 seconds
   }
 
   async checkVaultTimeout(): Promise<void> {
-    if (await this.platformUtilsService.isViewOpen()) {
-      return;
-    }
+    // Get whether or not the view is open a single time so it can be compared for each user
+    const isViewOpen = await this.platformUtilsService.isViewOpen();
+
+    const activeUserId = await firstValueFrom(this.stateService.activeAccount$.pipe(timeout(500)));
 
     const accounts = await firstValueFrom(this.stateService.accounts$);
     for (const userId in accounts) {
-      if (userId != null && (await this.shouldLock(userId))) {
+      if (userId != null && (await this.shouldLock(userId, activeUserId, isViewOpen))) {
         await this.executeTimeoutAction(userId);
       }
     }
@@ -70,7 +74,7 @@ export class VaultTimeoutService implements VaultTimeoutServiceAbstraction {
     }
 
     const availableActions = await firstValueFrom(
-      this.vaultTimeoutSettingsService.availableVaultTimeoutActions$()
+      this.vaultTimeoutSettingsService.availableVaultTimeoutActions$(userId),
     );
     const supportsLock = availableActions.includes(VaultTimeoutAction.Lock);
     if (!supportsLock) {
@@ -80,6 +84,7 @@ export class VaultTimeoutService implements VaultTimeoutServiceAbstraction {
     if (userId == null || userId === (await this.stateService.getUserId())) {
       this.searchService.clearIndex();
       await this.folderService.clearCache();
+      await this.collectionService.clearActiveUserCache();
     }
 
     await this.stateService.setEverBeenUnlocked(true, { userId: userId });
@@ -92,7 +97,6 @@ export class VaultTimeoutService implements VaultTimeoutServiceAbstraction {
     await this.cryptoService.clearKeyPair(true, userId);
 
     await this.cipherService.clearCache(userId);
-    await this.collectionService.clearCache(userId);
 
     this.messagingService.send("locked", { userId: userId });
 
@@ -107,7 +111,18 @@ export class VaultTimeoutService implements VaultTimeoutServiceAbstraction {
     }
   }
 
-  private async shouldLock(userId: string): Promise<boolean> {
+  private async shouldLock(
+    userId: string,
+    activeUserId: string,
+    isViewOpen: boolean,
+  ): Promise<boolean> {
+    if (isViewOpen && userId === activeUserId) {
+      // We know a view is open and this is the currently active user
+      // which means they are likely looking at their vault
+      // and they should not lock.
+      return false;
+    }
+
     const authStatus = await this.authService.getAuthStatus(userId);
     if (
       authStatus === AuthenticationStatus.Locked ||
@@ -133,7 +148,7 @@ export class VaultTimeoutService implements VaultTimeoutServiceAbstraction {
 
   private async executeTimeoutAction(userId: string): Promise<void> {
     const timeoutAction = await firstValueFrom(
-      this.vaultTimeoutSettingsService.vaultTimeoutAction$(userId)
+      this.vaultTimeoutSettingsService.vaultTimeoutAction$(userId),
     );
     timeoutAction === VaultTimeoutAction.LogOut
       ? await this.logOut(userId)
@@ -141,10 +156,18 @@ export class VaultTimeoutService implements VaultTimeoutServiceAbstraction {
   }
 
   private async migrateKeyForNeverLockIfNeeded(): Promise<void> {
+    // Web can't set vault timeout to never
+    if (this.platformUtilsService.getClientType() == ClientType.Web) {
+      return;
+    }
     const accounts = await firstValueFrom(this.stateService.accounts$);
     for (const userId in accounts) {
       if (userId != null) {
         await this.cryptoService.migrateAutoKeyIfNeeded(userId);
+        // Legacy users should be logged out since we're not on the web vault and can't migrate.
+        if (await this.cryptoService.isLegacyUser(null, userId)) {
+          await this.logOut(userId);
+        }
       }
     }
   }

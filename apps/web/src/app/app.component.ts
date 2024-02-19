@@ -5,7 +5,6 @@ import { NavigationEnd, Router } from "@angular/router";
 import * as jq from "jquery";
 import { IndividualConfig, ToastrService } from "ngx-toastr";
 import { Subject, takeUntil } from "rxjs";
-import Swal from "sweetalert2";
 
 import { EventUploadService } from "@bitwarden/common/abstractions/event/event-upload.service";
 import { NotificationsService } from "@bitwarden/common/abstractions/notifications.service";
@@ -82,7 +81,7 @@ export class AppComponent implements OnDestroy, OnInit {
     protected policyListService: PolicyListService,
     private keyConnectorService: KeyConnectorService,
     private configService: ConfigServiceAbstraction,
-    private dialogService: DialogService
+    private dialogService: DialogService,
   ) {}
 
   ngOnInit() {
@@ -106,39 +105,54 @@ export class AppComponent implements OnDestroy, OnInit {
     /// and subscribe to events through that service observable.
     ///
     this.broadcasterService.subscribe(BroadcasterSubscriptionId, async (message: any) => {
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.ngZone.run(async () => {
         switch (message.command) {
           case "loggedIn":
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.notificationsService.updateConnection(false);
             break;
           case "loggedOut":
-            this.routerService.setPreviousUrl(null);
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.notificationsService.updateConnection(false);
             break;
           case "unlocked":
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.notificationsService.updateConnection(false);
             break;
           case "authBlocked":
-            this.routerService.setPreviousUrl(message.url);
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.router.navigate(["/"]);
             break;
           case "logout":
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.logOut(!!message.expired, message.redirect);
             break;
           case "lockVault":
             await this.vaultTimeoutService.lock();
             break;
           case "locked":
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.notificationsService.updateConnection(false);
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.router.navigate(["lock"]);
             break;
           case "lockedUrl":
-            this.routerService.setPreviousUrl(message.url);
             break;
           case "syncStarted":
             break;
           case "syncCompleted":
-            await this.configService.fetchServerConfig();
+            if (message.successfully) {
+              this.configService.triggerServerConfigFetch();
+            }
             break;
           case "upgradeOrganization": {
             const upgradeConfirmed = await this.dialogService.openSimpleDialog({
@@ -148,6 +162,8 @@ export class AppComponent implements OnDestroy, OnInit {
               type: "info",
             });
             if (upgradeConfirmed) {
+              // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+              // eslint-disable-next-line @typescript-eslint/no-floating-promises
               this.router.navigate([
                 "organizations",
                 message.organizationId,
@@ -165,6 +181,8 @@ export class AppComponent implements OnDestroy, OnInit {
               type: "success",
             });
             if (premiumConfirmed) {
+              // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+              // eslint-disable-next-line @typescript-eslint/no-floating-promises
               this.router.navigate(["settings/subscription/premium"]);
             }
             break;
@@ -178,7 +196,7 @@ export class AppComponent implements OnDestroy, OnInit {
             });
             if (emailVerificationConfirmed) {
               this.platformUtilsService.launchUri(
-                "https://bitwarden.com/help/create-bitwarden-account/"
+                "https://bitwarden.com/help/create-bitwarden-account/",
               );
             }
             break;
@@ -187,9 +205,13 @@ export class AppComponent implements OnDestroy, OnInit {
             this.showToast(message);
             break;
           case "setFullWidth":
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.setFullWidth();
             break;
           case "convertAccountToKeyConnector":
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.router.navigate(["/remove-password"]);
             break;
           default:
@@ -203,10 +225,6 @@ export class AppComponent implements OnDestroy, OnInit {
         const modals = Array.from(document.querySelectorAll(".modal"));
         for (const modal of modals) {
           (jq(modal) as any).modal("hide");
-        }
-
-        if (document.querySelector(".swal-modal") != null) {
-          Swal.close(undefined);
         }
       }
     });
@@ -223,6 +241,8 @@ export class AppComponent implements OnDestroy, OnInit {
       new SendOptionsPolicy(),
     ]);
 
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.setFullWidth();
   }
 
@@ -253,13 +273,14 @@ export class AppComponent implements OnDestroy, OnInit {
         this.platformUtilsService.showToast(
           "warning",
           this.i18nService.t("loggedOut"),
-          this.i18nService.t("loginExpired")
+          this.i18nService.t("loginExpired"),
         );
       }
 
       await this.stateService.clean({ userId: userId });
-      Swal.close();
       if (redirect) {
+        // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.router.navigate(["/"]);
       }
     });
@@ -272,6 +293,8 @@ export class AppComponent implements OnDestroy, OnInit {
     }
 
     this.lastActivity = now;
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.stateService.setLastActive(now);
     // Idle states
     if (this.isIdle) {
@@ -302,7 +325,7 @@ export class AppComponent implements OnDestroy, OnInit {
     } else {
       msg.text.forEach(
         (t: string) =>
-          (message += "<p>" + this.sanitizer.sanitize(SecurityContext.HTML, t) + "</p>")
+          (message += "<p>" + this.sanitizer.sanitize(SecurityContext.HTML, t) + "</p>"),
       );
       options.enableHtml = true;
     }
@@ -324,8 +347,12 @@ export class AppComponent implements OnDestroy, OnInit {
 
   private idleStateChanged() {
     if (this.isIdle) {
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.notificationsService.disconnectFromInactivity();
     } else {
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.notificationsService.reconnectFromActivity();
     }
   }
