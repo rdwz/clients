@@ -1,0 +1,5 @@
+@import "~ngx-toastr/toastr";
+
+.toast-container .ngx-toastr {
+  all: unset;
+}
