@@ -16,7 +16,7 @@ const variants: Record<ToastVariant, { icon: string; bgColor: string }> = {
   },
   info: {
     icon: "bwi-info-circle",
-    bgColor: "tw-bg-secondary-500",
+    bgColor: "tw-bg-info-500",
   },
   warning: {
     icon: "bwi-exclamation-triangle",
