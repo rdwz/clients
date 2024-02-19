@@ -1,14 +1,5 @@
-import {
-  ChangeDetectorRef,
-  Component,
-  NgZone,
-  OnDestroy,
-  OnInit,
-  SecurityContext,
-} from "@angular/core";
-import { DomSanitizer } from "@angular/platform-browser";
+import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { NavigationEnd, Router, RouterOutlet } from "@angular/router";
-import { IndividualConfig, ToastrService } from "ngx-toastr";
 import { filter, concatMap, Subject, takeUntil, firstValueFrom } from "rxjs";
 
 import { AuthService } from "@bitwarden/common/auth/abstractions/auth.service";
@@ -16,7 +7,7 @@ import { BroadcasterService } from "@bitwarden/common/platform/abstractions/broa
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
-import { DialogService, SimpleDialogOptions } from "@bitwarden/components";
+import { DialogService, SimpleDialogOptions, ToastService } from "@bitwarden/components";
 
 import { BrowserApi } from "../platform/browser/browser-api";
 import { ZonedMessageListenerService } from "../platform/browser/zoned-message-listener.service";
@@ -40,7 +31,6 @@ export class AppComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   constructor(
-    private toastrService: ToastrService,
     private broadcasterService: BroadcasterService,
     private authService: AuthService,
     private i18nService: I18nService,
@@ -49,10 +39,10 @@ export class AppComponent implements OnInit, OnDestroy {
     private messagingService: MessagingService,
     private changeDetectorRef: ChangeDetectorRef,
     private ngZone: NgZone,
-    private sanitizer: DomSanitizer,
     private platformUtilsService: PlatformUtilsService,
     private dialogService: DialogService,
     private browserMessagingApi: ZonedMessageListenerService,
+    private toastService: ToastService,
   ) {}
 
   async ngOnInit() {
@@ -86,7 +76,7 @@ export class AppComponent implements OnInit, OnDestroy {
       if (msg.command === "doneLoggingOut") {
         this.authService.logOut(async () => {
           if (msg.expired) {
-            this.showToast({
+            this.toastService.showToast({
               type: "warning",
               title: this.i18nService.t("loggedOut"),
               text: this.i18nService.t("loginExpired"),
@@ -119,7 +109,7 @@ export class AppComponent implements OnInit, OnDestroy {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.showNativeMessagingFingerprintDialog(msg);
       } else if (msg.command === "showToast") {
-        this.showToast(msg);
+        this.toastService.showToast(msg);
       } else if (msg.command === "reloadProcess") {
         const forceWindowReload =
           this.platformUtilsService.isSafari() ||
@@ -214,38 +204,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
     this.lastActivity = now;
     await this.stateService.setLastActive(now, { userId: this.activeUserId });
-  }
-
-  private showToast(msg: any) {
-    let message = "";
-
-    const options: Partial<IndividualConfig> = {};
-
-    if (typeof msg.text === "string") {
-      message = msg.text;
-    } else if (msg.text.length === 1) {
-      message = msg.text[0];
-    } else {
-      msg.text.forEach(
-        (t: string) =>
-          (message += "<p>" + this.sanitizer.sanitize(SecurityContext.HTML, t) + "</p>"),
-      );
-      options.enableHtml = true;
-    }
-    if (msg.options != null) {
-      if (msg.options.trustedHtml === true) {
-        options.enableHtml = true;
-      }
-      if (msg.options.timeout != null && msg.options.timeout > 0) {
-        options.timeOut = msg.options.timeout;
-      }
-    }
-
-    options.payload = {
-      type: msg.type,
-    };
-
-    this.toastrService.show(message, msg.title, options, "toast-" + msg.type);
   }
 
   private async showDialog(msg: SimpleDialogOptions) {
