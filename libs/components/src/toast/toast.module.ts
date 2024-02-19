@@ -2,11 +2,11 @@ import { CommonModule } from "@angular/common";
 import { ModuleWithProviders, NgModule } from "@angular/core";
 import { GlobalConfig, TOAST_CONFIG } from "ngx-toastr";
 
-import { BitToastComponent } from "./toast.component";
+import { ToastComponent } from "./toast.component";
 import { BitwardenToastrComponent, BitwardenToastrGlobalConfig } from "./toastr.component";
 
 @NgModule({
-  imports: [CommonModule, BitToastComponent],
+  imports: [CommonModule, ToastComponent],
   declarations: [BitwardenToastrComponent],
   exports: [BitwardenToastrComponent],
 })

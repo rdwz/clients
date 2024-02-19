@@ -3,15 +3,9 @@ import { Component, EventEmitter, Input, Output } from "@angular/core";
 
 import { IconButtonModule } from "../icon-button";
 
-export type BitToastType = "success" | "error" | "info" | "warning";
+export type ToastVariant = "success" | "error" | "info" | "warning";
 
-export type BitToastConfig = {
-  type: BitToastType;
-  title: string;
-  text: string;
-};
-
-const variants: Record<BitToastType, { icon: string; bgColor: string }> = {
+const variants: Record<ToastVariant, { icon: string; bgColor: string }> = {
   success: {
     icon: "bwi-check",
     bgColor: "tw-bg-success-500",
@@ -36,8 +30,8 @@ const variants: Record<BitToastType, { icon: string; bgColor: string }> = {
   standalone: true,
   imports: [CommonModule, IconButtonModule],
 })
-export class BitToastComponent {
-  @Input() type: BitToastType = "info";
+export class ToastComponent {
+  @Input() type: ToastVariant = "info";
 
   @Input() text: string;
 

@@ -2,11 +2,12 @@ import { Injectable, SecurityContext } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
 import { IndividualConfig, ToastrService } from "ngx-toastr";
 
-import { BitToastType } from "./toast.component";
+import { ToastVariant } from "./toast.component";
 
 /**
  * Presents toast notifications.
- * Acts as facade over `ngx-toastr`.
+ *
+ * Facade for `ngx-toastr`
  **/
 @Injectable({ providedIn: "root" })
 export class ToastService {
@@ -15,43 +16,41 @@ export class ToastService {
     private sanitizer: DomSanitizer,
   ) {}
 
-  showToast(msg: {
+  showToast(config: {
     text: string | string[];
-    type: BitToastType;
-
-    /** @deprecated */
+    type: ToastVariant;
     title: string;
-    /** @deprecated */
+    /** FIXME: remove `any` type */
     options?: any;
   }) {
     let message = "";
 
     const options: Partial<IndividualConfig> = {};
 
-    if (typeof msg.text === "string") {
-      message = msg.text;
-    } else if (msg.text.length === 1) {
-      message = msg.text[0];
+    if (typeof config.text === "string") {
+      message = config.text;
+    } else if (config.text.length === 1) {
+      message = config.text[0];
     } else {
-      msg.text.forEach(
+      config.text.forEach(
         (t: string) =>
           (message += "<p>" + this.sanitizer.sanitize(SecurityContext.HTML, t) + "</p>"),
       );
       options.enableHtml = true;
     }
-    if (msg.options != null) {
-      if (msg.options.trustedHtml === true) {
+    if (config.options != null) {
+      if (config.options.trustedHtml === true) {
         options.enableHtml = true;
       }
-      if (msg.options.timeout != null && msg.options.timeout > 0) {
-        options.timeOut = msg.options.timeout;
+      if (config.options.timeout != null && config.options.timeout > 0) {
+        options.timeOut = config.options.timeout;
       }
     }
 
     options.payload = {
-      type: msg.type,
+      type: config.type,
     };
 
-    this.toastrService.show(message, msg.title, options, "toast-" + msg.type);
+    this.toastrService.show(message, config.title, options, "toast-" + config.type);
   }
 }

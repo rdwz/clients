@@ -1,10 +1,10 @@
 import { Meta, StoryObj, moduleMetadata } from "@storybook/angular";
 
-import { BitToastComponent } from "./toast.component";
+import { ToastComponent } from "./toast.component";
 
 export default {
   title: "Component Library/Toast",
-  component: BitToastComponent,
+  component: ToastComponent,
   decorators: [
     moduleMetadata({
       imports: [],
@@ -12,7 +12,7 @@ export default {
   ],
 } as Meta;
 
-type Story = StoryObj<BitToastComponent>;
+type Story = StoryObj<ToastComponent>;
 
 export const Default: Story = {
   render: (args) => ({
