@@ -257,7 +257,9 @@ export class Fido2AuthenticatorService implements Fido2AuthenticatorServiceAbstr
         const selectedFido2Credential = selectedCipher.login.fido2Credentials[0];
         const selectedCredentialId = selectedFido2Credential.credentialId;
 
-        ++selectedFido2Credential.counter;
+        if (selectedFido2Credential.counter > 0) {
+          ++selectedFido2Credential.counter;
+        }
 
         selectedCipher.localData = {
           ...selectedCipher.localData,
