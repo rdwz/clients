@@ -265,8 +265,11 @@ export class Fido2AuthenticatorService implements Fido2AuthenticatorServiceAbstr
           ...selectedCipher.localData,
           lastUsedDate: new Date().getTime(),
         };
-        const encrypted = await this.cipherService.encrypt(selectedCipher);
-        await this.cipherService.updateWithServer(encrypted);
+
+        if (selectedFido2Credential.counter > 0) {
+          const encrypted = await this.cipherService.encrypt(selectedCipher);
+          await this.cipherService.updateWithServer(encrypted);
+        }
 
         const authenticatorData = await generateAuthData({
           rpId: selectedFido2Credential.rpId,
