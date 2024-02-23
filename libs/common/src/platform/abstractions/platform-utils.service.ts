@@ -28,6 +28,7 @@ export abstract class PlatformUtilsService {
   getApplicationVersionNumber: () => Promise<string>;
   supportsWebAuthn: (win: Window) => boolean;
   supportsDuo: () => boolean;
+  /** @deprecated use `@bitwarden/components/ToastService.showToast` instead */
   showToast: (
     type: "error" | "success" | "warning" | "info",
     title: string,
