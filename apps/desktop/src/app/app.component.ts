@@ -282,7 +282,7 @@ export class AppComponent implements OnInit, OnDestroy {
             );
             break;
           case "showToast":
-            this.toastService.showToast(message);
+            this.toastService._showToast(message);
             break;
           case "copiedToClipboard":
             if (!message.clearing) {

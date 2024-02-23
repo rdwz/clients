@@ -76,7 +76,7 @@ export class AppComponent implements OnInit, OnDestroy {
       if (msg.command === "doneLoggingOut") {
         this.authService.logOut(async () => {
           if (msg.expired) {
-            this.toastService.showToast({
+            this.toastService._showToast({
               type: "warning",
               title: this.i18nService.t("loggedOut"),
               text: this.i18nService.t("loginExpired"),
@@ -109,7 +109,7 @@ export class AppComponent implements OnInit, OnDestroy {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.showNativeMessagingFingerprintDialog(msg);
       } else if (msg.command === "showToast") {
-        this.toastService.showToast(msg);
+        this.toastService._showToast(msg);
       } else if (msg.command === "reloadProcess") {
         const forceWindowReload =
           this.platformUtilsService.isSafari() ||

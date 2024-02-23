@@ -35,8 +35,6 @@ export class ToastComponent {
 
   @Input() text: string;
 
-  @Input() title: string;
-
   /**
    * Percent width of the progress bar
    **/

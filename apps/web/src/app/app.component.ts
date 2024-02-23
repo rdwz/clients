@@ -199,7 +199,7 @@ export class AppComponent implements OnDestroy, OnInit {
             break;
           }
           case "showToast":
-            this.toastService.showToast(message);
+            this.toastService._showToast(message);
             break;
           case "setFullWidth":
             // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.

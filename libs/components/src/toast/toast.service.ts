@@ -4,6 +4,12 @@ import { IndividualConfig, ToastrService } from "ngx-toastr";
 
 import { ToastVariant } from "./toast.component";
 
+export type ToastOptions = {
+  message: string | string[];
+  variant: ToastVariant;
+  timeout?: number;
+};
+
 /**
  * Presents toast notifications.
  *
@@ -16,41 +22,47 @@ export class ToastService {
     private sanitizer: DomSanitizer,
   ) {}
 
-  showToast(config: {
-    text: string | string[];
-    type: ToastVariant;
-    title: string;
-    /** FIXME: remove `any` type */
-    options?: any;
-  }) {
+  showToast(options: ToastOptions) {
     let message = "";
 
-    const options: Partial<IndividualConfig> = {};
+    const toastrConfig: Partial<IndividualConfig> = {};
 
-    if (typeof config.text === "string") {
-      message = config.text;
-    } else if (config.text.length === 1) {
-      message = config.text[0];
+    if (typeof options.message === "string") {
+      message = options.message;
+    } else if (options.message.length === 1) {
+      message = options.message[0];
     } else {
-      config.text.forEach(
+      options.message.forEach(
         (t: string) =>
           (message += "<p>" + this.sanitizer.sanitize(SecurityContext.HTML, t) + "</p>"),
       );
-      options.enableHtml = true;
-    }
-    if (config.options != null) {
-      if (config.options.trustedHtml === true) {
-        options.enableHtml = true;
-      }
-      if (config.options.timeout != null && config.options.timeout > 0) {
-        options.timeOut = config.options.timeout;
-      }
+      toastrConfig.enableHtml = true;
     }
 
-    options.payload = {
-      type: config.type,
+    if (options.timeout) {
+      toastrConfig.timeOut = options.timeout;
+    }
+
+    toastrConfig.payload = {
+      type: options.variant,
     };
 
-    this.toastrService.show(message, config.title, options, "toast-" + config.type);
+    this.toastrService.show(message, null, toastrConfig, "toast-" + options.variant);
+  }
+
+  /** @deprecated use `showToast` instead */
+  _showToast(options: {
+    type: "error" | "success" | "warning" | "info";
+    title: string;
+    text: string | string[];
+    options?: {
+      timeout?: number;
+    };
+  }) {
+    this.showToast({
+      message: options.text,
+      variant: options.type,
+      timeout: options.options?.timeout,
+    });
   }
 }
