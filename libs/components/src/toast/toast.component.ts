@@ -31,22 +31,26 @@ const variants: Record<ToastVariant, { icon: string; bgColor: string }> = {
   imports: [CommonModule, IconButtonModule],
 })
 export class ToastComponent {
-  @Input() type: ToastVariant = "info";
-
-  @Input() text: string;
+  @Input() variant: ToastVariant = "info";
 
   /**
-   * Percent width of the progress bar
+   * The message to display
    **/
-  @Input() progressBarWidth = 0;
+  @Input() message: string;
 
+  /**
+   * The percent width of the progress bar, from 0-100
+   **/
+  @Input() progressWidth = 0;
+
+  /** Emits when the user presses the close button */
   @Output() onClose = new EventEmitter<void>();
 
   protected get iconClass(): string {
-    return variants[this.type].icon;
+    return variants[this.variant].icon;
   }
 
   protected get bgColor(): string {
-    return variants[this.type].bgColor;
+    return variants[this.variant].bgColor;
   }
 }

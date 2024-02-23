@@ -19,10 +19,10 @@ export const Default: Story = {
     props: args,
     template: `
       <div class="tw-flex tw-flex-col">
-        <bit-toast text="Hello world!" progressBarWidth="50" type="success"></bit-toast>
-        <bit-toast text="Hello world!" progressBarWidth="50" type="info"></bit-toast>
-        <bit-toast text="Hello world!" progressBarWidth="50" type="warning"></bit-toast>
-        <bit-toast text="Hello world!" progressBarWidth="50" type="error"></bit-toast>
+        <bit-toast message="Hello world!" progressWidth="50" variant="success"></bit-toast>
+        <bit-toast message="Hello world!" progressWidth="50" variant="info"></bit-toast>
+        <bit-toast message="Hello world!" progressWidth="50" variant="warning"></bit-toast>
+        <bit-toast message="Hello world!" progressWidth="50" variant="error"></bit-toast>
       </div>
     `,
   }),
@@ -33,10 +33,10 @@ export const LongContent: Story = {
     props: args,
     template: `
       <div class="tw-flex tw-flex-col">
-        <bit-toast text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." progressBarWidth="50" type="success"></bit-toast>
-        <bit-toast text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." progressBarWidth="50" type="info"></bit-toast>
-        <bit-toast text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." progressBarWidth="50" type="warning"></bit-toast>
-        <bit-toast text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." progressBarWidth="50" type="error"></bit-toast>
+        <bit-toast message="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." progressWidth="50" variant="success"></bit-toast>
+        <bit-toast message="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." progressWidth="50" variant="info"></bit-toast>
+        <bit-toast message="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." progressWidth="50" variant="warning"></bit-toast>
+        <bit-toast message="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." progressWidth="50" variant="error"></bit-toast>
       </div>
     `,
   }),

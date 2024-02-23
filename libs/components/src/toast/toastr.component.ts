@@ -1,15 +1,15 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { Component } from "@angular/core";
-import { DefaultNoComponentGlobalConfig, GlobalConfig, Toast as BaseToast } from "ngx-toastr";
+import { Toast as BaseToastrComponent } from "ngx-toastr";
 
 @Component({
   selector: "[toast-component2]",
   template: `
     <bit-toast
       [title]="title"
-      [type]="options?.payload?.type || 'info'"
-      [text]="message"
-      [progressBarWidth]="width"
+      [variant]="options?.payload?.type || 'info'"
+      [message]="message"
+      [progressWidth]="width"
       (onClose)="remove()"
     ></bit-toast>
   `,
@@ -24,12 +24,4 @@ import { DefaultNoComponentGlobalConfig, GlobalConfig, Toast as BaseToast } from
   ],
   preserveWhitespaces: false,
 })
-export class BitwardenToastrComponent extends BaseToast {}
-
-export const BitwardenToastrGlobalConfig: GlobalConfig = {
-  ...DefaultNoComponentGlobalConfig,
-  toastComponent: BitwardenToastrComponent,
-  tapToDismiss: false,
-  progressBar: true,
-  extendedTimeOut: 2000,
-};
+export class BitwardenToastrComponent extends BaseToastrComponent {}

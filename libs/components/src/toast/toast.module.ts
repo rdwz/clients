@@ -1,9 +1,9 @@
 import { CommonModule } from "@angular/common";
 import { ModuleWithProviders, NgModule } from "@angular/core";
-import { GlobalConfig, TOAST_CONFIG } from "ngx-toastr";
+import { DefaultNoComponentGlobalConfig, GlobalConfig, TOAST_CONFIG } from "ngx-toastr";
 
 import { ToastComponent } from "./toast.component";
-import { BitwardenToastrComponent, BitwardenToastrGlobalConfig } from "./toastr.component";
+import { BitwardenToastrComponent } from "./toastr.component";
 
 @NgModule({
   imports: [CommonModule, ToastComponent],
@@ -26,3 +26,11 @@ export class ToastModule {
     };
   }
 }
+
+export const BitwardenToastrGlobalConfig: GlobalConfig = {
+  ...DefaultNoComponentGlobalConfig,
+  toastComponent: BitwardenToastrComponent,
+  tapToDismiss: false,
+  progressBar: true,
+  extendedTimeOut: 2000,
+};
