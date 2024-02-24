@@ -2,11 +2,12 @@ import { Injectable, SecurityContext } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
 import { IndividualConfig, ToastrService } from "ngx-toastr";
 
-import { ToastVariant } from "./toast.component";
+import type { ToastVariant } from "./toast.component";
 
 export type ToastOptions = {
   message: string | string[];
   variant: ToastVariant;
+  title?: string;
   timeout?: number;
 };
 
@@ -47,7 +48,7 @@ export class ToastService {
       type: options.variant,
     };
 
-    this.toastrService.show(message, null, toastrConfig, "toast-" + options.variant);
+    this.toastrService.show(message, options.title, toastrConfig, "toast-" + options.variant);
   }
 
   /** @deprecated use `showToast` instead */
@@ -62,6 +63,7 @@ export class ToastService {
     this.showToast({
       message: options.text,
       variant: options.type,
+      title: options.title,
       timeout: options.options?.timeout,
     });
   }

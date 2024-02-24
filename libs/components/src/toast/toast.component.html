@@ -5,7 +5,10 @@
 >
   <div class="tw-flex tw-items-center tw-gap-4 tw-px-4 tw-pb-1 tw-pt-2">
     <i class="bwi tw-text-lg tw-py-1.5 tw-px-2.5 {{ iconClass }}"></i>
-    <div>{{ message }}</div>
+    <div>
+      <div *ngIf="title" class="tw-mb-0.5 tw-font-semibold">{{ title }}</div>
+      <div>{{ message }}</div>
+    </div>
     <button
       class="tw-ml-auto"
       bitIconButton="bwi-close"
