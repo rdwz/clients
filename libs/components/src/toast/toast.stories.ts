@@ -1,26 +1,49 @@
+import { CommonModule } from "@angular/common";
+import { Component, Input } from "@angular/core";
+import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { action } from "@storybook/addon-actions";
-import { Meta, StoryObj, moduleMetadata } from "@storybook/angular";
+import { Meta, StoryObj, applicationConfig, moduleMetadata } from "@storybook/angular";
+
+import { ButtonModule } from "../button";
 
 import { ToastComponent } from "./toast.component";
+import { ToastModule } from "./toast.module";
+import { ToastOptions, ToastService } from "./toast.service";
+
+const toastServiceExampleTemplate = `
+  <button bitButton type="button" (click)="toastService.showToast(toastOptions)">Show Toast</button>
+`;
+@Component({
+  selector: "toast-service-example",
+  template: toastServiceExampleTemplate,
+})
+export class ToastServiceExampleComponent {
+  @Input()
+  toastOptions: ToastOptions;
+
+  constructor(protected toastService: ToastService) {}
+}
 
 export default {
   title: "Component Library/Toast",
   component: ToastComponent,
-  decorators: [
-    moduleMetadata({
-      imports: [],
-    }),
-  ],
   args: {
     onClose: action("emit onClose"),
+    variant: "info",
+    progressWidth: 50,
+    title: "",
+    message: "Hello Bitwarden!",
+  },
+  parameters: {
+    design: {
+      type: "figma",
+      url: "https://www.figma.com/file/Zt3YSeb6E6lebAffrNLa0h/Tailwind-Component-Library",
+    },
   },
 } as Meta;
 
 type Story = StoryObj<ToastComponent>;
 
-/**
- * Avoid using long messages in toasts.
- */
 export const Default: Story = {
   render: (args) => ({
     props: args,
@@ -33,13 +56,11 @@ export const Default: Story = {
       </div>
     `,
   }),
-  args: {
-    title: "",
-    message: "Hello Bitwarden!",
-    progressWidth: 50,
-  },
 };
 
+/**
+ * Avoid using long messages in toasts.
+ */
 export const LongContent: Story = {
   ...Default,
   args: {
@@ -48,6 +69,39 @@ export const LongContent: Story = {
       "Lorem ipsum dolor sit amet, consectetur adipisci",
       "Lorem ipsum dolor sit amet, consectetur adipisci",
     ],
+  },
+};
+
+export const Service: Story = {
+  render: (args) => ({
+    props: {
+      toastOptions: args,
+    },
+    template: `
+      <toast-service-example [toastOptions]="toastOptions"></toast-service-example>
+    `,
+  }),
+  args: {
+    title: "",
+    message: "Hello Bitwarden!",
     progressWidth: 50,
+    variant: "error",
+  },
+  decorators: [
+    moduleMetadata({
+      imports: [CommonModule, BrowserAnimationsModule, ButtonModule],
+      declarations: [ToastServiceExampleComponent],
+    }),
+    applicationConfig({
+      providers: [ToastModule.forRoot().providers],
+    }),
+  ],
+  parameters: {
+    chromatic: { disableSnapshot: true },
+    docs: {
+      source: {
+        code: toastServiceExampleTemplate,
+      },
+    },
   },
 };
