@@ -6,9 +6,9 @@ import { Toast as BaseToastrComponent } from "ngx-toastr";
   selector: "[toast-component2]",
   template: `
     <bit-toast
-      [title]="title"
-      [variant]="options?.payload?.type || 'info'"
-      [message]="message"
+      [title]="options.payload.type"
+      [variant]="options.payload.type"
+      [message]="options.payload.message"
       [progressWidth]="width"
       (onClose)="remove()"
     ></bit-toast>

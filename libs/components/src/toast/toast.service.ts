@@ -1,5 +1,4 @@
-import { Injectable, SecurityContext } from "@angular/core";
-import { DomSanitizer } from "@angular/platform-browser";
+import { Injectable } from "@angular/core";
 import { IndividualConfig, ToastrService } from "ngx-toastr";
 
 import type { ToastVariant } from "./toast.component";
@@ -18,37 +17,18 @@ export type ToastOptions = {
  **/
 @Injectable({ providedIn: "root" })
 export class ToastService {
-  constructor(
-    private toastrService: ToastrService,
-    private sanitizer: DomSanitizer,
-  ) {}
+  constructor(private toastrService: ToastrService) {}
 
   showToast(options: ToastOptions) {
-    let message = "";
-
-    const toastrConfig: Partial<IndividualConfig> = {};
-
-    if (typeof options.message === "string") {
-      message = options.message;
-    } else if (options.message.length === 1) {
-      message = options.message[0];
-    } else {
-      options.message.forEach(
-        (t: string) =>
-          (message += "<p>" + this.sanitizer.sanitize(SecurityContext.HTML, t) + "</p>"),
-      );
-      toastrConfig.enableHtml = true;
-    }
-
-    if (options.timeout) {
-      toastrConfig.timeOut = options.timeout;
-    }
-
-    toastrConfig.payload = {
-      type: options.variant,
+    const toastrConfig: Partial<IndividualConfig> = {
+      timeOut: options.timeout,
+      payload: {
+        message: options.message,
+        variant: options.variant,
+      },
     };
 
-    this.toastrService.show(message, options.title, toastrConfig, "toast-" + options.variant);
+    this.toastrService.show(null, options.title, toastrConfig, "toast-" + options.variant);
   }
 
   /** @deprecated use `showToast` instead */

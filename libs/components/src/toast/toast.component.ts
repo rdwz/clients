@@ -35,8 +35,11 @@ export class ToastComponent {
 
   /**
    * The message to display
+   *
+   * Pass an array to render multiple paragraphs.
    **/
-  @Input({ required: true }) message: string;
+  @Input({ required: true })
+  message: string | string[];
 
   /** An optional title to display over the message. */
   @Input() title: string;
@@ -55,5 +58,9 @@ export class ToastComponent {
 
   protected get bgColor(): string {
     return variants[this.variant].bgColor;
+  }
+
+  protected get messageArray(): string[] {
+    return Array.isArray(this.message) ? this.message : [this.message];
   }
 }
