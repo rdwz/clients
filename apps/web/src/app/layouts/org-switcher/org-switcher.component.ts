@@ -1,22 +1,24 @@
+import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { combineLatest, map, Observable } from "rxjs";
 
+import { JslibModule } from "@bitwarden/angular/jslib.module";
 import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 import type { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
+import { NavigationModule } from "@bitwarden/components";
 
 @Component({
   selector: "org-switcher",
   templateUrl: "org-switcher.component.html",
+  standalone: true,
+  imports: [CommonModule, JslibModule, NavigationModule],
 })
 export class OrgSwitcherComponent {
   protected organizations$: Observable<Organization[]> =
     this.organizationService.organizations$.pipe(
       map((orgs) =>
-        orgs
-          .filter((org) => this.filter(org))
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .sort((a, b) => (a.enabled ? -1 : 1)),
+        orgs.filter((org) => this.filter(org)).sort((a, b) => a.name.localeCompare(b.name)),
       ),
     );
 
