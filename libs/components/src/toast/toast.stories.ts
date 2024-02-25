@@ -44,6 +44,9 @@ export default {
           useFactory: () => {
             return new I18nMockService({
               close: "Close",
+              success: "Success",
+              error: "Error",
+              warning: "Warning",
             });
           },
         },

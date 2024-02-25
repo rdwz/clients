@@ -1,19 +1,18 @@
 <div
-  class="tw-mb-1 tw-text-contrast tw-flex tw-flex-col tw-justify-between tw-rounded-md tw-pointer-events-auto tw-cursor-default {{
+  class="tw-mb-1 tw-min-w-[300px] tw-text-contrast tw-flex tw-flex-col tw-justify-between tw-rounded-md tw-pointer-events-auto tw-cursor-default {{
     bgColor
   }}"
 >
   <div class="tw-flex tw-items-center tw-gap-4 tw-px-2 tw-pb-1 tw-pt-2">
-    <i [attr.aria-label]="variant" class="bwi tw-text-xl tw-py-1.5 tw-px-2.5 {{ iconClass }}"></i>
+    <i aria-hidden="true" class="bwi tw-text-xl tw-py-1.5 tw-px-2.5 {{ iconClass }}"></i>
     <div>
+      <span class="tw-sr-only">{{ variant | i18n }}</span>
       <div *ngIf="title" class="tw-font-semibold">{{ title }}</div>
       <p *ngFor="let m of messageArray" class="tw-mb-2 last:tw-mb-0">{{ m }}</p>
     </div>
     <button
       class="tw-ml-auto"
       bitIconButton="bwi-close"
-      [attr.aria-label]="'close' | i18n"
-      [title]="'close' | i18n"
       buttonType="contrast"
       type="button"
       (click)="this.onClose.emit()"

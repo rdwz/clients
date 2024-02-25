@@ -7595,5 +7595,8 @@
   },
   "providerPortal": {
     "message": "Provider Portal"
+  },
+  "success": {
+    "message": "Success"
   }
 }
