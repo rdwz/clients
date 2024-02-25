@@ -21,14 +21,17 @@ export class ToastService {
 
   showToast(options: ToastOptions) {
     const toastrConfig: Partial<IndividualConfig> = {
-      timeOut: options.timeout,
       payload: {
         message: options.message,
         variant: options.variant,
       },
     };
 
-    this.toastrService.show(null, options.title, toastrConfig, "toast-" + options.variant);
+    if (options.timeout != null && options.timeout > 0) {
+      toastrConfig.timeOut = options.timeout;
+    }
+
+    this.toastrService.show(null, options.title, toastrConfig);
   }
 
   /** @deprecated use `showToast` instead */

@@ -34,4 +34,5 @@ export const BitwardenToastrGlobalConfig: GlobalConfig = {
   extendedTimeOut: 2000,
   maxOpened: 5,
   autoDismiss: true,
+  progressBar: true,
 };

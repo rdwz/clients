@@ -84,7 +84,6 @@ export const Service: Story = {
   args: {
     title: "",
     message: "Hello Bitwarden!",
-    progressWidth: 50,
     variant: "error",
   },
   decorators: [
