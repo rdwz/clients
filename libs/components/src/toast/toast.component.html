@@ -1,21 +1,23 @@
-<section
-  class="tw-mb-1 tw-w-[300px] tw-text-contrast tw-flex tw-flex-col tw-justify-between tw-rounded-md tw-pointer-events-auto tw-cursor-default {{
+<div
+  class="tw-mb-1 tw-text-contrast tw-flex tw-flex-col tw-justify-between tw-rounded-md tw-pointer-events-auto tw-cursor-default {{
     bgColor
   }}"
 >
   <div class="tw-flex tw-items-center tw-gap-4 tw-px-2 tw-pb-1 tw-pt-2">
     <i [attr.aria-label]="variant" class="bwi tw-text-xl tw-py-1.5 tw-px-2.5 {{ iconClass }}"></i>
-    <div class="tw-flex tw-flex-col tw-gap-2">
+    <div>
       <div *ngIf="title" class="tw-font-semibold">{{ title }}</div>
-      <p *ngFor="let m of messageArray" class="tw-mb-0">{{ m }}</p>
+      <p *ngFor="let m of messageArray" class="tw-mb-2 last:tw-mb-0">{{ m }}</p>
     </div>
     <button
       class="tw-ml-auto"
       bitIconButton="bwi-close"
+      [attr.aria-label]="'close' | i18n"
+      [title]="'close' | i18n"
       buttonType="contrast"
       type="button"
       (click)="this.onClose.emit()"
     ></button>
   </div>
   <div class="tw-h-1 tw-w-full tw-bg-text-contrast/70" [style.width]="progressWidth + '%'"></div>
-</section>
+</div>

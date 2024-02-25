@@ -1,7 +1,7 @@
-import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 
 import { IconButtonModule } from "../icon-button";
+import { SharedModule } from "../shared";
 
 export type ToastVariant = "success" | "error" | "info" | "warning";
 
@@ -28,7 +28,7 @@ const variants: Record<ToastVariant, { icon: string; bgColor: string }> = {
   selector: "bit-toast",
   templateUrl: "toast.component.html",
   standalone: true,
-  imports: [CommonModule, IconButtonModule],
+  imports: [SharedModule, IconButtonModule],
 })
 export class ToastComponent {
   @Input() variant: ToastVariant = "info";

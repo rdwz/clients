@@ -4,10 +4,13 @@ import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { action } from "@storybook/addon-actions";
 import { Meta, StoryObj, applicationConfig, moduleMetadata } from "@storybook/angular";
 
+import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
+
 import { ButtonModule } from "../button";
+import { I18nMockService } from "../utils/i18n-mock.service";
 
 import { ToastComponent } from "./toast.component";
-import { ToastModule } from "./toast.module";
+import { BitwardenToastrGlobalConfig, ToastModule } from "./toast.module";
 import { ToastOptions, ToastService } from "./toast.service";
 
 const toastServiceExampleTemplate = `
@@ -27,6 +30,26 @@ export class ToastServiceExampleComponent {
 export default {
   title: "Component Library/Toast",
   component: ToastComponent,
+
+  decorators: [
+    moduleMetadata({
+      imports: [CommonModule, BrowserAnimationsModule, ButtonModule],
+      declarations: [ToastServiceExampleComponent],
+    }),
+    applicationConfig({
+      providers: [
+        ToastModule.forRoot().providers,
+        {
+          provide: I18nService,
+          useFactory: () => {
+            return new I18nMockService({
+              close: "Close",
+            });
+          },
+        },
+      ],
+    }),
+  ],
   args: {
     onClose: action("emit onClose"),
     variant: "info",
@@ -48,7 +71,7 @@ export const Default: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <div class="tw-flex tw-flex-col">
+      <div class="tw-flex tw-flex-col tw-max-w-[300px]">
         <bit-toast [title]="title" [message]="message" [progressWidth]="progressWidth" (onClose)="onClose()" variant="success"></bit-toast>
         <bit-toast [title]="title" [message]="message" [progressWidth]="progressWidth" (onClose)="onClose()" variant="info"></bit-toast>
         <bit-toast [title]="title" [message]="message" [progressWidth]="progressWidth" (onClose)="onClose()" variant="warning"></bit-toast>
@@ -85,7 +108,8 @@ export const Service: Story = {
     title: "",
     message: "Hello Bitwarden!",
     variant: "error",
-  },
+    timeout: BitwardenToastrGlobalConfig.timeOut,
+  } as ToastOptions,
   decorators: [
     moduleMetadata({
       imports: [CommonModule, BrowserAnimationsModule, ButtonModule],
