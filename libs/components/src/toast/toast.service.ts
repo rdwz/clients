@@ -1,19 +1,19 @@
 import { Injectable } from "@angular/core";
 import { IndividualConfig, ToastrService } from "ngx-toastr";
 
-import type { ToastVariant } from "./toast.component";
+import type { ToastComponent } from "./toast.component";
 
 export type ToastOptions = {
-  message: string | string[];
-  variant: ToastVariant;
-  title?: string;
+  /**
+   * The duration the toast will persist in millisecond
+   *
+   * @default 5000
+   **/
   timeout?: number;
-};
+} & Pick<ToastComponent, "message" | "variant" | "title">;
 
 /**
- * Presents toast notifications.
- *
- * Facade for `ngx-toastr`
+ * Presents toast notifications
  **/
 @Injectable({ providedIn: "root" })
 export class ToastService {
@@ -34,7 +34,11 @@ export class ToastService {
     this.toastrService.show(null, options.title, toastrConfig);
   }
 
-  /** @deprecated use `showToast` instead */
+  /**
+   * @deprecated use `showToast` instead
+   *
+   * Converts options object from PlatformUtilsService
+   **/
   _showToast(options: {
     type: "error" | "success" | "warning" | "info";
     title: string;
