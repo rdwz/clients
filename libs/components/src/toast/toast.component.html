@@ -3,8 +3,8 @@
     bgColor
   }}"
 >
-  <div class="tw-flex tw-items-center tw-gap-4 tw-px-4 tw-pb-1 tw-pt-2">
-    <i class="bwi tw-text-lg tw-py-1.5 tw-px-2.5 {{ iconClass }}"></i>
+  <div class="tw-flex tw-items-center tw-gap-4 tw-px-2 tw-pb-1 tw-pt-2">
+    <i [attr.aria-label]="variant" class="bwi tw-text-xl tw-py-1.5 tw-px-2.5 {{ iconClass }}"></i>
     <div class="tw-flex tw-flex-col tw-gap-2">
       <div *ngIf="title" class="tw-font-semibold">{{ title }}</div>
       <p *ngFor="let m of messageArray" class="tw-mb-0">{{ m }}</p>

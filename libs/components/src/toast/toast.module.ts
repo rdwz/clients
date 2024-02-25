@@ -31,6 +31,7 @@ export const BitwardenToastrGlobalConfig: GlobalConfig = {
   ...DefaultNoComponentGlobalConfig,
   toastComponent: BitwardenToastrComponent,
   tapToDismiss: false,
+  timeOut: 5000,
   extendedTimeOut: 2000,
   maxOpened: 5,
   autoDismiss: true,
