@@ -199,20 +199,54 @@ export class BrowserApi {
     return chrome.windows.onCreated.addListener(callback);
   }
 
+  /**
+   * Gets the background page for the extension. This method is
+   * not valid within manifest v3 background service workers. As
+   * a result, it will return null when called from that context.
+   */
   static getBackgroundPage(): any {
+    if (typeof chrome.extension.getBackgroundPage === "undefined") {
+      return null;
+    }
+
     return chrome.extension.getBackgroundPage();
   }
 
+  /**
+   * Accepts a window object and determines if it is
+   * associated with the background page of the extension.
+   *
+   * @param window - The window to check.
+   */
   static isBackgroundPage(window: Window & typeof globalThis): boolean {
-    return window === chrome.extension.getBackgroundPage();
+    return typeof window !== "undefined" && window === BrowserApi.getBackgroundPage();
   }
 
   static getApplicationVersion(): string {
     return chrome.runtime.getManifest().version;
   }
 
+  /**
+   * Gets the extension views that match the given properties. This method is not
+   * available within background service worker. As a result, it will return an
+   * empty array when called from that context.
+   *
+   * @param fetchProperties - The properties used to filter extension views.
+   */
+  static getExtensionViews(fetchProperties?: chrome.extension.FetchProperties): Window[] {
+    if (typeof chrome.extension.getViews === "undefined") {
+      return [];
+    }
+
+    return chrome.extension.getViews(fetchProperties);
+  }
+
+  /**
+   * Queries all extension views that are of type `popup`
+   * and returns whether any are currently open.
+   */
   static async isPopupOpen(): Promise<boolean> {
-    return Promise.resolve(chrome.extension.getViews({ type: "popup" }).length > 0);
+    return Promise.resolve(BrowserApi.getExtensionViews({ type: "popup" }).length > 0);
   }
 
   static createNewTab(url: string, active = true): Promise<chrome.tabs.Tab> {
@@ -321,6 +355,8 @@ export class BrowserApi {
   }
 
   static async focusTab(tabId: number) {
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     chrome.tabs.update(tabId, { active: true, highlighted: true });
   }
 
@@ -329,6 +365,8 @@ export class BrowserApi {
       // Reactivating the active tab dismisses the popup tab. The promise final
       // condition is only called if the popup wasn't already dismissed (future proofing).
       // ref: https://bugzilla.mozilla.org/show_bug.cgi?id=1433604
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       browser.tabs.update({ active: true }).finally(win.close);
     } else {
       win.close();
@@ -343,23 +381,39 @@ export class BrowserApi {
     return chrome.i18n.getUILanguage();
   }
 
-  static reloadExtension(win: Window) {
-    if (win != null) {
-      return (win.location as any).reload(true);
-    } else {
-      return chrome.runtime.reload();
+  /**
+   * Handles reloading the extension, either by calling the window location
+   * to reload or by calling the extension's runtime to reload.
+   *
+   * @param globalContext - The global context to use for the reload.
+   */
+  static reloadExtension(globalContext: (Window & typeof globalThis) | null) {
+    // The passed globalContext might be a ServiceWorkerGlobalScope, as a result
+    // we need to check if the location object exists before calling reload on it.
+    if (typeof globalContext?.location?.reload === "function") {
+      return (globalContext as any).location.reload(true);
     }
+
+    return chrome.runtime.reload();
   }
 
+  /**
+   * Reloads all open extension views, except the background page. Will also
+   * skip reloading the current window location if exemptCurrentHref is true.
+   *
+   * @param exemptCurrentHref - Whether to exempt the current window location from the reload.
+   */
   static reloadOpenWindows(exemptCurrentHref = false) {
+    const views = BrowserApi.getExtensionViews();
+    if (!views.length) {
+      return;
+    }
+
     const currentHref = window.location.href;
-    const views = chrome.extension.getViews() as Window[];
     views
       .filter((w) => w.location.href != null && !w.location.href.includes("background.html"))
       .filter((w) => !exemptCurrentHref || w.location.href !== currentHref)
-      .forEach((w) => {
-        w.location.reload();
-      });
+      .forEach((w) => w.location.reload());
   }
 
   static connectNative(application: string): browser.runtime.Port | chrome.runtime.Port {

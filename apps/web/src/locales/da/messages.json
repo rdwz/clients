@@ -638,9 +638,6 @@
   "learnMoreAboutPasswordless": {
     "message": "Læs mere om adgangskodefrihed"
   },
-  "passkeyEnterMasterPassword": {
-    "message": "Angiv hovedadgangskoden for at ændre loginindstillinger for adgangsnøgle."
-  },
   "creatingPasskeyLoading": {
     "message": "Opretter adgangsnøgle..."
   },
@@ -1350,6 +1347,18 @@
   "importData": {
     "message": "Importér data"
   },
+  "onboardingImportDataDetailsPartOne": {
+    "message": "Har man igen data at importere, kan man oprette et ",
+    "description": "This will be part of a larger sentence, that will read like this: If you don't have any data to import, you can create a new item instead. You may need to wait until your administrator confirms your organization membership."
+  },
+  "onboardingImportDataDetailsLink": {
+    "message": "nyt emne",
+    "description": "This will be part of a larger sentence, that will read like this: If you don't have any data to import, you can create a new item instead. You may need to wait until your administrator confirms your organization membership."
+  },
+  "onboardingImportDataDetailsPartTwo": {
+    "message": " i stedet. Man skal muligvis afvente, at administratoren bekræfter organisationsmedlemskabet.",
+    "description": "This will be part of a larger sentence, that will read like this: If you don't have any data to import, you can create a new item instead. You may need to wait until your administrator confirms your organization membership."
+  },
   "importError": {
     "message": "Importfejl"
   },
@@ -1462,13 +1471,6 @@
   },
   "faviconDesc": {
     "message": "Vis et genkendeligt billede ud for hvert login."
-  },
-  "enableFullWidth": {
-    "message": "Vis layout i fuld bredde",
-    "description": "Allows scaling the web vault UI's width"
-  },
-  "enableFullWidthDesc": {
-    "message": "Lad web-boksen udnytte browservinduets fulde bredde."
   },
   "default": {
     "message": "Standard"
@@ -2531,6 +2533,15 @@
       }
     }
   },
+  "trialSecretsManagerThankYou": {
+    "message": "Tak for tilmeldingen til Bitwarden Secrets Manager for $PLAN$!",
+    "placeholders": {
+      "plan": {
+        "content": "$1",
+        "example": "Teams"
+      }
+    }
+  },
   "trialPaidInfoMessage": {
     "message": "Når den 7-dages gratis prøveperiode på $PLAN$ udløber, konverteres den til et betalt abonnement.",
     "placeholders": {
@@ -2817,7 +2828,7 @@
     "message": "Forkert kode"
   },
   "incorrectPin": {
-    "message": "Incorrect PIN"
+    "message": "Forkert PIN-kode"
   },
   "exportedVault": {
     "message": "Boks eksporteret"
@@ -4025,6 +4036,12 @@
   "ssoHandOff": {
     "message": "Du kan nu lukke denne fane og fortsætte i udvidelsen."
   },
+  "youSuccessfullyLoggedIn": {
+    "message": "Du er nu logget ind"
+  },
+  "thisWindowWillCloseIn5Seconds": {
+    "message": "Dette vindue lukkes automatisk om 5 sekunder"
+  },
   "includeAllTeamsFeatures": {
     "message": "Alle teamfunktioner, plus:"
   },
@@ -4925,6 +4942,9 @@
   },
   "newClientOrganizationDesc": {
     "message": "Opret en ny klientorganisation, der tilknyttes dig som udbyderen. Du vil kunne tilgå og håndtere denne organisation."
+  },
+  "newClient": {
+    "message": "Ny klient"
   },
   "addExistingOrganization": {
     "message": "Tilføj eksisterende organisation"
@@ -5909,6 +5929,15 @@
       }
     }
   },
+  "launchDuoAndFollowStepsToFinishLoggingIn": {
+    "message": "Start DUO og følg trinene for at fuldføre indlogningen."
+  },
+  "duoRequiredByOrgForAccount": {
+    "message": "DUO totrins indlogning kræves for kontoen."
+  },
+  "launchDuo": {
+    "message": "Start DUO"
+  },
   "turnOn": {
     "message": "Slå til"
   },
@@ -5976,7 +6005,7 @@
     "message": "-- Vælg --"
   },
   "multiSelectPlaceholder": {
-    "message": "-- Skriv for at filtrere --"
+    "message": "-- Filtreringstype --"
   },
   "multiSelectLoading": {
     "message": "Henter indstillinger..."
@@ -6608,37 +6637,37 @@
     }
   },
   "verificationRequiredForActionSetPinToContinue": {
-    "message": "Verification required for this action. Set a PIN to continue."
+    "message": "Bekræftelse kræves for denne handling. Opsæt en PIN-kode for at fortsætte."
   },
   "setPin": {
-    "message": "Set PIN"
+    "message": "Opsæt PIN-kode"
   },
   "verifyWithBiometrics": {
-    "message": "Verify with biometrics"
+    "message": "Bekræft med biometri"
   },
   "awaitingConfirmation": {
-    "message": "Awaiting confirmation"
+    "message": "Afventer bekræftelse"
   },
   "couldNotCompleteBiometrics": {
-    "message": "Could not complete biometrics."
+    "message": "Kunne ikke færdiggøre biometri."
   },
   "needADifferentMethod": {
-    "message": "Need a different method?"
+    "message": "Brug for en anden metode?"
   },
   "useMasterPassword": {
-    "message": "Use master password"
+    "message": "Brug hovedadgangskode"
   },
   "usePin": {
-    "message": "Use PIN"
+    "message": "Brug PIN-kode"
   },
   "useBiometrics": {
-    "message": "Use biometrics"
+    "message": "Brug biometri"
   },
   "enterVerificationCodeSentToEmail": {
-    "message": "Enter the verification code that was sent to your email."
+    "message": "Angiv bekræftelseskoden tilsendt pr. e-mail."
   },
   "resendCode": {
-    "message": "Resend code"
+    "message": "Send kode igen"
   },
   "membersColumnHeader": {
     "message": "Medlem/Gruppe"
@@ -6850,9 +6879,6 @@
   "secretsManager": {
     "message": "Hemmelighedshåndtering"
   },
-  "secretsManagerBeta": {
-    "message": "Secrets Manager Beta"
-  },
   "secretsManagerAccessDescription": {
     "message": "Aktivér brugeradgang til Hemmelighedshåndtering."
   },
@@ -6899,6 +6925,9 @@
   "sdk": {
     "message": "SDK",
     "description": "Software Development Kit"
+  },
+  "createAnAccount": {
+    "message": "Opret en konto"
   },
   "createSecret": {
     "message": "Opret en hemmelighed"
@@ -6955,12 +6984,6 @@
   },
   "selectionIsRequired": {
     "message": "Valg er obligatorisk."
-  },
-  "secretsManagerSubscriptionDesc": {
-    "message": "Slå organisationsadgang til Secrets Manager til uden beregning under Beta-programmet. Brugere kan få adgang til Beta under Medlemmer."
-  },
-  "secretsManagerEnable": {
-    "message": "Aktivér Secrets Manager Beta"
   },
   "saPeopleWarningTitle": {
     "message": "Adgangstokener stadig tilgængelige"
@@ -7123,7 +7146,7 @@
     }
   },
   "verificationRequired": {
-    "message": "Verification required",
+    "message": "Bekræftelse kræves",
     "description": "Default title for the user verification dialog."
   },
   "recoverAccount": {
@@ -7227,6 +7250,15 @@
   },
   "startYour7DayFreeTrialOfBitwardenFor": {
     "message": "Start din 7-dages gratis prøveperiode af Bitwarden til $ORG$",
+    "placeholders": {
+      "org": {
+        "content": "$1",
+        "example": "Organization name"
+      }
+    }
+  },
+  "startYour7DayFreeTrialOfBitwardenSecretsManagerFor": {
+    "message": "Start den 7-dages gratis prøveperiode af Bitwarden Secrets Manager til $ORG$",
     "placeholders": {
       "org": {
         "content": "$1",
@@ -7395,22 +7427,6 @@
   "loggedInExclamation": {
     "message": "Indlogget!"
   },
-  "smBetaEndedDesc": {
-    "message": "Secrets Manager Beta ophørte $BETA_ENDING_DATE$. Der er $DAYS$ dage tilbage til at føje Secrets Manager til dit betalte abonnement og bevare adgangen til Secrets Manager-data. Kontakt Customer Success for at føje Secrets Manager til abonnementet.",
-    "placeholders": {
-      "beta_ending_date": {
-        "content": "$1",
-        "example": "August 1, 2023"
-      },
-      "days": {
-        "content": "$2",
-        "example": "11"
-      }
-    }
-  },
-  "betaEnding": {
-    "message": "Beta ophører"
-  },
   "beta": {
     "message": "Beta"
   },
@@ -7456,6 +7472,12 @@
   "seeDetailedInstructions": {
     "message": "See detailed instructions on our help site at",
     "description": "This is followed a by a hyperlink to the help website."
+  },
+  "installBrowserExtension": {
+    "message": "Installér webbrowserudvidelser"
+  },
+  "installBrowserExtensionDetails": {
+    "message": "Brug udvidelsen til hurtigt at gemme logins og auto-udfylde formularer uden at åbne web-appen."
   },
   "projectAccessUpdated": {
     "message": "Projektadgang opdateret"
@@ -7508,5 +7530,70 @@
   },
   "collectionEnhancementsLearnMore": {
     "message": "Læs mere om samlingshåndtering"
+  },
+  "organizationInformation": {
+    "message": "Organisationsoplysninger"
+  },
+  "confirmationDetails": {
+    "message": "Bekræftelsesoplysninger"
+  },
+  "smFreeTrialThankYou": {
+    "message": "Tak for tilmeldingen til Bitwarden Secrets Manager!"
+  },
+  "smFreeTrialConfirmationEmail": {
+    "message": "Vi har sendt bekræftelsesmail til dig via "
+  },
+  "confirmCollectionEnhancementsDialogTitle": {
+    "message": "Denne handling er irreversibel"
+  },
+  "confirmCollectionEnhancementsDialogContent": {
+    "message": "Aktivering af denne funktion vil udfase manager-rollen og erstatte den med tilladelsen Kan administrere. Dette vil tage et øjeblik. Foretag ingen organisationsændringer før processen er færdig. Sikker på, at du vil fortsætte?"
+  },
+  "sorryToSeeYouGo": {
+    "message": "Vi er kede af, at du stopper! Hjælp os med at forbedre Bitwarden ved at dele årsagen til din opsigelse.",
+    "description": "A message shown to users as part of an offboarding survey asking them to provide more information on their subscription cancelation."
+  },
+  "selectCancellationReason": {
+    "message": "Vælg en opsigelsesårsag",
+    "description": "Used as a form field label for a select input on the offboarding survey."
+  },
+  "anyOtherFeedback": {
+    "message": "Er der anden feedback, du ønsker at dele?",
+    "description": "Used as a form field label for a textarea input on the offboarding survey."
+  },
+  "missingFeatures": {
+    "message": "Manglende funktioner",
+    "description": "An option for the offboarding survey shown when a user cancels their subscription."
+  },
+  "movingToAnotherTool": {
+    "message": "Flytter til andet værktøj",
+    "description": "An option for the offboarding survey shown when a user cancels their subscription."
+  },
+  "tooDifficultToUse": {
+    "message": "For svært at bruge",
+    "description": "An option for the offboarding survey shown when a user cancels their subscription."
+  },
+  "notUsingEnough": {
+    "message": "Bruger ikke nok",
+    "description": "An option for the offboarding survey shown when a user cancels their subscription."
+  },
+  "tooExpensive": {
+    "message": "For dyrt",
+    "description": "An option for the offboarding survey shown when a user cancels their subscription."
+  },
+  "freeForOneYear": {
+    "message": "Gratis i 1 år"
+  },
+  "newWebApp": {
+    "message": "Velkommen til den nye og forbedrede web-app. Læs mere om, hvad der er ændret."
+  },
+  "releaseBlog": {
+    "message": "Læs udgivelsesblog"
+  },
+  "adminConsole": {
+    "message": "Admin-konsol"
+  },
+  "providerPortal": {
+    "message": "Udbyderportal"
   }
 }

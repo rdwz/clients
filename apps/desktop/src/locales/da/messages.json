@@ -560,6 +560,12 @@
   "newAccountCreated": {
     "message": "Den nye konto er oprettet! Der kan nu logges ind."
   },
+  "youSuccessfullyLoggedIn": {
+    "message": "Du er nu logget ind"
+  },
+  "youMayCloseThisWindow": {
+    "message": "Dette vindue kan nu lukkes"
+  },
   "masterPassSent": {
     "message": "Der er sendt en e-mail til dig med dit hovedadgangskodetip."
   },
@@ -1548,7 +1554,7 @@
     "description": "Used as a card title description on the set password page to explain why the user is there"
   },
   "verificationRequired": {
-    "message": "Verification required",
+    "message": "Bekræftelse kræves",
     "description": "Default title for the user verification dialog."
   },
   "currentMasterPass": {
@@ -1877,40 +1883,40 @@
     "message": "Din hovedadgangskode overholder ikke en eller flere organisationspolitikker. For at få adgang til boksen skal hovedadgangskode opdateres nu. Fortsættes, logges du ud af den nuværende session og vil skulle logger ind igen. Aktive sessioner på andre enheder kan forblive aktive i op til én time."
   },
   "tryAgain": {
-    "message": "Try again"
+    "message": "Forsøg igen"
   },
   "verificationRequiredForActionSetPinToContinue": {
-    "message": "Verification required for this action. Set a PIN to continue."
+    "message": "Bekræftelse kræves for denne handling. Opsæt en PIN-kode for at fortsætte."
   },
   "setPin": {
-    "message": "Set PIN"
+    "message": "Opsæt PIN-kode"
   },
   "verifyWithBiometrics": {
-    "message": "Verify with biometrics"
+    "message": "Bekræft med biometri"
   },
   "awaitingConfirmation": {
-    "message": "Awaiting confirmation"
+    "message": "Afventer bekræftelse"
   },
   "couldNotCompleteBiometrics": {
-    "message": "Could not complete biometrics."
+    "message": "Kunne ikke færdiggøre biometri."
   },
   "needADifferentMethod": {
-    "message": "Need a different method?"
+    "message": "Brug for en anden metode?"
   },
   "useMasterPassword": {
-    "message": "Use master password"
+    "message": "Brug hovedadgangskode"
   },
   "usePin": {
-    "message": "Use PIN"
+    "message": "Brug PIN-kode"
   },
   "useBiometrics": {
-    "message": "Use biometrics"
+    "message": "Brug biometri"
   },
   "enterVerificationCodeSentToEmail": {
-    "message": "Enter the verification code that was sent to your email."
+    "message": "Angiv bekræftelseskoden tilsendt pr. e-mail."
   },
   "resendCode": {
-    "message": "Resend code"
+    "message": "Send kode igen"
   },
   "hours": {
     "message": "Timer"
@@ -2525,6 +2531,15 @@
       }
     }
   },
+  "launchDuoAndFollowStepsToFinishLoggingIn": {
+    "message": "Start Duo og følg trinnene for at fuldføre indlogningen."
+  },
+  "duoRequiredByOrgForAccount": {
+    "message": "Duo totrinsindlogning kræves for kontoen."
+  },
+  "launchDuo": {
+    "message": "Start Duo i webbrowser"
+  },
   "importFormatError": {
     "message": "Data er ikke korrekt formateret. Tjek importfilen og forsøg igen."
   },
@@ -2606,13 +2621,13 @@
     "message": "Forkert brugernavn eller adgangskode"
   },
   "incorrectPassword": {
-    "message": "Incorrect password"
+    "message": "Forkert adgangskode"
   },
   "incorrectCode": {
-    "message": "Incorrect code"
+    "message": "Forkert kode"
   },
   "incorrectPin": {
-    "message": "Incorrect PIN"
+    "message": "Forkert PIN-kode"
   },
   "multifactorAuthenticationFailed": {
     "message": "Multifaktorgodkendelse mislykkedes"

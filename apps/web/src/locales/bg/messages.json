@@ -638,9 +638,6 @@
   "learnMoreAboutPasswordless": {
     "message": "Learn more about passwordless"
   },
-  "passkeyEnterMasterPassword": {
-    "message": "Въведете главната си парола, за да променяте настройките за вписване със секретен ключ."
-  },
   "creatingPasskeyLoading": {
     "message": "Създаване на секретен ключ…"
   },
@@ -1350,6 +1347,18 @@
   "importData": {
     "message": "Внасяне на данни"
   },
+  "onboardingImportDataDetailsPartOne": {
+    "message": "Ако нямате данни за внасяне, вместо това може да създадете ",
+    "description": "This will be part of a larger sentence, that will read like this: If you don't have any data to import, you can create a new item instead. You may need to wait until your administrator confirms your organization membership."
+  },
+  "onboardingImportDataDetailsLink": {
+    "message": "нов елемент",
+    "description": "This will be part of a larger sentence, that will read like this: If you don't have any data to import, you can create a new item instead. You may need to wait until your administrator confirms your organization membership."
+  },
+  "onboardingImportDataDetailsPartTwo": {
+    "message": ". Може да трябва да почакате, докато администраторът потвърди членството Ви в организацията.",
+    "description": "This will be part of a larger sentence, that will read like this: If you don't have any data to import, you can create a new item instead. You may need to wait until your administrator confirms your organization membership."
+  },
   "importError": {
     "message": "Грешка при внасянето"
   },
@@ -1462,13 +1471,6 @@
   },
   "faviconDesc": {
     "message": "Показване на разпознаваемо изображение до всеки запис."
-  },
-  "enableFullWidth": {
-    "message": "Извеждане на цяла широчина",
-    "description": "Allows scaling the web vault UI's width"
-  },
-  "enableFullWidthDesc": {
-    "message": "Трезорът по уеб да заема цялата широчина на прозореца на браузъра."
   },
   "default": {
     "message": "Стандартно"
@@ -2531,6 +2533,15 @@
       }
     }
   },
+  "trialSecretsManagerThankYou": {
+    "message": "Благодарим Ви, че се регистрирахте в Управителя на пароли на Битуорден и избрахте плана $PLAN$!",
+    "placeholders": {
+      "plan": {
+        "content": "$1",
+        "example": "Teams"
+      }
+    }
+  },
   "trialPaidInfoMessage": {
     "message": "След като Вашият 7-дневен безплатен пробен период на плана $PLAN$ изтече, той ще бъде превърнат в платен абонамент.",
     "placeholders": {
@@ -2817,7 +2828,7 @@
     "message": "Неправилен код"
   },
   "incorrectPin": {
-    "message": "Incorrect PIN"
+    "message": "Неправилен ПИН"
   },
   "exportedVault": {
     "message": "Трезорът е изнесен."
@@ -4025,6 +4036,12 @@
   "ssoHandOff": {
     "message": "Вече може да затворите подпрозореца и да продължите в разширението."
   },
+  "youSuccessfullyLoggedIn": {
+    "message": "Вписахте се успешно"
+  },
+  "thisWindowWillCloseIn5Seconds": {
+    "message": "Този прозорец ще се затвори автоматично след 5 секунди"
+  },
   "includeAllTeamsFeatures": {
     "message": "Всички възможности на Екипния план, плюс:"
   },
@@ -4926,6 +4943,9 @@
   "newClientOrganizationDesc": {
     "message": "Създаване на нова клиентска организация, за която ще играете ролята на доставчик. Вие ще имате достъп до тази организация и ще можете да я управлявате."
   },
+  "newClient": {
+    "message": "Нов клиент"
+  },
   "addExistingOrganization": {
     "message": "Добавяне на съществуваща организация"
   },
@@ -5180,7 +5200,7 @@
     "message": "Проверка на сертификатите"
   },
   "spUniqueEntityId": {
-    "message": "Set a unique SP entity ID"
+    "message": "Задайте уникален идентификатор за доставчика на услугата"
   },
   "spUniqueEntityIdDesc": {
     "message": "Създаване на идентификатор, който е уникален за Вашата организация"
@@ -5909,6 +5929,15 @@
       }
     }
   },
+  "launchDuoAndFollowStepsToFinishLoggingIn": {
+    "message": "Стартирайте DUO и следвайте инструкциите, за да завършите вписването."
+  },
+  "duoRequiredByOrgForAccount": {
+    "message": "Вашата регистрация изисква двустепенно удостоверяване чрез DUO."
+  },
+  "launchDuo": {
+    "message": "Стартиране на DUO"
+  },
   "turnOn": {
     "message": "Включване"
   },
@@ -6608,37 +6637,37 @@
     }
   },
   "verificationRequiredForActionSetPinToContinue": {
-    "message": "Verification required for this action. Set a PIN to continue."
+    "message": "Това действие изисква потвърждаване. Задайте ПИН, за да продължите."
   },
   "setPin": {
-    "message": "Set PIN"
+    "message": "Задаване на ПИН"
   },
   "verifyWithBiometrics": {
-    "message": "Verify with biometrics"
+    "message": "Потвърждаване с биометрични данни"
   },
   "awaitingConfirmation": {
-    "message": "Awaiting confirmation"
+    "message": "Изчаква се потвърждение"
   },
   "couldNotCompleteBiometrics": {
-    "message": "Could not complete biometrics."
+    "message": "Действието с биометрични данни не може да бъде завършено."
   },
   "needADifferentMethod": {
-    "message": "Need a different method?"
+    "message": "Искате ли да опитате друг метод?"
   },
   "useMasterPassword": {
-    "message": "Use master password"
+    "message": "Използване на главната парола"
   },
   "usePin": {
-    "message": "Use PIN"
+    "message": "Използване на ПИН"
   },
   "useBiometrics": {
-    "message": "Use biometrics"
+    "message": "Използване на биометрични данни"
   },
   "enterVerificationCodeSentToEmail": {
-    "message": "Enter the verification code that was sent to your email."
+    "message": "Въведете кода за потвърждаване, който беше изпратен на Вашата е-поща."
   },
   "resendCode": {
-    "message": "Resend code"
+    "message": "Повторно изпращане на кода"
   },
   "membersColumnHeader": {
     "message": "Член/група"
@@ -6850,9 +6879,6 @@
   "secretsManager": {
     "message": "Управление на тайни"
   },
-  "secretsManagerBeta": {
-    "message": "Управление на тайни (Бета)"
-  },
   "secretsManagerAccessDescription": {
     "message": "Включване на достъпа на потребителите до Управлението на тайни."
   },
@@ -6899,6 +6925,9 @@
   "sdk": {
     "message": "SDK",
     "description": "Software Development Kit"
+  },
+  "createAnAccount": {
+    "message": "Създаване на регистрация"
   },
   "createSecret": {
     "message": "Създаване на тайна"
@@ -6955,12 +6984,6 @@
   },
   "selectionIsRequired": {
     "message": "Изборът е задължителен."
-  },
-  "secretsManagerSubscriptionDesc": {
-    "message": "Включете достъпа на организацията до Управлението на пароли, безплатно по време на периода на бета-версията. Потребителите могат да получат достъп до бета-версията в настройките за Членовете."
-  },
-  "secretsManagerEnable": {
-    "message": "Включване на управлението на тайни (Бета)"
   },
   "saPeopleWarningTitle": {
     "message": "Идентификаторите за достъп все още са налични"
@@ -7123,7 +7146,7 @@
     }
   },
   "verificationRequired": {
-    "message": "Verification required",
+    "message": "Изисква се потвърждение",
     "description": "Default title for the user verification dialog."
   },
   "recoverAccount": {
@@ -7227,6 +7250,15 @@
   },
   "startYour7DayFreeTrialOfBitwardenFor": {
     "message": "Започнете свой безплатен 7-дневен пробен период на Битуорден за $ORG$",
+    "placeholders": {
+      "org": {
+        "content": "$1",
+        "example": "Organization name"
+      }
+    }
+  },
+  "startYour7DayFreeTrialOfBitwardenSecretsManagerFor": {
+    "message": "Започнете безплатен 7-дневен пробен период на Управителя на пароли на Битуорден за $ORG$",
     "placeholders": {
       "org": {
         "content": "$1",
@@ -7395,22 +7427,6 @@
   "loggedInExclamation": {
     "message": "Вписахте се!"
   },
-  "smBetaEndedDesc": {
-    "message": "Бета-версията на Управлението на тайни приключи на $BETA_ENDING_DATE$. Остават $DAYS$ дни да добавите Управлението на тайни към своя платен абонамент, за да запазите достъпа си до създадените данни. Свържете се с поддръжката, ако искате да добавите Управлението на тайни към абонамента си.",
-    "placeholders": {
-      "beta_ending_date": {
-        "content": "$1",
-        "example": "August 1, 2023"
-      },
-      "days": {
-        "content": "$2",
-        "example": "11"
-      }
-    }
-  },
-  "betaEnding": {
-    "message": "Бета-версията приключва"
-  },
   "beta": {
     "message": "Бета"
   },
@@ -7456,6 +7472,12 @@
   "seeDetailedInstructions": {
     "message": "Може да намерите подробни инструкции в помощния ни уеб сайт на адрес",
     "description": "This is followed a by a hyperlink to the help website."
+  },
+  "installBrowserExtension": {
+    "message": "Инсталиране на разширението за браузъра"
+  },
+  "installBrowserExtensionDetails": {
+    "message": "Използвайте разширението, за да можете лесно да запазвате данни за вписване и да попълвате формуляри, без да отваряте уеб приложението."
   },
   "projectAccessUpdated": {
     "message": "Достъпът до проекта е актуализиран"
@@ -7508,5 +7530,70 @@
   },
   "collectionEnhancementsLearnMore": {
     "message": "Научете повече за управлението на колекции"
+  },
+  "organizationInformation": {
+    "message": "Информация за организацията"
+  },
+  "confirmationDetails": {
+    "message": "Подробности за потвърждението"
+  },
+  "smFreeTrialThankYou": {
+    "message": "Благодарим Ви, че се регистрирахте в Управителя на пароли на Битуорден!"
+  },
+  "smFreeTrialConfirmationEmail": {
+    "message": "Изпратихме Ви е-писмо за потвърждение до е-пощата Ви, на адрес: "
+  },
+  "confirmCollectionEnhancementsDialogTitle": {
+    "message": "Това действие е необратимо"
+  },
+  "confirmCollectionEnhancementsDialogContent": {
+    "message": "Ако включите тази функционалност, ролята на управителя ще бъде премахната и заменена от правомощието „може да управлява“. Това ще отнаме съвсем малко време. Не правете промени в организацията, докато процесът не завърши. Наистина ли искате да продължите?"
+  },
+  "sorryToSeeYouGo": {
+    "message": "Съжаляваме, че ни напускате! Помогнете ни да подобрим Битуорден, като споделите с нас защо прекратявате абонамента си.",
+    "description": "A message shown to users as part of an offboarding survey asking them to provide more information on their subscription cancelation."
+  },
+  "selectCancellationReason": {
+    "message": "Изберете причина за прекратяването",
+    "description": "Used as a form field label for a select input on the offboarding survey."
+  },
+  "anyOtherFeedback": {
+    "message": "Има ли нещо друго, което искате да споделите?",
+    "description": "Used as a form field label for a textarea input on the offboarding survey."
+  },
+  "missingFeatures": {
+    "message": "Липсващи функционалности",
+    "description": "An option for the offboarding survey shown when a user cancels their subscription."
+  },
+  "movingToAnotherTool": {
+    "message": "Ще изполвам друга подобна система",
+    "description": "An option for the offboarding survey shown when a user cancels their subscription."
+  },
+  "tooDifficultToUse": {
+    "message": "Твърде сложно е за ползване",
+    "description": "An option for the offboarding survey shown when a user cancels their subscription."
+  },
+  "notUsingEnough": {
+    "message": "Не го използвам достатъчно, че да си заслужава",
+    "description": "An option for the offboarding survey shown when a user cancels their subscription."
+  },
+  "tooExpensive": {
+    "message": "Твърде скъпо",
+    "description": "An option for the offboarding survey shown when a user cancels their subscription."
+  },
+  "freeForOneYear": {
+    "message": "Безплатно за 1 година"
+  },
+  "newWebApp": {
+    "message": "Добре дошли в новото и подобрено уеб приложение. Научете повече за това какво се е променило."
+  },
+  "releaseBlog": {
+    "message": "Прочетете публикацията за изданието в блога"
+  },
+  "adminConsole": {
+    "message": "Административна конзола"
+  },
+  "providerPortal": {
+    "message": "Портал за доставчици"
   }
 }

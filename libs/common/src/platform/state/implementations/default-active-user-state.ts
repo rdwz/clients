@@ -21,8 +21,8 @@ import {
   AbstractStorageService,
   ObservableStorageService,
 } from "../../abstractions/storage.service";
-import { KeyDefinition, userKeyBuilder } from "../key-definition";
 import { StateUpdateOptions, populateOptionsWithDefault } from "../state-update-options";
+import { UserKeyDefinition } from "../user-key-definition";
 import { ActiveUserState, CombinedState, activeMarker } from "../user-state";
 
 import { getStoredValue } from "./util";
@@ -31,7 +31,7 @@ const FAKE = Symbol("fake");
 
 export class DefaultActiveUserState<T> implements ActiveUserState<T> {
   [activeMarker]: true;
-  private updatePromise: Promise<T> | null = null;
+  private updatePromise: Promise<[UserId, T]> | null = null;
 
   private activeUserId$: Observable<UserId | null>;
 
@@ -39,7 +39,7 @@ export class DefaultActiveUserState<T> implements ActiveUserState<T> {
   state$: Observable<T>;
 
   constructor(
-    protected keyDefinition: KeyDefinition<T>,
+    protected keyDefinition: UserKeyDefinition<T>,
     private accountService: AccountService,
     private chosenStorageLocation: AbstractStorageService & ObservableStorageService,
   ) {
@@ -61,7 +61,7 @@ export class DefaultActiveUserState<T> implements ActiveUserState<T> {
           return FAKE;
         }
 
-        const fullKey = userKeyBuilder(userId, this.keyDefinition);
+        const fullKey = this.keyDefinition.buildKey(userId);
         const data = await getStoredValue(
           fullKey,
           this.chosenStorageLocation,
@@ -80,7 +80,7 @@ export class DefaultActiveUserState<T> implements ActiveUserState<T> {
           // Null userId is already taken care of through the userChange observable above
           filter((u) => u != null),
           // Take the userId and build the fullKey that we can now create
-          map((userId) => [userId, userKeyBuilder(userId, this.keyDefinition)] as const),
+          map((userId) => [userId, this.keyDefinition.buildKey(userId)] as const),
         ),
       ),
       // Filter to only storage updates that pertain to our key
@@ -120,15 +120,15 @@ export class DefaultActiveUserState<T> implements ActiveUserState<T> {
   async update<TCombine>(
     configureState: (state: T, dependency: TCombine) => T,
     options: StateUpdateOptions<T, TCombine> = {},
-  ): Promise<T> {
+  ): Promise<[UserId, T]> {
     options = populateOptionsWithDefault(options);
     try {
       if (this.updatePromise != null) {
         await this.updatePromise;
       }
       this.updatePromise = this.internalUpdate(configureState, options);
-      const newState = await this.updatePromise;
-      return newState;
+      const [userId, newState] = await this.updatePromise;
+      return [userId, newState];
     } finally {
       this.updatePromise = null;
     }
@@ -137,20 +137,20 @@ export class DefaultActiveUserState<T> implements ActiveUserState<T> {
   private async internalUpdate<TCombine>(
     configureState: (state: T, dependency: TCombine) => T,
     options: StateUpdateOptions<T, TCombine>,
-  ) {
-    const [key, currentState] = await this.getStateForUpdate();
+  ): Promise<[UserId, T]> {
+    const [userId, key, currentState] = await this.getStateForUpdate();
     const combinedDependencies =
       options.combineLatestWith != null
         ? await firstValueFrom(options.combineLatestWith.pipe(timeout(options.msTimeout)))
         : null;
 
     if (!options.shouldUpdate(currentState, combinedDependencies)) {
-      return currentState;
+      return [userId, currentState];
     }
 
     const newState = configureState(currentState, combinedDependencies);
     await this.saveToStorage(key, newState);
-    return newState;
+    return [userId, newState];
   }
 
   /** For use in update methods, does not wait for update to complete before yielding state.
@@ -168,8 +168,9 @@ export class DefaultActiveUserState<T> implements ActiveUserState<T> {
     if (userId == null) {
       throw new Error("No active user at this time.");
     }
-    const fullKey = userKeyBuilder(userId, this.keyDefinition);
+    const fullKey = this.keyDefinition.buildKey(userId);
     return [
+      userId,
       fullKey,
       await getStoredValue(fullKey, this.chosenStorageLocation, this.keyDefinition.deserializer),
     ] as const;

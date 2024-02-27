@@ -80,18 +80,24 @@ export class NativeMessagingBackground {
     private logService: LogService,
     private authService: AuthService,
   ) {
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.stateService.setBiometricFingerprintValidated(false);
 
     if (chrome?.permissions?.onAdded) {
       // Reload extension to activate nativeMessaging
       chrome.permissions.onAdded.addListener((permissions) => {
-        BrowserApi.reloadExtension(null);
+        if (permissions.permissions?.includes("nativeMessaging")) {
+          BrowserApi.reloadExtension(null);
+        }
       });
     }
   }
 
   async connect() {
     this.appId = await this.appIdService.getAppId();
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.stateService.setBiometricFingerprintValidated(false);
 
     return new Promise<void>((resolve, reject) => {
@@ -138,6 +144,8 @@ export class NativeMessagingBackground {
 
             if (this.validatingFingerprint) {
               this.validatingFingerprint = false;
+              // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+              // eslint-disable-next-line @typescript-eslint/no-floating-promises
               this.stateService.setBiometricFingerprintValidated(true);
             }
             this.sharedSecret = new SymmetricCryptoKey(decrypted);
@@ -165,6 +173,8 @@ export class NativeMessagingBackground {
           case "verifyFingerprint": {
             if (this.sharedSecret == null) {
               this.validatingFingerprint = true;
+              // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+              // eslint-disable-next-line @typescript-eslint/no-floating-promises
               this.showFingerprintDialog();
             }
             break;
@@ -178,6 +188,8 @@ export class NativeMessagingBackground {
               return;
             }
 
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.onMessage(message.message);
         }
       });
@@ -286,8 +298,6 @@ export class NativeMessagingBackground {
 
     switch (message.command) {
       case "biometricUnlock": {
-        await this.stateService.setBiometricAwaitingAcceptance(null);
-
         if (message.response === "not enabled") {
           this.messagingService.send("showDialog", {
             title: { key: "biometricsNotEnabledTitle" },
@@ -383,6 +393,8 @@ export class NativeMessagingBackground {
             return;
           }
 
+          // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
           this.runtimeBackground.processMessage({ command: "unlocked" }, null);
         }
         break;
@@ -402,6 +414,8 @@ export class NativeMessagingBackground {
     this.publicKey = publicKey;
     this.privateKey = privateKey;
 
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.sendUnencrypted({
       command: "setupEncryption",
       publicKey: Utils.fromBufferToB64(publicKey),

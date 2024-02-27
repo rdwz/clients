@@ -4,7 +4,7 @@ import { ProfileOrganizationResponse } from "../../admin-console/models/response
 import { ProfileProviderOrganizationResponse } from "../../admin-console/models/response/profile-provider-organization.response";
 import { ProfileProviderResponse } from "../../admin-console/models/response/profile-provider.response";
 import { KdfConfig } from "../../auth/models/domain/kdf-config";
-import { OrganizationId } from "../../types/guid";
+import { OrganizationId, ProviderId } from "../../types/guid";
 import { UserKey, MasterKey, OrgKey, ProviderKey, PinKey, CipherKey } from "../../types/key";
 import { KeySuffixOptions, KdfType, HashPurpose } from "../enums";
 import { EncArrayBuffer } from "../models/domain/enc-array-buffer";
@@ -12,10 +12,13 @@ import { EncString } from "../models/domain/enc-string";
 import { SymmetricCryptoKey } from "../models/domain/symmetric-crypto-key";
 
 export abstract class CryptoService {
+  activeUserKey$: Observable<UserKey>;
   /**
    * Sets the provided user key and stores
    * any other necessary versions (such as auto, biometrics,
    * or pin)
+   *
+   * @throws when key is null. Use {@link clearUserKey} instead
    * @param key The user key to set
    * @param userId The desired user
    */
@@ -229,6 +232,7 @@ export abstract class CryptoService {
    * provider keys currently in memory
    * @param providers The providers to set keys for
    */
+  activeUserProviderKeys$: Observable<Record<ProviderId, ProviderKey>>;
   setProviderKeys: (orgs: ProfileProviderResponse[]) => Promise<void>;
   /**
    * @param providerId The desired provider
@@ -236,9 +240,9 @@ export abstract class CryptoService {
    */
   getProviderKey: (providerId: string) => Promise<ProviderKey>;
   /**
-   * @returns A map of the provider Ids to their symmetric keys
+   * @returns A record of the provider Ids to their symmetric keys
    */
-  getProviderKeys: () => Promise<Map<string, ProviderKey>>;
+  getProviderKeys: () => Promise<Record<ProviderId, ProviderKey>>;
   /**
    * @param memoryOnly Clear only the in-memory keys
    * @param userId The desired user

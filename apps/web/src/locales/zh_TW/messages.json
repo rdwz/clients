@@ -638,9 +638,6 @@
   "learnMoreAboutPasswordless": {
     "message": "瞭解更多關於無密碼登入的資訊"
   },
-  "passkeyEnterMasterPassword": {
-    "message": "輸入您的主密碼以修改密碼金鑰登入設定。"
-  },
   "creatingPasskeyLoading": {
     "message": "正在建立密碼金輪..."
   },
@@ -1350,6 +1347,18 @@
   "importData": {
     "message": "匯入資料"
   },
+  "onboardingImportDataDetailsPartOne": {
+    "message": "If you don't have any data to import, you can create a ",
+    "description": "This will be part of a larger sentence, that will read like this: If you don't have any data to import, you can create a new item instead. You may need to wait until your administrator confirms your organization membership."
+  },
+  "onboardingImportDataDetailsLink": {
+    "message": "new item",
+    "description": "This will be part of a larger sentence, that will read like this: If you don't have any data to import, you can create a new item instead. You may need to wait until your administrator confirms your organization membership."
+  },
+  "onboardingImportDataDetailsPartTwo": {
+    "message": " instead. You may need to wait until your administrator confirms your organization membership.",
+    "description": "This will be part of a larger sentence, that will read like this: If you don't have any data to import, you can create a new item instead. You may need to wait until your administrator confirms your organization membership."
+  },
   "importError": {
     "message": "匯入時發生錯誤"
   },
@@ -1462,13 +1471,6 @@
   },
   "faviconDesc": {
     "message": "在每個登入資料旁顯示一個可辨識的圖片。"
-  },
-  "enableFullWidth": {
-    "message": "顯示全寬度佈局",
-    "description": "Allows scaling the web vault UI's width"
-  },
-  "enableFullWidthDesc": {
-    "message": "允許將網頁版密碼庫完全展開至瀏覽器視窗寬度。"
   },
   "default": {
     "message": "預設"
@@ -2524,6 +2526,15 @@
   },
   "trialThankYou": {
     "message": "感謝您申請 Bitwarden for $PLAN$！",
+    "placeholders": {
+      "plan": {
+        "content": "$1",
+        "example": "Teams"
+      }
+    }
+  },
+  "trialSecretsManagerThankYou": {
+    "message": "Thanks for signing up for Bitwarden Secrets Manager for $PLAN$!",
     "placeholders": {
       "plan": {
         "content": "$1",
@@ -4025,6 +4036,12 @@
   "ssoHandOff": {
     "message": "您現在可以關閉此分頁，並且回到擴充套件繼續。"
   },
+  "youSuccessfullyLoggedIn": {
+    "message": "You successfully logged in"
+  },
+  "thisWindowWillCloseIn5Seconds": {
+    "message": "This window will automatically close in 5 seconds"
+  },
   "includeAllTeamsFeatures": {
     "message": "包含所有團隊版功能"
   },
@@ -4925,6 +4942,9 @@
   },
   "newClientOrganizationDesc": {
     "message": "建立一個新的客戶組織，該組織將作為提供者與您建立關聯。您將能夠存取和管理此組織。"
+  },
+  "newClient": {
+    "message": "New client"
   },
   "addExistingOrganization": {
     "message": "新增現有組織"
@@ -5909,6 +5929,15 @@
       }
     }
   },
+  "launchDuoAndFollowStepsToFinishLoggingIn": {
+    "message": "Launch Duo and follow the steps to finish logging in."
+  },
+  "duoRequiredByOrgForAccount": {
+    "message": "Duo two-step login is required for your account."
+  },
+  "launchDuo": {
+    "message": "Launch Duo"
+  },
   "turnOn": {
     "message": "開啟"
   },
@@ -6850,9 +6879,6 @@
   "secretsManager": {
     "message": "Secrets Manager"
   },
-  "secretsManagerBeta": {
-    "message": "Secrets Manager Beta 版"
-  },
   "secretsManagerAccessDescription": {
     "message": "激活對 Secrets Manager 的使用者存取權限。"
   },
@@ -6899,6 +6925,9 @@
   "sdk": {
     "message": "SDK",
     "description": "Software Development Kit"
+  },
+  "createAnAccount": {
+    "message": "Create an account"
   },
   "createSecret": {
     "message": "建立機密"
@@ -6955,12 +6984,6 @@
   },
   "selectionIsRequired": {
     "message": "必須選擇。"
-  },
-  "secretsManagerSubscriptionDesc": {
-    "message": "在 Beta 計劃期間，啟用組織對 Secrets Manager 的存取權限是免費的。成員中的使用者可以被授予對 Beta 版的存取權限。"
-  },
-  "secretsManagerEnable": {
-    "message": "啟用 Secrets Manager Beta 版"
   },
   "saPeopleWarningTitle": {
     "message": "存取權杖依然可用"
@@ -7234,6 +7257,15 @@
       }
     }
   },
+  "startYour7DayFreeTrialOfBitwardenSecretsManagerFor": {
+    "message": "Start your 7-Day free trial of Bitwarden Secrets Manager for $ORG$",
+    "placeholders": {
+      "org": {
+        "content": "$1",
+        "example": "Organization name"
+      }
+    }
+  },
   "next": {
     "message": "下一步"
   },
@@ -7395,22 +7427,6 @@
   "loggedInExclamation": {
     "message": "已登入！"
   },
-  "smBetaEndedDesc": {
-    "message": "Secrets Manager Beta 版已於 $BETA_ENDING_DATE$ 結束。您還剩 $DAYS$ 天時間將 Secrets Manager 新增至您的付費訂閱，以保持對 Secrets Manager 資料的存取。聯絡客戶成功團隊將 Secrets Manager 新增至您的訂閱。",
-    "placeholders": {
-      "beta_ending_date": {
-        "content": "$1",
-        "example": "August 1, 2023"
-      },
-      "days": {
-        "content": "$2",
-        "example": "11"
-      }
-    }
-  },
-  "betaEnding": {
-    "message": "Beta 版即將結束"
-  },
   "beta": {
     "message": "Beta 版"
   },
@@ -7456,6 +7472,12 @@
   "seeDetailedInstructions": {
     "message": "請參閱我們的幫助網站上的詳細說明：",
     "description": "This is followed a by a hyperlink to the help website."
+  },
+  "installBrowserExtension": {
+    "message": "Install browser extension"
+  },
+  "installBrowserExtensionDetails": {
+    "message": "Use the extension to quickly save logins and auto-fill forms without opening the web app."
   },
   "projectAccessUpdated": {
     "message": "Project access updated"
@@ -7508,5 +7530,70 @@
   },
   "collectionEnhancementsLearnMore": {
     "message": "Learn more about collection management"
+  },
+  "organizationInformation": {
+    "message": "Organization information"
+  },
+  "confirmationDetails": {
+    "message": "Confirmation details"
+  },
+  "smFreeTrialThankYou": {
+    "message": "Thank you for signing up for Bitwarden Secrets Manager!"
+  },
+  "smFreeTrialConfirmationEmail": {
+    "message": "We've sent a confirmation email to your email at "
+  },
+  "confirmCollectionEnhancementsDialogTitle": {
+    "message": "This action is irreversible"
+  },
+  "confirmCollectionEnhancementsDialogContent": {
+    "message": "Turning on this feature will deprecate the manager role and replace it with a Can manage permission. This will take a few moments. Do not make any organization changes until it is complete. Are you sure you want to proceed?"
+  },
+  "sorryToSeeYouGo": {
+    "message": "Sorry to see you go! Help improve Bitwarden by sharing why you're canceling.",
+    "description": "A message shown to users as part of an offboarding survey asking them to provide more information on their subscription cancelation."
+  },
+  "selectCancellationReason": {
+    "message": "Select a reason for canceling",
+    "description": "Used as a form field label for a select input on the offboarding survey."
+  },
+  "anyOtherFeedback": {
+    "message": "Is there any other feedback you'd like to share?",
+    "description": "Used as a form field label for a textarea input on the offboarding survey."
+  },
+  "missingFeatures": {
+    "message": "Missing features",
+    "description": "An option for the offboarding survey shown when a user cancels their subscription."
+  },
+  "movingToAnotherTool": {
+    "message": "Moving to another tool",
+    "description": "An option for the offboarding survey shown when a user cancels their subscription."
+  },
+  "tooDifficultToUse": {
+    "message": "Too difficult to use",
+    "description": "An option for the offboarding survey shown when a user cancels their subscription."
+  },
+  "notUsingEnough": {
+    "message": "Not using enough",
+    "description": "An option for the offboarding survey shown when a user cancels their subscription."
+  },
+  "tooExpensive": {
+    "message": "Too expensive",
+    "description": "An option for the offboarding survey shown when a user cancels their subscription."
+  },
+  "freeForOneYear": {
+    "message": "Free for 1 year"
+  },
+  "newWebApp": {
+    "message": "Welcome to the new and improved web app. Learn more about what’s changed."
+  },
+  "releaseBlog": {
+    "message": "Read release blog"
+  },
+  "adminConsole": {
+    "message": "Admin Console"
+  },
+  "providerPortal": {
+    "message": "Provider Portal"
   }
 }

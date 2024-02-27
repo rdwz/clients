@@ -20,7 +20,9 @@ import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.se
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
+import { BiometricStateService } from "@bitwarden/common/platform/biometrics/biometric-state.service";
 import { PasswordGenerationServiceAbstraction } from "@bitwarden/common/tools/generator/password";
+import { UserId } from "@bitwarden/common/types/guid";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { CollectionService } from "@bitwarden/common/vault/abstractions/collection.service";
 import { InternalFolderService } from "@bitwarden/common/vault/abstractions/folder/folder.service.abstraction";
@@ -82,6 +84,7 @@ export class AppComponent implements OnDestroy, OnInit {
     private keyConnectorService: KeyConnectorService,
     private configService: ConfigServiceAbstraction,
     private dialogService: DialogService,
+    private biometricStateService: BiometricStateService,
   ) {}
 
   ngOnInit() {
@@ -105,28 +108,44 @@ export class AppComponent implements OnDestroy, OnInit {
     /// and subscribe to events through that service observable.
     ///
     this.broadcasterService.subscribe(BroadcasterSubscriptionId, async (message: any) => {
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.ngZone.run(async () => {
         switch (message.command) {
           case "loggedIn":
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.notificationsService.updateConnection(false);
             break;
           case "loggedOut":
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.notificationsService.updateConnection(false);
             break;
           case "unlocked":
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.notificationsService.updateConnection(false);
             break;
           case "authBlocked":
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.router.navigate(["/"]);
             break;
           case "logout":
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.logOut(!!message.expired, message.redirect);
             break;
           case "lockVault":
             await this.vaultTimeoutService.lock();
             break;
           case "locked":
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.notificationsService.updateConnection(false);
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.router.navigate(["lock"]);
             break;
           case "lockedUrl":
@@ -146,6 +165,8 @@ export class AppComponent implements OnDestroy, OnInit {
               type: "info",
             });
             if (upgradeConfirmed) {
+              // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+              // eslint-disable-next-line @typescript-eslint/no-floating-promises
               this.router.navigate([
                 "organizations",
                 message.organizationId,
@@ -163,6 +184,8 @@ export class AppComponent implements OnDestroy, OnInit {
               type: "success",
             });
             if (premiumConfirmed) {
+              // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+              // eslint-disable-next-line @typescript-eslint/no-floating-promises
               this.router.navigate(["settings/subscription/premium"]);
             }
             break;
@@ -184,10 +207,9 @@ export class AppComponent implements OnDestroy, OnInit {
           case "showToast":
             this.showToast(message);
             break;
-          case "setFullWidth":
-            this.setFullWidth();
-            break;
           case "convertAccountToKeyConnector":
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.router.navigate(["/remove-password"]);
             break;
           default:
@@ -216,8 +238,6 @@ export class AppComponent implements OnDestroy, OnInit {
       new DisableSendPolicy(),
       new SendOptionsPolicy(),
     ]);
-
-    this.setFullWidth();
   }
 
   ngOnDestroy() {
@@ -239,6 +259,7 @@ export class AppComponent implements OnDestroy, OnInit {
       this.policyService.clear(userId),
       this.passwordGenerationService.clear(),
       this.keyConnectorService.clear(),
+      this.biometricStateService.logout(userId as UserId),
     ]);
 
     this.searchService.clearIndex();
@@ -253,6 +274,8 @@ export class AppComponent implements OnDestroy, OnInit {
 
       await this.stateService.clean({ userId: userId });
       if (redirect) {
+        // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.router.navigate(["/"]);
       }
     });
@@ -265,6 +288,8 @@ export class AppComponent implements OnDestroy, OnInit {
     }
 
     this.lastActivity = now;
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.stateService.setLastActive(now);
     // Idle states
     if (this.isIdle) {
@@ -313,18 +338,13 @@ export class AppComponent implements OnDestroy, OnInit {
 
   private idleStateChanged() {
     if (this.isIdle) {
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.notificationsService.disconnectFromInactivity();
     } else {
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.notificationsService.reconnectFromActivity();
-    }
-  }
-
-  private async setFullWidth() {
-    const enableFullWidth = await this.stateService.getEnableFullWidth();
-    if (enableFullWidth) {
-      document.body.classList.add("full-width");
-    } else {
-      document.body.classList.remove("full-width");
     }
   }
 }

@@ -1,4 +1,7 @@
+import { Observable, map } from "rxjs";
+
 import { AccountService } from "../../../auth/abstractions/account.service";
+import { UserId } from "../../../types/guid";
 import {
   AbstractMemoryStorageService,
   AbstractStorageService,
@@ -6,6 +9,7 @@ import {
 } from "../../abstractions/storage.service";
 import { KeyDefinition } from "../key-definition";
 import { StateDefinition } from "../state-definition";
+import { UserKeyDefinition, isUserKeyDefinition } from "../user-key-definition";
 import { ActiveUserState } from "../user-state";
 import { ActiveUserStateProvider } from "../user-state.provider";
 
@@ -14,13 +18,20 @@ import { DefaultActiveUserState } from "./default-active-user-state";
 export class DefaultActiveUserStateProvider implements ActiveUserStateProvider {
   private cache: Record<string, ActiveUserState<unknown>> = {};
 
+  activeUserId$: Observable<UserId | undefined>;
+
   constructor(
     protected readonly accountService: AccountService,
     protected readonly memoryStorage: AbstractMemoryStorageService & ObservableStorageService,
     protected readonly diskStorage: AbstractStorageService & ObservableStorageService,
-  ) {}
+  ) {
+    this.activeUserId$ = this.accountService.activeAccount$.pipe(map((account) => account?.id));
+  }
 
-  get<T>(keyDefinition: KeyDefinition<T>): ActiveUserState<T> {
+  get<T>(keyDefinition: KeyDefinition<T> | UserKeyDefinition<T>): ActiveUserState<T> {
+    if (!isUserKeyDefinition(keyDefinition)) {
+      keyDefinition = UserKeyDefinition.fromBaseKeyDefinition(keyDefinition);
+    }
     const cacheKey = this.buildCacheKey(keyDefinition);
     const existingUserState = this.cache[cacheKey];
     if (existingUserState != null) {
@@ -34,11 +45,11 @@ export class DefaultActiveUserStateProvider implements ActiveUserStateProvider {
     return newUserState;
   }
 
-  private buildCacheKey(keyDefinition: KeyDefinition<unknown>) {
+  private buildCacheKey(keyDefinition: UserKeyDefinition<unknown>) {
     return `${this.getLocationString(keyDefinition)}_${keyDefinition.fullName}`;
   }
 
-  protected buildActiveUserState<T>(keyDefinition: KeyDefinition<T>): ActiveUserState<T> {
+  protected buildActiveUserState<T>(keyDefinition: UserKeyDefinition<T>): ActiveUserState<T> {
     return new DefaultActiveUserState<T>(
       keyDefinition,
       this.accountService,
@@ -46,7 +57,7 @@ export class DefaultActiveUserStateProvider implements ActiveUserStateProvider {
     );
   }
 
-  protected getLocationString(keyDefinition: KeyDefinition<unknown>): string {
+  protected getLocationString(keyDefinition: UserKeyDefinition<unknown>): string {
     return keyDefinition.stateDefinition.defaultStorageLocation;
   }
 

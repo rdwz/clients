@@ -1,7 +1,9 @@
+import {
+  AddLoginMessageData,
+  ChangePasswordMessageData,
+} from "../background/abstractions/notification.background";
 import AutofillField from "../models/autofill-field";
 import { WatchedForm } from "../models/watched-form";
-import AddLoginRuntimeMessage from "../notification/models/add-login-runtime-message";
-import ChangePasswordRuntimeMessage from "../notification/models/change-password-runtime-message";
 import { FormData } from "../services/abstractions/autofill.service";
 import { GlobalSettings, UserSettings } from "../types";
 import { getFromLocalStorage, setupExtensionDisconnectAction } from "../utils";
@@ -28,9 +30,13 @@ interface HTMLElementWithFormOpId extends HTMLElement {
  * and async scripts to finish loading.
  * https://developer.mozilla.org/en-US/docs/Web/API/Window/DOMContentLoaded_event
  */
+let notificationBarIframe: HTMLIFrameElement = null;
+
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", loadNotificationBar);
 } else {
+  // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
   loadNotificationBar();
 }
 
@@ -188,6 +194,18 @@ async function loadNotificationBar() {
       watchForms(msg.data.forms);
       sendResponse();
       return true;
+    } else if (msg.command === "saveCipherAttemptCompleted") {
+      if (!notificationBarIframe) {
+        return;
+      }
+
+      notificationBarIframe.contentWindow?.postMessage(
+        {
+          command: "saveCipherAttemptCompleted",
+          error: msg.data?.error,
+        },
+        "*",
+      );
     }
   }
   // End Message Processing
@@ -609,7 +627,7 @@ async function loadNotificationBar() {
         watchedForms[i].passwordEl != null
       ) {
         // Create a login object from the form data
-        const login: AddLoginRuntimeMessage = {
+        const login: AddLoginMessageData = {
           username: watchedForms[i].usernameEl.value,
           password: watchedForms[i].passwordEl.value,
           url: document.URL,
@@ -622,7 +640,7 @@ async function loadNotificationBar() {
           processedForm(form);
           sendPlatformMessage({
             command: "bgAddLogin",
-            login: login,
+            login,
           });
           break;
         } else if (
@@ -692,15 +710,12 @@ async function loadNotificationBar() {
 
           // Send a message to the `notification.background.ts` background script to notify the user that their password has changed
           // which eventually calls the `processMessage(...)` method in this script with command `openNotificationBar`
-          const changePasswordRuntimeMessage: ChangePasswordRuntimeMessage = {
+          const data: ChangePasswordMessageData = {
             newPassword: newPass,
             currentPassword: curPass,
             url: document.URL,
           };
-          sendPlatformMessage({
-            command: "bgChangedPassword",
-            data: changePasswordRuntimeMessage,
-          });
+          sendPlatformMessage({ command: "bgChangedPassword", data });
           break;
         }
       }
@@ -868,12 +883,13 @@ async function loadNotificationBar() {
       return;
     }
 
-    const barPageUrl: string = chrome.extension.getURL(barPage);
+    const barPageUrl: string = chrome.runtime.getURL(barPage);
 
-    const iframe = document.createElement("iframe");
-    iframe.style.cssText = "height: 42px; width: 100%; border: 0; min-height: initial;";
-    iframe.id = "bit-notification-bar-iframe";
-    iframe.src = barPageUrl;
+    notificationBarIframe = document.createElement("iframe");
+    notificationBarIframe.style.cssText =
+      "height: 42px; width: 100%; border: 0; min-height: initial;";
+    notificationBarIframe.id = "bit-notification-bar-iframe";
+    notificationBarIframe.src = barPageUrl;
 
     const frameDiv = document.createElement("div");
     frameDiv.setAttribute("aria-live", "polite");
@@ -881,10 +897,10 @@ async function loadNotificationBar() {
     frameDiv.style.cssText =
       "height: 42px; width: 100%; top: 0; left: 0; padding: 0; position: fixed; " +
       "z-index: 2147483647; visibility: visible;";
-    frameDiv.appendChild(iframe);
+    frameDiv.appendChild(notificationBarIframe);
     document.body.appendChild(frameDiv);
 
-    (iframe.contentWindow.location as any) = barPageUrl;
+    (notificationBarIframe.contentWindow.location as any) = barPageUrl;
 
     const spacer = document.createElement("div");
     spacer.id = "bit-notification-bar-spacer";
@@ -896,6 +912,7 @@ async function loadNotificationBar() {
     const barEl = document.getElementById("bit-notification-bar");
     if (barEl != null) {
       barEl.parentElement.removeChild(barEl);
+      notificationBarIframe = null;
     }
 
     const spacerEl = document.getElementById("bit-notification-bar-spacer");
@@ -909,13 +926,9 @@ async function loadNotificationBar() {
 
     switch (barType) {
       case "add":
-        sendPlatformMessage({
-          command: "bgAddClose",
-        });
-        break;
       case "change":
         sendPlatformMessage({
-          command: "bgChangeClose",
+          command: "bgRemoveTabFromNotificationQueue",
         });
         break;
       default:
@@ -942,6 +955,8 @@ async function loadNotificationBar() {
 
   // Helper Functions
   function sendPlatformMessage(msg: any) {
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     chrome.runtime.sendMessage(msg);
   }
 

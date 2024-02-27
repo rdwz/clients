@@ -19,23 +19,29 @@ import { LoginService as LoginServiceAbstraction } from "@bitwarden/common/auth/
 import { LoginService } from "@bitwarden/common/auth/services/login.service";
 import { FileDownloadService } from "@bitwarden/common/platform/abstractions/file-download/file-download.service";
 import { I18nService as I18nServiceAbstraction } from "@bitwarden/common/platform/abstractions/i18n.service";
+import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { MessagingService as MessagingServiceAbstraction } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { PlatformUtilsService as PlatformUtilsServiceAbstraction } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { StateService as BaseStateServiceAbstraction } from "@bitwarden/common/platform/abstractions/state.service";
 import { AbstractStorageService } from "@bitwarden/common/platform/abstractions/storage.service";
 import { StateFactory } from "@bitwarden/common/platform/factories/state-factory";
 import { MemoryStorageService } from "@bitwarden/common/platform/services/memory-storage.service";
+import { MigrationBuilderService } from "@bitwarden/common/platform/services/migration-builder.service";
+import { MigrationRunner } from "@bitwarden/common/platform/services/migration-runner";
 import {
   ActiveUserStateProvider,
   GlobalStateProvider,
   SingleUserStateProvider,
 } from "@bitwarden/common/platform/state";
+// eslint-disable-next-line import/no-restricted-paths -- Implementation for memory storage
+import { MemoryStorageService as MemoryStorageServiceForStateProviders } from "@bitwarden/common/platform/state/storage/memory-storage.service";
 
 import { PolicyListService } from "../admin-console/core/policy-list.service";
 import { HtmlStorageService } from "../core/html-storage.service";
 import { I18nService } from "../core/i18n.service";
 import { WebActiveUserStateProvider } from "../platform/web-active-user-state.provider";
 import { WebGlobalStateProvider } from "../platform/web-global-state.provider";
+import { WebMigrationRunner } from "../platform/web-migration-runner";
 import { WebSingleUserStateProvider } from "../platform/web-single-user-state.provider";
 import { WindowStorageService } from "../platform/window-storage.service";
 import { CollectionAdminService } from "../vault/core/collection-admin.service";
@@ -87,7 +93,7 @@ import { WebPlatformUtilsService } from "./web-platform-utils.service";
       provide: MEMORY_STORAGE,
       useClass: MemoryStorageService,
     },
-    { provide: OBSERVABLE_MEMORY_STORAGE, useExisting: MEMORY_STORAGE },
+    { provide: OBSERVABLE_MEMORY_STORAGE, useClass: MemoryStorageServiceForStateProviders },
     {
       provide: OBSERVABLE_DISK_STORAGE,
       useFactory: () => new WindowStorageService(window.sessionStorage),
@@ -120,14 +126,14 @@ import { WebPlatformUtilsService } from "./web-platform-utils.service";
     {
       provide: SingleUserStateProvider,
       useClass: WebSingleUserStateProvider,
-      deps: [MEMORY_STORAGE, OBSERVABLE_DISK_STORAGE, OBSERVABLE_DISK_LOCAL_STORAGE],
+      deps: [OBSERVABLE_MEMORY_STORAGE, OBSERVABLE_DISK_STORAGE, OBSERVABLE_DISK_LOCAL_STORAGE],
     },
     {
       provide: ActiveUserStateProvider,
       useClass: WebActiveUserStateProvider,
       deps: [
         AccountService,
-        MEMORY_STORAGE,
+        OBSERVABLE_MEMORY_STORAGE,
         OBSERVABLE_DISK_STORAGE,
         OBSERVABLE_DISK_LOCAL_STORAGE,
       ],
@@ -135,7 +141,17 @@ import { WebPlatformUtilsService } from "./web-platform-utils.service";
     {
       provide: GlobalStateProvider,
       useClass: WebGlobalStateProvider,
-      deps: [MEMORY_STORAGE, OBSERVABLE_DISK_STORAGE, OBSERVABLE_DISK_LOCAL_STORAGE],
+      deps: [OBSERVABLE_MEMORY_STORAGE, OBSERVABLE_DISK_STORAGE, OBSERVABLE_DISK_LOCAL_STORAGE],
+    },
+    {
+      provide: MigrationRunner,
+      useClass: WebMigrationRunner,
+      deps: [
+        AbstractStorageService,
+        LogService,
+        MigrationBuilderService,
+        OBSERVABLE_DISK_LOCAL_STORAGE,
+      ],
     },
   ],
 })
