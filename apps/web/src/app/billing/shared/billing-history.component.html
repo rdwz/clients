@@ -1,4 +1,6 @@
-<h2 bitTypography="h2" class="tw-mt-3">{{ "invoices" | i18n }}</h2>
+<bit-section>
+  <h3 bitTypography="h3">{{ "invoices" | i18n }}</h3>
+</bit-section>
 <p bitTypography="body1" *ngIf="!invoices || !invoices.length">{{ "noInvoices" | i18n }}</p>
 <bit-table>
   <ng-template body>
@@ -32,7 +34,9 @@
     </tr>
   </ng-template>
 </bit-table>
-<h2 bitTypography="h2" class="tw-mt-16">{{ "transactions" | i18n }}</h2>
+<bit-section>
+  <h3 bitTypography="h3" class="tw-mt-16">{{ "transactions" | i18n }}</h3>
+</bit-section>
 <p bitTypography="body1" *ngIf="!transactions || !transactions.length">
   {{ "noTransactions" | i18n }}
 </p>
