@@ -37,6 +37,9 @@ export const GENERATOR_MEMORY = new StateDefinition("generator", "memory");
 
 export const BIOMETRIC_SETTINGS_DISK = new StateDefinition("biometricSettings", "disk");
 
+// Auth
+export const KEY_CONNECTOR_DISK = new StateDefinition("keyConnector", "disk");
+
 // Admin Console
 export const ORGANIZATIONS_DISK = new StateDefinition("organizations", "disk");
 export const POLICIES_DISK = new StateDefinition("policies", "disk");

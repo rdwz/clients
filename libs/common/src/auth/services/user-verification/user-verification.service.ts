@@ -22,6 +22,7 @@ import {
   VerificationWithSecret,
   verificationHasSecret,
 } from "../../types/verification";
+import { KeyConnectorService } from "../key-connector.service";
 
 /**
  * Used for general-purpose user verification throughout the app.
@@ -31,6 +32,7 @@ export class UserVerificationService implements UserVerificationServiceAbstracti
   constructor(
     private stateService: StateService,
     private cryptoService: CryptoService,
+    private keyConnectorService: KeyConnectorService,
     private i18nService: I18nService,
     private userVerificationApiService: UserVerificationApiServiceAbstraction,
     private pinCryptoService: PinCryptoServiceAbstraction,
@@ -219,7 +221,7 @@ export class UserVerificationService implements UserVerificationServiceAbstracti
     }
 
     // TODO: PM-3518 - Left for backwards compatibility, remove after 2023.12.0
-    return !(await this.stateService.getUsesKeyConnector({ userId }));
+    return !(await this.keyConnectorService.getUsesKeyConnector());
   }
 
   async hasMasterPasswordAndMasterKeyHash(userId?: string): Promise<boolean> {

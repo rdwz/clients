@@ -692,6 +692,7 @@ import { ModalService } from "./modal.service";
         LogService,
         OrganizationServiceAbstraction,
         KeyGenerationServiceAbstraction,
+        StateProvider,
         LOGOUT_CALLBACK,
       ],
     },
