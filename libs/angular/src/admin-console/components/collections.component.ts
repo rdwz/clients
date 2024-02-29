@@ -1,5 +1,6 @@
 import { Directive, EventEmitter, Input, OnInit, Output } from "@angular/core";
 
+import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
@@ -30,6 +31,7 @@ export class CollectionsComponent implements OnInit {
     protected platformUtilsService: PlatformUtilsService,
     protected i18nService: I18nService,
     protected cipherService: CipherService,
+    protected organizationService: OrganizationService,
     private logService: LogService,
   ) {}
 
@@ -50,6 +52,10 @@ export class CollectionsComponent implements OnInit {
       this.collections.forEach((c) => {
         (c as any).checked = this.collectionIds != null && this.collectionIds.indexOf(c.id) > -1;
       });
+    }
+
+    if (this.organization == null) {
+      this.organization = this.organizationService.get(this.cipher.organizationId);
     }
   }
 
