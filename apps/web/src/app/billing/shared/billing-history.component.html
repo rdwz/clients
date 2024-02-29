@@ -34,9 +34,8 @@
     </ng-template>
   </bit-table>
 </bit-section>
-
 <bit-section>
-  <h3 bitTypography="h3" class="tw-mt-16">{{ "transactions" | i18n }}</h3>
+  <h3 bitTypography="h3">{{ "transactions" | i18n }}</h3>
   <p bitTypography="body1" *ngIf="!transactions || !transactions.length">
     {{ "noTransactions" | i18n }}
   </p>
@@ -70,5 +69,4 @@
     </ng-template>
   </bit-table>
 </bit-section>
-
 <small class="tw-text-muted">* {{ "chargesStatement" | i18n: "BITWARDEN" }}</small>
