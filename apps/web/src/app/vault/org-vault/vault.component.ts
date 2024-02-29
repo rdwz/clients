@@ -96,6 +96,11 @@ import { VaultFilterComponent } from "./vault-filter/vault-filter.component";
 const BroadcasterSubscriptionId = "OrgVaultComponent";
 const SearchTextDebounceInterval = 200;
 
+enum AddAccessStatusType {
+  All = 0,
+  AddAccess = 1,
+}
+
 @Component({
   selector: "app-org-vault",
   templateUrl: "vault.component.html",
@@ -116,6 +121,8 @@ export class VaultComponent implements OnInit, OnDestroy {
   trashCleanupWarning: string = null;
   activeFilter: VaultFilter = new VaultFilter();
 
+  protected showAddAccessToggle = false;
+  protected addAccessStatus: AddAccessStatusType = 0;
   protected noItemIcon = Icons.Search;
   protected performingInitialLoad = true;
   protected refreshing = false;
@@ -150,6 +157,7 @@ export class VaultComponent implements OnInit, OnDestroy {
   private searchText$ = new Subject<string>();
   private refresh$ = new BehaviorSubject<void>(null);
   private destroy$ = new Subject<void>();
+  private addAccessStatus$ = new BehaviorSubject<number>(0);
 
   constructor(
     private route: ActivatedRoute,
@@ -343,9 +351,14 @@ export class VaultComponent implements OnInit, OnDestroy {
       shareReplay({ refCount: true, bufferSize: 1 }),
     );
 
-    const collections$ = combineLatest([nestedCollections$, filter$, this.currentSearchText$]).pipe(
+    const collections$ = combineLatest([
+      nestedCollections$,
+      filter$,
+      this.currentSearchText$,
+      this.addAccessStatus$,
+    ]).pipe(
       filter(([collections, filter]) => collections != undefined && filter != undefined),
-      map(([collections, filter, searchText]) => {
+      map(([collections, filter, searchText, addAccessStatus]) => {
         if (
           filter.collectionId === Unassigned ||
           (filter.collectionId === undefined && filter.type !== undefined)
@@ -355,7 +368,15 @@ export class VaultComponent implements OnInit, OnDestroy {
 
         let collectionsToReturn = [];
         if (filter.collectionId === undefined || filter.collectionId === All) {
-          collectionsToReturn = collections.map((c) => c.node);
+          collectionsToReturn = collections.map((c) => {
+            if (c.node.allGroups.length === 0 || c.node.allUsers.length === 0) {
+              c.node.addAccess = true;
+              this.showAddAccessToggle = true;
+            } else {
+              c.node.addAccess = false;
+            }
+            return c.node;
+          });
         } else {
           const selectedCollection = ServiceUtils.getTreeNodeObjectFromList(
             collections,
@@ -373,6 +394,9 @@ export class VaultComponent implements OnInit, OnDestroy {
           );
         }
 
+        if (addAccessStatus === 1) {
+          collectionsToReturn = collectionsToReturn.filter((c) => c.addAccess);
+        }
         return collectionsToReturn;
       }),
       takeUntil(this.destroy$),
@@ -579,6 +603,10 @@ export class VaultComponent implements OnInit, OnDestroy {
           this.performingInitialLoad = false;
         },
       );
+  }
+
+  addAccessToggle(e: any) {
+    this.addAccessStatus$.next(e);
   }
 
   get loading() {

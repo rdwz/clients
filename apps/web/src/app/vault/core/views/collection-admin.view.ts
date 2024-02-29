@@ -7,6 +7,7 @@ import { CollectionAccessSelectionView } from "../../../admin-console/organizati
 export class CollectionAdminView extends CollectionView {
   groups: CollectionAccessSelectionView[] = [];
   users: CollectionAccessSelectionView[] = [];
+  addAccess: boolean;
 
   /**
    * Flag indicating the user has been explicitly assigned to this Collection
@@ -29,6 +30,14 @@ export class CollectionAdminView extends CollectionView {
       : [];
 
     this.assigned = response.assigned;
+  }
+
+  get allGroups() {
+    return this.groups;
+  }
+
+  get allUsers() {
+    return this.users;
   }
 
   override canEdit(org: Organization): boolean {
