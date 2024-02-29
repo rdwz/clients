@@ -344,6 +344,7 @@ import { ModalService } from "./modal.service";
         encryptService: EncryptService,
         fileUploadService: CipherFileUploadServiceAbstraction,
         configService: ConfigServiceAbstraction,
+        stateProvider: StateProvider,
       ) =>
         new CipherService(
           cryptoService,
@@ -356,6 +357,7 @@ import { ModalService } from "./modal.service";
           encryptService,
           fileUploadService,
           configService,
+          stateProvider,
         ),
       deps: [
         CryptoServiceAbstraction,
@@ -368,6 +370,7 @@ import { ModalService } from "./modal.service";
         EncryptService,
         CipherFileUploadServiceAbstraction,
         ConfigServiceAbstraction,
+        StateProvider,
       ],
     },
     {

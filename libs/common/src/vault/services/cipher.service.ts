@@ -1,4 +1,4 @@
-import { firstValueFrom } from "rxjs";
+import { Observable, firstValueFrom } from "rxjs";
 import { SemVer } from "semver";
 
 import { ApiService } from "../../abstractions/api.service";
@@ -20,12 +20,14 @@ import Domain from "../../platform/models/domain/domain-base";
 import { EncArrayBuffer } from "../../platform/models/domain/enc-array-buffer";
 import { EncString } from "../../platform/models/domain/enc-string";
 import { SymmetricCryptoKey } from "../../platform/models/domain/symmetric-crypto-key";
+import { ActiveUserState, KeyDefinition, LOCAL_DATA, StateProvider } from "../../platform/state";
 import { UserKey, OrgKey } from "../../types/key";
 import { CipherService as CipherServiceAbstraction } from "../abstractions/cipher.service";
 import { CipherFileUploadService } from "../abstractions/file-upload/cipher-file-upload.service";
 import { FieldType, UriMatchType } from "../enums";
 import { CipherType } from "../enums/cipher-type";
 import { CipherData } from "../models/data/cipher.data";
+import { LocalData } from "../models/data/local.data";
 import { Attachment } from "../models/domain/attachment";
 import { Card } from "../models/domain/card";
 import { Cipher } from "../models/domain/cipher";
@@ -54,10 +56,20 @@ import { PasswordHistoryView } from "../models/view/password-history.view";
 
 const CIPHER_KEY_ENC_MIN_SERVER_VER = new SemVer("2024.2.0");
 
+const LOCAL_DATA_KEY = new KeyDefinition<Record<string, LocalData>>(LOCAL_DATA, "local_data", {
+  deserializer: (obj) => obj,
+});
+
 export class CipherService implements CipherServiceAbstraction {
   private sortedCiphersCache: SortedCiphersCache = new SortedCiphersCache(
     this.sortCiphersByLastUsed,
   );
+
+  localData$: Observable<Record<string, LocalData>>;
+
+  private localDataState: ActiveUserState<Record<string, LocalData>>;
+
+  private stateProviderFlag: boolean;
 
   constructor(
     private cryptoService: CryptoService,
@@ -70,7 +82,15 @@ export class CipherService implements CipherServiceAbstraction {
     private encryptService: EncryptService,
     private cipherFileUploadService: CipherFileUploadService,
     private configService: ConfigServiceAbstraction,
-  ) {}
+    private stateProvider: StateProvider,
+  ) {
+    this.localDataState = this.stateProvider.getActive(LOCAL_DATA_KEY);
+
+    this.localData$ = this.localDataState.state$;
+
+    //TODO remove this before opening the PR and references to 5273
+    this.stateProviderFlag = false;
+  }
 
   async getDecryptedCipherCache(): Promise<CipherView[]> {
     const decryptedCiphers = await this.stateService.getDecryptedCiphers();
@@ -266,11 +286,19 @@ export class CipherService implements CipherServiceAbstraction {
       return null;
     }
 
-    const localData = await this.stateService.getLocalData();
+    //5273
+    let localData;
+    if (this.stateProviderFlag) {
+      localData = await firstValueFrom(this.localData$);
+    } else {
+      localData = await this.stateService.getLocalData();
+    }
+
     return new Cipher(ciphers[id], localData ? localData[id] : null);
   }
 
   async getAll(): Promise<Cipher[]> {
+    //const localData = await firstValueFrom(this.localData$);
     const localData = await this.stateService.getLocalData();
     const ciphers = await this.stateService.getEncryptedCiphers();
     const response: Cipher[] = [];
@@ -437,7 +465,14 @@ export class CipherService implements CipherServiceAbstraction {
   }
 
   async updateLastUsedDate(id: string): Promise<void> {
-    let ciphersLocalData = await this.stateService.getLocalData();
+    //5273
+    let ciphersLocalData: { [cipherId: string]: LocalData } | Record<string, LocalData>;
+    if (this.stateProviderFlag) {
+      ciphersLocalData = await firstValueFrom(this.localData$);
+    } else {
+      ciphersLocalData = await this.stateService.getLocalData();
+    }
+
     if (!ciphersLocalData) {
       ciphersLocalData = {};
     }
@@ -450,7 +485,12 @@ export class CipherService implements CipherServiceAbstraction {
       };
     }
 
-    await this.stateService.setLocalData(ciphersLocalData);
+    //5273
+    if (this.stateProviderFlag) {
+      await this.localDataState.update(() => ciphersLocalData);
+    } else {
+      await this.stateService.setLocalData(ciphersLocalData);
+    }
 
     const decryptedCipherCache = await this.stateService.getDecryptedCiphers();
     if (!decryptedCipherCache) {
@@ -468,7 +508,14 @@ export class CipherService implements CipherServiceAbstraction {
   }
 
   async updateLastLaunchedDate(id: string): Promise<void> {
-    let ciphersLocalData = await this.stateService.getLocalData();
+    //5273
+    let ciphersLocalData: { [cipherId: string]: LocalData } | Record<string, LocalData>;
+    if (this.stateProviderFlag) {
+      ciphersLocalData = await firstValueFrom(this.localData$);
+    } else {
+      ciphersLocalData = await this.stateService.getLocalData();
+    }
+
     if (!ciphersLocalData) {
       ciphersLocalData = {};
     }
@@ -481,7 +528,12 @@ export class CipherService implements CipherServiceAbstraction {
       };
     }
 
-    await this.stateService.setLocalData(ciphersLocalData);
+    //5273
+    if (this.stateProviderFlag) {
+      await this.localDataState.update(() => ciphersLocalData);
+    } else {
+      await this.stateService.setLocalData(ciphersLocalData);
+    }
 
     const decryptedCipherCache = await this.stateService.getDecryptedCiphers();
     if (!decryptedCipherCache) {
