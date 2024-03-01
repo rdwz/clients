@@ -113,15 +113,6 @@ export const Service: Story = {
     variant: "error",
     timeout: BitwardenToastrGlobalConfig.timeOut,
   } as ToastOptions,
-  decorators: [
-    moduleMetadata({
-      imports: [CommonModule, BrowserAnimationsModule, ButtonModule],
-      declarations: [ToastServiceExampleComponent],
-    }),
-    applicationConfig({
-      providers: [ToastModule.forRoot().providers],
-    }),
-  ],
   parameters: {
     chromatic: { disableSnapshot: true },
     docs: {
