@@ -163,6 +163,7 @@
 @import "./popover/popover.component.css";
 @import "./search/search.component.css";
 
+@import "./toast/toast.tokens.css";
 @import "./toast/toastr.css";
 
 /** 
