@@ -3,7 +3,6 @@ import { Component } from "@angular/core";
 import { Toast as BaseToastrComponent } from "ngx-toastr";
 
 @Component({
-  selector: "[toast-component2]",
   template: `
     <bit-toast
       [title]="options?.payload?.title"
