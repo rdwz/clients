@@ -147,6 +147,11 @@ export class VaultComponent implements OnInit, OnDestroy {
     return this._flexibleCollectionsV1FlagEnabled && this.organization?.flexibleCollections;
   }
 
+  private _restrictProviderAccessFlagEnabled: boolean;
+  protected get restrictProviderAccessEnabled(): boolean {
+    return this._restrictProviderAccessFlagEnabled && this.flexibleCollectionsV1Enabled;
+  }
+
   private searchText$ = new Subject<string>();
   private refresh$ = new BehaviorSubject<void>(null);
   private destroy$ = new Subject<void>();
@@ -190,6 +195,11 @@ export class VaultComponent implements OnInit, OnDestroy {
 
     this._flexibleCollectionsV1FlagEnabled = await this.configService.getFeatureFlag(
       FeatureFlag.FlexibleCollectionsV1,
+      false,
+    );
+
+    this._restrictProviderAccessFlagEnabled = await this.configService.getFeatureFlag(
+      FeatureFlag.RestrictProviderAccess,
       false,
     );
 
@@ -306,6 +316,10 @@ export class VaultComponent implements OnInit, OnDestroy {
       concatMap(async (organization) => {
         let ciphers;
 
+        if (organization.isProviderUser && this.restrictProviderAccessEnabled) {
+          return [];
+        }
+
         if (this.flexibleCollectionsV1Enabled) {
           // Flexible collections V1 logic.
           // If the user can edit all ciphers for the organization then fetch them ALL.
@@ -401,6 +415,10 @@ export class VaultComponent implements OnInit, OnDestroy {
       organization$,
     ]).pipe(
       map(([filter, collection, organization]) => {
+        if (organization.isProviderUser && this.restrictProviderAccessEnabled) {
+          return collection != undefined || filter.collectionId === Unassigned;
+        }
+
         return (
           (filter.collectionId === Unassigned && !organization.canUseAdminCollections) ||
           (!organization.canEditAllCiphers(this.flexibleCollectionsV1Enabled) &&
