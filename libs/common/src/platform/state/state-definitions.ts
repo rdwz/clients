@@ -63,4 +63,4 @@ export const VAULT_FILTER_DISK = new StateDefinition("vaultFilter", "disk", {
   web: "disk-local",
 });
 
-export const LOCAL_DATA = new StateDefinition("localData", "disk", { web: "disk-local" });
+export const CIPHERS_DISK = new StateDefinition("localData", "disk", { web: "disk-local" });

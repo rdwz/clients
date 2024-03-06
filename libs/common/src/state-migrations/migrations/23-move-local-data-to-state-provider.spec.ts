@@ -72,7 +72,7 @@ describe("LocalDataMigrator", () => {
   let helper: MockProxy<MigrationHelper>;
   let sut: LocalDataMigrator;
   const keyDefinitionLike = {
-    key: "local_data",
+    key: "ciphers_disk",
     stateDefinition: {
       name: "localData",
     },

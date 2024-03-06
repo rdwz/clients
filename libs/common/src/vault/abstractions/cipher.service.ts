@@ -88,4 +88,5 @@ export abstract class CipherService {
     asAdmin?: boolean,
   ) => Promise<void>;
   getKeyForCipherKeyDecryption: (cipher: Cipher) => Promise<any>;
+  decryptCiphers: (ciphers: Cipher[]) => Promise<CipherView[]>;
 }

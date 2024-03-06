@@ -10,8 +10,8 @@ type LocalData = {
   lastLaunched?: number;
 };
 
-const LOCAL_DATA: KeyDefinitionLike = {
-  key: "local_data",
+const CIPHERS_DISK: KeyDefinitionLike = {
+  key: "ciphers_disk",
   stateDefinition: {
     name: "localData",
   },
@@ -23,7 +23,7 @@ export class LocalDataMigrator extends Migrator<22, 23> {
     async function migrateAccount(userId: string, account: ExpectedAccountType): Promise<void> {
       const value = account?.localData;
       if (value != null) {
-        await helper.setToUser(userId, LOCAL_DATA, value);
+        await helper.setToUser(userId, CIPHERS_DISK, value);
         delete account.LocalData;
         await helper.set(userId, account);
       }
@@ -35,14 +35,14 @@ export class LocalDataMigrator extends Migrator<22, 23> {
   async rollback(helper: MigrationHelper): Promise<void> {
     const accounts = await helper.getAccounts<ExpectedAccountType>();
     async function rollbackAccount(userId: string, account: ExpectedAccountType): Promise<void> {
-      const value = await helper.getFromUser(userId, LOCAL_DATA);
+      const value = await helper.getFromUser(userId, CIPHERS_DISK);
       if (account) {
         account.localData = Object.assign(account.localData ?? {}, {
           localData: value,
         });
         await helper.set(userId, account);
       }
-      await helper.setToUser(userId, LOCAL_DATA, null);
+      await helper.setToUser(userId, CIPHERS_DISK, null);
     }
 
     await Promise.all([...accounts.map(({ userId, account }) => rollbackAccount(userId, account))]);
