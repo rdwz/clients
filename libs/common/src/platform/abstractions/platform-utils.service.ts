@@ -31,7 +31,7 @@ export abstract class PlatformUtilsService {
   /**
    * @deprecated use `@bitwarden/components/ToastService.showToast` instead
    *
-   * Jira: [PM-6563](https://bitwarden.atlassian.net/browse/PM-6563)
+   * Jira: [CL-213](https://bitwarden.atlassian.net/browse/CL-213)
    */
   showToast: (
     type: "error" | "success" | "warning" | "info",
