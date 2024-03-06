@@ -2,12 +2,11 @@ import { Injectable } from "@angular/core";
 import { IndividualConfig, ToastrService } from "ngx-toastr";
 
 import type { ToastComponent } from "./toast.component";
+import { calculateToastTimeout } from "./utils";
 
 export type ToastOptions = {
   /**
-   * The duration the toast will persist in millisecond
-   *
-   * @default 5000
+   * The duration the toast will persist in milliseconds
    **/
   timeout?: number;
 } & Pick<ToastComponent, "message" | "variant" | "title">;
@@ -25,11 +24,11 @@ export class ToastService {
         message: options.message,
         variant: options.variant,
       },
+      timeOut:
+        options.timeout != null && options.timeout > 0
+          ? options.timeout
+          : calculateToastTimeout(options.message),
     };
-
-    if (options.timeout != null && options.timeout > 0) {
-      toastrConfig.timeOut = options.timeout;
-    }
 
     this.toastrService.show(null, options.title, toastrConfig);
   }
