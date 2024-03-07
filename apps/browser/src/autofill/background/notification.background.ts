@@ -4,9 +4,10 @@ import { PolicyService } from "@bitwarden/common/admin-console/abstractions/poli
 import { PolicyType } from "@bitwarden/common/admin-console/enums";
 import { AuthService } from "@bitwarden/common/auth/abstractions/auth.service";
 import { AuthenticationStatus } from "@bitwarden/common/auth/enums/authentication-status";
+import { NOTIFICATION_BAR_LIFESPAN_MS } from "@bitwarden/common/autofill/constants";
+import { UserNotificationSettingsServiceAbstraction } from "@bitwarden/common/autofill/services/user-notification-settings.service";
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
-import { ThemeType } from "@bitwarden/common/platform/enums";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { FolderService } from "@bitwarden/common/vault/abstractions/folder/folder.service.abstraction";
@@ -19,7 +20,6 @@ import { openUnlockPopout } from "../../auth/popup/utils/auth-popout-window";
 import { BrowserApi } from "../../platform/browser/browser-api";
 import { BrowserStateService } from "../../platform/services/abstractions/browser-state.service";
 import { openAddEditVaultItemPopout } from "../../vault/popup/utils/vault-popout-window";
-import { NOTIFICATION_BAR_LIFESPAN_MS } from "../constants";
 import { NotificationQueueMessageType } from "../enums/notification-queue-message-type.enum";
 import { AutofillService } from "../services/abstractions/autofill.service";
 
@@ -39,6 +39,7 @@ import { OverlayBackgroundExtensionMessage } from "./abstractions/overlay.backgr
 
 export default class NotificationBackground {
   private openUnlockPopout = openUnlockPopout;
+  private openAddEditVaultItemPopout = openAddEditVaultItemPopout;
   private notificationQueue: NotificationQueueMessageItem[] = [];
   private readonly extensionMessageHandlers: NotificationBackgroundExtensionMessageHandlers = {
     unlockCompleted: ({ message, sender }) => this.handleUnlockCompleted(message, sender),
@@ -57,6 +58,9 @@ export default class NotificationBackground {
     bgUnlockPopoutOpened: ({ message, sender }) => this.unlockVault(message, sender.tab),
     checkNotificationQueue: ({ sender }) => this.checkNotificationQueue(sender.tab),
     bgReopenUnlockPopout: ({ sender }) => this.openUnlockPopout(sender.tab),
+    bgGetEnableChangedPasswordPrompt: () => this.getEnableChangedPasswordPrompt(),
+    bgGetEnableAddedLoginPrompt: () => this.getEnableAddedLoginPrompt(),
+    getWebVaultUrlForNotification: () => this.getWebVaultUrl(),
   };
 
   constructor(
@@ -66,6 +70,7 @@ export default class NotificationBackground {
     private policyService: PolicyService,
     private folderService: FolderService,
     private stateService: BrowserStateService,
+    private userNotificationSettingsService: UserNotificationSettingsServiceAbstraction,
     private environmentService: EnvironmentService,
     private logService: LogService,
   ) {}
@@ -78,6 +83,20 @@ export default class NotificationBackground {
     this.setupExtensionMessageListener();
 
     this.cleanupNotificationQueue();
+  }
+
+  /**
+   * Gets the enableChangedPasswordPrompt setting from the user notification settings service.
+   */
+  async getEnableChangedPasswordPrompt(): Promise<boolean> {
+    return await firstValueFrom(this.userNotificationSettingsService.enableChangedPasswordPrompt$);
+  }
+
+  /**
+   * Gets the enableAddedLoginPrompt setting from the user notification settings service.
+   */
+  async getEnableAddedLoginPrompt(): Promise<boolean> {
+    return await firstValueFrom(this.userNotificationSettingsService.enableAddedLoginPrompt$);
   }
 
   /**
@@ -133,11 +152,9 @@ export default class NotificationBackground {
     notificationQueueMessage: NotificationQueueMessageItem,
   ) {
     const notificationType = notificationQueueMessage.type;
-    const webVaultURL = this.environmentService.getWebVaultUrl();
     const typeData: Record<string, any> = {
       isVaultLocked: notificationQueueMessage.wasVaultLocked,
-      theme: await this.getCurrentTheme(),
-      webVaultURL,
+      theme: await this.stateService.getTheme(),
     };
 
     switch (notificationType) {
@@ -155,18 +172,6 @@ export default class NotificationBackground {
       type: notificationType,
       typeData,
     });
-  }
-
-  private async getCurrentTheme() {
-    const theme = await this.stateService.getTheme();
-
-    if (theme !== ThemeType.System) {
-      return theme;
-    }
-
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? ThemeType.Dark
-      : ThemeType.Light;
   }
 
   /**
@@ -207,9 +212,10 @@ export default class NotificationBackground {
       return;
     }
 
-    const disabledAddLogin = await this.stateService.getDisableAddLoginNotification();
+    const addLoginIsEnabled = await this.getEnableAddedLoginPrompt();
+
     if (authStatus === AuthenticationStatus.Locked) {
-      if (!disabledAddLogin) {
+      if (addLoginIsEnabled) {
         await this.pushAddLoginToQueue(loginDomain, loginInfo, sender.tab, true);
       }
 
@@ -220,14 +226,15 @@ export default class NotificationBackground {
     const usernameMatches = ciphers.filter(
       (c) => c.login.username != null && c.login.username.toLowerCase() === normalizedUsername,
     );
-    if (!disabledAddLogin && usernameMatches.length === 0) {
+    if (addLoginIsEnabled && usernameMatches.length === 0) {
       await this.pushAddLoginToQueue(loginDomain, loginInfo, sender.tab);
       return;
     }
 
-    const disabledChangePassword = await this.stateService.getDisableChangedPasswordNotification();
+    const changePasswordIsEnabled = await this.getEnableChangedPasswordPrompt();
+
     if (
-      !disabledChangePassword &&
+      changePasswordIsEnabled &&
       usernameMatches.length === 1 &&
       usernameMatches[0].login.password !== loginInfo.password
     ) {
@@ -431,6 +438,14 @@ export default class NotificationBackground {
     this.removeTabFromNotificationQueue(tab);
   }
 
+  /**
+   * Saves a cipher based on the message sent from the notification bar. If the vault
+   * is locked, the message will be added to the notification queue and the unlock
+   * popout will be opened.
+   *
+   * @param message - The extension message
+   * @param sender - The contextual sender of the message
+   */
   private async handleSaveCipherMessage(
     message: NotificationBackgroundExtensionMessage,
     sender: chrome.runtime.MessageSender,
@@ -454,6 +469,14 @@ export default class NotificationBackground {
     await this.saveOrUpdateCredentials(sender.tab, message.edit, message.folder);
   }
 
+  /**
+   * Saves or updates credentials based on the message within the
+   * notification queue that is associated with the specified tab.
+   *
+   * @param tab - The tab to save or update credentials for
+   * @param edit - Identifies if the credentials should be edited or simply added
+   * @param folderId - The folder to add the cipher to
+   */
   private async saveOrUpdateCredentials(tab: chrome.tabs.Tab, edit: boolean, folderId?: string) {
     for (let i = this.notificationQueue.length - 1; i >= 0; i--) {
       const queueMessage = this.notificationQueue[i];
@@ -471,9 +494,6 @@ export default class NotificationBackground {
       }
 
       this.notificationQueue.splice(i, 1);
-      BrowserApi.tabSendMessageData(tab, "closeNotificationBar").catch((error) =>
-        this.logService.error(error),
-      );
 
       if (queueMessage.type === NotificationQueueMessageType.ChangePassword) {
         const cipherView = await this.getDecryptedCipherById(queueMessage.cipherId);
@@ -481,38 +501,52 @@ export default class NotificationBackground {
         return;
       }
 
-      if (queueMessage.type === NotificationQueueMessageType.AddLogin) {
-        // If the vault was locked, check if a cipher needs updating instead of creating a new one
-        if (queueMessage.wasVaultLocked) {
-          const allCiphers = await this.cipherService.getAllDecryptedForUrl(queueMessage.uri);
-          const existingCipher = allCiphers.find(
-            (c) =>
-              c.login.username != null && c.login.username.toLowerCase() === queueMessage.username,
-          );
+      // If the vault was locked, check if a cipher needs updating instead of creating a new one
+      if (queueMessage.wasVaultLocked) {
+        const allCiphers = await this.cipherService.getAllDecryptedForUrl(queueMessage.uri);
+        const existingCipher = allCiphers.find(
+          (c) =>
+            c.login.username != null && c.login.username.toLowerCase() === queueMessage.username,
+        );
 
-          if (existingCipher != null) {
-            await this.updatePassword(existingCipher, queueMessage.password, edit, tab);
-            return;
-          }
-        }
-
-        folderId = (await this.folderExists(folderId)) ? folderId : null;
-        const newCipher = this.convertAddLoginQueueMessageToCipherView(queueMessage, folderId);
-
-        if (edit) {
-          await this.editItem(newCipher, tab);
+        if (existingCipher != null) {
+          await this.updatePassword(existingCipher, queueMessage.password, edit, tab);
           return;
         }
+      }
 
-        const cipher = await this.cipherService.encrypt(newCipher);
+      folderId = (await this.folderExists(folderId)) ? folderId : null;
+      const newCipher = this.convertAddLoginQueueMessageToCipherView(queueMessage, folderId);
+
+      if (edit) {
+        await this.editItem(newCipher, tab);
+        await BrowserApi.tabSendMessage(tab, { command: "closeNotificationBar" });
+        return;
+      }
+
+      const cipher = await this.cipherService.encrypt(newCipher);
+      try {
         await this.cipherService.createWithServer(cipher);
-        BrowserApi.tabSendMessageData(tab, "addedCipher").catch((error) =>
-          this.logService.error(error),
-        );
+        await BrowserApi.tabSendMessage(tab, { command: "saveCipherAttemptCompleted" });
+        await BrowserApi.tabSendMessage(tab, { command: "addedCipher" });
+      } catch (error) {
+        await BrowserApi.tabSendMessageData(tab, "saveCipherAttemptCompleted", {
+          error: String(error.message),
+        });
       }
     }
   }
 
+  /**
+   * Handles updating an existing cipher's password. If the cipher
+   * is being edited, a popup will be opened to allow the user to
+   * edit the cipher.
+   *
+   * @param cipherView - The cipher to update
+   * @param newPassword - The new password to update the cipher with
+   * @param edit - Identifies if the cipher should be edited or simply updated
+   * @param tab - The tab that the message was sent from
+   */
   private async updatePassword(
     cipherView: CipherView,
     newPassword: string,
@@ -523,23 +557,37 @@ export default class NotificationBackground {
 
     if (edit) {
       await this.editItem(cipherView, tab);
+      await BrowserApi.tabSendMessage(tab, { command: "closeNotificationBar" });
       await BrowserApi.tabSendMessage(tab, { command: "editedCipher" });
       return;
     }
 
     const cipher = await this.cipherService.encrypt(cipherView);
-    await this.cipherService.updateWithServer(cipher);
-    // We've only updated the password, no need to broadcast editedCipher message
-    return;
+    try {
+      // We've only updated the password, no need to broadcast editedCipher message
+      await this.cipherService.updateWithServer(cipher);
+      await BrowserApi.tabSendMessage(tab, { command: "saveCipherAttemptCompleted" });
+    } catch (error) {
+      await BrowserApi.tabSendMessageData(tab, "saveCipherAttemptCompleted", {
+        error: String(error.message),
+      });
+    }
   }
 
+  /**
+   * Sets the add/edit cipher info in the state service
+   * and opens the add/edit vault item popout.
+   *
+   * @param cipherView - The cipher to edit
+   * @param senderTab - The tab that the message was sent from
+   */
   private async editItem(cipherView: CipherView, senderTab: chrome.tabs.Tab) {
     await this.stateService.setAddEditCipherInfo({
       cipher: cipherView,
       collectionIds: cipherView.collectionIds,
     });
 
-    await openAddEditVaultItemPopout(senderTab, { cipherId: cipherView.id });
+    await this.openAddEditVaultItemPopout(senderTab, { cipherId: cipherView.id });
   }
 
   private async folderExists(folderId: string) {
@@ -592,6 +640,10 @@ export default class NotificationBackground {
    */
   private async getFolderData() {
     return await firstValueFrom(this.folderService.folderViews$);
+  }
+
+  private getWebVaultUrl(): string {
+    return this.environmentService.getWebVaultUrl();
   }
 
   private async removeIndividualVault(): Promise<boolean> {

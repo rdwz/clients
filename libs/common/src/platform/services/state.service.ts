@@ -3,7 +3,6 @@ import { Jsonify, JsonValue } from "type-fest";
 
 import { OrganizationData } from "../../admin-console/models/data/organization.data";
 import { PolicyData } from "../../admin-console/models/data/policy.data";
-import { ProviderData } from "../../admin-console/models/data/provider.data";
 import { Policy } from "../../admin-console/models/domain/policy";
 import { AccountService } from "../../auth/abstractions/account.service";
 import { AuthenticationStatus } from "../../auth/enums/authentication-status";
@@ -378,24 +377,6 @@ export class StateService<
     );
   }
 
-  async getBiometricUnlock(options?: StorageOptions): Promise<boolean> {
-    return (
-      (await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskOptions())))
-        ?.settings?.biometricUnlock ?? false
-    );
-  }
-
-  async setBiometricUnlock(value: boolean, options?: StorageOptions): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-    account.settings.biometricUnlock = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-  }
-
   async getCanAccessPremium(options?: StorageOptions): Promise<boolean> {
     if (!(await this.getIsAuthenticated(options))) {
       return false;
@@ -459,27 +440,6 @@ export class StateService<
     await this.saveAccount(
       account,
       this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-  }
-
-  async getClearClipboard(options?: StorageOptions): Promise<number> {
-    return (
-      (
-        await this.getAccount(
-          this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
-        )
-      )?.settings?.clearClipboard ?? null
-    );
-  }
-
-  async setClearClipboard(value: number, options?: StorageOptions): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
-    );
-    account.settings.clearClipboard = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
     );
   }
 
@@ -775,24 +735,6 @@ export class StateService<
     await this.saveSecureStorageKey(partialKeys.biometricKey, value, options);
   }
 
-  async getBiometricPromptCancelled(options?: StorageOptions): Promise<boolean> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-    return account?.settings?.biometricPromptCancelled;
-  }
-
-  async setBiometricPromptCancelled(value: boolean, options?: StorageOptions): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-    account.settings.biometricPromptCancelled = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-  }
-
   @withPrototypeForArrayMembers(CipherView, CipherView.fromJSON)
   async getDecryptedCiphers(options?: StorageOptions): Promise<CipherView[]> {
     return (
@@ -906,81 +848,6 @@ export class StateService<
     account.settings.defaultUriMatch = value;
     await this.saveAccount(
       account,
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-  }
-
-  async getDisableAddLoginNotification(options?: StorageOptions): Promise<boolean> {
-    return (
-      (await this.getGlobals(this.reconcileOptions(options, await this.defaultOnDiskOptions())))
-        ?.disableAddLoginNotification ?? false
-    );
-  }
-
-  async setDisableAddLoginNotification(value: boolean, options?: StorageOptions): Promise<void> {
-    const globals = await this.getGlobals(
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-    globals.disableAddLoginNotification = value;
-    await this.saveGlobals(
-      globals,
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-  }
-
-  async getDisableAutoBiometricsPrompt(options?: StorageOptions): Promise<boolean> {
-    return (
-      (await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskOptions())))
-        ?.settings?.disableAutoBiometricsPrompt ?? false
-    );
-  }
-
-  async setDisableAutoBiometricsPrompt(value: boolean, options?: StorageOptions): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-    account.settings.disableAutoBiometricsPrompt = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-  }
-
-  async getDisableBadgeCounter(options?: StorageOptions): Promise<boolean> {
-    return (
-      (await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskOptions())))
-        ?.settings?.disableBadgeCounter ?? false
-    );
-  }
-
-  async setDisableBadgeCounter(value: boolean, options?: StorageOptions): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-    account.settings.disableBadgeCounter = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-  }
-
-  async getDisableChangedPasswordNotification(options?: StorageOptions): Promise<boolean> {
-    return (
-      (await this.getGlobals(this.reconcileOptions(options, await this.defaultOnDiskOptions())))
-        ?.disableChangedPasswordNotification ?? false
-    );
-  }
-
-  async setDisableChangedPasswordNotification(
-    value: boolean,
-    options?: StorageOptions,
-  ): Promise<void> {
-    const globals = await this.getGlobals(
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-    globals.disableChangedPasswordNotification = value;
-    await this.saveGlobals(
-      globals,
       this.reconcileOptions(options, await this.defaultOnDiskOptions()),
     );
   }
@@ -1359,27 +1226,6 @@ export class StateService<
     );
   }
 
-  async getEnableFullWidth(options?: StorageOptions): Promise<boolean> {
-    return (
-      (
-        await this.getAccount(
-          this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
-        )
-      )?.settings?.enableFullWidth ?? false
-    );
-  }
-
-  async setEnableFullWidth(value: boolean, options?: StorageOptions): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
-    );
-    account.settings.enableFullWidth = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
-    );
-  }
-
   async getEnableMinimizeToTray(options?: StorageOptions): Promise<boolean> {
     return (
       (await this.getGlobals(this.reconcileOptions(options, await this.defaultOnDiskOptions())))
@@ -1733,6 +1579,23 @@ export class StateService<
     await this.storageService.save(keys.accountActivity, accountActivity, options);
   }
 
+  async getLastSync(options?: StorageOptions): Promise<string> {
+    return (
+      await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskMemoryOptions()))
+    )?.profile?.lastSync;
+  }
+
+  async setLastSync(value: string, options?: StorageOptions): Promise<void> {
+    const account = await this.getAccount(
+      this.reconcileOptions(options, await this.defaultOnDiskMemoryOptions()),
+    );
+    account.profile.lastSync = value;
+    await this.saveAccount(
+      account,
+      this.reconcileOptions(options, await this.defaultOnDiskMemoryOptions()),
+    );
+  }
+
   async getLocalData(options?: StorageOptions): Promise<{ [cipherId: string]: LocalData }> {
     return (
       await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()))
@@ -1951,27 +1814,6 @@ export class StateService<
       this.reconcileOptions(options, await this.defaultOnDiskOptions()),
     );
     account.settings.protectedPin = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-  }
-
-  @withPrototypeForObjectValues(ProviderData)
-  async getProviders(options?: StorageOptions): Promise<{ [id: string]: ProviderData }> {
-    return (
-      await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskOptions()))
-    )?.data?.providers;
-  }
-
-  async setProviders(
-    value: { [id: string]: ProviderData },
-    options?: StorageOptions,
-  ): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-    account.data.providers = value;
     await this.saveAccount(
       account,
       this.reconcileOptions(options, await this.defaultOnDiskOptions()),
@@ -2205,28 +2047,6 @@ export class StateService<
       this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
     );
     account.settings.avatarColor = value;
-    return await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
-    );
-  }
-
-  async getSMOnboardingTasks(
-    options?: StorageOptions,
-  ): Promise<Record<string, Record<string, boolean>>> {
-    return (
-      await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()))
-    )?.settings?.smOnboardingTasks;
-  }
-
-  async setSMOnboardingTasks(
-    value: Record<string, Record<string, boolean>>,
-    options?: StorageOptions,
-  ): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
-    );
-    account.settings.smOnboardingTasks = value;
     return await this.saveAccount(
       account,
       this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),

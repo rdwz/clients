@@ -1,23 +1,42 @@
+import { ThemeType } from "@bitwarden/common/platform/enums";
 import { ConsoleLogService } from "@bitwarden/common/platform/services/console-log.service";
 import type { FolderView } from "@bitwarden/common/vault/models/view/folder.view";
 
 import { FilelessImportPort, FilelessImportType } from "../../tools/enums/fileless-import.enums";
 import { AdjustNotificationBarMessageData } from "../background/abstractions/notification.background";
 
+import {
+  NotificationBarWindowMessageHandlers,
+  NotificationBarWindowMessage,
+  NotificationBarIframeInitData,
+} from "./abstractions/notification-bar";
+
 require("./bar.scss");
 
 const logService = new ConsoleLogService(false);
+let notificationBarIframeInitData: NotificationBarIframeInitData = {};
+let windowMessageOrigin: string;
+const notificationBarWindowMessageHandlers: NotificationBarWindowMessageHandlers = {
+  initNotificationBar: ({ message }) => initNotificationBar(message),
+  saveCipherAttemptCompleted: ({ message }) => handleSaveCipherAttemptCompletedMessage(message),
+};
 
-document.addEventListener("DOMContentLoaded", () => {
-  // delay 50ms so that we get proper body dimensions
-  setTimeout(load, 50);
-});
-
+globalThis.addEventListener("load", load);
 function load() {
-  const theme = getQueryVariable("theme");
-  document.documentElement.classList.add("theme_" + theme);
+  setupWindowMessageListener();
+  postMessageToParent({ command: "initNotificationBar" });
+}
 
-  const isVaultLocked = getQueryVariable("isVaultLocked") == "true";
+function initNotificationBar(message: NotificationBarWindowMessage) {
+  const { initData } = message;
+  if (!initData) {
+    return;
+  }
+
+  notificationBarIframeInitData = initData;
+  const { isVaultLocked } = notificationBarIframeInitData;
+  setNotificationBarTheme();
+
   (document.getElementById("logo") as HTMLImageElement).src = isVaultLocked
     ? chrome.runtime.getURL("images/icon38_locked.png")
     : chrome.runtime.getURL("images/icon38.png");
@@ -41,16 +60,7 @@ function load() {
     startFilelessImport: chrome.i18n.getMessage("startFilelessImport"),
   };
 
-  const logoLink = document.getElementById("logo-link") as HTMLAnchorElement;
-  logoLink.title = i18n.appName;
-
-  // Update logo link to user's regional domain
-  const webVaultURL = getQueryVariable("webVaultURL");
-  const newVaultURL = webVaultURL && decodeURIComponent(webVaultURL);
-
-  if (newVaultURL && newVaultURL !== logoLink.href) {
-    logoLink.href = newVaultURL;
-  }
+  setupLogoLink(i18n);
 
   // i18n for "Add" template
   const addTemplate = document.getElementById("template-add") as HTMLTemplateElement;
@@ -92,7 +102,7 @@ function load() {
   unlockTemplate.content.getElementById("unlock-text").textContent = i18n.notificationUnlockDesc;
 
   // i18n for "Fileless Import" (fileless-import) template
-  const isLpImport = getQueryVariable("importType") === FilelessImportType.LP;
+  const isLpImport = initData.importType === FilelessImportType.LP;
   const importTemplate = document.getElementById("template-fileless-import") as HTMLTemplateElement;
 
   const startImportButton = importTemplate.content.getElementById("start-fileless-import");
@@ -111,13 +121,14 @@ function load() {
   const closeButton = document.getElementById("close-button");
   closeButton.title = i18n.close;
 
-  if (getQueryVariable("type") === "add") {
+  const notificationType = initData.type;
+  if (initData.type === "add") {
     handleTypeAdd();
-  } else if (getQueryVariable("type") === "change") {
+  } else if (notificationType === "change") {
     handleTypeChange();
-  } else if (getQueryVariable("type") === "unlock") {
+  } else if (notificationType === "unlock") {
     handleTypeUnlock();
-  } else if (getQueryVariable("type") === "fileless-import") {
+  } else if (notificationType === "fileless-import") {
     handleTypeFilelessImport();
   }
 
@@ -130,20 +141,6 @@ function load() {
 
   window.addEventListener("resize", adjustHeight);
   adjustHeight();
-}
-
-function getQueryVariable(variable: string) {
-  const query = window.location.search.substring(1);
-  const vars = query.split("&");
-
-  for (let i = 0; i < vars.length; i++) {
-    const pair = vars[i].split("=");
-    if (pair[0] === variable) {
-      return pair[1];
-    }
-  }
-
-  return null;
 }
 
 function handleTypeAdd() {
@@ -205,6 +202,32 @@ function sendSaveCipherMessage(edit: boolean, folder?: string) {
   });
 }
 
+function handleSaveCipherAttemptCompletedMessage(message: NotificationBarWindowMessage) {
+  const addSaveButtonContainers = document.querySelectorAll(".add-change-cipher-buttons");
+  const notificationBarOuterWrapper = document.getElementById("notification-bar-outer-wrapper");
+  if (message?.error) {
+    addSaveButtonContainers.forEach((element) => {
+      element.textContent = chrome.i18n.getMessage("saveCipherAttemptFailed");
+      element.classList.add("error-message");
+      notificationBarOuterWrapper.classList.add("error-event");
+    });
+
+    logService.error(`Error encountered when saving credentials: ${message.error}`);
+    return;
+  }
+  const messageName =
+    notificationBarIframeInitData.type === "add"
+      ? "saveCipherAttemptSuccess"
+      : "updateCipherAttemptSuccess";
+
+  addSaveButtonContainers.forEach((element) => {
+    element.textContent = chrome.i18n.getMessage(messageName);
+    element.classList.add("success-message");
+    notificationBarOuterWrapper.classList.add("success-event");
+  });
+  setTimeout(() => sendPlatformMessage({ command: "bgCloseNotificationBar" }), 1250);
+}
+
 function handleTypeUnlock() {
   setContent(document.getElementById("template-unlock") as HTMLTemplateElement);
 
@@ -223,7 +246,7 @@ function handleTypeUnlock() {
  * the Bitwarden vault.
  */
 function handleTypeFilelessImport() {
-  const importType = getQueryVariable("importType");
+  const importType = notificationBarIframeInitData.importType;
   const port = chrome.runtime.connect({ name: FilelessImportPort.NotificationBar });
   setContent(document.getElementById("template-fileless-import") as HTMLTemplateElement);
 
@@ -248,17 +271,19 @@ function handleTypeFilelessImport() {
 
     port.disconnect();
 
+    const filelessImportButtons = document.getElementById("fileless-import-buttons");
+    const notificationBarOuterWrapper = document.getElementById("notification-bar-outer-wrapper");
+
     if (msg.command === "filelessImportCompleted") {
-      document.getElementById("fileless-import-buttons").textContent = chrome.i18n.getMessage(
-        "dataSuccessfullyImported",
-      );
-      document.getElementById("fileless-import-buttons").classList.add("success-message");
+      filelessImportButtons.textContent = chrome.i18n.getMessage("dataSuccessfullyImported");
+      filelessImportButtons.classList.add("success-message");
+      notificationBarOuterWrapper.classList.add("success-event");
       return;
     }
 
-    document.getElementById("fileless-import-buttons").textContent =
-      chrome.i18n.getMessage("dataImportFailed");
-    document.getElementById("fileless-import-buttons").classList.add("error-message");
+    filelessImportButtons.textContent = chrome.i18n.getMessage("dataImportFailed");
+    filelessImportButtons.classList.add("error-message");
+    notificationBarOuterWrapper.classList.add("error-event");
     logService.error(`Error Encountered During Import: ${msg.importErrorMessage}`);
   };
   port.onMessage.addListener(handlePortMessage);
@@ -309,7 +334,7 @@ function getSelectedFolder(): string {
 }
 
 function removeIndividualVault(): boolean {
-  return getQueryVariable("removeIndividualVault") == "true";
+  return notificationBarIframeInitData.removeIndividualVault;
 }
 
 function adjustHeight() {
@@ -320,4 +345,53 @@ function adjustHeight() {
     command: "bgAdjustNotificationBar",
     data,
   });
+}
+
+function setupWindowMessageListener() {
+  globalThis.addEventListener("message", handleWindowMessage);
+}
+
+function handleWindowMessage(event: MessageEvent) {
+  if (!windowMessageOrigin) {
+    windowMessageOrigin = event.origin;
+  }
+
+  if (event.origin !== windowMessageOrigin) {
+    return;
+  }
+
+  const message = event.data as NotificationBarWindowMessage;
+  const handler = notificationBarWindowMessageHandlers[message.command];
+  if (!handler) {
+    return;
+  }
+
+  handler({ message });
+}
+
+function setupLogoLink(i18n: Record<string, string>) {
+  const logoLink = document.getElementById("logo-link") as HTMLAnchorElement;
+  logoLink.title = i18n.appName;
+  const setWebVaultUrlLink = (webVaultURL: string) => {
+    const newVaultURL = webVaultURL && decodeURIComponent(webVaultURL);
+    if (newVaultURL && newVaultURL !== logoLink.href) {
+      logoLink.href = newVaultURL;
+    }
+  };
+  sendPlatformMessage({ command: "getWebVaultUrlForNotification" }, setWebVaultUrlLink);
+}
+
+function setNotificationBarTheme() {
+  let theme = notificationBarIframeInitData.theme;
+  if (theme === ThemeType.System) {
+    theme = window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? ThemeType.Dark
+      : ThemeType.Light;
+  }
+
+  document.documentElement.classList.add(`theme_${theme}`);
+}
+
+function postMessageToParent(message: NotificationBarWindowMessage) {
+  window.parent.postMessage(message, windowMessageOrigin || "*");
 }
