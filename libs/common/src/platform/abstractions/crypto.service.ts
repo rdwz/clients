@@ -13,6 +13,8 @@ import { SymmetricCryptoKey } from "../models/domain/symmetric-crypto-key";
 
 export abstract class CryptoService {
   activeUserKey$: Observable<UserKey>;
+  getPinKeyEncryptedUserKey: (userId?: string) => Promise<EncString>;
+  setPinKeyEncryptedUserKey: (encString: EncString, userId?: string) => Promise<void>;
   /**
    * Sets the provided user key and stores
    * any other necessary versions (such as auto, biometrics,

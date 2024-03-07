@@ -71,7 +71,7 @@ export class PinCryptoService implements PinCryptoServiceAbstraction {
   ): Promise<{ pinKeyEncryptedUserKey: EncString; oldPinKeyEncryptedMasterKey?: EncString }> {
     switch (pinLockType) {
       case "PERSISTANT": {
-        const pinKeyEncryptedUserKey = await this.stateService.getPinKeyEncryptedUserKey();
+        const pinKeyEncryptedUserKey = await this.cryptoService.getPinKeyEncryptedUserKey();
         const oldPinKeyEncryptedMasterKey = await this.stateService.getEncryptedPinProtected();
         return {
           pinKeyEncryptedUserKey,

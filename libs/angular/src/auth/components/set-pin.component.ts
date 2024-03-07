@@ -55,7 +55,7 @@ export class SetPinComponent implements OnInit {
     if (masterPassOnRestart) {
       await this.stateService.setPinKeyEncryptedUserKeyEphemeral(pinProtectedKey);
     } else {
-      await this.stateService.setPinKeyEncryptedUserKey(pinProtectedKey);
+      await this.cryptoService.setPinKeyEncryptedUserKey(pinProtectedKey);
     }
 
     this.dialogRef.close(true);

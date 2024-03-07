@@ -58,6 +58,15 @@ export const USER_PUBLIC_KEY = DeriveDefinition.from<
     return (await cryptoFunctionService.rsaExtractPublicKey(privateKey)) as UserPublicKey;
   },
 });
+
+export const PIN_KEY_ENCRYPTED_USER_KEY = new KeyDefinition<EncryptedString>(
+  CRYPTO_DISK,
+  "pinKeyEncryptedUserKey",
+  {
+    deserializer: (obj) => obj,
+  },
+);
+
 export const USER_KEY = new KeyDefinition<UserKey>(CRYPTO_MEMORY, "userKey", {
   deserializer: (obj) => SymmetricCryptoKey.fromJSON(obj) as UserKey,
 });
