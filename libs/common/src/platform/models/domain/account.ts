@@ -210,8 +210,6 @@ export class AccountSettings {
   passwordGenerationOptions?: PasswordGeneratorOptions;
   usernameGenerationOptions?: UsernameGeneratorOptions;
   generatorOptions?: GeneratorOptions;
-  // pinKeyEncryptedUserKey?: EncryptedString;
-  // pinKeyEncryptedUserKeyEphemeral?: EncryptedString;
   protectedPin?: string;
   settings?: AccountSettingsSettings; // TODO: Merge whatever is going on here into the AccountSettings model properly
   vaultTimeout?: number;
