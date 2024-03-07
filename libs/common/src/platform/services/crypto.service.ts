@@ -63,8 +63,6 @@ import {
 export class CryptoService implements CryptoServiceAbstraction {
   private readonly activeUserKeyState: ActiveUserState<UserKey>;
   private readonly activeUserEverHadUserKey: ActiveUserState<boolean>;
-  private readonly activeUserPinKeyEncryptedUserKeyState: ActiveUserState<EncryptedString>;
-  private readonly activeUserPinKeyEncryptedUserKeyEphemeralState: ActiveUserState<EncryptedString>;
   private readonly activeUserEncryptedOrgKeysState: ActiveUserState<
     Record<OrganizationId, EncryptedOrganizationKeyData>
   >;
@@ -78,8 +76,7 @@ export class CryptoService implements CryptoServiceAbstraction {
   private readonly activeUserPublicKeyState: DerivedState<UserPublicKey>;
 
   readonly activeUserKey$: Observable<UserKey>;
-  readonly activeUserPinKeyEncryptedUserKey$: Observable<EncryptedString>;
-  readonly activeUserPinKeyEncryptedUserKeyEphemeral$: Observable<EncryptedString>;
+
   readonly activeUserOrgKeys$: Observable<Record<OrganizationId, OrgKey>>;
   readonly activeUserProviderKeys$: Observable<Record<ProviderId, ProviderKey>>;
   readonly activeUserPrivateKey$: Observable<UserPrivateKey>;
@@ -101,19 +98,6 @@ export class CryptoService implements CryptoServiceAbstraction {
     this.activeUserKey$ = this.activeUserKeyState.state$;
     this.activeUserEverHadUserKey = stateProvider.getActive(USER_EVER_HAD_USER_KEY);
     this.everHadUserKey$ = this.activeUserEverHadUserKey.state$.pipe(map((x) => x ?? false));
-
-    // Pin Key Encrypted User Key
-    this.activeUserPinKeyEncryptedUserKeyState = this.stateProvider.getActive(
-      PIN_KEY_ENCRYPTED_USER_KEY,
-    );
-    this.activeUserPinKeyEncryptedUserKey$ = this.activeUserPinKeyEncryptedUserKeyState.state$;
-
-    // Pin Key Encrypted User Key Ephemeral
-    this.activeUserPinKeyEncryptedUserKeyEphemeralState = this.stateProvider.getActive(
-      PIN_KEY_ENCRYPTED_USER_KEY_EPHEMERAL,
-    );
-    this.activeUserPinKeyEncryptedUserKeyEphemeral$ =
-      this.activeUserPinKeyEncryptedUserKeyEphemeralState.state$;
 
     // User Asymmetric Key Pair
     this.activeUserEncryptedPrivateKeyState = stateProvider.getActive(USER_ENCRYPTED_PRIVATE_KEY);
