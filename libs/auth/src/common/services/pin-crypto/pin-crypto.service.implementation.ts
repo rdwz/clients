@@ -81,7 +81,8 @@ export class PinCryptoService implements PinCryptoServiceAbstraction {
         };
       }
       case "TRANSIENT": {
-        const pinKeyEncryptedUserKey = await this.stateService.getPinKeyEncryptedUserKeyEphemeral();
+        const pinKeyEncryptedUserKey =
+          await this.cryptoService.getPinKeyEncryptedUserKeyEphemeral();
         const oldPinKeyEncryptedMasterKey = await this.stateService.getDecryptedPinProtected();
         return { pinKeyEncryptedUserKey, oldPinKeyEncryptedMasterKey };
       }

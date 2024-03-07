@@ -67,6 +67,14 @@ export const PIN_KEY_ENCRYPTED_USER_KEY = new KeyDefinition<EncryptedString>(
   },
 );
 
+export const PIN_KEY_ENCRYPTED_USER_KEY_EPHEMERAL = new KeyDefinition<EncryptedString>(
+  CRYPTO_MEMORY,
+  "pinKeyEncryptedUserKeyEphemeral",
+  {
+    deserializer: (obj) => obj,
+  },
+);
+
 export const USER_KEY = new KeyDefinition<UserKey>(CRYPTO_MEMORY, "userKey", {
   deserializer: (obj) => SymmetricCryptoKey.fromJSON(obj) as UserKey,
 });

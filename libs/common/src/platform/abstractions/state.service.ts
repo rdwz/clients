@@ -130,12 +130,12 @@ export abstract class StateService<T extends Account = Account> {
    * Gets the ephemeral version of the user key encrypted by the Pin key.
    * Used when Lock with MP on Restart is enabled
    */
-  getPinKeyEncryptedUserKeyEphemeral: (options?: StorageOptions) => Promise<EncString>;
-  /**
-   * Sets the ephemeral version of the user key encrypted by the Pin key.
-   * Used when Lock with MP on Restart is enabled
-   */
-  setPinKeyEncryptedUserKeyEphemeral: (value: EncString, options?: StorageOptions) => Promise<void>;
+  // getPinKeyEncryptedUserKeyEphemeral: (options?: StorageOptions) => Promise<EncString>;
+  // /**
+  //  * Sets the ephemeral version of the user key encrypted by the Pin key.
+  //  * Used when Lock with MP on Restart is enabled
+  //  */
+  // setPinKeyEncryptedUserKeyEphemeral: (value: EncString, options?: StorageOptions) => Promise<void>;
   /**
    * @deprecated For migration purposes only, use getUserKeyMasterKey instead
    */

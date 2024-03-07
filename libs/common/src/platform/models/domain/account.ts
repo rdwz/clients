@@ -27,7 +27,7 @@ import { KdfType } from "../../enums";
 import { Utils } from "../../misc/utils";
 import { ServerConfigData } from "../../models/data/server-config.data";
 
-import { EncryptedString, EncString } from "./enc-string";
+import { EncString } from "./enc-string";
 import { SymmetricCryptoKey } from "./symmetric-crypto-key";
 
 export class EncryptionPair<TEncrypted, TDecrypted> {
@@ -211,7 +211,7 @@ export class AccountSettings {
   usernameGenerationOptions?: UsernameGeneratorOptions;
   generatorOptions?: GeneratorOptions;
   // pinKeyEncryptedUserKey?: EncryptedString;
-  pinKeyEncryptedUserKeyEphemeral?: EncryptedString;
+  // pinKeyEncryptedUserKeyEphemeral?: EncryptedString;
   protectedPin?: string;
   settings?: AccountSettingsSettings; // TODO: Merge whatever is going on here into the AccountSettings model properly
   vaultTimeout?: number;

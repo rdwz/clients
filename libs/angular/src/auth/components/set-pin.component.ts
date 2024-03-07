@@ -53,7 +53,7 @@ export class SetPinComponent implements OnInit {
     await this.stateService.setProtectedPin(encPin.encryptedString);
 
     if (masterPassOnRestart) {
-      await this.stateService.setPinKeyEncryptedUserKeyEphemeral(pinProtectedKey);
+      await this.cryptoService.setPinKeyEncryptedUserKeyEphemeral(pinProtectedKey);
     } else {
       await this.cryptoService.setPinKeyEncryptedUserKey(pinProtectedKey);
     }
