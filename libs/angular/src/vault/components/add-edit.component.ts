@@ -90,6 +90,7 @@ export class AddEditComponent implements OnInit, OnDestroy {
   private previousCipherId: string;
 
   protected flexibleCollectionsV1Enabled = false;
+  protected restrictProviderAccess = false;
 
   get fido2CredentialCreationDateValue(): string {
     const dateCreated = this.i18nService.t("dateCreated");
@@ -181,6 +182,10 @@ export class AddEditComponent implements OnInit, OnDestroy {
   async ngOnInit() {
     this.flexibleCollectionsV1Enabled = await this.configService.getFeatureFlag(
       FeatureFlag.FlexibleCollectionsV1,
+      false,
+    );
+    this.restrictProviderAccess = await this.configService.getFeatureFlag(
+      FeatureFlag.RestrictProviderAccess,
       false,
     );
     this.writeableCollections = await this.loadCollections();
@@ -653,7 +658,7 @@ export class AddEditComponent implements OnInit, OnDestroy {
 
     if (this.flexibleCollectionsV1Enabled) {
       // Flexible Collections V1 restricts admins, check the organization setting via canEditAllCiphers
-      orgAdmin = this.organization?.canEditAllCiphers(true);
+      orgAdmin = this.organization?.canEditAllCiphers(true, this.restrictProviderAccess);
     }
 
     return this.cipher.id == null
