@@ -3,7 +3,13 @@ import { CryptoFunctionService } from "../../abstractions/crypto-function.servic
 import { EncryptService } from "../../abstractions/encrypt.service";
 import { EncString, EncryptedString } from "../../models/domain/enc-string";
 import { SymmetricCryptoKey } from "../../models/domain/symmetric-crypto-key";
-import { KeyDefinition, CRYPTO_DISK, DeriveDefinition, CRYPTO_MEMORY } from "../../state";
+import {
+  KeyDefinition,
+  CRYPTO_DISK,
+  DeriveDefinition,
+  CRYPTO_MEMORY,
+  UserKeyDefinition,
+} from "../../state";
 import { CryptoService } from "../crypto.service";
 
 export const USER_EVER_HAD_USER_KEY = new KeyDefinition<boolean>(CRYPTO_DISK, "everHadUserKey", {
@@ -59,19 +65,21 @@ export const USER_PUBLIC_KEY = DeriveDefinition.from<
   },
 });
 
-export const PIN_KEY_ENCRYPTED_USER_KEY = new KeyDefinition<EncryptedString>(
+export const PIN_KEY_ENCRYPTED_USER_KEY = new UserKeyDefinition<EncryptedString>(
   CRYPTO_DISK,
   "pinKeyEncryptedUserKey",
   {
     deserializer: (obj) => obj,
+    clearOn: [],
   },
 );
 
-export const PIN_KEY_ENCRYPTED_USER_KEY_EPHEMERAL = new KeyDefinition<EncryptedString>(
+export const PIN_KEY_ENCRYPTED_USER_KEY_EPHEMERAL = new UserKeyDefinition<EncryptedString>(
   CRYPTO_MEMORY,
   "pinKeyEncryptedUserKeyEphemeral",
   {
     deserializer: (obj) => obj,
+    clearOn: ["logout"],
   },
 );
 
