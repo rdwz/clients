@@ -70,10 +70,7 @@ export default class RuntimeBackground {
         return true;
       }
 
-      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.processMessage(msg, sender);
-      return false;
+      this.processMessage(msg, sender).catch((e) => this.logService.error(e));
     };
 
     BrowserApi.messageListener("runtime.background", backgroundMessageListener);

@@ -105,7 +105,6 @@ import { ImportServiceAbstraction } from "@bitwarden/importer/core";
 import { VaultExportServiceAbstraction } from "@bitwarden/vault-export-core";
 
 import { BrowserOrganizationService } from "../../admin-console/services/browser-organization.service";
-import { BrowserPolicyService } from "../../admin-console/services/browser-policy.service";
 import { UnauthGuardService } from "../../auth/popup/services";
 import { AutofillService } from "../../autofill/services/abstractions/autofill.service";
 import MainBackground from "../../background/main.background";
@@ -226,10 +225,6 @@ function getBgService<T>(service: keyof MainBackground) {
       deps: [],
     },
     {
-      provide: FileUploadService,
-      useFactory: getBgService<FileUploadService>("fileUploadService"),
-    },
-    {
       provide: InternalFolderService,
       useExisting: FolderServiceAbstraction,
     },
@@ -247,9 +242,9 @@ function getBgService<T>(service: keyof MainBackground) {
     },
     {
       provide: LogServiceAbstraction,
-      // useFactory: getBgService<ConsoleLogService>("logService"),
-      useClass: ConsoleLogService,
-      deps: [],
+      useFactory: (platformUtilsService: PlatformUtilsService) =>
+        new ConsoleLogService(platformUtilsService.isDev()),
+      deps: [PlatformUtilsService],
     },
     {
       provide: BrowserEnvironmentService,
@@ -304,17 +299,6 @@ function getBgService<T>(service: keyof MainBackground) {
       deps: [],
     },
     {
-      provide: PolicyService,
-      useFactory: (
-        stateService: StateServiceAbstraction,
-        stateProvider: StateProvider,
-        organizationService: OrganizationService,
-      ) => {
-        return new BrowserPolicyService(stateService, stateProvider, organizationService);
-      },
-      deps: [StateServiceAbstraction, StateProvider, OrganizationService],
-    },
-    {
       provide: PlatformUtilsService,
       useExisting: ForegroundPlatformUtilsService,
     },
@@ -353,7 +337,6 @@ function getBgService<T>(service: keyof MainBackground) {
       useFactory: getBgService<PasswordGenerationServiceAbstraction>("passwordGenerationService"),
       deps: [],
     },
-    { provide: ApiService, useFactory: getBgService<ApiService>("apiService"), deps: [] },
     {
       provide: SendService,
       useFactory: (
