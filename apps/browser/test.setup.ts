@@ -30,6 +30,7 @@ const runtime = {
     addListener: jest.fn(),
     removeListener: jest.fn(),
   },
+  reload: jest.fn(),
 };
 
 const contextMenus = {
@@ -43,6 +44,7 @@ const i18n = {
 };
 
 const tabs = {
+  get: jest.fn(),
   executeScript: jest.fn(),
   sendMessage: jest.fn(),
   query: jest.fn(),
@@ -105,6 +107,23 @@ const privacy = {
   },
 };
 
+const extension = {
+  getBackgroundPage: jest.fn(),
+  getViews: jest.fn(),
+};
+
+const offscreen = {
+  createDocument: jest.fn(),
+  closeDocument: jest.fn((callback) => {
+    if (callback) {
+      callback();
+    }
+  }),
+  Reason: {
+    CLIPBOARD: "clipboard",
+  },
+};
+
 // set chrome
 global.chrome = {
   i18n,
@@ -116,4 +135,6 @@ global.chrome = {
   windows,
   port,
   privacy,
+  extension,
+  offscreen,
 } as any;

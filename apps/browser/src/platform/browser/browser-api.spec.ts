@@ -9,6 +9,24 @@ describe("BrowserApi", () => {
     jest.clearAllMocks();
   });
 
+  describe("isManifestVersion", () => {
+    beforeEach(() => {
+      jest.spyOn(BrowserApi, "manifestVersion", "get").mockReturnValue(3);
+    });
+
+    it("returns true if the manifest version matches the provided version", () => {
+      const result = BrowserApi.isManifestVersion(3);
+
+      expect(result).toBe(true);
+    });
+
+    it("returns false if the manifest version does not match the provided version", () => {
+      const result = BrowserApi.isManifestVersion(2);
+
+      expect(result).toBe(false);
+    });
+  });
+
   describe("getWindow", () => {
     it("will get the current window if a window id is not provided", () => {
       // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
@@ -106,6 +124,230 @@ describe("BrowserApi", () => {
     });
   });
 
+  describe("getTab", () => {
+    it("returns `null` if the tabId is a falsy value", async () => {
+      const result = await BrowserApi.getTab(null);
+
+      expect(result).toBeNull();
+    });
+
+    it("returns the tab within manifest v3", async () => {
+      const tabId = 1;
+      jest.spyOn(BrowserApi, "manifestVersion", "get").mockReturnValue(3);
+      (chrome.tabs.get as jest.Mock).mockImplementation(
+        (tabId) => ({ id: tabId }) as chrome.tabs.Tab,
+      );
+
+      const result = await BrowserApi.getTab(tabId);
+
+      expect(result).toEqual({ id: tabId });
+    });
+
+    it("returns the tab within manifest v2", async () => {
+      const tabId = 1;
+      jest.spyOn(BrowserApi, "manifestVersion", "get").mockReturnValue(2);
+      (chrome.tabs.get as jest.Mock).mockImplementation((tabId, callback) =>
+        callback({ id: tabId } as chrome.tabs.Tab),
+      );
+
+      const result = BrowserApi.getTab(tabId);
+
+      await expect(result).resolves.toEqual({ id: tabId });
+    });
+  });
+
+  describe("getBackgroundPage", () => {
+    it("returns a null value if the `getBackgroundPage` method is not available", () => {
+      chrome.extension.getBackgroundPage = undefined;
+
+      const result = BrowserApi.getBackgroundPage();
+
+      expect(result).toBeNull();
+    });
+
+    it("returns the background page if the `getBackgroundPage` method is available", () => {
+      chrome.extension.getBackgroundPage = jest.fn().mockReturnValue(window);
+
+      const result = BrowserApi.getBackgroundPage();
+
+      expect(result).toEqual(window);
+    });
+  });
+
+  describe("isBackgroundPage", () => {
+    it("returns false if the passed window is `undefined`", () => {
+      const result = BrowserApi.isBackgroundPage(undefined);
+
+      expect(result).toBe(false);
+    });
+
+    it("returns false if the current window is not the background page", () => {
+      chrome.extension.getBackgroundPage = jest.fn().mockReturnValue(null);
+
+      const result = BrowserApi.isBackgroundPage(window);
+
+      expect(result).toBe(false);
+    });
+
+    it("returns true if the current window is the background page", () => {
+      chrome.extension.getBackgroundPage = jest.fn().mockReturnValue(window);
+
+      const result = BrowserApi.isBackgroundPage(window);
+
+      expect(result).toBe(true);
+    });
+  });
+
+  describe("getExtensionViews", () => {
+    it("returns an empty array if the `getViews` method is not available", () => {
+      chrome.extension.getViews = undefined;
+
+      const result = BrowserApi.getExtensionViews();
+
+      expect(result).toEqual([]);
+    });
+
+    it("returns the extension views if the `getViews` method is available", () => {
+      const views = [window];
+      chrome.extension.getViews = jest.fn().mockReturnValue(views);
+
+      const result = BrowserApi.getExtensionViews();
+
+      expect(result).toEqual(views);
+    });
+  });
+
+  describe("isPopupOpen", () => {
+    it("returns true if the popup is open", async () => {
+      chrome.extension.getViews = jest.fn().mockReturnValue([window]);
+
+      const result = await BrowserApi.isPopupOpen();
+
+      expect(result).toBe(true);
+    });
+
+    it("returns false if the popup is not open", async () => {
+      chrome.extension.getViews = jest.fn().mockReturnValue([]);
+
+      const result = await BrowserApi.isPopupOpen();
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe("reloadExtension", () => {
+    it("reloads the window location if the passed globalContext is for the window", () => {
+      const windowMock = mock<Window>({
+        location: { reload: jest.fn() },
+      }) as unknown as Window & typeof globalThis;
+
+      BrowserApi.reloadExtension(windowMock);
+
+      expect(windowMock.location.reload).toHaveBeenCalled();
+    });
+
+    it("reloads the extension runtime if the passed globalContext is not for the window", () => {
+      const globalMock = mock<typeof globalThis>({}) as any;
+      BrowserApi.reloadExtension(globalMock);
+
+      expect(chrome.runtime.reload).toHaveBeenCalled();
+    });
+
+    it("reloads the extension runtime if a null value is passed as the globalContext", () => {
+      BrowserApi.reloadExtension(null);
+
+      expect(chrome.runtime.reload).toHaveBeenCalled();
+    });
+  });
+
+  describe("reloadOpenWindows", () => {
+    const href = window.location.href;
+    const reload = window.location.reload;
+
+    afterEach(() => {
+      window.location.href = href;
+      window.location.reload = reload;
+    });
+
+    it("skips reloading any windows if no views can be found", () => {
+      Object.defineProperty(window, "location", {
+        value: { reload: jest.fn(), href: "chrome-extension://id-value/background.html" },
+        writable: true,
+      });
+      chrome.extension.getViews = jest.fn().mockReturnValue([]);
+
+      BrowserApi.reloadOpenWindows();
+
+      expect(window.location.reload).not.toHaveBeenCalled();
+    });
+
+    it("reloads all open windows", () => {
+      Object.defineProperty(window, "location", {
+        value: { reload: jest.fn(), href: "chrome-extension://id-value/index.html" },
+        writable: true,
+      });
+      const views = [window];
+      chrome.extension.getViews = jest.fn().mockReturnValue(views);
+
+      BrowserApi.reloadOpenWindows();
+
+      expect(window.location.reload).toHaveBeenCalledTimes(views.length);
+    });
+
+    it("skips reloading the background page", () => {
+      Object.defineProperty(window, "location", {
+        value: { reload: jest.fn(), href: "chrome-extension://id-value/background.html" },
+        writable: true,
+      });
+      const views = [window];
+      chrome.extension.getViews = jest.fn().mockReturnValue(views);
+      chrome.extension.getBackgroundPage = jest.fn().mockReturnValue(window);
+
+      BrowserApi.reloadOpenWindows();
+
+      expect(window.location.reload).toHaveBeenCalledTimes(0);
+    });
+
+    it("skips reloading the current href if it is exempt", () => {
+      Object.defineProperty(window, "location", {
+        value: { reload: jest.fn(), href: "chrome-extension://id-value/index.html" },
+        writable: true,
+      });
+      const mockWindow = mock<Window>({
+        location: {
+          href: "chrome-extension://id-value/sidebar.html",
+          reload: jest.fn(),
+        },
+      });
+      const views = [window, mockWindow];
+      chrome.extension.getViews = jest.fn().mockReturnValue(views);
+      window.location.href = "chrome-extension://id-value/index.html";
+
+      BrowserApi.reloadOpenWindows(true);
+
+      expect(window.location.reload).toHaveBeenCalledTimes(0);
+      expect(mockWindow.location.reload).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("getBrowserAction", () => {
+    it("returns the `chrome.action` API if the extension manifest is for version 3", () => {
+      jest.spyOn(BrowserApi, "manifestVersion", "get").mockReturnValue(3);
+
+      const result = BrowserApi.getBrowserAction();
+
+      expect(result).toEqual(chrome.action);
+    });
+
+    it("returns the `chrome.browserAction` API if the extension manifest is for version 2", () => {
+      jest.spyOn(BrowserApi, "manifestVersion", "get").mockReturnValue(2);
+
+      const result = BrowserApi.getBrowserAction();
+
+      expect(result).toEqual(chrome.browserAction);
+    });
+  });
+
   describe("executeScriptInTab", () => {
     it("calls to the extension api to execute a script within the give tabId", async () => {
       const tabId = 1;
@@ -146,6 +388,60 @@ describe("BrowserApi", () => {
         },
         files: [injectDetails.file],
         injectImmediately: true,
+        world: "ISOLATED",
+      });
+      expect(result).toEqual(executeScriptResult);
+    });
+
+    it("injects the script into a specified frameId when the extension is built for manifest v3", async () => {
+      const tabId = 1;
+      const frameId = 2;
+      const injectDetails = mock<chrome.tabs.InjectDetails>({
+        file: "file.js",
+        allFrames: true,
+        runAt: "document_start",
+        frameId,
+      });
+      jest.spyOn(BrowserApi, "manifestVersion", "get").mockReturnValue(3);
+      (chrome.scripting.executeScript as jest.Mock).mockResolvedValue(executeScriptResult);
+
+      await BrowserApi.executeScriptInTab(tabId, injectDetails);
+
+      expect(chrome.scripting.executeScript).toHaveBeenCalledWith({
+        target: {
+          tabId: tabId,
+          allFrames: injectDetails.allFrames,
+          frameIds: [frameId],
+        },
+        files: [injectDetails.file],
+        injectImmediately: true,
+        world: "ISOLATED",
+      });
+    });
+
+    it("injects the script into the MAIN world context when injecting a script for manifest v3", async () => {
+      const tabId = 1;
+      const injectDetails = mock<chrome.tabs.InjectDetails>({
+        file: null,
+        allFrames: true,
+        runAt: "document_start",
+        frameId: null,
+      });
+      const scriptingApiDetails = { world: "MAIN" as chrome.scripting.ExecutionWorld };
+      jest.spyOn(BrowserApi, "manifestVersion", "get").mockReturnValue(3);
+      (chrome.scripting.executeScript as jest.Mock).mockResolvedValue(executeScriptResult);
+
+      const result = await BrowserApi.executeScriptInTab(tabId, injectDetails, scriptingApiDetails);
+
+      expect(chrome.scripting.executeScript).toHaveBeenCalledWith({
+        target: {
+          tabId: tabId,
+          allFrames: injectDetails.allFrames,
+          frameIds: null,
+        },
+        files: null,
+        injectImmediately: true,
+        world: "MAIN",
       });
       expect(result).toEqual(executeScriptResult);
     });
@@ -226,6 +522,32 @@ describe("BrowserApi", () => {
       expect(chrome.privacy.services.passwordSavingEnabled.set).toHaveBeenCalledWith({
         value: false,
       });
+    });
+  });
+
+  describe("createOffscreenDocument", () => {
+    it("creates the offscreen document with the supplied reasons and justification", async () => {
+      const reasons = [chrome.offscreen.Reason.CLIPBOARD];
+      const justification = "justification";
+
+      await BrowserApi.createOffscreenDocument(reasons, justification);
+
+      expect(chrome.offscreen.createDocument).toHaveBeenCalledWith({
+        url: "offscreen-document/index.html",
+        reasons,
+        justification,
+      });
+    });
+  });
+
+  describe("closeOffscreenDocument", () => {
+    it("closes the offscreen document", () => {
+      const callbackMock = jest.fn();
+
+      BrowserApi.closeOffscreenDocument(callbackMock);
+
+      expect(chrome.offscreen.closeDocument).toHaveBeenCalled();
+      expect(callbackMock).toHaveBeenCalled();
     });
   });
 });

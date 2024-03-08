@@ -15,11 +15,10 @@ import {
 } from "@bitwarden/common/platform/abstractions/storage.service";
 import { StateFactory } from "@bitwarden/common/platform/factories/state-factory";
 import { StorageOptions } from "@bitwarden/common/platform/models/domain/storage-options";
+import { MigrationRunner } from "@bitwarden/common/platform/services/migration-runner";
 import { StateService as BaseStateService } from "@bitwarden/common/platform/services/state.service";
 import { SendData } from "@bitwarden/common/tools/send/models/data/send.data";
 import { CipherData } from "@bitwarden/common/vault/models/data/cipher.data";
-import { CollectionData } from "@bitwarden/common/vault/models/data/collection.data";
-import { FolderData } from "@bitwarden/common/vault/models/data/folder.data";
 
 import { Account } from "./account";
 import { GlobalState } from "./global-state";
@@ -34,6 +33,7 @@ export class StateService extends BaseStateService<GlobalState, Account> {
     @Inject(STATE_FACTORY) stateFactory: StateFactory<GlobalState, Account>,
     accountService: AccountService,
     environmentService: EnvironmentService,
+    migrationRunner: MigrationRunner,
     @Inject(STATE_SERVICE_USE_CACHE) useAccountCache = true,
   ) {
     super(
@@ -44,6 +44,7 @@ export class StateService extends BaseStateService<GlobalState, Account> {
       stateFactory,
       accountService,
       environmentService,
+      migrationRunner,
       useAccountCache,
     );
   }
@@ -65,34 +66,6 @@ export class StateService extends BaseStateService<GlobalState, Account> {
   ): Promise<void> {
     options = this.reconcileOptions(options, await this.defaultInMemoryOptions());
     return await super.setEncryptedCiphers(value, options);
-  }
-
-  async getEncryptedCollections(
-    options?: StorageOptions,
-  ): Promise<{ [id: string]: CollectionData }> {
-    options = this.reconcileOptions(options, await this.defaultInMemoryOptions());
-    return await super.getEncryptedCollections(options);
-  }
-
-  async setEncryptedCollections(
-    value: { [id: string]: CollectionData },
-    options?: StorageOptions,
-  ): Promise<void> {
-    options = this.reconcileOptions(options, await this.defaultInMemoryOptions());
-    return await super.setEncryptedCollections(value, options);
-  }
-
-  async getEncryptedFolders(options?: StorageOptions): Promise<{ [id: string]: FolderData }> {
-    options = this.reconcileOptions(options, await this.defaultInMemoryOptions());
-    return await super.getEncryptedFolders(options);
-  }
-
-  async setEncryptedFolders(
-    value: { [id: string]: FolderData },
-    options?: StorageOptions,
-  ): Promise<void> {
-    options = this.reconcileOptions(options, await this.defaultInMemoryOptions());
-    return await super.setEncryptedFolders(value, options);
   }
 
   async getEncryptedSends(options?: StorageOptions): Promise<{ [id: string]: SendData }> {

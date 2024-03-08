@@ -1,10 +1,12 @@
 import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { Router } from "@angular/router";
-import { Subject } from "rxjs";
+import { Subject, firstValueFrom } from "rxjs";
 import { debounceTime, takeUntil } from "rxjs/operators";
 
 import { SearchService } from "@bitwarden/common/abstractions/search.service";
 import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
+import { AutofillOverlayVisibility } from "@bitwarden/common/autofill/constants";
+import { AutofillSettingsServiceAbstraction } from "@bitwarden/common/autofill/services/autofill-settings.service";
 import { BroadcasterService } from "@bitwarden/common/platform/abstractions/broadcaster.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
@@ -18,7 +20,6 @@ import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { PasswordRepromptService } from "@bitwarden/vault";
 
 import { AutofillService } from "../../../../autofill/services/abstractions/autofill.service";
-import { AutofillOverlayVisibility } from "../../../../autofill/utils/autofill-overlay.enum";
 import { BrowserApi } from "../../../../platform/browser/browser-api";
 import BrowserPopupUtils from "../../../../platform/popup/browser-popup-utils";
 import { VaultFilterService } from "../../../services/vault-filter.service";
@@ -65,6 +66,7 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
     private syncService: SyncService,
     private searchService: SearchService,
     private stateService: StateService,
+    private autofillSettingsService: AutofillSettingsServiceAbstraction,
     private passwordRepromptService: PasswordRepromptService,
     private organizationService: OrganizationService,
     private vaultFilterService: VaultFilterService,
@@ -121,15 +123,32 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
       .pipe(debounceTime(500), takeUntil(this.destroy$))
       .subscribe(() => this.searchVault());
 
-    // activate autofill on page load if policy is set
-    if (await this.stateService.getActivateAutoFillOnPageLoadFromPolicy()) {
-      await this.stateService.setEnableAutoFillOnPageLoad(true);
-      await this.stateService.setActivateAutoFillOnPageLoadFromPolicy(false);
-      this.platformUtilsService.showToast(
-        "info",
-        null,
-        this.i18nService.t("autofillPageLoadPolicyActivated"),
-      );
+    const autofillOnPageLoadOrgPolicy = await firstValueFrom(
+      this.autofillSettingsService.activateAutofillOnPageLoadFromPolicy$,
+    );
+    const autofillOnPageLoadPolicyToastHasDisplayed = await firstValueFrom(
+      this.autofillSettingsService.autofillOnPageLoadPolicyToastHasDisplayed$,
+    );
+
+    // If the org "autofill on page load" policy is set, set the user setting to match it
+    // @TODO override user setting instead of overwriting
+    if (autofillOnPageLoadOrgPolicy === true) {
+      await this.autofillSettingsService.setAutofillOnPageLoad(true);
+
+      if (!autofillOnPageLoadPolicyToastHasDisplayed) {
+        this.platformUtilsService.showToast(
+          "info",
+          null,
+          this.i18nService.t("autofillPageLoadPolicyActivated"),
+        );
+
+        await this.autofillSettingsService.setAutofillOnPageLoadPolicyToastHasDisplayed(true);
+      }
+    }
+
+    // If the org policy is ever disabled after being enabled, reset the toast notification
+    if (!autofillOnPageLoadOrgPolicy && autofillOnPageLoadPolicyToastHasDisplayed) {
+      await this.autofillSettingsService.setAutofillOnPageLoadPolicyToastHasDisplayed(false);
     }
   }
 
@@ -302,16 +321,20 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
   }
 
   async dismissCallout() {
-    await this.stateService.setDismissedAutofillCallout(true);
+    await this.autofillSettingsService.setAutofillOnPageLoadCalloutIsDismissed(true);
     this.showHowToAutofill = false;
   }
 
   private async setCallout() {
+    const inlineMenuVisibilityIsOff =
+      (await firstValueFrom(this.autofillSettingsService.inlineMenuVisibility$)) ===
+      AutofillOverlayVisibility.Off;
+
     this.showHowToAutofill =
       this.loginCiphers.length > 0 &&
-      (await this.stateService.getAutoFillOverlayVisibility()) === AutofillOverlayVisibility.Off &&
-      !(await this.stateService.getEnableAutoFillOnPageLoad()) &&
-      !(await this.stateService.getDismissedAutofillCallout());
+      inlineMenuVisibilityIsOff &&
+      !(await firstValueFrom(this.autofillSettingsService.autofillOnPageLoad$)) &&
+      !(await firstValueFrom(this.autofillSettingsService.autofillOnPageLoadCalloutIsDismissed$));
 
     if (this.showHowToAutofill) {
       const autofillCommand = await this.platformUtilsService.getAutofillKeyboardShortcut();

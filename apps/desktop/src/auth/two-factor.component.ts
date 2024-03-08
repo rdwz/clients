@@ -1,4 +1,4 @@
-import { Component, Inject, ViewChild, ViewContainerRef } from "@angular/core";
+import { Component, Inject, NgZone, ViewChild, ViewContainerRef } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 
 import { TwoFactorComponent as BaseTwoFactorComponent } from "@bitwarden/angular/auth/components/two-factor.component";
@@ -7,9 +7,11 @@ import { ModalService } from "@bitwarden/angular/services/modal.service";
 import { LoginStrategyServiceAbstraction } from "@bitwarden/auth/common";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { LoginService } from "@bitwarden/common/auth/abstractions/login.service";
+import { SsoLoginServiceAbstraction } from "@bitwarden/common/auth/abstractions/sso-login.service.abstraction";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
 import { TwoFactorProviderType } from "@bitwarden/common/auth/enums/two-factor-provider-type";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
+import { BroadcasterService } from "@bitwarden/common/platform/abstractions/broadcaster.service";
 import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
@@ -19,6 +21,8 @@ import { StateService } from "@bitwarden/common/platform/abstractions/state.serv
 import { SyncService } from "@bitwarden/common/vault/abstractions/sync/sync.service.abstraction";
 
 import { TwoFactorOptionsComponent } from "./two-factor-options.component";
+
+const BroadcasterSubscriptionId = "TwoFactorComponent";
 
 @Component({
   selector: "app-two-factor",
@@ -30,6 +34,7 @@ export class TwoFactorComponent extends BaseTwoFactorComponent {
   twoFactorOptionsModal: ViewContainerRef;
 
   showingModal = false;
+  duoCallbackSubscriptionEnabled: boolean = false;
 
   constructor(
     loginStrategyService: LoginStrategyServiceAbstraction,
@@ -39,13 +44,16 @@ export class TwoFactorComponent extends BaseTwoFactorComponent {
     platformUtilsService: PlatformUtilsService,
     syncService: SyncService,
     environmentService: EnvironmentService,
+    private broadcasterService: BroadcasterService,
     private modalService: ModalService,
     stateService: StateService,
+    private ngZone: NgZone,
     route: ActivatedRoute,
     logService: LogService,
     twoFactorService: TwoFactorService,
     appIdService: AppIdService,
     loginService: LoginService,
+    ssoLoginService: SsoLoginServiceAbstraction,
     configService: ConfigServiceAbstraction,
     @Inject(WINDOW) protected win: Window,
   ) {
@@ -63,6 +71,7 @@ export class TwoFactorComponent extends BaseTwoFactorComponent {
       twoFactorService,
       appIdService,
       loginService,
+      ssoLoginService,
       configService,
     );
     super.onSuccessfulLogin = async () => {
@@ -110,6 +119,46 @@ export class TwoFactorComponent extends BaseTwoFactorComponent {
     if (this.captchaSiteKey) {
       const content = document.getElementById("content") as HTMLDivElement;
       content.setAttribute("style", "width:335px");
+    }
+  }
+
+  protected override setupDuoResultListener() {
+    if (!this.duoCallbackSubscriptionEnabled) {
+      this.broadcasterService.subscribe(BroadcasterSubscriptionId, async (message: any) => {
+        await this.ngZone.run(async () => {
+          if (message.command === "duoCallback") {
+            this.token = message.code + "|" + message.state;
+            await this.submit();
+          }
+        });
+      });
+      this.duoCallbackSubscriptionEnabled = true;
+    }
+  }
+
+  override launchDuoFrameless() {
+    const duoHandOffMessage = {
+      title: this.i18nService.t("youSuccessfullyLoggedIn"),
+      message: this.i18nService.t("youMayCloseThisWindow"),
+      isCountdown: false,
+    };
+
+    // we're using the connector here as a way to set a cookie with translations
+    // before continuing to the duo frameless url
+    const launchUrl =
+      this.environmentService.getWebVaultUrl() +
+      "/duo-redirect-connector.html" +
+      "?duoFramelessUrl=" +
+      encodeURIComponent(this.duoFramelessUrl) +
+      "&handOffMessage=" +
+      encodeURIComponent(JSON.stringify(duoHandOffMessage));
+    this.platformUtilsService.launchUri(launchUrl);
+  }
+
+  ngOnDestroy(): void {
+    if (this.duoCallbackSubscriptionEnabled) {
+      this.broadcasterService.unsubscribe(BroadcasterSubscriptionId);
+      this.duoCallbackSubscriptionEnabled = false;
     }
   }
 }
