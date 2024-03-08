@@ -30,7 +30,7 @@ describe("Fido2Background", () => {
 
   describe("injectFido2ContentScripts", () => {
     const fido2ContentScript = "content/fido2/content-script.js";
-    const defaultExecuteScriptOptions = { runAt: "document_start", frameId: 0 };
+    const defaultExecuteScriptOptions = { runAt: "document_start", allFrames: true };
 
     it("accepts an extension message sender and injects the fido2 scripts into the tab of the sender", async () => {
       fido2ClientService.isFido2FeatureEnabled = jest.fn().mockResolvedValue(true);

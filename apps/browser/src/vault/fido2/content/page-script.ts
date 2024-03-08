@@ -72,29 +72,27 @@ import { Messenger } from "./messaging/messenger";
    * Creates a new webauthn credential.
    *
    * @param options Options for creating new credentials.
-   * @param abortController Abort controller to abort the request if needed.
    * @returns Promise that resolves to the new credential object.
    */
   async function createWebAuthnCredential(
     options?: CredentialCreationOptions,
-    abortController?: AbortController,
   ): Promise<Credential> {
     if (!isWebauthnCall(options)) {
       return await browserCredentials.create(options);
     }
 
+    const authenticatorAttachmentIsPlatform =
+      options?.publicKey?.authenticatorSelection?.authenticatorAttachment === "platform";
     const fallbackSupported =
-      (options?.publicKey?.authenticatorSelection?.authenticatorAttachment === "platform" &&
-        browserNativeWebauthnPlatformAuthenticatorSupport) ||
-      (options?.publicKey?.authenticatorSelection?.authenticatorAttachment !== "platform" &&
-        browserNativeWebauthnSupport);
+      (authenticatorAttachmentIsPlatform && browserNativeWebauthnPlatformAuthenticatorSupport) ||
+      (!authenticatorAttachmentIsPlatform && browserNativeWebauthnSupport);
     try {
       const response = await messenger.request(
         {
           type: MessageType.CredentialCreationRequest,
           data: WebauthnUtils.mapCredentialCreationOptions(options, fallbackSupported),
         },
-        abortController,
+        options?.signal,
       );
 
       if (response.type !== MessageType.CredentialCreationResponse) {
@@ -116,13 +114,9 @@ import { Messenger } from "./messaging/messenger";
    * Retrieves a webauthn credential.
    *
    * @param options Options for creating new credentials.
-   * @param abortController Abort controller to abort the request if needed.
    * @returns Promise that resolves to the new credential object.
    */
-  async function getWebAuthnCredential(
-    options?: CredentialRequestOptions,
-    abortController?: AbortController,
-  ): Promise<Credential> {
+  async function getWebAuthnCredential(options?: CredentialRequestOptions): Promise<Credential> {
     if (!isWebauthnCall(options)) {
       return await browserCredentials.get(options);
     }
@@ -139,7 +133,7 @@ import { Messenger } from "./messaging/messenger";
           type: MessageType.CredentialGetRequest,
           data: WebauthnUtils.mapCredentialRequestOptions(options, fallbackSupported),
         },
-        abortController,
+        options?.signal,
       );
 
       if (response.type !== MessageType.CredentialGetResponse) {
