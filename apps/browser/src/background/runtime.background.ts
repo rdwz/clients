@@ -71,7 +71,6 @@ export default class RuntimeBackground {
       }
 
       this.processMessage(msg, sender).catch((e) => this.logService.error(e));
-      return false;
     };
 
     BrowserApi.messageListener("runtime.background", backgroundMessageListener);
