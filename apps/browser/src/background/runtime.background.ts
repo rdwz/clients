@@ -55,8 +55,23 @@ export default class RuntimeBackground {
     }
 
     await this.checkOnInstalled();
-    const backgroundMessageListener = (msg: any, sender: chrome.runtime.MessageSender) => {
+    const backgroundMessageListener = (
+      msg: any,
+      sender: chrome.runtime.MessageSender,
+      sendResponse: any,
+    ) => {
+      const messagesWithResponse = [""];
+
+      if (messagesWithResponse.includes(msg.command)) {
+        this.processMessage(msg, sender).then(
+          (value) => sendResponse({ result: value }),
+          (error) => sendResponse({ error: { ...error, message: error.message } }),
+        );
+        return true;
+      }
+
       this.processMessage(msg, sender).catch((e) => this.logService.error(e));
+      return false;
     };
 
     BrowserApi.messageListener("runtime.background", backgroundMessageListener);
