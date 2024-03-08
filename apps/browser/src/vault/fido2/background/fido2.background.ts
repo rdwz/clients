@@ -21,10 +21,8 @@ import {
 export default class Fido2Background implements Fido2BackgroundInterface {
   private abortManager = new AbortManager();
   private fido2ContentScriptPortsSet = new Set<chrome.runtime.Port>();
-  private previousEnablePasskeys: boolean;
+  private currentEnablePasskeysSetting: boolean;
   private extensionMessageHandlers: Fido2BackgroundExtensionMessageHandlers = {
-    triggerFido2ContentScriptsInjection: ({ message, sender }) =>
-      this.injectFido2ContentScripts(message.hostname, message.origin, sender.tab, sender.frameId),
     fido2AbortRequest: ({ message }) => this.abortRequest(message),
     fido2RegisterCredentialRequest: ({ message, sender }) =>
       this.registerCredentialRequest(message, sender),
@@ -53,47 +51,41 @@ export default class Fido2Background implements Fido2BackgroundInterface {
   }
 
   private handleEnablePasskeysUpdate(enablePasskeys: boolean) {
-    if (enablePasskeys && this.previousEnablePasskeys === false) {
-      this.reloadFido2ContentScripts();
-    }
-
-    this.previousEnablePasskeys = enablePasskeys;
-  }
-
-  /**
-   * Injects the FIDO2 content script into the current tab.\
-   *
-   * Note: Calls to this method should only happen through a
-   * received chrome runtime message with a command of
-   * `triggerFido2ContentScriptsInjection`. This ensures
-   * that we check the contentType of the document before
-   * attempting to inject the FIDO2 content scripts.
-   *
-   * @returns {Promise<void>}
-   */
-  private async injectFido2ContentScripts(
-    hostname: string,
-    origin: string,
-    tab: chrome.tabs.Tab,
-    frameId?: chrome.runtime.MessageSender["frameId"],
-  ): Promise<void> {
-    if (!(await this.fido2ClientService.isFido2FeatureEnabled(hostname, origin))) {
+    const previousEnablePasskeysSetting = this.currentEnablePasskeysSetting;
+    this.currentEnablePasskeysSetting = enablePasskeys;
+    if (typeof previousEnablePasskeysSetting === "undefined") {
       return;
     }
 
-    void BrowserApi.executeScriptInTab(tab.id, {
-      file: "content/fido2/content-script.js",
-      frameId: frameId || 0,
-      runAt: "document_start",
-    });
-    this.injectFido2PageScript(tab);
+    this.destroyLoadedFido2ContentScripts();
+    if (enablePasskeys) {
+      void this.injectFido2ContentScriptsInAllTabs();
+    }
   }
 
-  private injectFido2PageScript(tab: chrome.tabs.Tab) {
+  /**
+   * Injects the FIDO2 content and page script into the current tab.
+   *
+   * @returns {Promise<void>}
+   */
+  private async injectFido2ContentScripts(tab: chrome.tabs.Tab): Promise<void> {
+    const sharedInjectionDetails = { allFrames: true, runAt: "document_start" };
+
+    this.injectFido2PageScript(tab, sharedInjectionDetails);
+    void BrowserApi.executeScriptInTab(tab.id, {
+      file: "content/fido2/content-script.js",
+      ...sharedInjectionDetails,
+    });
+  }
+
+  private injectFido2PageScript(
+    tab: chrome.tabs.Tab,
+    sharedInjectionDetails: { allFrames: boolean; runAt: string },
+  ) {
     if (BrowserApi.isManifestVersion(3)) {
       void BrowserApi.executeScriptInTab(
         tab.id,
-        { file: "content/fido2/page-script.js", runAt: "document_start" },
+        { file: "content/fido2/page-script.js", ...sharedInjectionDetails },
         { world: "MAIN" },
       );
       return;
@@ -101,17 +93,15 @@ export default class Fido2Background implements Fido2BackgroundInterface {
 
     void BrowserApi.executeScriptInTab(tab.id, {
       file: "content/fido2/page-script-append-mv2.js",
-      runAt: "document_start",
+      ...sharedInjectionDetails,
     });
   }
 
-  private reloadFido2ContentScripts() {
+  private destroyLoadedFido2ContentScripts() {
     this.fido2ContentScriptPortsSet.forEach((port) => {
       port.disconnect();
       this.fido2ContentScriptPortsSet.delete(port);
     });
-
-    void this.injectFido2ContentScriptsInAllTabs();
   }
 
   private async injectFido2ContentScriptsInAllTabs() {
@@ -122,11 +112,7 @@ export default class Fido2Background implements Fido2BackgroundInterface {
         continue;
       }
 
-      void BrowserApi.executeScriptInTab(tab.id, {
-        file: "content/fido2/trigger-fido2-content-script-injection.js",
-        allFrames: true,
-        runAt: "document_start",
-      });
+      void this.injectFido2ContentScripts(tab);
     }
   }
 
@@ -200,8 +186,14 @@ export default class Fido2Background implements Fido2BackgroundInterface {
     return true;
   };
 
-  private handleInjectedScriptPortConnection = (port: chrome.runtime.Port) => {
-    if (port.name !== Fido2Port.InjectedScript) {
+  private handleInjectedScriptPortConnection = async (port: chrome.runtime.Port) => {
+    if (port.name !== Fido2Port.InjectedScript || !port.sender?.url) {
+      return;
+    }
+
+    const { hostname, origin } = new URL(port.sender.url);
+    if (!(await this.fido2ClientService.isFido2FeatureEnabled(hostname, origin))) {
+      port.disconnect();
       return;
     }
 

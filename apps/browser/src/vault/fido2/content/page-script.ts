@@ -6,6 +6,10 @@ import { MessageType } from "./messaging/message";
 import { Messenger } from "./messaging/messenger";
 
 (function (globalContext) {
+  if (globalContext.document.contentType !== "text/html") {
+    return;
+  }
+
   const BrowserPublicKeyCredential = globalContext.PublicKeyCredential;
   const BrowserNavigatorCredentials = navigator.credentials;
   const BrowserAuthenticatorAttestationResponse = globalContext.AuthenticatorAttestationResponse;
@@ -214,12 +218,12 @@ import { Messenger } from "./messaging/messenger";
         globalContext.PublicKeyCredential = BrowserPublicKeyCredential;
         globalContext.AuthenticatorAttestationResponse = BrowserAuthenticatorAttestationResponse;
       }
+
+      clearWaitForFocus();
+      void messenger.destroy();
     } catch (e) {
       /** empty */
     }
-
-    clearWaitForFocus();
-    void messenger.destroy();
   }
 
   /**

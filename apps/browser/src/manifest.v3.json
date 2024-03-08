@@ -24,8 +24,16 @@
       "run_at": "document_start"
     },
     {
+      "world": "MAIN",
       "all_frames": true,
-      "js": ["content/fido2/trigger-fido2-content-script-injection.js"],
+      "js": ["content/fido2/page-script.js"],
+      "matches": ["https://*/*"],
+      "exclude_matches": ["https://*/*.xml*"],
+      "run_at": "document_start"
+    },
+    {
+      "all_frames": true,
+      "js": ["content/fido2/content-script.js"],
       "matches": ["https://*/*"],
       "exclude_matches": ["https://*/*.xml*"],
       "run_at": "document_start"

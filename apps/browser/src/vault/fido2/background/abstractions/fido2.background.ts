@@ -22,10 +22,6 @@ type Fido2ExtensionMessageEventParams = {
 
 type Fido2BackgroundExtensionMessageHandlers = {
   [key: string]: CallableFunction;
-  triggerFido2ContentScriptsInjection: ({
-    message,
-    sender,
-  }: Fido2ExtensionMessageEventParams) => Promise<void>;
   fido2AbortRequest: ({ message }: Fido2ExtensionMessageEventParams) => void;
   fido2RegisterCredentialRequest: ({
     message,

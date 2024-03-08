@@ -15,6 +15,10 @@ import {
 import { MessageWithMetadata, Messenger } from "./messaging/messenger";
 
 (function (globalContext) {
+  if (globalContext.document.contentType !== "text/html") {
+    return;
+  }
+
   const messenger = Messenger.forDOMCommunication(window);
   messenger.handler = handleFido2Message;
 
