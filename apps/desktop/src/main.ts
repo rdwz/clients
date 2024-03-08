@@ -218,9 +218,11 @@ export class Main {
           await this.biometricsService.init();
         }
 
-        const browserIntegrationEnabled = await this.stateService.getEnableBrowserIntegration();
-        const ddgIntegrationEnabled =
-          await this.stateService.getEnableDuckDuckGoBrowserIntegration();
+        const [browserIntegrationEnabled, ddgIntegrationEnabled] = await Promise.all([
+          this.stateService.getEnableBrowserIntegration(),
+          this.stateService.getEnableDuckDuckGoBrowserIntegration(),
+        ]);
+
         if (browserIntegrationEnabled || ddgIntegrationEnabled) {
           // Re-register the native messaging host integrations on startup, in case they are not present
           if (browserIntegrationEnabled) {
