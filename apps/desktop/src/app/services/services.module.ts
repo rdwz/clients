@@ -68,6 +68,7 @@ import { SearchBarService } from "../layout/search/search-bar.service";
 import { DesktopFileDownloadService } from "./desktop-file-download.service";
 import { DesktopThemingService } from "./desktop-theming.service";
 import { InitService } from "./init.service";
+import { NativeMessagingManifestService } from "./native-messaging-manifest.service";
 import { RendererCryptoFunctionService } from "./renderer-crypto-function.service";
 
 const RELOAD_CALLBACK = new InjectionToken<() => any>("RELOAD_CALLBACK");
@@ -174,6 +175,10 @@ const RELOAD_CALLBACK = new InjectionToken<() => any>("RELOAD_CALLBACK");
         EncryptedMessageHandlerService,
         DialogService,
       ],
+    },
+    {
+      provide: NativeMessagingManifestService,
+      deps: [],
     },
     {
       provide: LoginServiceAbstraction,

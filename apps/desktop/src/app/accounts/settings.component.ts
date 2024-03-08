@@ -26,6 +26,7 @@ import { DialogService } from "@bitwarden/components";
 
 import { SetPinComponent } from "../../auth/components/set-pin.component";
 import { flagEnabled } from "../../platform/flags";
+import { NativeMessagingManifestService } from "../services/native-messaging-manifest.service";
 
 @Component({
   selector: "app-settings",
@@ -123,6 +124,7 @@ export class SettingsComponent implements OnInit {
     private userVerificationService: UserVerificationServiceAbstraction,
     private biometricStateService: BiometricStateService,
     private logService: LogService,
+    private nativeMessagingManifestService: NativeMessagingManifestService,
   ) {
     const isMac = this.platformUtilsService.getDevice() === DeviceType.MacOsDesktop;
 
@@ -624,7 +626,7 @@ export class SettingsComponent implements OnInit {
 
     await this.stateService.setEnableBrowserIntegration(this.form.value.enableBrowserIntegration);
 
-    const errorResult = await ipc.platform.nativeMessaging.manifests.generate(
+    const errorResult = await this.nativeMessagingManifestService.generate(
       this.form.value.enableBrowserIntegration,
     );
     if (errorResult !== null) {
@@ -655,7 +657,7 @@ export class SettingsComponent implements OnInit {
       await this.stateService.setDuckDuckGoSharedKey(null);
     }
 
-    const errorResult = await ipc.platform.nativeMessaging.manifests.generateDuckDuckGo(
+    const errorResult = await this.nativeMessagingManifestService.generateDuckDuckGo(
       this.form.value.enableDuckDuckGoBrowserIntegration,
     );
     if (errorResult !== null) {
