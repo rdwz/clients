@@ -3,10 +3,12 @@
   [loading]="refreshing"
   [organization]="organization"
   [collection]="selectedCollection"
+  [searchText]="currentSearchText$ | async"
   (onAddCipher)="addCipher()"
   (onAddCollection)="addCollection()"
   (onEditCollection)="editCollection(selectedCollection.node, $event.tab)"
   (onDeleteCollection)="deleteCollection(selectedCollection.node)"
+  (searchTextChanged)="filterSearchText($event)"
 ></app-org-vault-header>
 
 <div class="row">

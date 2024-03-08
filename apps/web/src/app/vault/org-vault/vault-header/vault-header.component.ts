@@ -41,6 +41,9 @@ export class VaultHeaderComponent {
   /** Currently selected collection */
   @Input() collection?: TreeNode<CollectionAdminView>;
 
+  /** The current search text in the header */
+  @Input() searchText: string;
+
   /** Emits an event when the new item button is clicked in the header */
   @Output() onAddCipher = new EventEmitter<void>();
 
@@ -52,6 +55,9 @@ export class VaultHeaderComponent {
 
   /** Emits an event when the delete collection button is clicked in the header */
   @Output() onDeleteCollection = new EventEmitter<void>();
+
+  /** Emits an event when the search text changes in the header*/
+  @Output() searchTextChanged = new EventEmitter<string>();
 
   protected CollectionDialogTabType = CollectionDialogTabType;
   protected organizations$ = this.organizationService.organizations$;
@@ -188,5 +194,10 @@ export class VaultHeaderComponent {
 
   deleteCollection() {
     this.onDeleteCollection.emit();
+  }
+
+  onSearchTextChanged(t: string) {
+    this.searchText = t;
+    this.searchTextChanged.emit(t);
   }
 }
