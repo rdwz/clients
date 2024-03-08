@@ -10,7 +10,7 @@
 ></app-org-vault-header>
 
 <div class="row">
-  <div class="col-3">
+  <div class="col-3" *ngIf="!organization?.isProviderUser">
     <div class="groupings">
       <div class="content">
         <div class="inner-content">
@@ -24,7 +24,7 @@
       </div>
     </div>
   </div>
-  <div class="col-9">
+  <div [class]="organization?.isProviderUser ? 'col-12' : 'col-9'">
     <app-callout type="warning" *ngIf="activeFilter.isDeleted" icon="bwi bwi-exclamation-triangle">
       {{ trashCleanupWarning }}
     </app-callout>
