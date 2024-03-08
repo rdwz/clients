@@ -91,7 +91,6 @@ import {
   BulkCollectionsDialogResult,
 } from "./bulk-collections-dialog";
 import { CollectionsComponent } from "./collections.component";
-import { VaultFilterComponent } from "./vault-filter/vault-filter.component";
 
 const BroadcasterSubscriptionId = "OrgVaultComponent";
 const SearchTextDebounceInterval = 200;
@@ -104,8 +103,6 @@ const SearchTextDebounceInterval = 200;
 export class VaultComponent implements OnInit, OnDestroy {
   protected Unassigned = Unassigned;
 
-  @ViewChild("vaultFilter", { static: true })
-  vaultFilterComponent: VaultFilterComponent;
   @ViewChild("attachments", { read: ViewContainerRef, static: true })
   attachmentsModalRef: ViewContainerRef;
   @ViewChild("cipherAddEdit", { read: ViewContainerRef, static: true })
