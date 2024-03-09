@@ -20,7 +20,6 @@ import { UriMatchType } from "../../vault/enums";
 import { CipherData } from "../../vault/models/data/cipher.data";
 import { LocalData } from "../../vault/models/data/local.data";
 import { CipherView } from "../../vault/models/view/cipher.view";
-import { AddEditCipherInfo } from "../../vault/types/add-edit-cipher-info";
 import { KdfType, ThemeType } from "../enums";
 import { ServerConfigData } from "../models/data/server-config.data";
 import {
@@ -61,8 +60,6 @@ export abstract class StateService<T extends Account = Account> {
 
   getAccessToken: (options?: StorageOptions) => Promise<string>;
   setAccessToken: (value: string, options?: StorageOptions) => Promise<void>;
-  getAddEditCipherInfo: (options?: StorageOptions) => Promise<AddEditCipherInfo>;
-  setAddEditCipherInfo: (value: AddEditCipherInfo, options?: StorageOptions) => Promise<void>;
   getAlwaysShowDock: (options?: StorageOptions) => Promise<boolean>;
   setAlwaysShowDock: (value: boolean, options?: StorageOptions) => Promise<void>;
   getApiKeyClientId: (options?: StorageOptions) => Promise<string>;

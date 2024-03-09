@@ -59,6 +59,7 @@ import { AttachmentView } from "../models/view/attachment.view";
 import { CipherView } from "../models/view/cipher.view";
 import { FieldView } from "../models/view/field.view";
 import { PasswordHistoryView } from "../models/view/password-history.view";
+import { AddEditCipherInfo } from "../types/add-edit-cipher-info";
 
 import { DECRYPTED_CIPHERS, ENCRYPTED_CIPHERS } from "./key-state/ciphers.state";
 
@@ -68,6 +69,12 @@ const CIPHERS_DISK_KEY = new KeyDefinition<Record<string, LocalData>>(CIPHERS_DI
   deserializer: (obj) => obj,
 });
 
+const ADD_EDIT_CIPHER_INFO_KEY = new KeyDefinition<AddEditCipherInfo>(
+  CIPHERS_DISK,
+  "addEditCipherInfo",
+  { deserializer: (obj) => obj },
+);
+
 export class CipherService implements CipherServiceAbstraction {
   private sortedCiphersCache: SortedCiphersCache = new SortedCiphersCache(
     this.sortCiphersByLastUsed,
@@ -76,10 +83,12 @@ export class CipherService implements CipherServiceAbstraction {
   localData$: Observable<Record<string, LocalData>>;
   ciphers$: Observable<Record<string, CipherData>>;
   cipherViews$: Observable<CipherView[]>;
+  addEditCipherInfo$: Observable<AddEditCipherInfo>;
 
   private localDataState: ActiveUserState<Record<string, LocalData>>;
   private encryptedCiphersState: ActiveUserState<Record<string, CipherData>>;
   private decryptedCiphersState: DerivedState<CipherView[]>;
+  private addEditCipherInfoState: ActiveUserState<AddEditCipherInfo>;
 
   constructor(
     private cryptoService: CryptoService,
@@ -101,10 +110,12 @@ export class CipherService implements CipherServiceAbstraction {
       DECRYPTED_CIPHERS,
       { cipherService: this },
     );
+    this.addEditCipherInfoState = this.stateProvider.getActive(ADD_EDIT_CIPHER_INFO_KEY);
 
     this.localData$ = this.localDataState.state$;
     this.ciphers$ = this.encryptedCiphersState.state$;
     this.cipherViews$ = this.decryptedCiphersState.state$;
+    this.addEditCipherInfo$ = this.addEditCipherInfoState.state$;
   }
 
   async getDecryptedCipherCache(): Promise<CipherView[]> {
@@ -1043,6 +1054,15 @@ export class CipherService implements CipherServiceAbstraction {
       (await this.cryptoService.getOrgKey(cipher.organizationId)) ||
       ((await this.cryptoService.getUserKeyWithLegacySupport()) as UserKey)
     );
+  }
+
+  async getAddEditCipherInfo(): Promise<AddEditCipherInfo> {
+    const info = await firstValueFrom(this.addEditCipherInfo$);
+    return info;
+  }
+
+  async setAddEditCipherInfo(value: AddEditCipherInfo) {
+    await this.addEditCipherInfoState.update(() => value);
   }
 
   // Helpers

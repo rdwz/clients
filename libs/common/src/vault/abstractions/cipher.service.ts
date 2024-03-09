@@ -6,6 +6,7 @@ import { Cipher } from "../models/domain/cipher";
 import { Field } from "../models/domain/field";
 import { CipherView } from "../models/view/cipher.view";
 import { FieldView } from "../models/view/field.view";
+import { AddEditCipherInfo } from "../types/add-edit-cipher-info";
 
 export abstract class CipherService {
   clearCache: (userId?: string) => Promise<void>;
@@ -89,4 +90,6 @@ export abstract class CipherService {
   ) => Promise<void>;
   getKeyForCipherKeyDecryption: (cipher: Cipher) => Promise<any>;
   decryptCiphers: (ciphers: Cipher[]) => Promise<CipherView[]>;
+  getAddEditCipherInfo: () => Promise<AddEditCipherInfo>;
+  setAddEditCipherInfo: (value: AddEditCipherInfo) => Promise<void>;
 }

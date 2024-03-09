@@ -678,7 +678,7 @@ export class AddEditComponent implements OnInit, OnDestroy {
   }
 
   async loadAddEditCipherInfo(): Promise<boolean> {
-    const addEditCipherInfo: any = await this.stateService.getAddEditCipherInfo();
+    const addEditCipherInfo: any = await this.cipherService.getAddEditCipherInfo();
     const loadedSavedInfo = addEditCipherInfo != null;
 
     if (loadedSavedInfo) {
@@ -691,7 +691,7 @@ export class AddEditComponent implements OnInit, OnDestroy {
       }
     }
 
-    await this.stateService.setAddEditCipherInfo(null);
+    await this.cipherService.setAddEditCipherInfo(null);
 
     return loadedSavedInfo;
   }

@@ -24,7 +24,6 @@ import { UriMatchType } from "../../vault/enums";
 import { CipherData } from "../../vault/models/data/cipher.data";
 import { LocalData } from "../../vault/models/data/local.data";
 import { CipherView } from "../../vault/models/view/cipher.view";
-import { AddEditCipherInfo } from "../../vault/types/add-edit-cipher-info";
 import { EnvironmentService } from "../abstractions/environment.service";
 import { LogService } from "../abstractions/log.service";
 import {
@@ -269,34 +268,6 @@ export class StateService<
     const account = await this.getAccount(options);
     account.tokens.accessToken = value;
     await this.saveAccount(account, options);
-  }
-
-  async getAddEditCipherInfo(options?: StorageOptions): Promise<AddEditCipherInfo> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultInMemoryOptions()),
-    );
-    // ensure prototype on cipher
-    const raw = account?.data?.addEditCipherInfo;
-    return raw == null
-      ? null
-      : {
-          cipher:
-            raw?.cipher.toJSON != null
-              ? raw.cipher
-              : CipherView.fromJSON(raw?.cipher as Jsonify<CipherView>),
-          collectionIds: raw?.collectionIds,
-        };
-  }
-
-  async setAddEditCipherInfo(value: AddEditCipherInfo, options?: StorageOptions): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultInMemoryOptions()),
-    );
-    account.data.addEditCipherInfo = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultInMemoryOptions()),
-    );
   }
 
   async getAlwaysShowDock(options?: StorageOptions): Promise<boolean> {
