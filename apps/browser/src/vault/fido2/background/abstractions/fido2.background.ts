@@ -35,7 +35,7 @@ type Fido2BackgroundExtensionMessageHandlers = {
 
 interface Fido2Background {
   init(): void;
-  loadFido2ScriptsOnInstall(): Promise<void>;
+  injectFido2ContentScriptsInAllTabs(): Promise<void>;
 }
 
 export { Fido2ExtensionMessage, Fido2BackgroundExtensionMessageHandlers, Fido2Background };

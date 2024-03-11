@@ -46,10 +46,29 @@ export default class Fido2Background implements Fido2BackgroundInterface {
     this.vaultSettingsService.enablePasskeys$.subscribe(this.handleEnablePasskeysUpdate.bind(this));
   }
 
-  async loadFido2ScriptsOnInstall() {
-    await this.injectFido2ContentScriptsInAllTabs();
+  /**
+   * Injects the FIDO2 content and page script into all existing browser tabs.
+   */
+  async injectFido2ContentScriptsInAllTabs() {
+    const tabs = await BrowserApi.tabsQuery({});
+    for (let index = 0; index < tabs.length; index++) {
+      const tab = tabs[index];
+      if (!tab.url?.startsWith("https")) {
+        continue;
+      }
+
+      void this.injectFido2ContentScripts(tab);
+    }
   }
 
+  /**
+   * Handles reacting to the enablePasskeys setting being updated. If the setting
+   * is enabled, the FIDO2 content scripts are injected into all tabs. If the setting
+   * is disabled, the FIDO2 content scripts will be from all tabs. This logic will
+   * not trigger until after the first setting update.
+   *
+   * @param enablePasskeys - The new value of the enablePasskeys setting.
+   */
   private handleEnablePasskeysUpdate(enablePasskeys: boolean) {
     const previousEnablePasskeysSetting = this.currentEnablePasskeysSetting;
     this.currentEnablePasskeysSetting = enablePasskeys;
@@ -66,7 +85,7 @@ export default class Fido2Background implements Fido2BackgroundInterface {
   /**
    * Injects the FIDO2 content and page script into the current tab.
    *
-   * @returns {Promise<void>}
+   * @param tab - The current tab to inject the scripts into.
    */
   private async injectFido2ContentScripts(tab: chrome.tabs.Tab): Promise<void> {
     const sharedInjectionDetails = { allFrames: true, runAt: "document_start" };
@@ -78,6 +97,12 @@ export default class Fido2Background implements Fido2BackgroundInterface {
     });
   }
 
+  /**
+   * Injects the FIDO2 page script into the current tab.
+   *
+   * @param tab - The current tab to inject the script into.
+   * @param sharedInjectionDetails - The shared injection details for the script.
+   */
   private injectFido2PageScript(
     tab: chrome.tabs.Tab,
     sharedInjectionDetails: { allFrames: boolean; runAt: string },
@@ -97,23 +122,15 @@ export default class Fido2Background implements Fido2BackgroundInterface {
     });
   }
 
+  /**
+   * Iterates over the set of injected FIDO2 content script ports
+   * and disconnects them, destroying the content scripts.
+   */
   private destroyLoadedFido2ContentScripts() {
     this.fido2ContentScriptPortsSet.forEach((port) => {
       port.disconnect();
       this.fido2ContentScriptPortsSet.delete(port);
     });
-  }
-
-  private async injectFido2ContentScriptsInAllTabs() {
-    const tabs = await BrowserApi.tabsQuery({});
-    for (let index = 0; index < tabs.length; index++) {
-      const tab = tabs[index];
-      if (!tab.url?.startsWith("https")) {
-        continue;
-      }
-
-      void this.injectFido2ContentScripts(tab);
-    }
   }
 
   private abortRequest(message: Fido2ExtensionMessage) {
