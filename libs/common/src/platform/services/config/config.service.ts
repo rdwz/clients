@@ -12,7 +12,7 @@ import {
 } from "rxjs";
 import { SemVer } from "semver";
 
-import { AuthService } from "../../../auth/abstractions/auth.service";
+import { AccountService } from "../../../auth/abstractions/account.service";
 import { AuthenticationStatus } from "../../../auth/enums/authentication-status";
 import { FeatureFlag, FeatureFlagValue } from "../../../enums/feature-flag.enum";
 import { ConfigApiServiceAbstraction } from "../../abstractions/config/config-api.service.abstraction";
@@ -41,7 +41,7 @@ export class ConfigService implements ConfigServiceAbstraction {
   constructor(
     private stateService: StateService,
     private configApiService: ConfigApiServiceAbstraction,
-    private authService: AuthService,
+    private accountService: AccountService,
     private environmentService: EnvironmentService,
     private logService: LogService,
 
@@ -100,7 +100,8 @@ export class ConfigService implements ConfigServiceAbstraction {
   }
 
   private async saveConfig(data: ServerConfigData) {
-    if ((await this.authService.getAuthStatus()) === AuthenticationStatus.LoggedOut) {
+    const activeAccount = await firstValueFrom(this.accountService.activeAccount$);
+    if (activeAccount == null || activeAccount.status === AuthenticationStatus.LoggedOut) {
       return;
     }
 

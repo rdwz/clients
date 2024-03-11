@@ -594,12 +594,12 @@ export default class MainBackground {
 
     this.userVerificationApiService = new UserVerificationApiService(this.apiService);
 
-    this.configApiService = new ConfigApiService(this.apiService, this.authService);
+    this.configApiService = new ConfigApiService(this.apiService, this.accountService);
 
     this.configService = new BrowserConfigService(
       this.stateService,
       this.configApiService,
-      this.authService,
+      this.accountService,
       this.environmentService,
       this.logService,
       true,

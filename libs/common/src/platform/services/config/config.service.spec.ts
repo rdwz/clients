@@ -1,8 +1,9 @@
 import { MockProxy, mock } from "jest-mock-extended";
-import { ReplaySubject, skip, take } from "rxjs";
+import { ReplaySubject, of, skip, take } from "rxjs";
 
-import { AuthService } from "../../../auth/abstractions/auth.service";
+import { AccountService } from "../../../auth/abstractions/account.service";
 import { AuthenticationStatus } from "../../../auth/enums/authentication-status";
+import { UserId } from "../../../types/guid";
 import { ConfigApiServiceAbstraction } from "../../abstractions/config/config-api.service.abstraction";
 import { ServerConfig } from "../../abstractions/config/server-config";
 import { EnvironmentService } from "../../abstractions/environment.service";
@@ -20,7 +21,7 @@ import { ConfigService } from "./config.service";
 describe("ConfigService", () => {
   let stateService: MockProxy<StateService>;
   let configApiService: MockProxy<ConfigApiServiceAbstraction>;
-  let authService: MockProxy<AuthService>;
+  let accountService: MockProxy<AccountService>;
   let environmentService: MockProxy<EnvironmentService>;
   let logService: MockProxy<LogService>;
 
@@ -32,7 +33,7 @@ describe("ConfigService", () => {
     const configService = new ConfigService(
       stateService,
       configApiService,
-      authService,
+      accountService,
       environmentService,
       logService,
     );
@@ -43,7 +44,7 @@ describe("ConfigService", () => {
   beforeEach(() => {
     stateService = mock();
     configApiService = mock();
-    authService = mock();
+    accountService = mock();
     environmentService = mock();
     logService = mock();
 
@@ -160,7 +161,13 @@ describe("ConfigService", () => {
 
   it("Saves server config to storage when the user is logged in", (done) => {
     stateService.getServerConfig.mockResolvedValueOnce(null);
-    authService.getAuthStatus.mockResolvedValue(AuthenticationStatus.Locked);
+    accountService.activeAccount$ = of({
+      id: "userId" as UserId,
+      status: AuthenticationStatus.Unlocked,
+      email: "userId@example.com",
+      name: "",
+    });
+
     const configService = configServiceFactory();
 
     configService.serverConfig$.pipe(take(1)).subscribe(() => {

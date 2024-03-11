@@ -466,12 +466,12 @@ export class Main {
       this.stateService,
     );
 
-    this.configApiService = new ConfigApiService(this.apiService, this.authService);
+    this.configApiService = new ConfigApiService(this.apiService, this.accountService);
 
     this.configService = new CliConfigService(
       this.stateService,
       this.configApiService,
-      this.authService,
+      this.accountService,
       this.environmentService,
       this.logService,
       true,

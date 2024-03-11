@@ -784,7 +784,7 @@ import { ModalService } from "./modal.service";
       deps: [
         StateServiceAbstraction,
         ConfigApiServiceAbstraction,
-        AuthServiceAbstraction,
+        AccountServiceAbstraction,
         EnvironmentServiceAbstraction,
         LogService,
       ],
@@ -796,7 +796,7 @@ import { ModalService } from "./modal.service";
     {
       provide: ConfigApiServiceAbstraction,
       useClass: ConfigApiService,
-      deps: [ApiServiceAbstraction, AuthServiceAbstraction],
+      deps: [ApiServiceAbstraction, AccountServiceAbstraction],
     },
     {
       provide: AnonymousHubServiceAbstraction,

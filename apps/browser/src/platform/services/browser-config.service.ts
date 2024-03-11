@@ -1,6 +1,6 @@
 import { ReplaySubject } from "rxjs";
 
-import { AuthService } from "@bitwarden/common/auth/abstractions/auth.service";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { ConfigApiServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config-api.service.abstraction";
 import { ServerConfig } from "@bitwarden/common/platform/abstractions/config/server-config";
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
@@ -18,11 +18,18 @@ export class BrowserConfigService extends ConfigService {
   constructor(
     stateService: StateService,
     configApiService: ConfigApiServiceAbstraction,
-    authService: AuthService,
+    accountService: AccountService,
     environmentService: EnvironmentService,
     logService: LogService,
     subscribe = false,
   ) {
-    super(stateService, configApiService, authService, environmentService, logService, subscribe);
+    super(
+      stateService,
+      configApiService,
+      accountService,
+      environmentService,
+      logService,
+      subscribe,
+    );
   }
 }

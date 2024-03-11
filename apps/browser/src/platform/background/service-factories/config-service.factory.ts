@@ -2,9 +2,9 @@ import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstraction
 import { ConfigService } from "@bitwarden/common/platform/services/config/config.service";
 
 import {
-  authServiceFactory,
-  AuthServiceInitOptions,
-} from "../../../auth/background/service-factories/auth-service.factory";
+  accountServiceFactory,
+  AccountServiceInitOptions,
+} from "../../../auth/background/service-factories/account-service.factory";
 
 import { configApiServiceFactory, ConfigApiServiceInitOptions } from "./config-api.service.factory";
 import {
@@ -24,7 +24,7 @@ type ConfigServiceFactoryOptions = FactoryOptions & {
 export type ConfigServiceInitOptions = ConfigServiceFactoryOptions &
   StateServiceInitOptions &
   ConfigApiServiceInitOptions &
-  AuthServiceInitOptions &
+  AccountServiceInitOptions &
   EnvironmentServiceInitOptions &
   LogServiceInitOptions;
 
@@ -40,7 +40,7 @@ export function configServiceFactory(
       new ConfigService(
         await stateServiceFactory(cache, opts),
         await configApiServiceFactory(cache, opts),
-        await authServiceFactory(cache, opts),
+        await accountServiceFactory(cache, opts),
         await environmentServiceFactory(cache, opts),
         await logServiceFactory(cache, opts),
         opts.configServiceOptions?.subscribe ?? true,
