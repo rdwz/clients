@@ -23,6 +23,7 @@ export class ToastService {
       payload: {
         message: options.message,
         variant: options.variant,
+        title: options.title,
       },
       timeOut:
         options.timeout != null && options.timeout > 0
