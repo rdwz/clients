@@ -266,6 +266,7 @@ function createPortSpyMock(name: string) {
     disconnect: jest.fn(),
     sender: {
       tab: createChromeTabMock(),
+      url: "https://jest-testing-website.com",
     },
   });
 }
