@@ -1,7 +1,7 @@
 import { MockProxy, mock } from "jest-mock-extended";
-import { ReplaySubject, of, skip, take } from "rxjs";
+import { ReplaySubject, skip, take } from "rxjs";
 
-import { AccountService } from "../../../auth/abstractions/account.service";
+import { FakeAccountService } from "../../../../spec";
 import { AuthenticationStatus } from "../../../auth/enums/authentication-status";
 import { UserId } from "../../../types/guid";
 import { ConfigApiServiceAbstraction } from "../../abstractions/config/config-api.service.abstraction";
@@ -21,7 +21,7 @@ import { ConfigService } from "./config.service";
 describe("ConfigService", () => {
   let stateService: MockProxy<StateService>;
   let configApiService: MockProxy<ConfigApiServiceAbstraction>;
-  let accountService: MockProxy<AccountService>;
+  let accountService: FakeAccountService;
   let environmentService: MockProxy<EnvironmentService>;
   let logService: MockProxy<LogService>;
 
@@ -44,7 +44,7 @@ describe("ConfigService", () => {
   beforeEach(() => {
     stateService = mock();
     configApiService = mock();
-    accountService = mock();
+    accountService = new FakeAccountService({});
     environmentService = mock();
     logService = mock();
 
@@ -161,7 +161,7 @@ describe("ConfigService", () => {
 
   it("Saves server config to storage when the user is logged in", (done) => {
     stateService.getServerConfig.mockResolvedValueOnce(null);
-    accountService.activeAccount$ = of({
+    accountService.activeAccountSubject.next({
       id: "userId" as UserId,
       status: AuthenticationStatus.Unlocked,
       email: "userId@example.com",
@@ -175,6 +175,22 @@ describe("ConfigService", () => {
         expect(stateService.setServerConfig).toHaveBeenCalledWith(
           expect.objectContaining({ gitHash: "server1" }),
         );
+        done();
+      } catch (e) {
+        done(e);
+      }
+    });
+
+    configService.triggerServerConfigFetch();
+  });
+
+  it("Does not save server config to storage when no user is logged in", (done) => {
+    stateService.getServerConfig.mockResolvedValueOnce(null);
+    const configService = configServiceFactory();
+
+    configService.serverConfig$.pipe(take(1)).subscribe(() => {
+      try {
+        expect(stateService.setServerConfig).not.toHaveBeenCalled();
         done();
       } catch (e) {
         done(e);
