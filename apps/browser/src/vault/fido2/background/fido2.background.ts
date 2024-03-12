@@ -1,3 +1,5 @@
+import registerContentScript from "content-scripts-register-polyfill/ponyfill.js";
+
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import {
   AssertCredentialParams,
@@ -22,6 +24,7 @@ export default class Fido2Background implements Fido2BackgroundInterface {
   private abortManager = new AbortManager();
   private fido2ContentScriptPortsSet = new Set<chrome.runtime.Port>();
   private currentEnablePasskeysSetting: boolean;
+  private registeredContentScripts: browser.contentScripts.RegisteredContentScript;
   private extensionMessageHandlers: Fido2BackgroundExtensionMessageHandlers = {
     fido2AbortRequest: ({ message }) => this.abortRequest(message),
     fido2RegisterCredentialRequest: ({ message, sender }) =>
@@ -69,9 +72,11 @@ export default class Fido2Background implements Fido2BackgroundInterface {
    *
    * @param enablePasskeys - The new value of the enablePasskeys setting.
    */
-  private handleEnablePasskeysUpdate(enablePasskeys: boolean) {
+  private async handleEnablePasskeysUpdate(enablePasskeys: boolean) {
     const previousEnablePasskeysSetting = this.currentEnablePasskeysSetting;
     this.currentEnablePasskeysSetting = enablePasskeys;
+    await this.updateContentScriptRegistration();
+
     if (typeof previousEnablePasskeysSetting === "undefined") {
       return;
     }
@@ -80,6 +85,77 @@ export default class Fido2Background implements Fido2BackgroundInterface {
     if (enablePasskeys) {
       void this.injectFido2ContentScriptsInAllTabs();
     }
+  }
+
+  private async updateContentScriptRegistration() {
+    const sharedRegistrationOptions: browser.contentScripts.RegisteredContentScriptOptions = {
+      allFrames: true,
+      matches: ["https://*/*"],
+      excludeMatches: ["https://*/*.xml*"],
+      runAt: "document_start",
+    };
+
+    if (BrowserApi.isManifestVersion(2)) {
+      await this.registerManifestV2ContentScripts(sharedRegistrationOptions);
+
+      return;
+    }
+
+    await this.registerManifestV3ContentScripts(
+      sharedRegistrationOptions as unknown as chrome.scripting.RegisteredContentScript,
+    );
+  }
+
+  private async registerManifestV2ContentScripts(
+    sharedRegistrationOptions: browser.contentScripts.RegisteredContentScriptOptions,
+  ) {
+    if (!this.currentEnablePasskeysSetting && this.registeredContentScripts) {
+      await this.registeredContentScripts.unregister();
+
+      return;
+    }
+
+    const registrationOptions: browser.contentScripts.RegisteredContentScriptOptions = {
+      js: [
+        { file: "content/fido2/page-script-append-mv2.js" },
+        { file: "content/fido2/content-script.js" },
+      ],
+      ...sharedRegistrationOptions,
+    };
+
+    if (typeof browser !== "undefined") {
+      this.registeredContentScripts = await browser.contentScripts.register(registrationOptions);
+
+      return;
+    }
+
+    this.registeredContentScripts = await registerContentScript(registrationOptions);
+  }
+
+  private async registerManifestV3ContentScripts(
+    sharedRegistrationOptions: chrome.scripting.RegisteredContentScript,
+  ) {
+    if (this.currentEnablePasskeysSetting) {
+      void chrome.scripting.registerContentScripts([
+        {
+          id: "fido2-page-script",
+          js: ["content/fido2/page-script.js"],
+          world: "MAIN",
+          ...sharedRegistrationOptions,
+        },
+        {
+          id: "fido2-content-script",
+          js: ["content/fido2/content-script.js"],
+          ...sharedRegistrationOptions,
+        },
+      ]);
+
+      return;
+    }
+
+    void chrome.scripting.unregisterContentScripts({
+      ids: ["fido2-page-script", "fido2-content-script"],
+    });
   }
 
   /**
