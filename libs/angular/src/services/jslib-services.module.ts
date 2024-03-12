@@ -349,13 +349,12 @@ import { ModalService } from "./modal.service";
       provide: CipherServiceAbstraction,
       useFactory: (
         cryptoService: CryptoServiceAbstraction,
-        settingsService: SettingsServiceAbstraction,
+        domainSettingsService: DomainSettingsService,
         apiService: ApiServiceAbstraction,
         i18nService: I18nServiceAbstraction,
         searchService: SearchServiceAbstraction,
         stateService: StateServiceAbstraction,
         autofillSettingsService: AutofillSettingsServiceAbstraction,
-        domainSettingsService: DomainSettingsService,
         encryptService: EncryptService,
         fileUploadService: CipherFileUploadServiceAbstraction,
         configService: ConfigServiceAbstraction,
@@ -376,7 +375,7 @@ import { ModalService } from "./modal.service";
         ),
       deps: [
         CryptoServiceAbstraction,
-        SettingsServiceAbstraction,
+        DomainSettingsService,
         ApiServiceAbstraction,
         I18nServiceAbstraction,
         SearchServiceAbstraction,
