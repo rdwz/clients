@@ -1,4 +1,4 @@
-import { APP_INITIALIZER, LOCALE_ID, NgModule, NgZone } from "@angular/core";
+import { APP_INITIALIZER, NgModule, NgZone } from "@angular/core";
 
 import { UnauthGuard as BaseUnauthGuardService } from "@bitwarden/angular/auth/guards";
 import { ThemingService } from "@bitwarden/angular/platform/services/theming/theming.service";
@@ -60,10 +60,7 @@ import {
 } from "@bitwarden/common/platform/abstractions/log.service";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
-import {
-  StateService as BaseStateServiceAbstraction,
-  StateService,
-} from "@bitwarden/common/platform/abstractions/state.service";
+import { StateService as BaseStateServiceAbstraction } from "@bitwarden/common/platform/abstractions/state.service";
 import {
   AbstractMemoryStorageService,
   AbstractStorageService,
@@ -75,7 +72,11 @@ import { ConsoleLogService } from "@bitwarden/common/platform/services/console-l
 import { ContainerService } from "@bitwarden/common/platform/services/container.service";
 import { MigrationRunner } from "@bitwarden/common/platform/services/migration-runner";
 import { WebCryptoFunctionService } from "@bitwarden/common/platform/services/web-crypto-function.service";
-import { DerivedStateProvider, StateProvider } from "@bitwarden/common/platform/state";
+import {
+  DerivedStateProvider,
+  GlobalStateProvider,
+  StateProvider,
+} from "@bitwarden/common/platform/state";
 import { SearchService } from "@bitwarden/common/services/search.service";
 import { PasswordGenerationServiceAbstraction } from "@bitwarden/common/tools/generator/password";
 import { UsernameGenerationServiceAbstraction } from "@bitwarden/common/tools/generator/username";
@@ -102,7 +103,6 @@ import { ImportServiceAbstraction } from "@bitwarden/importer/core";
 import { VaultExportServiceAbstraction } from "@bitwarden/vault-export-core";
 
 import { BrowserOrganizationService } from "../../admin-console/services/browser-organization.service";
-import { BrowserPolicyService } from "../../admin-console/services/browser-policy.service";
 import { UnauthGuardService } from "../../auth/popup/services";
 import { AutofillService } from "../../autofill/services/abstractions/autofill.service";
 import MainBackground from "../../background/main.background";
@@ -113,11 +113,11 @@ import { BrowserStateService as StateServiceAbstraction } from "../../platform/s
 import { BrowserConfigService } from "../../platform/services/browser-config.service";
 import { BrowserEnvironmentService } from "../../platform/services/browser-environment.service";
 import { BrowserFileDownloadService } from "../../platform/services/browser-file-download.service";
-import { BrowserI18nService } from "../../platform/services/browser-i18n.service";
 import BrowserLocalStorageService from "../../platform/services/browser-local-storage.service";
 import BrowserMessagingPrivateModePopupService from "../../platform/services/browser-messaging-private-mode-popup.service";
 import BrowserMessagingService from "../../platform/services/browser-messaging.service";
 import { BrowserStateService } from "../../platform/services/browser-state.service";
+import I18nService from "../../platform/services/i18n.service";
 import { ForegroundDerivedStateProvider } from "../../platform/state/foreground-derived-state.provider";
 import { ForegroundMemoryStorageService } from "../../platform/storage/foreground-memory-storage.service";
 import { BrowserSendService } from "../../services/browser-send.service";
@@ -159,11 +159,6 @@ function getBgService<T>(service: keyof MainBackground) {
     DebounceNavigationService,
     DialogService,
     PopupCloseWarningService,
-    {
-      provide: LOCALE_ID,
-      useFactory: () => getBgService<I18nServiceAbstraction>("i18nService")().translationLocale,
-      deps: [],
-    },
     {
       provide: APP_INITIALIZER,
       useFactory: (initService: InitService) => initService.init(),
@@ -221,10 +216,6 @@ function getBgService<T>(service: keyof MainBackground) {
       deps: [],
     },
     {
-      provide: FileUploadService,
-      useFactory: getBgService<FileUploadService>("fileUploadService"),
-    },
-    {
       provide: InternalFolderService,
       useExisting: FolderServiceAbstraction,
     },
@@ -242,8 +233,9 @@ function getBgService<T>(service: keyof MainBackground) {
     },
     {
       provide: LogServiceAbstraction,
-      useFactory: getBgService<ConsoleLogService>("logService"),
-      deps: [],
+      useFactory: (platformUtilsService: PlatformUtilsService) =>
+        new ConsoleLogService(platformUtilsService.isDev()),
+      deps: [PlatformUtilsService],
     },
     {
       provide: BrowserEnvironmentService,
@@ -258,10 +250,10 @@ function getBgService<T>(service: keyof MainBackground) {
     { provide: TokenService, useFactory: getBgService<TokenService>("tokenService"), deps: [] },
     {
       provide: I18nServiceAbstraction,
-      useFactory: (stateService: BrowserStateService) => {
-        return new BrowserI18nService(BrowserApi.getUILanguage(), stateService);
+      useFactory: (globalStateProvider: GlobalStateProvider) => {
+        return new I18nService(BrowserApi.getUILanguage(), globalStateProvider);
       },
-      deps: [StateService],
+      deps: [GlobalStateProvider],
     },
     {
       provide: CryptoService,
@@ -298,17 +290,6 @@ function getBgService<T>(service: keyof MainBackground) {
       deps: [],
     },
     {
-      provide: PolicyService,
-      useFactory: (
-        stateService: StateServiceAbstraction,
-        stateProvider: StateProvider,
-        organizationService: OrganizationService,
-      ) => {
-        return new BrowserPolicyService(stateService, stateProvider, organizationService);
-      },
-      deps: [StateServiceAbstraction, StateProvider, OrganizationService],
-    },
-    {
       provide: PlatformUtilsService,
       useFactory: getBgService<PlatformUtilsService>("platformUtilsService"),
       deps: [],
@@ -323,7 +304,6 @@ function getBgService<T>(service: keyof MainBackground) {
       useFactory: getBgService<PasswordGenerationServiceAbstraction>("passwordGenerationService"),
       deps: [],
     },
-    { provide: ApiService, useFactory: getBgService<ApiService>("apiService"), deps: [] },
     {
       provide: SendService,
       useFactory: (
@@ -411,11 +391,6 @@ function getBgService<T>(service: keyof MainBackground) {
       deps: [],
     },
     {
-      provide: LogServiceAbstraction,
-      useFactory: getBgService<ConsoleLogService>("logService"),
-      deps: [],
-    },
-    {
       provide: OrganizationService,
       useFactory: (stateService: StateServiceAbstraction, stateProvider: StateProvider) => {
         return new BrowserOrganizationService(stateService, stateProvider);
@@ -437,7 +412,7 @@ function getBgService<T>(service: keyof MainBackground) {
     },
     {
       provide: SECURE_STORAGE,
-      useFactory: getBgService<AbstractStorageService>("secureStorageService"),
+      useExisting: AbstractStorageService, // Secure storage is not available in the browser, so we use normal storage instead and warn users when it is used.
     },
     {
       provide: MEMORY_STORAGE,

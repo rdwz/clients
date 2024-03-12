@@ -231,7 +231,6 @@ export class Main {
       p = path.join(process.env.HOME, ".config/Bitwarden CLI");
     }
 
-    this.i18nService = new I18nService("en", "./locales");
     this.platformUtilsService = new CliPlatformUtilsService(ClientType.Cli, packageJson);
     this.logService = new ConsoleLogService(
       this.platformUtilsService.isDev(),
@@ -269,6 +268,8 @@ export class Main {
       this.globalStateProvider,
       storageServiceProvider,
     );
+
+    this.i18nService = new I18nService("en", "./locales", this.globalStateProvider);
 
     this.singleUserStateProvider = new DefaultSingleUserStateProvider(
       storageServiceProvider,
@@ -394,11 +395,7 @@ export class Main {
 
     this.organizationUserService = new OrganizationUserServiceImplementation(this.apiService);
 
-    this.policyService = new PolicyService(
-      this.stateService,
-      this.stateProvider,
-      this.organizationService,
-    );
+    this.policyService = new PolicyService(this.stateProvider, this.organizationService);
 
     this.policyApiService = new PolicyApiService(this.policyService, this.apiService);
 
@@ -654,7 +651,7 @@ export class Main {
       this.cipherService.clear(userId),
       this.folderService.clear(userId),
       this.collectionService.clear(userId as UserId),
-      this.policyService.clear(userId),
+      this.policyService.clear(userId as UserId),
       this.passwordGenerationService.clear(),
       this.providerService.save(null, userId as UserId),
     ]);
@@ -670,8 +667,7 @@ export class Main {
     await this.stateService.init();
     this.containerService.attachToGlobal(global);
     await this.environmentService.setUrlsFromStorage();
-    const locale = await this.stateService.getLocale();
-    await this.i18nService.init(locale);
+    await this.i18nService.init();
     this.twoFactorService.init();
     this.configService.init();
 

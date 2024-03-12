@@ -3,7 +3,7 @@ import { MockProxy } from "jest-mock-extended";
 import { MigrationHelper } from "../migration-helper";
 import { mockMigrationHelper } from "../migration-helper.spec";
 
-import { LocalDataMigrator } from "./30-move-local-data-to-state-provider";
+import { LocalDataMigrator } from "./33-move-local-data-to-state-provider";
 
 function exampleJSON() {
   return {
