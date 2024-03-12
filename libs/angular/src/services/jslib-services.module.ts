@@ -693,15 +693,14 @@ import { ModalService } from "./modal.service";
       provide: KeyConnectorServiceAbstraction,
       useClass: KeyConnectorService,
       deps: [
-        StateServiceAbstraction,
         CryptoServiceAbstraction,
         ApiServiceAbstraction,
         TokenServiceAbstraction,
         LogService,
         OrganizationServiceAbstraction,
         KeyGenerationServiceAbstraction,
-        StateProvider,
         LOGOUT_CALLBACK,
+        StateProvider,
       ],
     },
     {
