@@ -80,8 +80,8 @@ describe("LocalDataMigrator", () => {
 
   describe("migrate", () => {
     beforeEach(() => {
-      helper = mockMigrationHelper(exampleJSON(), 23);
-      sut = new LocalDataMigrator(22, 23);
+      helper = mockMigrationHelper(exampleJSON(), 35);
+      sut = new LocalDataMigrator(34, 35);
     });
 
     it("should remove local data from all accounts", async () => {
@@ -105,8 +105,8 @@ describe("LocalDataMigrator", () => {
 
   describe("rollback", () => {
     beforeEach(() => {
-      helper = mockMigrationHelper(rollbackJSON(), 23);
-      sut = new LocalDataMigrator(22, 23);
+      helper = mockMigrationHelper(rollbackJSON(), 35);
+      sut = new LocalDataMigrator(34, 35);
     });
 
     it.each(["user-1", "user-2"])("should null out new values", async (userId) => {
