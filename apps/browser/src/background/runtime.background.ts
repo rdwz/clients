@@ -18,7 +18,7 @@ import { AutofillService } from "../autofill/services/abstractions/autofill.serv
 import { BrowserApi } from "../platform/browser/browser-api";
 import { BrowserStateService } from "../platform/services/abstractions/browser-state.service";
 import { BrowserEnvironmentService } from "../platform/services/browser-environment.service";
-import BrowserPlatformUtilsService from "../platform/services/browser-platform-utils.service";
+import { BrowserPlatformUtilsService } from "../platform/services/platform-utils/browser-platform-utils.service";
 import { Fido2Background } from "../vault/fido2/background/abstractions/fido2.background";
 
 import MainBackground from "./main.background";
@@ -60,7 +60,7 @@ export default class RuntimeBackground {
       sender: chrome.runtime.MessageSender,
       sendResponse: any,
     ) => {
-      const messagesWithResponse = [""];
+      const messagesWithResponse = ["biometricUnlock"];
 
       if (messagesWithResponse.includes(msg.command)) {
         this.processMessage(msg, sender).then(
@@ -254,6 +254,14 @@ export default class RuntimeBackground {
         break;
       case "switchAccount": {
         await this.main.switchAccount(msg.userId);
+        break;
+      }
+      case "clearClipboard": {
+        await this.main.clearClipboard(msg.clipboardValue, msg.timeoutMs);
+        break;
+      }
+      case "biometricUnlock": {
+        return await this.main.biometricUnlock();
       }
     }
   }
