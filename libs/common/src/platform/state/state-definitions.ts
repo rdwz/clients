@@ -52,11 +52,15 @@ export const NEW_WEB_LAYOUT_BANNER_DISK = new StateDefinition("newWebLayoutBanne
 
 // Platform
 
+export const APPLICATION_ID_DISK = new StateDefinition("applicationId", "disk", {
+  web: "disk-local",
+});
 export const BIOMETRIC_SETTINGS_DISK = new StateDefinition("biometricSettings", "disk");
 export const CLEAR_EVENT_DISK = new StateDefinition("clearEvent", "disk");
 export const CRYPTO_DISK = new StateDefinition("crypto", "disk");
 export const CRYPTO_MEMORY = new StateDefinition("crypto", "memory");
 export const ENVIRONMENT_DISK = new StateDefinition("environment", "disk");
+export const TRANSLATION_DISK = new StateDefinition("translation", "disk");
 
 // Secrets Manager
 
