@@ -18,9 +18,6 @@ import { SendData } from "../../tools/send/models/data/send.data";
 import { SendView } from "../../tools/send/models/view/send.view";
 import { UserId } from "../../types/guid";
 import { DeviceKey, MasterKey } from "../../types/key";
-import { CipherData } from "../../vault/models/data/cipher.data";
-import { LocalData } from "../../vault/models/data/local.data";
-import { CipherView } from "../../vault/models/view/cipher.view";
 import { EnvironmentService } from "../abstractions/environment.service";
 import { LogService } from "../abstractions/log.service";
 import {
@@ -702,24 +699,6 @@ export class StateService<
     await this.saveSecureStorageKey(partialKeys.biometricKey, value, options);
   }
 
-  @withPrototypeForArrayMembers(CipherView, CipherView.fromJSON)
-  async getDecryptedCiphers(options?: StorageOptions): Promise<CipherView[]> {
-    return (
-      await this.getAccount(this.reconcileOptions(options, await this.defaultInMemoryOptions()))
-    )?.data?.ciphers?.decrypted;
-  }
-
-  async setDecryptedCiphers(value: CipherView[], options?: StorageOptions): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultInMemoryOptions()),
-    );
-    account.data.ciphers.decrypted = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultInMemoryOptions()),
-    );
-  }
-
   @withPrototypeForArrayMembers(GeneratedPasswordHistory)
   async getDecryptedPasswordGenerationHistory(
     options?: StorageOptions,
@@ -1194,27 +1173,6 @@ export class StateService<
     );
   }
 
-  @withPrototypeForObjectValues(CipherData)
-  async getEncryptedCiphers(options?: StorageOptions): Promise<{ [id: string]: CipherData }> {
-    return (
-      await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskMemoryOptions()))
-    )?.data?.ciphers?.encrypted;
-  }
-
-  async setEncryptedCiphers(
-    value: { [id: string]: CipherData },
-    options?: StorageOptions,
-  ): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskMemoryOptions()),
-    );
-    account.data.ciphers.encrypted = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskMemoryOptions()),
-    );
-  }
-
   /**
    * @deprecated Use UserKey instead
    */
@@ -1469,26 +1427,6 @@ export class StateService<
     await this.saveAccount(
       account,
       this.reconcileOptions(options, await this.defaultOnDiskMemoryOptions()),
-    );
-  }
-
-  async getLocalData(options?: StorageOptions): Promise<{ [cipherId: string]: LocalData }> {
-    return (
-      await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()))
-    )?.data?.localData;
-  }
-
-  async setLocalData(
-    value: { [cipherId: string]: LocalData },
-    options?: StorageOptions,
-  ): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
-    );
-    account.data.localData = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
     );
   }
 

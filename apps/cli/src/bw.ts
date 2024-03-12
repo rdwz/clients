@@ -503,7 +503,6 @@ export class Main {
       this.cryptoService,
       this.i18nService,
       this.cipherService,
-      this.stateService,
       this.stateProvider,
     );
 

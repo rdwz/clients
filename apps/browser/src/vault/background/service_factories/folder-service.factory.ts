@@ -15,10 +15,6 @@ import {
   I18nServiceInitOptions,
 } from "../../../platform/background/service-factories/i18n-service.factory";
 import { stateProviderFactory } from "../../../platform/background/service-factories/state-provider.factory";
-import {
-  stateServiceFactory as stateServiceFactory,
-  StateServiceInitOptions,
-} from "../../../platform/background/service-factories/state-service.factory";
 
 import { cipherServiceFactory, CipherServiceInitOptions } from "./cipher-service.factory";
 
@@ -27,8 +23,7 @@ type FolderServiceFactoryOptions = FactoryOptions;
 export type FolderServiceInitOptions = FolderServiceFactoryOptions &
   CryptoServiceInitOptions &
   CipherServiceInitOptions &
-  I18nServiceInitOptions &
-  StateServiceInitOptions;
+  I18nServiceInitOptions;
 
 export function folderServiceFactory(
   cache: { folderService?: AbstractFolderService } & CachedServices,
@@ -43,7 +38,6 @@ export function folderServiceFactory(
         await cryptoServiceFactory(cache, opts),
         await i18nServiceFactory(cache, opts),
         await cipherServiceFactory(cache, opts),
-        await stateServiceFactory(cache, opts),
         await stateProviderFactory(cache, opts),
       ),
   );

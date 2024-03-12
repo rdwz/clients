@@ -394,7 +394,6 @@ import { ModalService } from "./modal.service";
         CryptoServiceAbstraction,
         I18nServiceAbstraction,
         CipherServiceAbstraction,
-        StateServiceAbstraction,
         StateProvider,
       ],
     },
