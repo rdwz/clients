@@ -195,12 +195,12 @@ import { BrowserStateService as StateServiceAbstraction } from "../platform/serv
 import { BrowserConfigService } from "../platform/services/browser-config.service";
 import { BrowserCryptoService } from "../platform/services/browser-crypto.service";
 import { BrowserEnvironmentService } from "../platform/services/browser-environment.service";
-import { BrowserI18nService } from "../platform/services/browser-i18n.service";
 import BrowserLocalStorageService from "../platform/services/browser-local-storage.service";
 import BrowserMessagingPrivateModeBackgroundService from "../platform/services/browser-messaging-private-mode-background.service";
 import BrowserMessagingService from "../platform/services/browser-messaging.service";
 import BrowserPlatformUtilsService from "../platform/services/browser-platform-utils.service";
 import { BrowserStateService } from "../platform/services/browser-state.service";
+import I18nService from "../platform/services/i18n.service";
 import { LocalBackedSessionStorageService } from "../platform/services/local-backed-session-storage.service";
 import { BackgroundDerivedStateProvider } from "../platform/state/background-derived-state.provider";
 import { BackgroundMemoryStorageService } from "../platform/storage/background-memory-storage.service";
@@ -352,7 +352,7 @@ export default class MainBackground {
     this.cryptoFunctionService = new WebCryptoFunctionService(self);
     this.keyGenerationService = new KeyGenerationService(this.cryptoFunctionService);
     this.storageService = new BrowserLocalStorageService();
-    this.secureStorageService = new BrowserLocalStorageService();
+    this.secureStorageService = this.storageService; // secure storage is not supported in browsers, so we use local storage and warn users when it is used
     this.memoryStorageService = BrowserApi.isManifestVersion(3)
       ? new LocalBackedSessionStorageService(
           new EncryptServiceImplementation(this.cryptoFunctionService, this.logService, false),
@@ -462,7 +462,7 @@ export default class MainBackground {
       },
       self,
     );
-    this.i18nService = new BrowserI18nService(BrowserApi.getUILanguage(), this.stateService);
+    this.i18nService = new I18nService(BrowserApi.getUILanguage(), this.globalStateProvider);
     this.cryptoService = new BrowserCryptoService(
       this.keyGenerationService,
       this.cryptoFunctionService,
@@ -969,7 +969,7 @@ export default class MainBackground {
     await this.stateService.init();
 
     await this.vaultTimeoutService.init(true);
-    await (this.i18nService as BrowserI18nService).init();
+    await (this.i18nService as I18nService).init();
     await (this.eventUploadService as EventUploadService).init(true);
     await this.runtimeBackground.init();
     await this.notificationBackground.init();
