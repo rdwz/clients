@@ -269,11 +269,10 @@ export abstract class BrowserPlatformUtilsService implements PlatformUtilsServic
 
   async supportsBiometric() {
     const platformInfo = await BrowserApi.getPlatformInfo();
-    if (platformInfo.os === "android") {
-      return false;
+    if (platformInfo.os === "mac" || platformInfo.os === "win") {
+      return true;
     }
-
-    return true;
+    return false;
   }
 
   authenticateBiometric() {

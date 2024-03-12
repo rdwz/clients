@@ -1,4 +1,4 @@
-import { APP_INITIALIZER, LOCALE_ID, NgModule, NgZone } from "@angular/core";
+import { APP_INITIALIZER, NgModule, NgZone } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
 import { ToastrService } from "ngx-toastr";
 
@@ -46,7 +46,6 @@ import {
   UserNotificationSettingsService,
   UserNotificationSettingsServiceAbstraction,
 } from "@bitwarden/common/autofill/services/user-notification-settings.service";
-import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { ConfigApiServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config-api.service.abstraction";
 import { CryptoFunctionService } from "@bitwarden/common/platform/abstractions/crypto-function.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
@@ -62,10 +61,7 @@ import {
 } from "@bitwarden/common/platform/abstractions/log.service";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
-import {
-  StateService as BaseStateServiceAbstraction,
-  StateService,
-} from "@bitwarden/common/platform/abstractions/state.service";
+import { StateService as BaseStateServiceAbstraction } from "@bitwarden/common/platform/abstractions/state.service";
 import {
   AbstractMemoryStorageService,
   AbstractStorageService,
@@ -78,7 +74,11 @@ import { ContainerService } from "@bitwarden/common/platform/services/container.
 import { MemoryStorageService } from "@bitwarden/common/platform/services/memory-storage.service";
 import { MigrationRunner } from "@bitwarden/common/platform/services/migration-runner";
 import { WebCryptoFunctionService } from "@bitwarden/common/platform/services/web-crypto-function.service";
-import { DerivedStateProvider, StateProvider } from "@bitwarden/common/platform/state";
+import {
+  DerivedStateProvider,
+  GlobalStateProvider,
+  StateProvider,
+} from "@bitwarden/common/platform/state";
 import { SearchService } from "@bitwarden/common/services/search.service";
 import { PasswordGenerationServiceAbstraction } from "@bitwarden/common/tools/generator/password";
 import { UsernameGenerationServiceAbstraction } from "@bitwarden/common/tools/generator/username";
@@ -115,11 +115,11 @@ import { BrowserFileDownloadService } from "../../platform/popup/services/browse
 import { BrowserStateService as StateServiceAbstraction } from "../../platform/services/abstractions/browser-state.service";
 import { BrowserConfigService } from "../../platform/services/browser-config.service";
 import { BrowserEnvironmentService } from "../../platform/services/browser-environment.service";
-import { BrowserI18nService } from "../../platform/services/browser-i18n.service";
 import BrowserLocalStorageService from "../../platform/services/browser-local-storage.service";
 // import BrowserMessagingPrivateModePopupService from "../../platform/services/browser-messaging-private-mode-popup.service";
 import BrowserMessagingService from "../../platform/services/browser-messaging.service";
 import { BrowserStateService } from "../../platform/services/browser-state.service";
+import I18nService from "../../platform/services/i18n.service";
 import { ForegroundPlatformUtilsService } from "../../platform/services/platform-utils/foreground-platform-utils.service";
 import { ForegroundDerivedStateProvider } from "../../platform/state/foreground-derived-state.provider";
 import { ForegroundMemoryStorageService } from "../../platform/storage/foreground-memory-storage.service";
@@ -162,11 +162,6 @@ function getBgService<T>(service: keyof MainBackground) {
     DebounceNavigationService,
     DialogService,
     PopupCloseWarningService,
-    {
-      provide: LOCALE_ID,
-      useFactory: () => getBgService<I18nServiceAbstraction>("i18nService")().translationLocale,
-      deps: [],
-    },
     {
       provide: APP_INITIALIZER,
       useFactory: (initService: InitService) => initService.init(),
@@ -259,10 +254,10 @@ function getBgService<T>(service: keyof MainBackground) {
     { provide: TokenService, useFactory: getBgService<TokenService>("tokenService"), deps: [] },
     {
       provide: I18nServiceAbstraction,
-      useFactory: (stateService: BrowserStateService) => {
-        return new BrowserI18nService(BrowserApi.getUILanguage(), stateService);
+      useFactory: (globalStateProvider: GlobalStateProvider) => {
+        return new I18nService(BrowserApi.getUILanguage(), globalStateProvider);
       },
-      deps: [StateService],
+      deps: [GlobalStateProvider],
     },
     {
       provide: CryptoService,
@@ -318,7 +313,7 @@ function getBgService<T>(service: keyof MainBackground) {
               error: string;
             }>("biometricUnlock");
             if (!response.result) {
-              throw new Error(response.error);
+              throw response.error;
             }
             return response.result;
           },
@@ -382,7 +377,6 @@ function getBgService<T>(service: keyof MainBackground) {
       useClass: BrowserLocalStorageService,
       deps: [],
     },
-    { provide: AppIdService, useFactory: getBgService<AppIdService>("appIdService"), deps: [] },
     {
       provide: AutofillService,
       useFactory: getBgService<AutofillService>("autofillService"),
@@ -455,7 +449,7 @@ function getBgService<T>(service: keyof MainBackground) {
     },
     {
       provide: SECURE_STORAGE,
-      useFactory: getBgService<AbstractStorageService>("secureStorageService"),
+      useExisting: AbstractStorageService, // Secure storage is not available in the browser, so we use normal storage instead and warn users when it is used.
     },
     {
       provide: MemoryStorageService,

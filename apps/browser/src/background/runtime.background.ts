@@ -286,7 +286,7 @@ export default class RuntimeBackground {
 
   private async checkOnInstalled() {
     setTimeout(async () => {
-      void this.fido2Background.loadFido2ScriptsOnInstall();
+      void this.fido2Background.injectFido2ContentScriptsInAllTabs();
       void this.autofillService.loadAutofillScriptsOnInstall();
 
       if (this.onInstalledReason != null) {
