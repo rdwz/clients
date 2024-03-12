@@ -170,15 +170,6 @@
               {{ "removeStorage" | i18n }}
             </button>
           </div>
-          <app-adjust-storage
-            [storageGbPrice]="storageGbPrice"
-            [add]="adjustStorageAdd"
-            [organizationId]="organizationId"
-            [interval]="billingInterval"
-            (onAdjusted)="closeStorage(true)"
-            (onCanceled)="closeStorage(false)"
-            *ngIf="showAdjustStorage"
-          ></app-adjust-storage>
         </div>
       </ng-container>
       <ng-container *ngIf="showAdjustSecretsManager">

@@ -184,13 +184,6 @@
             {{ "removeStorage" | i18n }}
           </button>
         </div>
-        <app-adjust-storage
-          [storageGbPrice]="4"
-          [add]="adjustStorageAdd"
-          (onAdjusted)="closeStorage(true)"
-          (onCanceled)="closeStorage(false)"
-          *ngIf="showAdjustStorage"
-        ></app-adjust-storage>
       </div>
     </ng-container>
   </ng-container>
