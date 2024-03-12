@@ -180,7 +180,7 @@ import ContextMenusBackground from "../autofill/background/context-menus.backgro
 import NotificationBackground from "../autofill/background/notification.background";
 import OverlayBackground from "../autofill/background/overlay.background";
 import TabsBackground from "../autofill/background/tabs.background";
-import WebRequestBackground from "../autofill/background/web-request.background";
+// import WebRequestBackground from "../autofill/background/web-request.background";
 import { CipherContextMenuHandler } from "../autofill/browser/cipher-context-menu-handler";
 import { ContextMenuClickedHandler } from "../autofill/browser/context-menu-clicked-handler";
 import { MainContextMenuHandler } from "../autofill/browser/main-context-menu-handler";
@@ -318,7 +318,7 @@ export default class MainBackground {
   private filelessImporterBackground: FilelessImporterBackground;
   private runtimeBackground: RuntimeBackground;
   private tabsBackground: TabsBackground;
-  private webRequestBackground: WebRequestBackground;
+  // private webRequestBackground: WebRequestBackground;
 
   private syncTimeout: any;
   private nativeMessagingBackground: NativeMessagingBackground;
@@ -909,11 +909,11 @@ export default class MainBackground {
         this.notificationsService,
         this.accountService,
       );
-      this.webRequestBackground = new WebRequestBackground(
-        this.platformUtilsService,
-        this.cipherService,
-        this.authService,
-      );
+      // this.webRequestBackground = new WebRequestBackground(
+      //   this.platformUtilsService,
+      //   this.cipherService,
+      //   this.authService,
+      // );
 
       this.mainContextMenuHandler = new MainContextMenuHandler(
         this.stateService,
@@ -970,7 +970,7 @@ export default class MainBackground {
       await this.tabsBackground.init();
       this.contextMenusBackground?.init();
       await this.idleBackground.init();
-      await this.webRequestBackground.init();
+      // await this.webRequestBackground.init();
     }
 
     if (this.platformUtilsService.isFirefox() && !this.isPrivateMode) {
