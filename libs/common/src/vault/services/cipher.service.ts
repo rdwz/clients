@@ -1,5 +1,6 @@
 import { Observable, firstValueFrom } from "rxjs";
 import { SemVer } from "semver";
+import { Jsonify } from "type-fest";
 
 import { ApiService } from "../../abstractions/api.service";
 import { SearchService } from "../../abstractions/search.service";
@@ -1058,7 +1059,16 @@ export class CipherService implements CipherServiceAbstraction {
 
   async getAddEditCipherInfo(): Promise<AddEditCipherInfo> {
     const info = await firstValueFrom(this.addEditCipherInfo$);
-    return info;
+    // ensure prototype on cipher
+    return info == null
+      ? null
+      : {
+          cipher:
+            info?.cipher.toJSON != null
+              ? info.cipher
+              : CipherView.fromJSON(info?.cipher as Jsonify<CipherView>),
+          collectionIds: info?.collectionIds,
+        };
   }
 
   async setAddEditCipherInfo(value: AddEditCipherInfo) {
