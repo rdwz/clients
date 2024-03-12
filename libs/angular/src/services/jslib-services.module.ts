@@ -90,6 +90,10 @@ import {
   BadgeSettingsServiceAbstraction,
   BadgeSettingsService,
 } from "@bitwarden/common/autofill/services/badge-settings.service";
+import {
+  DomainSettingsService,
+  DefaultDomainSettingsService,
+} from "@bitwarden/common/autofill/services/domain-settings.service";
 import { BillingApiServiceAbstraction } from "@bitwarden/common/billing/abstractions/billilng-api.service.abstraction";
 import { OrganizationBillingServiceAbstraction } from "@bitwarden/common/billing/abstractions/organization-billing.service";
 import { PaymentMethodWarningsServiceAbstraction } from "@bitwarden/common/billing/abstractions/payment-method-warnings-service.abstraction";
@@ -290,7 +294,7 @@ import { ModalService } from "./modal.service";
     {
       provide: AppIdServiceAbstraction,
       useClass: AppIdService,
-      deps: [AbstractStorageService],
+      deps: [GlobalStateProvider],
     },
     {
       provide: AuditServiceAbstraction,
@@ -328,6 +332,7 @@ import { ModalService } from "./modal.service";
         PolicyServiceAbstraction,
         DeviceTrustCryptoServiceAbstraction,
         AuthRequestServiceAbstraction,
+        GlobalStateProvider,
       ],
     },
     {
@@ -350,6 +355,7 @@ import { ModalService } from "./modal.service";
         searchService: SearchServiceAbstraction,
         stateService: StateServiceAbstraction,
         autofillSettingsService: AutofillSettingsServiceAbstraction,
+        domainSettingsService: DomainSettingsService,
         encryptService: EncryptService,
         fileUploadService: CipherFileUploadServiceAbstraction,
         configService: ConfigServiceAbstraction,
@@ -357,7 +363,7 @@ import { ModalService } from "./modal.service";
       ) =>
         new CipherService(
           cryptoService,
-          settingsService,
+          domainSettingsService,
           apiService,
           i18nService,
           searchService,
@@ -739,7 +745,7 @@ import { ModalService } from "./modal.service";
       useClass: PasswordResetEnrollmentServiceImplementation,
       deps: [
         OrganizationApiServiceAbstraction,
-        StateServiceAbstraction,
+        AccountServiceAbstraction,
         CryptoServiceAbstraction,
         OrganizationUserService,
         I18nServiceAbstraction,
@@ -962,6 +968,11 @@ import { ModalService } from "./modal.service";
     {
       provide: BadgeSettingsServiceAbstraction,
       useClass: BadgeSettingsService,
+      deps: [StateProvider],
+    },
+    {
+      provide: DomainSettingsService,
+      useClass: DefaultDomainSettingsService,
       deps: [StateProvider],
     },
     {
