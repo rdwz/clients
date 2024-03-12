@@ -28,6 +28,7 @@ import {
   StateProvider,
   DerivedState,
 } from "../../platform/state";
+import { CipherId } from "../../types/guid";
 import { UserKey, OrgKey } from "../../types/key";
 import { CipherService as CipherServiceAbstraction } from "../abstractions/cipher.service";
 import { CipherFileUploadService } from "../abstractions/file-upload/cipher-file-upload.service";
@@ -66,7 +67,7 @@ import { DECRYPTED_CIPHERS, ENCRYPTED_CIPHERS } from "./key-state/ciphers.state"
 
 const CIPHER_KEY_ENC_MIN_SERVER_VER = new SemVer("2024.2.0");
 
-const CIPHERS_DISK_KEY = new KeyDefinition<Record<string, LocalData>>(CIPHERS_DISK, "localData", {
+const CIPHERS_DISK_KEY = new KeyDefinition<Record<CipherId, LocalData>>(CIPHERS_DISK, "localData", {
   deserializer: (obj) => obj,
 });
 
@@ -81,13 +82,13 @@ export class CipherService implements CipherServiceAbstraction {
     this.sortCiphersByLastUsed,
   );
 
-  localData$: Observable<Record<string, LocalData>>;
-  ciphers$: Observable<Record<string, CipherData>>;
+  localData$: Observable<Record<CipherId, LocalData>>;
+  ciphers$: Observable<Record<CipherId, CipherData>>;
   cipherViews$: Observable<CipherView[]>;
   addEditCipherInfo$: Observable<AddEditCipherInfo>;
 
-  private localDataState: ActiveUserState<Record<string, LocalData>>;
-  private encryptedCiphersState: ActiveUserState<Record<string, CipherData>>;
+  private localDataState: ActiveUserState<Record<CipherId, LocalData>>;
+  private encryptedCiphersState: ActiveUserState<Record<CipherId, CipherData>>;
   private decryptedCiphersState: DerivedState<CipherView[]>;
   private addEditCipherInfoState: ActiveUserState<AddEditCipherInfo>;
 
@@ -313,8 +314,9 @@ export class CipherService implements CipherServiceAbstraction {
     }
 
     const localData = await firstValueFrom(this.localData$);
+    const cipherId = id as CipherId;
 
-    return new Cipher(ciphers[id], localData ? localData[id] : null);
+    return new Cipher(ciphers[cipherId], localData ? localData[cipherId] : null);
   }
 
   async getAll(): Promise<Cipher[]> {
@@ -324,7 +326,8 @@ export class CipherService implements CipherServiceAbstraction {
     for (const id in ciphers) {
       // eslint-disable-next-line
       if (ciphers.hasOwnProperty(id)) {
-        response.push(new Cipher(ciphers[id], localData ? localData[id] : null));
+        const cipherId = id as CipherId;
+        response.push(new Cipher(ciphers[cipherId], localData ? localData[cipherId] : null));
       }
     }
     return response;
@@ -495,10 +498,11 @@ export class CipherService implements CipherServiceAbstraction {
       ciphersLocalData = {};
     }
 
-    if (ciphersLocalData[id]) {
-      ciphersLocalData[id].lastUsedDate = new Date().getTime();
+    const cipherId = id as CipherId;
+    if (ciphersLocalData[cipherId]) {
+      ciphersLocalData[cipherId].lastUsedDate = new Date().getTime();
     } else {
-      ciphersLocalData[id] = {
+      ciphersLocalData[cipherId] = {
         lastUsedDate: new Date().getTime(),
       };
     }
@@ -513,7 +517,7 @@ export class CipherService implements CipherServiceAbstraction {
     for (let i = 0; i < decryptedCipherCache.length; i++) {
       const cached = decryptedCipherCache[i];
       if (cached.id === id) {
-        cached.localData = ciphersLocalData[id];
+        cached.localData = ciphersLocalData[id as CipherId];
         break;
       }
     }
@@ -528,10 +532,11 @@ export class CipherService implements CipherServiceAbstraction {
       ciphersLocalData = {};
     }
 
-    if (ciphersLocalData[id]) {
-      ciphersLocalData[id].lastLaunched = new Date().getTime();
+    const cipherId = id as CipherId;
+    if (ciphersLocalData[cipherId]) {
+      ciphersLocalData[cipherId].lastLaunched = new Date().getTime();
     } else {
-      ciphersLocalData[id] = {
+      ciphersLocalData[cipherId] = {
         lastUsedDate: new Date().getTime(),
       };
     }
@@ -546,7 +551,7 @@ export class CipherService implements CipherServiceAbstraction {
     for (let i = 0; i < decryptedCipherCache.length; i++) {
       const cached = decryptedCipherCache[i];
       if (cached.id === id) {
-        cached.localData = ciphersLocalData[id];
+        cached.localData = ciphersLocalData[id as CipherId];
         break;
       }
     }
@@ -741,10 +746,10 @@ export class CipherService implements CipherServiceAbstraction {
 
     if (cipher instanceof CipherData) {
       const c = cipher as CipherData;
-      ciphers[c.id] = c;
+      ciphers[c.id as CipherId] = c;
     } else {
       (cipher as CipherData[]).forEach((c) => {
-        ciphers[c.id] = c;
+        ciphers[c.id as CipherId] = c;
       });
     }
 
@@ -777,7 +782,7 @@ export class CipherService implements CipherServiceAbstraction {
     ids.forEach((id) => {
       // eslint-disable-next-line
       if (ciphers.hasOwnProperty(id)) {
-        ciphers[id].folderId = folderId;
+        ciphers[id as CipherId].folderId = folderId;
       }
     });
 
@@ -797,12 +802,13 @@ export class CipherService implements CipherServiceAbstraction {
     }
 
     if (typeof id === "string") {
-      if (ciphers[id] == null) {
+      const cipherId = id as CipherId;
+      if (ciphers[cipherId] == null) {
         return;
       }
-      delete ciphers[id];
+      delete ciphers[cipherId];
     } else {
-      (id as string[]).forEach((i) => {
+      (id as CipherId[]).forEach((i) => {
         delete ciphers[i];
       });
     }
@@ -838,15 +844,15 @@ export class CipherService implements CipherServiceAbstraction {
 
   async deleteAttachment(id: string, attachmentId: string): Promise<void> {
     let ciphers = await firstValueFrom(this.ciphers$);
-
+    const cipherId = id as CipherId;
     // eslint-disable-next-line
-    if (ciphers == null || !ciphers.hasOwnProperty(id) || ciphers[id].attachments == null) {
+    if (ciphers == null || !ciphers.hasOwnProperty(id) || ciphers[cipherId].attachments == null) {
       return;
     }
 
-    for (let i = 0; i < ciphers[id].attachments.length; i++) {
-      if (ciphers[id].attachments[i].id === attachmentId) {
-        ciphers[id].attachments.splice(i, 1);
+    for (let i = 0; i < ciphers[cipherId].attachments.length; i++) {
+      if (ciphers[cipherId].attachments[i].id === attachmentId) {
+        ciphers[cipherId].attachments.splice(i, 1);
       }
     }
 
@@ -944,7 +950,7 @@ export class CipherService implements CipherServiceAbstraction {
       return;
     }
 
-    const setDeletedDate = (cipherId: string) => {
+    const setDeletedDate = (cipherId: CipherId) => {
       if (ciphers[cipherId] == null) {
         return;
       }
@@ -952,7 +958,7 @@ export class CipherService implements CipherServiceAbstraction {
     };
 
     if (typeof id === "string") {
-      setDeletedDate(id);
+      setDeletedDate(id as CipherId);
     } else {
       (id as string[]).forEach(setDeletedDate);
     }
@@ -996,11 +1002,12 @@ export class CipherService implements CipherServiceAbstraction {
     }
 
     const clearDeletedDate = (c: { id: string; revisionDate: string }) => {
-      if (ciphers[c.id] == null) {
+      const cipherId = c.id as CipherId;
+      if (ciphers[cipherId] == null) {
         return;
       }
-      ciphers[c.id].deletedDate = null;
-      ciphers[c.id].revisionDate = c.revisionDate;
+      ciphers[cipherId].deletedDate = null;
+      ciphers[cipherId].revisionDate = c.revisionDate;
     };
 
     if (cipher.constructor.name === Array.name) {
