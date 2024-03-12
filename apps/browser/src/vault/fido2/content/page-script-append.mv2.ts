@@ -9,6 +9,6 @@
 
   const script = globalContext.document.createElement("script");
   script.src = chrome.runtime.getURL("content/fido2/page-script.js");
-  (globalContext.document.head || globalContext.document.documentElement).appendChild(script);
+  (globalContext.document.head || globalContext.document.documentElement).prepend(script);
   script.addEventListener("load", () => script.remove());
 })(globalThis);

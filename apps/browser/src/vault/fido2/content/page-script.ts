@@ -1,8 +1,14 @@
-import { FallbackRequestedError } from "@bitwarden/common/vault/abstractions/fido2/fido2-client.service.abstraction";
+import {
+  AssertCredentialResult,
+  CreateCredentialResult,
+  FallbackRequestedError,
+} from "@bitwarden/common/vault/abstractions/fido2/fido2-client.service.abstraction";
 
-import { WebauthnUtils } from "../webauthn-utils";
-
-import { MessageType } from "./messaging/message";
+import {
+  InsecureAssertCredentialParams,
+  InsecureCreateCredentialParams,
+  MessageType,
+} from "./messaging/message";
 import { Messenger } from "./messaging/messenger";
 
 (function (globalContext) {
@@ -90,7 +96,7 @@ import { Messenger } from "./messaging/messenger";
       const response = await messenger.request(
         {
           type: MessageType.CredentialCreationRequest,
-          data: WebauthnUtils.mapCredentialCreationOptions(options, fallbackSupported),
+          data: mapCredentialCreationOptions(options, fallbackSupported),
         },
         options?.signal,
       );
@@ -99,7 +105,7 @@ import { Messenger } from "./messaging/messenger";
         throw new Error("Something went wrong.");
       }
 
-      return WebauthnUtils.mapCredentialRegistrationResult(response.result);
+      return mapCredentialRegistrationResult(response.result);
     } catch (error) {
       if (error && error.fallbackRequested && fallbackSupported) {
         await waitForFocus();
@@ -131,7 +137,7 @@ import { Messenger } from "./messaging/messenger";
       const response = await messenger.request(
         {
           type: MessageType.CredentialGetRequest,
-          data: WebauthnUtils.mapCredentialRequestOptions(options, fallbackSupported),
+          data: mapCredentialRequestOptions(options, fallbackSupported),
         },
         options?.signal,
       );
@@ -140,7 +146,7 @@ import { Messenger } from "./messaging/messenger";
         throw new Error("Something went wrong.");
       }
 
-      return WebauthnUtils.mapCredentialAssertResult(response.result);
+      return mapCredentialAssertResult(response.result);
     } catch (error) {
       if (error && error.fallbackRequested && fallbackSupported) {
         await waitForFocus();
@@ -232,4 +238,210 @@ import { Messenger } from "./messaging/messenger";
       destroy();
     }
   };
+
+  function mapCredentialRequestOptions(
+    options: CredentialRequestOptions,
+    fallbackSupported: boolean,
+  ): InsecureAssertCredentialParams {
+    const keyOptions = options.publicKey;
+
+    if (keyOptions == undefined) {
+      throw new Error("Public-key options not found");
+    }
+
+    return {
+      allowedCredentialIds: keyOptions.allowCredentials?.map((c) => bufferToString(c.id)) ?? [],
+      challenge: bufferToString(keyOptions.challenge),
+      rpId: keyOptions.rpId,
+      userVerification: keyOptions.userVerification,
+      timeout: keyOptions.timeout,
+      fallbackSupported,
+    };
+  }
+
+  function mapCredentialAssertResult(result: AssertCredentialResult): PublicKeyCredential {
+    const credential = {
+      id: result.credentialId,
+      rawId: stringToBuffer(result.credentialId),
+      type: "public-key",
+      response: {
+        authenticatorData: stringToBuffer(result.authenticatorData),
+        clientDataJSON: stringToBuffer(result.clientDataJSON),
+        signature: stringToBuffer(result.signature),
+        userHandle: stringToBuffer(result.userHandle),
+      } as AuthenticatorAssertionResponse,
+      getClientExtensionResults: () => ({}),
+      authenticatorAttachment: "platform",
+    } as PublicKeyCredential;
+
+    // Modify prototype chains to fix `instanceof` calls.
+    // This makes these objects indistinguishable from the native classes.
+    // Unfortunately PublicKeyCredential does not have a javascript constructor so `extends` does not work here.
+    Object.setPrototypeOf(credential.response, AuthenticatorAssertionResponse.prototype);
+    Object.setPrototypeOf(credential, PublicKeyCredential.prototype);
+
+    return credential;
+  }
+
+  function mapCredentialCreationOptions(
+    options: CredentialCreationOptions,
+    fallbackSupported: boolean,
+  ): InsecureCreateCredentialParams {
+    const keyOptions = options.publicKey;
+
+    if (keyOptions == undefined) {
+      throw new Error("Public-key options not found");
+    }
+
+    return {
+      attestation: keyOptions.attestation,
+      authenticatorSelection: {
+        requireResidentKey: keyOptions.authenticatorSelection?.requireResidentKey,
+        residentKey: keyOptions.authenticatorSelection?.residentKey,
+        userVerification: keyOptions.authenticatorSelection?.userVerification,
+      },
+      challenge: bufferToString(keyOptions.challenge),
+      excludeCredentials: keyOptions.excludeCredentials?.map((credential) => ({
+        id: bufferToString(credential.id),
+        transports: credential.transports,
+        type: credential.type,
+      })),
+      extensions: {
+        credProps: keyOptions.extensions?.credProps,
+      },
+      pubKeyCredParams: keyOptions.pubKeyCredParams.map((params) => ({
+        alg: params.alg,
+        type: params.type,
+      })),
+      rp: {
+        id: keyOptions.rp.id,
+        name: keyOptions.rp.name,
+      },
+      user: {
+        id: bufferToString(keyOptions.user.id),
+        displayName: keyOptions.user.displayName,
+        name: keyOptions.user.name,
+      },
+      timeout: keyOptions.timeout,
+      fallbackSupported,
+    };
+  }
+
+  function mapCredentialRegistrationResult(result: CreateCredentialResult): PublicKeyCredential {
+    const credential = {
+      id: result.credentialId,
+      rawId: stringToBuffer(result.credentialId),
+      type: "public-key",
+      authenticatorAttachment: "platform",
+      response: {
+        clientDataJSON: stringToBuffer(result.clientDataJSON),
+        attestationObject: stringToBuffer(result.attestationObject),
+
+        getAuthenticatorData(): ArrayBuffer {
+          return stringToBuffer(result.authData);
+        },
+
+        getPublicKey(): ArrayBuffer {
+          return stringToBuffer(result.publicKey);
+        },
+
+        getPublicKeyAlgorithm(): number {
+          return result.publicKeyAlgorithm;
+        },
+
+        getTransports(): string[] {
+          return result.transports;
+        },
+      } as AuthenticatorAttestationResponse,
+      getClientExtensionResults: () => ({
+        credProps: result.extensions.credProps,
+      }),
+    } as PublicKeyCredential;
+
+    // Modify prototype chains to fix `instanceof` calls.
+    // This makes these objects indistinguishable from the native classes.
+    // Unfortunately PublicKeyCredential does not have a javascript constructor so `extends` does not work here.
+    Object.setPrototypeOf(credential.response, AuthenticatorAttestationResponse.prototype);
+    Object.setPrototypeOf(credential, PublicKeyCredential.prototype);
+
+    return credential;
+  }
+
+  function bufferToString(bufferSource: BufferSource): string {
+    const buffer = bufferSourceToUint8Array(bufferSource);
+
+    return fromBufferToUrlB64(buffer);
+  }
+
+  function stringToBuffer(str: string): Uint8Array {
+    return fromUrlB64ToArray(str);
+  }
+
+  function fromBufferToUrlB64(buffer: ArrayBuffer): string {
+    return fromB64toUrlB64(fromBufferToB64(buffer));
+  }
+
+  function fromUrlB64ToArray(str: string): Uint8Array {
+    return fromB64ToArray(fromUrlB64ToB64(str));
+  }
+
+  function fromB64toUrlB64(b64Str: string) {
+    return b64Str.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+  }
+
+  function fromBufferToB64(buffer: ArrayBuffer): string {
+    if (buffer == null) {
+      return null;
+    }
+
+    let binary = "";
+    const bytes = new Uint8Array(buffer);
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return globalThis.btoa(binary);
+  }
+
+  function fromUrlB64ToB64(urlB64Str: string): string {
+    let output = urlB64Str.replace(/-/g, "+").replace(/_/g, "/");
+    switch (output.length % 4) {
+      case 0:
+        break;
+      case 2:
+        output += "==";
+        break;
+      case 3:
+        output += "=";
+        break;
+      default:
+        throw new Error("Illegal base64url string!");
+    }
+
+    return output;
+  }
+
+  function fromB64ToArray(str: string): Uint8Array {
+    if (str == null) {
+      return null;
+    }
+
+    const binaryString = globalThis.atob(str);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
+  }
+
+  function bufferSourceToUint8Array(bufferSource: BufferSource) {
+    if (isArrayBuffer(bufferSource)) {
+      return new Uint8Array(bufferSource);
+    } else {
+      return new Uint8Array(bufferSource.buffer);
+    }
+  }
+
+  function isArrayBuffer(bufferSource: BufferSource): bufferSource is ArrayBuffer {
+    return bufferSource instanceof ArrayBuffer || bufferSource.buffer === undefined;
+  }
 })(globalThis);

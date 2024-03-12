@@ -123,7 +123,7 @@ export default class Fido2Background implements Fido2BackgroundInterface {
       ...sharedRegistrationOptions,
     };
 
-    if (typeof browser !== "undefined") {
+    if (typeof browser?.contentScripts?.register === "function") {
       this.registeredContentScripts = await browser.contentScripts.register(registrationOptions);
 
       return;
