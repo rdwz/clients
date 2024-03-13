@@ -27,10 +27,10 @@ import { UserNotificationSettingsKeyMigrator } from "./migrations/29-move-user-n
 import { FixPremiumMigrator } from "./migrations/3-fix-premium";
 import { PolicyMigrator } from "./migrations/30-move-policy-state-to-state-provider";
 import { EnableContextMenuMigrator } from "./migrations/31-move-enable-context-menu-to-autofill-settings-state-provider";
-import { KeyConnectorMigrator } from "./migrations/32-move-key-connector-to-state-provider";
 import { PreferredLanguageMigrator } from "./migrations/32-move-preferred-language";
 import { AppIdMigrator } from "./migrations/33-move-app-id-to-state-providers";
 import { DomainSettingsMigrator } from "./migrations/34-move-domain-settings-to-state-providers";
+import { KeyConnectorMigrator } from "./migrations/35-move-key-connector-to-state-provider";
 import { RemoveEverBeenUnlockedMigrator } from "./migrations/4-remove-ever-been-unlocked";
 import { AddKeyTypeToOrgKeysMigrator } from "./migrations/5-add-key-type-to-org-keys";
 import { RemoveLegacyEtmKeyMigrator } from "./migrations/6-remove-legacy-etm-key";

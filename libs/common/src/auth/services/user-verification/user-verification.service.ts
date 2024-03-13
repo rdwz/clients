@@ -7,6 +7,7 @@ import { PlatformUtilsService } from "../../../platform/abstractions/platform-ut
 import { StateService } from "../../../platform/abstractions/state.service";
 import { KeySuffixOptions } from "../../../platform/enums/key-suffix-options.enum";
 import { UserKey } from "../../../types/key";
+import { KeyConnectorService as KeyConnectorServiceAbstraction } from "../../abstractions/key-connector.service";
 import { UserVerificationApiServiceAbstraction } from "../../abstractions/user-verification/user-verification-api.service.abstraction";
 import { UserVerificationService as UserVerificationServiceAbstraction } from "../../abstractions/user-verification/user-verification.service.abstraction";
 import { VerificationType } from "../../enums/verification-type";
@@ -22,7 +23,6 @@ import {
   VerificationWithSecret,
   verificationHasSecret,
 } from "../../types/verification";
-import { KeyConnectorService } from "../key-connector.service";
 
 /**
  * Used for general-purpose user verification throughout the app.
@@ -32,7 +32,7 @@ export class UserVerificationService implements UserVerificationServiceAbstracti
   constructor(
     private stateService: StateService,
     private cryptoService: CryptoService,
-    private keyConnectorService: KeyConnectorService,
+    private keyConnectorService: KeyConnectorServiceAbstraction,
     private i18nService: I18nService,
     private userVerificationApiService: UserVerificationApiServiceAbstraction,
     private pinCryptoService: PinCryptoServiceAbstraction,

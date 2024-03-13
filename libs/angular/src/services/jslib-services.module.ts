@@ -713,7 +713,6 @@ const typesafeProviders: Array<SafeProvider> = [
     provide: KeyConnectorServiceAbstraction,
     useClass: KeyConnectorService,
     deps: [
-      StateServiceAbstraction,
       CryptoServiceAbstraction,
       ApiServiceAbstraction,
       TokenServiceAbstraction,
@@ -721,6 +720,7 @@ const typesafeProviders: Array<SafeProvider> = [
       OrganizationServiceAbstraction,
       KeyGenerationServiceAbstraction,
       LOGOUT_CALLBACK,
+      StateProvider,
     ],
   }),
   safeProvider({
@@ -729,6 +729,7 @@ const typesafeProviders: Array<SafeProvider> = [
     deps: [
       StateServiceAbstraction,
       CryptoServiceAbstraction,
+      KeyConnectorServiceAbstraction,
       I18nServiceAbstraction,
       UserVerificationApiServiceAbstraction,
       PinCryptoServiceAbstraction,
