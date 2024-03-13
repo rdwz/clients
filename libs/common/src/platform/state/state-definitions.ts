@@ -17,6 +17,13 @@ import { StateDefinition } from "./state-definition";
  *
  */
 
+// Admin Console
+
+export const ORGANIZATIONS_DISK = new StateDefinition("organizations", "disk");
+export const POLICIES_DISK = new StateDefinition("policies", "disk");
+export const POLICIES_MEMORY = new StateDefinition("policies", "memory");
+export const PROVIDERS_DISK = new StateDefinition("providers", "disk");
+
 // Auth
 
 export const KEY_CONNECTOR_DISK = new StateDefinition("keyConnector", "disk");
@@ -58,6 +65,7 @@ export const CLEAR_EVENT_DISK = new StateDefinition("clearEvent", "disk");
 export const CRYPTO_DISK = new StateDefinition("crypto", "disk");
 export const CRYPTO_MEMORY = new StateDefinition("crypto", "memory");
 export const ENVIRONMENT_DISK = new StateDefinition("environment", "disk");
+export const THEMING_DISK = new StateDefinition("theming", "disk");
 export const TRANSLATION_DISK = new StateDefinition("translation", "disk");
 
 // Secrets Manager
@@ -76,12 +84,6 @@ export const GENERATOR_MEMORY = new StateDefinition("generator", "memory");
 export const COLLECTION_DATA = new StateDefinition("collection", "disk", {
   web: "memory",
 });
-
-// Admin Console
-export const ORGANIZATIONS_DISK = new StateDefinition("organizations", "disk");
-export const POLICIES_DISK = new StateDefinition("policies", "disk");
-export const POLICIES_MEMORY = new StateDefinition("policies", "memory");
-export const PROVIDERS_DISK = new StateDefinition("providers", "disk");
 
 export const FOLDER_DISK = new StateDefinition("folder", "disk", { web: "memory" });
 export const VAULT_FILTER_DISK = new StateDefinition("vaultFilter", "disk", {
