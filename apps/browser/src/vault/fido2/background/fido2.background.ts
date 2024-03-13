@@ -17,9 +17,13 @@ import {
   Fido2BackgroundExtensionMessageHandlers,
   Fido2ExtensionMessage,
 } from "./abstractions/fido2.background";
-import { registerContentScript } from "./register-content-script.polyfill";
+import { buildContentScriptRegisterPolyfill } from "./register-content-script.polyfill";
 
 export default class Fido2Background implements Fido2BackgroundInterface {
+  private registerContentScriptPolyfill: (
+    contentScriptOptions: browser.contentScripts.RegisteredContentScriptOptions,
+    callback?: (registeredContentScript: browser.contentScripts.RegisteredContentScript) => void,
+  ) => Promise<browser.contentScripts.RegisteredContentScript>;
   private abortManager = new AbortManager();
   private fido2ContentScriptPortsSet = new Set<chrome.runtime.Port>();
   private currentEnablePasskeysSetting: boolean;
@@ -131,7 +135,11 @@ export default class Fido2Background implements Fido2BackgroundInterface {
       return;
     }
 
-    this.registeredContentScripts = await registerContentScript(registrationOptions);
+    if (!this.registerContentScriptPolyfill) {
+      this.registerContentScriptPolyfill = buildContentScriptRegisterPolyfill();
+    }
+
+    this.registeredContentScripts = await this.registerContentScriptPolyfill(registrationOptions);
   }
 
   private async registerManifestV3ContentScripts(
