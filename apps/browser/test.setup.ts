@@ -68,6 +68,8 @@ const tabs = {
 
 const scripting = {
   executeScript: jest.fn(),
+  registerContentScripts: jest.fn(),
+  unregisterContentScripts: jest.fn(),
 };
 
 const windows = {

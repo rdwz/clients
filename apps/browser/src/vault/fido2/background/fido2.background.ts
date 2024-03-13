@@ -1,5 +1,3 @@
-import registerContentScript from "content-scripts-register-polyfill/ponyfill.js";
-
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import {
   AssertCredentialParams,
@@ -19,12 +17,17 @@ import {
   Fido2BackgroundExtensionMessageHandlers,
   Fido2ExtensionMessage,
 } from "./abstractions/fido2.background";
+import { registerContentScript } from "./register-content-script.polyfill";
 
 export default class Fido2Background implements Fido2BackgroundInterface {
   private abortManager = new AbortManager();
   private fido2ContentScriptPortsSet = new Set<chrome.runtime.Port>();
   private currentEnablePasskeysSetting: boolean;
   private registeredContentScripts: browser.contentScripts.RegisteredContentScript;
+  private sharedInjectionDetails: {
+    allFrames: boolean;
+    runAt: browser.contentScripts.RegisteredContentScriptOptions["runAt"];
+  } = { allFrames: true, runAt: "document_start" };
   private extensionMessageHandlers: Fido2BackgroundExtensionMessageHandlers = {
     fido2AbortRequest: ({ message }) => this.abortRequest(message),
     fido2RegisterCredentialRequest: ({ message, sender }) =>
@@ -89,10 +92,9 @@ export default class Fido2Background implements Fido2BackgroundInterface {
 
   private async updateContentScriptRegistration() {
     const sharedRegistrationOptions: browser.contentScripts.RegisteredContentScriptOptions = {
-      allFrames: true,
       matches: ["https://*/*"],
       excludeMatches: ["https://*/*.xml*"],
-      runAt: "document_start",
+      ...this.sharedInjectionDetails,
     };
 
     if (BrowserApi.isManifestVersion(2)) {
@@ -164,12 +166,10 @@ export default class Fido2Background implements Fido2BackgroundInterface {
    * @param tab - The current tab to inject the scripts into.
    */
   private async injectFido2ContentScripts(tab: chrome.tabs.Tab): Promise<void> {
-    const sharedInjectionDetails = { allFrames: true, runAt: "document_start" };
-
-    this.injectFido2PageScript(tab, sharedInjectionDetails);
+    this.injectFido2PageScript(tab);
     void BrowserApi.executeScriptInTab(tab.id, {
       file: "content/fido2/content-script.js",
-      ...sharedInjectionDetails,
+      ...this.sharedInjectionDetails,
     });
   }
 
@@ -177,16 +177,12 @@ export default class Fido2Background implements Fido2BackgroundInterface {
    * Injects the FIDO2 page script into the current tab.
    *
    * @param tab - The current tab to inject the script into.
-   * @param sharedInjectionDetails - The shared injection details for the script.
    */
-  private injectFido2PageScript(
-    tab: chrome.tabs.Tab,
-    sharedInjectionDetails: { allFrames: boolean; runAt: string },
-  ) {
+  private injectFido2PageScript(tab: chrome.tabs.Tab) {
     if (BrowserApi.isManifestVersion(3)) {
       void BrowserApi.executeScriptInTab(
         tab.id,
-        { file: "content/fido2/page-script.js", ...sharedInjectionDetails },
+        { file: "content/fido2/page-script.js", ...this.sharedInjectionDetails },
         { world: "MAIN" },
       );
       return;
@@ -194,7 +190,7 @@ export default class Fido2Background implements Fido2BackgroundInterface {
 
     void BrowserApi.executeScriptInTab(tab.id, {
       file: "content/fido2/page-script-append-mv2.js",
-      ...sharedInjectionDetails,
+      ...this.sharedInjectionDetails,
     });
   }
 
