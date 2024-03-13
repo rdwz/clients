@@ -14,6 +14,7 @@ import { KeyGenerationService } from "../../platform/services/key-generation.ser
 import { OrganizationId, UserId } from "../../types/guid";
 import { MasterKey } from "../../types/key";
 import { KeyConnectorUserKeyRequest } from "../models/request/key-connector-user-key.request";
+import { KeyConnectorUserKeyResponse } from "../models/response/key-connector-user-key.response";
 
 import {
   USES_KEY_CONNECTOR,
@@ -39,9 +40,9 @@ describe("KeyConnectorService", () => {
   const mockUserId = Utils.newGuid() as UserId;
   const mockOrgId = Utils.newGuid() as OrganizationId;
 
-  const mockMasterKeyResponse = {
+  const mockMasterKeyResponse: KeyConnectorUserKeyResponse = new KeyConnectorUserKeyResponse({
     key: "eO9nVlVl3I3sU6O+CyK0kEkpGtl/auT84Hig2WTXmZtDTqYtKpDvUPfjhgMOHf+KQzx++TVS2AOLYq856Caa7w==",
-  };
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -242,15 +243,15 @@ describe("KeyConnectorService", () => {
       const error = new Error("Failed to get master key");
       apiService.getMasterKeyFromKeyConnector.mockRejectedValue(error);
 
-      const handleKeyConnectorErrorSpy = jest.spyOn(keyConnectorService, "handleKeyConnectorError");
+      jest.spyOn(keyConnectorService, "handleKeyConnectorError").mockReturnValue();
 
       // Act
       try {
         await keyConnectorService.setMasterKeyFromUrl(url);
-      } catch (e) {
+      } catch {
         // Assert
         expect(apiService.getMasterKeyFromKeyConnector).toHaveBeenCalledWith(url);
-        expect(handleKeyConnectorErrorSpy).toHaveBeenCalledWith(error);
+        expect(keyConnectorService, "handleKeyConnectorError").toHaveBeenCalledWith(error);
       }
     });
   });
