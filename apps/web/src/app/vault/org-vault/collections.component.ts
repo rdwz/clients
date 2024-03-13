@@ -3,6 +3,8 @@ import { Component } from "@angular/core";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
+import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
+import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
@@ -28,6 +30,7 @@ export class CollectionsComponent extends BaseCollectionsComponent {
     cipherService: CipherService,
     organizationService: OrganizationService,
     private apiService: ApiService,
+    private configService: ConfigServiceAbstraction,
     logService: LogService,
   ) {
     super(
@@ -41,8 +44,14 @@ export class CollectionsComponent extends BaseCollectionsComponent {
     this.allowSelectNone = true;
   }
 
+  flexibleCollectionsV1Enabled: boolean;
+
   protected async loadCipher() {
-    if (!this.organization.canViewAllCollections) {
+    this.flexibleCollectionsV1Enabled = await this.configService.getFeatureFlag(
+      FeatureFlag.FlexibleCollectionsV1,
+      false,
+    );
+    if (!this.organization.canEditAllCiphers(this.flexibleCollectionsV1Enabled)) {
       return await super.loadCipher();
     }
     const response = await this.apiService.getCipherAdmin(this.cipherId);
