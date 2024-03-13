@@ -264,7 +264,7 @@ export class SettingsComponent implements OnInit {
       enableDuckDuckGoBrowserIntegration:
         await this.stateService.getEnableDuckDuckGoBrowserIntegration(),
       theme: await this.stateService.getTheme(),
-      locale: (await this.stateService.getLocale()) ?? null,
+      locale: await firstValueFrom(this.i18nService.locale$),
     };
     this.form.setValue(initialValues, { emitEvent: false });
 
@@ -445,12 +445,12 @@ export class SettingsComponent implements OnInit {
     try {
       if (!enabled || !this.supportsBiometric) {
         this.form.controls.biometric.setValue(false, { emitEvent: false });
-        await this.stateService.setBiometricUnlock(null);
+        await this.biometricStateService.setBiometricUnlockEnabled(false);
         await this.cryptoService.refreshAdditionalKeys();
         return;
       }
 
-      await this.stateService.setBiometricUnlock(true);
+      await this.biometricStateService.setBiometricUnlockEnabled(true);
       if (this.isWindows) {
         // Recommended settings for Windows Hello
         this.form.controls.requirePasswordOnStart.setValue(true);
@@ -465,7 +465,7 @@ export class SettingsComponent implements OnInit {
       const biometricSet = await this.cryptoService.hasUserKeyStored(KeySuffixOptions.Biometric);
       this.form.controls.biometric.setValue(biometricSet, { emitEvent: false });
       if (!biometricSet) {
-        await this.stateService.setBiometricUnlock(null);
+        await this.biometricStateService.setBiometricUnlockEnabled(false);
       }
     } finally {
       this.messagingService.send("redrawMenu");
@@ -553,7 +553,7 @@ export class SettingsComponent implements OnInit {
   }
 
   async saveLocale() {
-    await this.stateService.setLocale(this.form.value.locale);
+    await this.i18nService.setLocale(this.form.value.locale);
   }
 
   async saveTheme() {

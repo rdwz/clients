@@ -1,15 +1,13 @@
 import { Jsonify } from "type-fest";
 
 import { OrganizationData } from "../../../admin-console/models/data/organization.data";
-import { PolicyData } from "../../../admin-console/models/data/policy.data";
-import { ProviderData } from "../../../admin-console/models/data/provider.data";
-import { Policy } from "../../../admin-console/models/domain/policy";
 import { AdminAuthRequestStorable } from "../../../auth/models/domain/admin-auth-req-storable";
 import { ForceSetPasswordReason } from "../../../auth/models/domain/force-set-password-reason";
 import { KeyConnectorUserDecryptionOption } from "../../../auth/models/domain/user-decryption-options/key-connector-user-decryption-option";
 import { TrustedDeviceUserDecryptionOption } from "../../../auth/models/domain/user-decryption-options/trusted-device-user-decryption-option";
 import { IdentityTokenResponse } from "../../../auth/models/response/identity-token.response";
 import { EventData } from "../../../models/data/event.data";
+import { UriMatchStrategySetting } from "../../../models/domain/domain-service";
 import { GeneratorOptions } from "../../../tools/generator/generator-options";
 import {
   GeneratedPasswordHistory,
@@ -20,7 +18,6 @@ import { SendData } from "../../../tools/send/models/data/send.data";
 import { SendView } from "../../../tools/send/models/view/send.view";
 import { DeepJsonify } from "../../../types/deep-jsonify";
 import { MasterKey } from "../../../types/key";
-import { UriMatchType } from "../../../vault/enums";
 import { CipherData } from "../../../vault/models/data/cipher.data";
 import { CipherView } from "../../../vault/models/view/cipher.view";
 import { AddEditCipherInfo } from "../../../vault/types/add-edit-cipher-info";
@@ -88,7 +85,6 @@ export class AccountData {
   >();
   localData?: any;
   sends?: DataEncryptionPair<SendData, SendView> = new DataEncryptionPair<SendData, SendView>();
-  policies?: DataEncryptionPair<PolicyData, Policy> = new DataEncryptionPair<PolicyData, Policy>();
   passwordGenerationHistory?: EncryptionPair<
     GeneratedPasswordHistory[],
     GeneratedPasswordHistory[]
@@ -96,7 +92,6 @@ export class AccountData {
   addEditCipherInfo?: AddEditCipherInfo;
   eventCollection?: EventData[];
   organizations?: { [id: string]: OrganizationData };
-  providers?: { [id: string]: ProviderData };
 
   static fromJSON(obj: DeepJsonify<AccountData>): AccountData {
     if (obj == null) {
@@ -181,6 +176,7 @@ export class AccountProfile {
   forceSetPasswordReason?: ForceSetPasswordReason;
   hasPremiumPersonally?: boolean;
   hasPremiumFromOrganization?: boolean;
+  lastSync?: string;
   userId?: string;
   usesKeyConnector?: boolean;
   keyHash?: string;
@@ -200,15 +196,12 @@ export class AccountProfile {
 
 export class AccountSettings {
   autoConfirmFingerPrints?: boolean;
-  biometricUnlock?: boolean;
-  defaultUriMatch?: UriMatchType;
-  disableBadgeCounter?: boolean;
+  defaultUriMatch?: UriMatchStrategySetting;
   disableGa?: boolean;
   dontShowCardsCurrentTab?: boolean;
   dontShowIdentitiesCurrentTab?: boolean;
   enableAlwaysOnTop?: boolean;
   enableBiometric?: boolean;
-  equivalentDomains?: any;
   minimizeOnCopyToClipboard?: boolean;
   passwordGenerationOptions?: PasswordGeneratorOptions;
   usernameGenerationOptions?: UsernameGeneratorOptions;
@@ -216,7 +209,6 @@ export class AccountSettings {
   pinKeyEncryptedUserKey?: EncryptedString;
   pinKeyEncryptedUserKeyEphemeral?: EncryptedString;
   protectedPin?: string;
-  settings?: AccountSettingsSettings; // TODO: Merge whatever is going on here into the AccountSettings model properly
   vaultTimeout?: number;
   vaultTimeoutAction?: string = "lock";
   serverConfig?: ServerConfigData;
@@ -241,10 +233,6 @@ export class AccountSettings {
     });
   }
 }
-
-export type AccountSettingsSettings = {
-  equivalentDomains?: string[][];
-};
 
 export class AccountTokens {
   accessToken?: string;

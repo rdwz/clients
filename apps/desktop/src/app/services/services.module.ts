@@ -1,6 +1,8 @@
+import { DOCUMENT } from "@angular/common";
 import { APP_INITIALIZER, InjectionToken, NgModule } from "@angular/core";
 
 import { AbstractThemingService } from "@bitwarden/angular/platform/services/theming/theming.service.abstraction";
+import { safeProvider } from "@bitwarden/angular/platform/utils/safe-provider";
 import {
   SECURE_STORAGE,
   STATE_FACTORY,
@@ -11,6 +13,7 @@ import {
   OBSERVABLE_MEMORY_STORAGE,
   OBSERVABLE_DISK_STORAGE,
   WINDOW,
+  SafeInjectionToken,
 } from "@bitwarden/angular/services/injection-tokens";
 import { JslibServicesModule } from "@bitwarden/angular/services/jslib-services.module";
 import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
@@ -19,6 +22,7 @@ import { AccountService as AccountServiceAbstraction } from "@bitwarden/common/a
 import { AuthService as AuthServiceAbstraction } from "@bitwarden/common/auth/abstractions/auth.service";
 import { LoginService as LoginServiceAbstraction } from "@bitwarden/common/auth/abstractions/login.service";
 import { LoginService } from "@bitwarden/common/auth/services/login.service";
+import { AutofillSettingsServiceAbstraction } from "@bitwarden/common/autofill/services/autofill-settings.service";
 import { BroadcasterService as BroadcasterServiceAbstraction } from "@bitwarden/common/platform/abstractions/broadcaster.service";
 import { CryptoFunctionService as CryptoFunctionServiceAbstraction } from "@bitwarden/common/platform/abstractions/crypto-function.service";
 import { CryptoService as CryptoServiceAbstraction } from "@bitwarden/common/platform/abstractions/crypto.service";
@@ -42,7 +46,7 @@ import { GlobalState } from "@bitwarden/common/platform/models/domain/global-sta
 import { MemoryStorageService } from "@bitwarden/common/platform/services/memory-storage.service";
 import { MigrationRunner } from "@bitwarden/common/platform/services/migration-runner";
 import { SystemService } from "@bitwarden/common/platform/services/system.service";
-import { StateProvider } from "@bitwarden/common/platform/state";
+import { GlobalStateProvider, StateProvider } from "@bitwarden/common/platform/state";
 // eslint-disable-next-line import/no-restricted-paths -- Implementation for memory storage
 import { MemoryStorageService as MemoryStorageServiceForStateProviders } from "@bitwarden/common/platform/state/storage/memory-storage.service";
 import { PasswordGenerationServiceAbstraction } from "@bitwarden/common/tools/generator/password";
@@ -103,7 +107,7 @@ const RELOAD_CALLBACK = new InjectionToken<() => any>("RELOAD_CALLBACK");
     {
       provide: I18nServiceAbstraction,
       useClass: I18nRendererService,
-      deps: [SYSTEM_LANGUAGE, LOCALES_DIRECTORY],
+      deps: [SYSTEM_LANGUAGE, LOCALES_DIRECTORY, GlobalStateProvider],
     },
     {
       provide: MessagingServiceAbstraction,
@@ -123,7 +127,9 @@ const RELOAD_CALLBACK = new InjectionToken<() => any>("RELOAD_CALLBACK");
         PlatformUtilsServiceAbstraction,
         RELOAD_CALLBACK,
         StateServiceAbstraction,
+        AutofillSettingsServiceAbstraction,
         VaultTimeoutSettingsService,
+        BiometricStateService,
       ],
     },
     {
@@ -145,10 +151,11 @@ const RELOAD_CALLBACK = new InjectionToken<() => any>("RELOAD_CALLBACK");
       provide: FileDownloadService,
       useClass: DesktopFileDownloadService,
     },
-    {
+    safeProvider({
       provide: AbstractThemingService,
       useClass: DesktopThemingService,
-    },
+      deps: [StateServiceAbstraction, WINDOW, DOCUMENT as SafeInjectionToken<Document>],
+    }),
     {
       provide: EncryptedMessageHandlerService,
       deps: [

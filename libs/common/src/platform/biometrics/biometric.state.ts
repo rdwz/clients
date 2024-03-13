@@ -2,6 +2,17 @@ import { EncryptedString } from "../models/domain/enc-string";
 import { KeyDefinition, BIOMETRIC_SETTINGS_DISK } from "../state";
 
 /**
+ * Indicates whether the user elected to store a biometric key to unlock their vault.
+ */
+export const BIOMETRIC_UNLOCK_ENABLED = new KeyDefinition<boolean>(
+  BIOMETRIC_SETTINGS_DISK,
+  "biometricUnlockEnabled",
+  {
+    deserializer: (obj) => obj,
+  },
+);
+
+/**
  * Boolean indicating the user has elected to require a password to use their biometric key upon starting the application.
  *
  * A true setting controls whether {@link ENCRYPTED_CLIENT_KEY_HALF} is set.
@@ -59,6 +70,17 @@ export const PROMPT_CANCELLED = new KeyDefinition<boolean>(
 export const PROMPT_AUTOMATICALLY = new KeyDefinition<boolean>(
   BIOMETRIC_SETTINGS_DISK,
   "promptAutomatically",
+  {
+    deserializer: (obj) => obj,
+  },
+);
+
+/**
+ * Stores whether or not IPC handshake has been validated this session.
+ */
+export const FINGERPRINT_VALIDATED = new KeyDefinition<boolean>(
+  BIOMETRIC_SETTINGS_DISK,
+  "fingerprintValidated",
   {
     deserializer: (obj) => obj,
   },

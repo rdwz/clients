@@ -397,7 +397,7 @@ export class SettingsComponent implements OnInit {
             // Handle connection errors
             this.form.controls.biometric.setValue(false);
 
-            const error = BiometricErrors[e as BiometricErrorTypes];
+            const error = BiometricErrors[e.message as BiometricErrorTypes];
 
             // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -414,8 +414,8 @@ export class SettingsComponent implements OnInit {
           }),
       ]);
     } else {
-      await this.stateService.setBiometricUnlock(null);
-      await this.stateService.setBiometricFingerprintValidated(false);
+      await this.biometricStateService.setBiometricUnlockEnabled(false);
+      await this.biometricStateService.setFingerprintValidated(false);
     }
   }
 
