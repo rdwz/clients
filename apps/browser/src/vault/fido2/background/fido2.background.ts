@@ -9,7 +9,6 @@ import {
 import { VaultSettingsService } from "@bitwarden/common/vault/abstractions/vault-settings/vault-settings.service";
 
 import { BrowserApi } from "../../../platform/browser/browser-api";
-import { registerContentScriptPolyfill } from "../../../platform/browser/browser-api-register-content-script.polyfill";
 import { AbortManager } from "../../background/abort-manager";
 import { Fido2Port } from "../enums/fido2-port.enum";
 
@@ -111,34 +110,29 @@ export default class Fido2Background implements Fido2BackgroundInterface {
   private async registerManifestV2ContentScripts(
     sharedRegistrationOptions: browser.contentScripts.RegisteredContentScriptOptions,
   ) {
-    if (!this.currentEnablePasskeysSetting && this.registeredContentScripts) {
+    if (
+      !this.currentEnablePasskeysSetting &&
+      typeof this.registeredContentScripts?.unregister === "function"
+    ) {
       await this.registeredContentScripts.unregister();
 
       return;
     }
 
-    const registrationOptions: browser.contentScripts.RegisteredContentScriptOptions = {
+    this.registeredContentScripts = await BrowserApi.registerContentScriptsMv2({
       js: [
         { file: "content/fido2/page-script-append-mv2.js" },
         { file: "content/fido2/content-script.js" },
       ],
       ...sharedRegistrationOptions,
-    };
-
-    if (typeof browser !== "undefined" && !!browser.contentScripts?.register) {
-      this.registeredContentScripts = await browser.contentScripts.register(registrationOptions);
-
-      return;
-    }
-
-    this.registeredContentScripts = await registerContentScriptPolyfill(registrationOptions);
+    });
   }
 
   private async registerManifestV3ContentScripts(
     sharedRegistrationOptions: chrome.scripting.RegisteredContentScript,
   ) {
     if (this.currentEnablePasskeysSetting) {
-      void chrome.scripting.registerContentScripts([
+      void BrowserApi.registerContentScriptsMv3([
         {
           id: "fido2-page-script",
           js: ["content/fido2/page-script.js"],
@@ -155,7 +149,7 @@ export default class Fido2Background implements Fido2BackgroundInterface {
       return;
     }
 
-    void chrome.scripting.unregisterContentScripts({
+    void BrowserApi.unregisterContentScriptsMv3({
       ids: ["fido2-page-script", "fido2-content-script"],
     });
   }

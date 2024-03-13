@@ -5,6 +5,8 @@ import { DeviceType } from "@bitwarden/common/enums";
 import { TabMessage } from "../../types/tab-messages";
 import { BrowserPlatformUtilsService } from "../services/platform-utils/browser-platform-utils.service";
 
+import { registerContentScriptPolyfill } from "./browser-api-register-content-script.polyfill";
+
 export class BrowserApi {
   static isWebExtensionsApi: boolean = typeof browser !== "undefined";
   static isSafariApi: boolean =
@@ -590,5 +592,27 @@ export class BrowserApi {
         callback();
       }
     });
+  }
+
+  static async registerContentScriptsMv2(
+    contentScriptOptions: browser.contentScripts.RegisteredContentScriptOptions,
+  ): Promise<browser.contentScripts.RegisteredContentScript> {
+    if (typeof browser !== "undefined" && !!browser.contentScripts?.register) {
+      return await browser.contentScripts.register(contentScriptOptions);
+    }
+
+    return await registerContentScriptPolyfill(contentScriptOptions);
+  }
+
+  static async registerContentScriptsMv3(
+    scripts: chrome.scripting.RegisteredContentScript[],
+  ): Promise<void> {
+    await chrome.scripting.registerContentScripts(scripts);
+  }
+
+  static async unregisterContentScriptsMv3(
+    filter?: chrome.scripting.ContentScriptFilter,
+  ): Promise<void> {
+    await chrome.scripting.unregisterContentScripts(filter);
   }
 }
