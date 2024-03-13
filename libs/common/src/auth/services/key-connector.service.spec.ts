@@ -9,8 +9,11 @@ import { ProfileOrganizationResponse } from "../../admin-console/models/response
 import { CryptoService } from "../../platform/abstractions/crypto.service";
 import { LogService } from "../../platform/abstractions/log.service";
 import { Utils } from "../../platform/misc/utils";
+import { SymmetricCryptoKey } from "../../platform/models/domain/symmetric-crypto-key";
 import { KeyGenerationService } from "../../platform/services/key-generation.service";
 import { OrganizationId, UserId } from "../../types/guid";
+import { MasterKey } from "../../types/key";
+import { KeyConnectorUserKeyRequest } from "../models/request/key-connector-user-key.request";
 
 import {
   USES_KEY_CONNECTOR,
@@ -35,6 +38,10 @@ describe("KeyConnectorService", () => {
 
   const mockUserId = Utils.newGuid() as UserId;
   const mockOrgId = Utils.newGuid() as OrganizationId;
+
+  const mockMasterKeyResponse = {
+    key: "eO9nVlVl3I3sU6O+CyK0kEkpGtl/auT84Hig2WTXmZtDTqYtKpDvUPfjhgMOHf+KQzx++TVS2AOLYq856Caa7w==",
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -160,7 +167,7 @@ describe("KeyConnectorService", () => {
   });
 
   describe("clear()", () => {
-    it("should clear the user state for CONVERT_ACCOUNT_TO_KEY_CONNECTOR", async () => {
+    it("should clear the user state for keyConnector", async () => {
       // Arrange
       const setUserStateSpy = jest.spyOn(stateProvider, "setUserState");
 
@@ -174,6 +181,7 @@ describe("KeyConnectorService", () => {
         mockUserId,
       );
       expect(await keyConnectorService.getConvertAccountRequired()).toBe(null);
+      expect(await keyConnectorService.getUsesKeyConnector()).toBe(null);
     });
   });
 
@@ -205,6 +213,96 @@ describe("KeyConnectorService", () => {
       const result = await keyConnectorService.userNeedsMigration();
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe("setMasterKeyFromUrl", () => {
+    it("should set the master key from the provided URL", async () => {
+      // Arrange
+      const url = "https://key-connector-url.com";
+
+      apiService.getMasterKeyFromKeyConnector.mockResolvedValue(mockMasterKeyResponse);
+
+      // Hard to mock these, but we can generate the same keys
+      const keyArr = Utils.fromB64ToArray(mockMasterKeyResponse.key);
+      const masterKey = new SymmetricCryptoKey(keyArr) as MasterKey;
+
+      // Act
+      await keyConnectorService.setMasterKeyFromUrl(url);
+
+      // Assert
+      expect(apiService.getMasterKeyFromKeyConnector).toHaveBeenCalledWith(url);
+      expect(cryptoService.setMasterKey).toHaveBeenCalledWith(masterKey);
+    });
+
+    it("should handle errors thrown during the process", async () => {
+      // Arrange
+      const url = "https://key-connector-url.com";
+
+      const error = new Error("Failed to get master key");
+      apiService.getMasterKeyFromKeyConnector.mockRejectedValue(error);
+
+      const handleKeyConnectorErrorSpy = jest.spyOn(keyConnectorService, "handleKeyConnectorError");
+
+      // Act
+      try {
+        await keyConnectorService.setMasterKeyFromUrl(url);
+      } catch (e) {
+        // Assert
+        expect(apiService.getMasterKeyFromKeyConnector).toHaveBeenCalledWith(url);
+        expect(handleKeyConnectorErrorSpy).toHaveBeenCalledWith(error);
+      }
+    });
+  });
+
+  describe("migrateUser()", () => {
+    it("should migrate the user to the key connector", async () => {
+      // Arrange
+      const organization = organizationData(true, true, "https://key-connector-url.com", 2, false);
+      const masterKey = getMockMasterKey();
+      const keyConnectorRequest = new KeyConnectorUserKeyRequest(masterKey.encKeyB64);
+
+      jest.spyOn(keyConnectorService, "getManagingOrganization").mockResolvedValue(organization);
+      jest.spyOn(cryptoService, "getMasterKey").mockResolvedValue(masterKey);
+      jest.spyOn(apiService, "postUserKeyToKeyConnector").mockResolvedValue();
+
+      // Act
+      await keyConnectorService.migrateUser();
+
+      // Assert
+      expect(keyConnectorService.getManagingOrganization).toHaveBeenCalled();
+      expect(cryptoService.getMasterKey).toHaveBeenCalled();
+      expect(apiService.postUserKeyToKeyConnector).toHaveBeenCalledWith(
+        organization.keyConnectorUrl,
+        keyConnectorRequest,
+      );
+      expect(apiService.postConvertToKeyConnector).toHaveBeenCalled();
+    });
+
+    it("should handle errors thrown during migration", async () => {
+      // Arrange
+      const organization = organizationData(true, true, "https://key-connector-url.com", 2, false);
+      const masterKey = getMockMasterKey();
+      const keyConnectorRequest = new KeyConnectorUserKeyRequest(masterKey.encKeyB64);
+      const error = new Error("Failed to post user key to key connector");
+
+      jest.spyOn(keyConnectorService, "getManagingOrganization").mockResolvedValue(organization);
+      jest.spyOn(cryptoService, "getMasterKey").mockResolvedValue(masterKey);
+      jest.spyOn(apiService, "postUserKeyToKeyConnector").mockRejectedValue(error);
+      jest.spyOn(keyConnectorService, "handleKeyConnectorError").mockReturnValue();
+
+      // Act
+      await keyConnectorService.migrateUser();
+
+      // Assert
+      expect(keyConnectorService.getManagingOrganization).toHaveBeenCalled();
+      expect(cryptoService.getMasterKey).toHaveBeenCalled();
+      expect(apiService.postUserKeyToKeyConnector).toHaveBeenCalledWith(
+        organization.keyConnectorUrl,
+        keyConnectorRequest,
+      );
+      expect(keyConnectorService.handleKeyConnectorError).toHaveBeenCalledWith(error);
+      expect(apiService.postConvertToKeyConnector).toHaveBeenCalled();
     });
   });
 
@@ -285,5 +383,11 @@ describe("KeyConnectorService", () => {
         { isMember: true, isProviderUser: isProviderUser },
       ),
     );
+  }
+
+  function getMockMasterKey(): MasterKey {
+    const keyArr = Utils.fromB64ToArray(mockMasterKeyResponse.key);
+    const masterKey = new SymmetricCryptoKey(keyArr) as MasterKey;
+    return masterKey;
   }
 });
