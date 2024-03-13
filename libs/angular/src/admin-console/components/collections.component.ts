@@ -63,8 +63,9 @@ export class CollectionsComponent implements OnInit {
     const selectedCollectionIds = this.collections
       .filter((c) => {
         if (
-          this.organization?.allowAdminAccessToAllCollectionItems &&
-          this.organization?.canEditAnyCollection
+          (this.organization?.allowAdminAccessToAllCollectionItems &&
+            this.organization?.canEditAnyCollection) ||
+          this.organization.canEditAllCiphers(this.flexibleCollectionsV1Enabled)
         ) {
           return !!(c as any).checked;
         } else {
