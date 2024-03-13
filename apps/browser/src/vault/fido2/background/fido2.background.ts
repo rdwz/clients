@@ -9,6 +9,7 @@ import {
 import { VaultSettingsService } from "@bitwarden/common/vault/abstractions/vault-settings/vault-settings.service";
 
 import { BrowserApi } from "../../../platform/browser/browser-api";
+import { registerContentScriptPolyfill } from "../../../platform/browser/browser-api-register-content-script.polyfill";
 import { AbortManager } from "../../background/abort-manager";
 import { Fido2Port } from "../enums/fido2-port.enum";
 
@@ -17,13 +18,8 @@ import {
   Fido2BackgroundExtensionMessageHandlers,
   Fido2ExtensionMessage,
 } from "./abstractions/fido2.background";
-import { buildContentScriptRegisterPolyfill } from "./register-content-script.polyfill";
 
 export default class Fido2Background implements Fido2BackgroundInterface {
-  private registerContentScriptPolyfill: (
-    contentScriptOptions: browser.contentScripts.RegisteredContentScriptOptions,
-    callback?: (registeredContentScript: browser.contentScripts.RegisteredContentScript) => void,
-  ) => Promise<browser.contentScripts.RegisteredContentScript>;
   private abortManager = new AbortManager();
   private fido2ContentScriptPortsSet = new Set<chrome.runtime.Port>();
   private currentEnablePasskeysSetting: boolean;
@@ -135,11 +131,7 @@ export default class Fido2Background implements Fido2BackgroundInterface {
       return;
     }
 
-    if (!this.registerContentScriptPolyfill) {
-      this.registerContentScriptPolyfill = buildContentScriptRegisterPolyfill();
-    }
-
-    this.registeredContentScripts = await this.registerContentScriptPolyfill(registrationOptions);
+    this.registeredContentScripts = await registerContentScriptPolyfill(registrationOptions);
   }
 
   private async registerManifestV3ContentScripts(

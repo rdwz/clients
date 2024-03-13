@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
 /**
  * MIT License
  *
@@ -13,7 +16,7 @@
  * @version 4.0.2
  */
 
-export function buildContentScriptRegisterPolyfill() {
+function buildContentScriptRegisterPolyfill() {
   function NestedProxy(target) {
     // eslint-disable-next-line no-undef
     return new Proxy(target, {
@@ -321,8 +324,10 @@ export function buildContentScriptRegisterPolyfill() {
       void inject(url, tabId, frameId);
     };
     if (gotNavigation) {
+      // eslint-disable-next-line no-restricted-syntax
       chrome.webNavigation.onCommitted.addListener(navListener);
     } else {
+      // eslint-disable-next-line no-restricted-syntax
       chrome.tabs.onUpdated.addListener(tabListener);
     }
     const registeredContentScript = {
@@ -339,4 +344,19 @@ export function buildContentScriptRegisterPolyfill() {
     }
     return registeredContentScript;
   };
+}
+
+let registerContentScript: (
+  contentScriptOptions: browser.contentScripts.RegisteredContentScriptOptions,
+  callback?: (registeredContentScript: browser.contentScripts.RegisteredContentScript) => void,
+) => Promise<browser.contentScripts.RegisteredContentScript>;
+export async function registerContentScriptPolyfill(
+  contentScriptOptions: browser.contentScripts.RegisteredContentScriptOptions,
+  callback?: (registeredContentScript: browser.contentScripts.RegisteredContentScript) => void,
+) {
+  if (!registerContentScript) {
+    registerContentScript = buildContentScriptRegisterPolyfill();
+  }
+
+  return registerContentScript(contentScriptOptions, callback);
 }
