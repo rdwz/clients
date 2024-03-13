@@ -1,6 +1,4 @@
 import { APP_INITIALIZER, NgModule, NgZone } from "@angular/core";
-import { DomSanitizer } from "@angular/platform-browser";
-import { ToastrService } from "ngx-toastr";
 
 import { UnauthGuard as BaseUnauthGuardService } from "@bitwarden/angular/auth/guards";
 import { ThemingService } from "@bitwarden/angular/platform/services/theming/theming.service";
@@ -99,7 +97,7 @@ import {
 import { SyncService } from "@bitwarden/common/vault/abstractions/sync/sync.service.abstraction";
 import { TotpService } from "@bitwarden/common/vault/abstractions/totp.service";
 import { FolderApiService } from "@bitwarden/common/vault/services/folder/folder-api.service";
-import { DialogService } from "@bitwarden/components";
+import { DialogService, ToastService } from "@bitwarden/components";
 import { ImportServiceAbstraction } from "@bitwarden/importer/core";
 import { VaultExportServiceAbstraction } from "@bitwarden/vault-export-core";
 
@@ -298,10 +296,9 @@ function getBgService<T>(service: keyof MainBackground) {
     {
       provide: ForegroundPlatformUtilsService,
       useClass: ForegroundPlatformUtilsService,
-      useFactory: (sanitizer: DomSanitizer, toastrService: ToastrService) => {
+      useFactory: (toastService: ToastService) => {
         return new ForegroundPlatformUtilsService(
-          sanitizer,
-          toastrService,
+          toastService,
           (clipboardValue: string, clearMs: number) => {
             void BrowserApi.sendMessage("clearClipboard", { clipboardValue, clearMs });
           },
@@ -318,7 +315,7 @@ function getBgService<T>(service: keyof MainBackground) {
           window,
         );
       },
-      deps: [DomSanitizer, ToastrService],
+      deps: [ToastService],
     },
     {
       provide: PasswordStrengthServiceAbstraction,
