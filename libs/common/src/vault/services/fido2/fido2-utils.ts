@@ -14,7 +14,7 @@ export class Fido2Utils {
   }
 
   static stringToBuffer(str: string): Uint8Array {
-    return Fido2Utils.fromUrlB64ToArray(str);
+    return Fido2Utils.fromB64ToArray(Fido2Utils.fromUrlB64ToB64(str));
   }
 
   static bufferSourceToUint8Array(bufferSource: BufferSource) {
@@ -28,14 +28,6 @@ export class Fido2Utils {
   /** Utility function to identify type of bufferSource. Necessary because of differences between runtimes */
   private static isArrayBuffer(bufferSource: BufferSource): bufferSource is ArrayBuffer {
     return bufferSource instanceof ArrayBuffer || bufferSource.buffer === undefined;
-  }
-
-  static fromBufferToUrlB64(buffer: ArrayBuffer): string {
-    return Fido2Utils.fromB64toUrlB64(Fido2Utils.fromBufferToB64(buffer));
-  }
-
-  static fromUrlB64ToArray(str: string): Uint8Array {
-    return Fido2Utils.fromB64ToArray(Fido2Utils.fromUrlB64ToB64(str));
   }
 
   static fromB64toUrlB64(b64Str: string) {
