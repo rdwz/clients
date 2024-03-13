@@ -21,7 +21,6 @@ import { StateDefinition } from "./state-definition";
 
 export const ORGANIZATIONS_DISK = new StateDefinition("organizations", "disk");
 export const POLICIES_DISK = new StateDefinition("policies", "disk");
-export const POLICIES_MEMORY = new StateDefinition("policies", "memory");
 export const PROVIDERS_DISK = new StateDefinition("providers", "disk");
 
 // Auth
@@ -84,7 +83,6 @@ export const GENERATOR_MEMORY = new StateDefinition("generator", "memory");
 export const COLLECTION_DATA = new StateDefinition("collection", "disk", {
   web: "memory",
 });
-
 export const FOLDER_DISK = new StateDefinition("folder", "disk", { web: "memory" });
 export const VAULT_FILTER_DISK = new StateDefinition("vaultFilter", "disk", {
   web: "disk-local",
