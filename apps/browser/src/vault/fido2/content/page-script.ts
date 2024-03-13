@@ -262,13 +262,13 @@ import { Messenger } from "./messaging/messenger";
   function mapCredentialAssertResult(result: AssertCredentialResult): PublicKeyCredential {
     const credential = {
       id: result.credentialId,
-      rawId: stringToBuffer(result.credentialId),
+      rawId: fromB64ToArray(fromUrlB64ToB64(result.credentialId)),
       type: "public-key",
       response: {
-        authenticatorData: stringToBuffer(result.authenticatorData),
-        clientDataJSON: stringToBuffer(result.clientDataJSON),
-        signature: stringToBuffer(result.signature),
-        userHandle: stringToBuffer(result.userHandle),
+        authenticatorData: fromB64ToArray(fromUrlB64ToB64(result.authenticatorData)),
+        clientDataJSON: fromB64ToArray(fromUrlB64ToB64(result.clientDataJSON)),
+        signature: fromB64ToArray(fromUrlB64ToB64(result.signature)),
+        userHandle: fromB64ToArray(fromUrlB64ToB64(result.userHandle)),
       } as AuthenticatorAssertionResponse,
       getClientExtensionResults: () => ({}),
       authenticatorAttachment: "platform",
@@ -330,19 +330,19 @@ import { Messenger } from "./messaging/messenger";
   function mapCredentialRegistrationResult(result: CreateCredentialResult): PublicKeyCredential {
     const credential = {
       id: result.credentialId,
-      rawId: stringToBuffer(result.credentialId),
+      rawId: fromB64ToArray(fromUrlB64ToB64(result.credentialId)),
       type: "public-key",
       authenticatorAttachment: "platform",
       response: {
-        clientDataJSON: stringToBuffer(result.clientDataJSON),
-        attestationObject: stringToBuffer(result.attestationObject),
+        clientDataJSON: fromB64ToArray(fromUrlB64ToB64(result.clientDataJSON)),
+        attestationObject: fromB64ToArray(fromUrlB64ToB64(result.attestationObject)),
 
         getAuthenticatorData(): ArrayBuffer {
-          return stringToBuffer(result.authData);
+          return fromB64ToArray(fromUrlB64ToB64(result.authData));
         },
 
         getPublicKey(): ArrayBuffer {
-          return stringToBuffer(result.publicKey);
+          return fromB64ToArray(fromUrlB64ToB64(result.publicKey));
         },
 
         getPublicKeyAlgorithm(): number {
@@ -368,25 +368,14 @@ import { Messenger } from "./messaging/messenger";
   }
 
   function bufferToString(bufferSource: BufferSource): string {
-    const buffer = bufferSourceToUint8Array(bufferSource);
+    let buffer: Uint8Array;
+    if (bufferSource instanceof ArrayBuffer || bufferSource.buffer === undefined) {
+      buffer = new Uint8Array(bufferSource as ArrayBuffer);
+    } else {
+      buffer = new Uint8Array(bufferSource.buffer);
+    }
 
-    return fromBufferToUrlB64(buffer);
-  }
-
-  function stringToBuffer(str: string): Uint8Array {
-    return fromUrlB64ToArray(str);
-  }
-
-  function fromBufferToUrlB64(buffer: ArrayBuffer): string {
-    return fromB64toUrlB64(fromBufferToB64(buffer));
-  }
-
-  function fromUrlB64ToArray(str: string): Uint8Array {
-    return fromB64ToArray(fromUrlB64ToB64(str));
-  }
-
-  function fromB64toUrlB64(b64Str: string) {
-    return b64Str.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+    return fromBufferToB64(buffer).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   }
 
   function fromBufferToB64(buffer: ArrayBuffer): string {
@@ -431,17 +420,5 @@ import { Messenger } from "./messaging/messenger";
       bytes[i] = binaryString.charCodeAt(i);
     }
     return bytes;
-  }
-
-  function bufferSourceToUint8Array(bufferSource: BufferSource) {
-    if (isArrayBuffer(bufferSource)) {
-      return new Uint8Array(bufferSource);
-    } else {
-      return new Uint8Array(bufferSource.buffer);
-    }
-  }
-
-  function isArrayBuffer(bufferSource: BufferSource): bufferSource is ArrayBuffer {
-    return bufferSource instanceof ArrayBuffer || bufferSource.buffer === undefined;
   }
 })(globalThis);
