@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild } from "@angular/core";
 import { FormBuilder, FormControl, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
+import { lastValueFrom } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { OrganizationApiServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/organization/organization-api.service.abstraction";
@@ -14,6 +15,7 @@ import { LogService } from "@bitwarden/common/platform/abstractions/log.service"
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { DialogService } from "@bitwarden/components";
 
+import { AddCreditDialogResult, openAddCreditDialog } from "./add-credit.component";
 import { TaxInfoComponent } from "./tax-info.component";
 
 @Component({
@@ -107,8 +109,20 @@ export class PaymentMethodComponent implements OnInit {
     this.loading = false;
   }
 
-  addCredit() {
+  async addCredit() {
     this.showAddCredit = true;
+    if (this.showAddCredit) {
+      const dialogRef = openAddCreditDialog(this.dialogService, {
+        data: {
+          organizationId: this.organizationId,
+        },
+      });
+      const result: any = await lastValueFrom(dialogRef.closed);
+      if (result === AddCreditDialogResult.Added) {
+        await this.load();
+      }
+      this.showAddCredit = false;
+    }
   }
 
   closeAddCredit(load: boolean) {

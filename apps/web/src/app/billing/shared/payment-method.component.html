@@ -42,13 +42,6 @@
     >
       {{ "addCredit" | i18n }}
     </button>
-    <app-add-credit
-      [organizationId]="organizationId"
-      (onAdded)="closeAddCredit(true)"
-      (onCanceled)="closeAddCredit(false)"
-      *ngIf="showAddCredit"
-    >
-    </app-add-credit>
     <h2 class="spaced-header">{{ "paymentMethod" | i18n }}</h2>
     <p *ngIf="!paymentSource">{{ "noPaymentMethod" | i18n }}</p>
     <ng-container *ngIf="paymentSource">
@@ -80,6 +73,7 @@
             <input bitInput type="number" step="1" placeholder="xx" formControlName="amount2" />
             <span bitPrefix>$0.</span>
           </bit-form-field>
+          {{ verifyForm | json }}
           <button
             type="button"
             bitButton
