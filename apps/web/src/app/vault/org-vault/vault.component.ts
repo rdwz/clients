@@ -369,11 +369,16 @@ export class VaultComponent implements OnInit, OnDestroy {
         let collectionsToReturn = [];
         if (filter.collectionId === undefined || filter.collectionId === All) {
           collectionsToReturn = collections.map((c) => {
-            if (c.node.allGroups.length === 0 || c.node.allUsers.length === 0) {
+            if (
+              c.node.allGroups.length === 0 &&
+              c.node.allUsers.length === 0 &&
+              !this.organization.canEditAllCiphers(this.flexibleCollectionsV1Enabled)
+            ) {
               c.node.addAccess = true;
               this.showAddAccessToggle = true;
             } else {
               c.node.addAccess = false;
+              this.showAddAccessToggle = false;
             }
             return c.node;
           });
