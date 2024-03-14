@@ -1,4 +1,5 @@
 import { Component, Input, OnDestroy, OnInit } from "@angular/core";
+import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { Subject, takeUntil } from "rxjs";
 
 import { AbstractThemingService } from "@bitwarden/angular/platform/services/theming/theming.service.abstraction";
@@ -24,16 +25,17 @@ export class PaymentComponent implements OnInit, OnDestroy {
   @Input() trialFlow = false;
 
   private destroy$ = new Subject<void>();
-
-  bank: any = {
-    routing_number: null,
-    account_number: null,
-    account_holder_name: null,
-    account_holder_type: "",
-    currency: "USD",
-    country: "US",
-  };
-
+  protected paymentForm = new FormGroup({
+    method: new FormControl(null as PaymentMethodType),
+    bank: new FormGroup({
+      routing_number: new FormControl(null, Validators.required),
+      account_number: new FormControl(null, Validators.required),
+      account_holder_name: new FormControl(null, Validators.required),
+      account_holder_type: new FormControl("", Validators.required),
+      currency: new FormControl("USD"),
+      country: new FormControl("US"),
+    }),
+  });
   paymentMethodType = PaymentMethodType;
 
   private btScript: HTMLScriptElement;
@@ -87,6 +89,9 @@ export class PaymentComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit() {
+    this.paymentForm.patchValue({
+      method: this.method,
+    });
     if (!this.showOptions) {
       this.hidePaypal = this.method !== PaymentMethodType.PayPal;
       this.hideBank = this.method !== PaymentMethodType.BankAccount;
@@ -140,7 +145,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
 
   changeMethod() {
     this.btInstance = null;
-
+    this.method = this.paymentForm.get("method").value;
     if (this.method === PaymentMethodType.PayPal) {
       window.setTimeout(() => {
         (window as any).braintree.dropin.create(
@@ -209,15 +214,17 @@ export class PaymentComponent implements OnInit, OnDestroy {
               }
             });
         } else {
-          this.stripe.createToken("bank_account", this.bank).then((result: any) => {
-            if (result.error) {
-              reject(result.error.message);
-            } else if (result.token && result.token.id != null) {
-              resolve([result.token.id, this.method]);
-            } else {
-              reject();
-            }
-          });
+          this.stripe
+            .createToken("bank_account", this.paymentForm.get("bank").value)
+            .then((result: any) => {
+              if (result.error) {
+                reject(result.error.message);
+              } else if (result.token && result.token.id != null) {
+                resolve([result.token.id, this.method]);
+              } else {
+                reject();
+              }
+            });
         }
       }
     });
