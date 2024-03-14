@@ -16,41 +16,40 @@ import { ConsoleLogService } from "@bitwarden/common/platform/services/console-l
 
 import { BrowserApi } from "./browser-api";
 
-let registerContentScript: (
+let registerContentScripts: (
   contentScriptOptions: browser.contentScripts.RegisteredContentScriptOptions,
   callback?: (registeredContentScript: browser.contentScripts.RegisteredContentScript) => void,
 ) => Promise<browser.contentScripts.RegisteredContentScript>;
-export async function registerContentScriptPolyfill(
+export async function registerContentScriptsPolyfill(
   contentScriptOptions: browser.contentScripts.RegisteredContentScriptOptions,
   callback?: (registeredContentScript: browser.contentScripts.RegisteredContentScript) => void,
 ) {
-  if (!registerContentScript) {
-    registerContentScript = buildContentScriptRegisterPolyfill();
+  if (!registerContentScripts) {
+    registerContentScripts = buildRegisterContentScriptsPolyfill();
   }
 
-  return registerContentScript(contentScriptOptions, callback);
+  return registerContentScripts(contentScriptOptions, callback);
 }
 
-function buildContentScriptRegisterPolyfill() {
+function buildRegisterContentScriptsPolyfill() {
   const logService = new ConsoleLogService(false);
-  const chromeP: typeof globalThis.chrome =
-    globalThis.chrome && new (NestedProxy<typeof globalThis.chrome> as any)(globalThis.chrome);
+  const chromeProxy = globalThis.chrome && NestedProxy<typeof globalThis.chrome>(globalThis.chrome);
   const patternValidationRegex =
     /^(https?|wss?|file|ftp|\*):\/\/(\*|\*\.[^*/]+|[^*/]+)\/.*$|^file:\/\/\/.*$|^resource:\/\/(\*|\*\.[^*/]+|[^*/]+)\/.*$|^about:/;
   const isFirefox = globalThis.navigator?.userAgent.includes("Firefox/");
   const gotScripting = Boolean(globalThis.chrome?.scripting);
   const gotNavigation = typeof chrome === "object" && "webNavigation" in chrome;
 
-  function NestedProxy<T extends Record<string | symbol, any>>(target: T): T {
+  function NestedProxy<T extends object>(target: T): T {
     return new Proxy(target, {
       get(target, prop) {
-        const property = target[prop];
+        const property = target[prop as keyof T];
         if (!property) {
           return;
         }
 
         if (typeof property !== "function") {
-          return new (NestedProxy<typeof property> as any)(property);
+          return NestedProxy<typeof property>(property);
         }
 
         return (...arguments_: any[]) =>
@@ -181,7 +180,7 @@ function buildContentScriptRegisterPolyfill() {
           });
         }
 
-        return chromeP.tabs.insertCSS(tabId, {
+        return chromeProxy.tabs.insertCSS(tabId, {
           ...content,
           matchAboutBlank,
           allFrames,
@@ -250,7 +249,7 @@ function buildContentScriptRegisterPolyfill() {
       }
 
       executions.push(
-        chromeP.tabs.executeScript(tabId, {
+        chromeProxy.tabs.executeScript(tabId, {
           ...content,
           matchAboutBlank,
           allFrames,
@@ -335,7 +334,7 @@ function buildContentScriptRegisterPolyfill() {
   }
 
   async function isOriginPermitted(url: string) {
-    return chromeP.permissions.contains({
+    return chromeProxy.permissions.contains({
       origins: [new URL(url).origin + "/*"],
     });
   }
@@ -370,7 +369,7 @@ function buildContentScriptRegisterPolyfill() {
 
     await Promise.all(
       matches.map(async (pattern: string) => {
-        if (!(await chromeP.permissions.contains({ origins: [pattern] }))) {
+        if (!(await chromeProxy.permissions.contains({ origins: [pattern] }))) {
           throw new Error(`Permission denied to register a content script for ${pattern}`);
         }
       }),
