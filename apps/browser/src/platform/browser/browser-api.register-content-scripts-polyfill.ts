@@ -16,9 +16,31 @@ import { ConsoleLogService } from "@bitwarden/common/platform/services/console-l
 
 import { BrowserApi } from "./browser-api";
 
-const logService = new ConsoleLogService(false);
+let registerContentScript: (
+  contentScriptOptions: browser.contentScripts.RegisteredContentScriptOptions,
+  callback?: (registeredContentScript: browser.contentScripts.RegisteredContentScript) => void,
+) => Promise<browser.contentScripts.RegisteredContentScript>;
+export async function registerContentScriptPolyfill(
+  contentScriptOptions: browser.contentScripts.RegisteredContentScriptOptions,
+  callback?: (registeredContentScript: browser.contentScripts.RegisteredContentScript) => void,
+) {
+  if (!registerContentScript) {
+    registerContentScript = buildContentScriptRegisterPolyfill();
+  }
+
+  return registerContentScript(contentScriptOptions, callback);
+}
 
 function buildContentScriptRegisterPolyfill() {
+  const logService = new ConsoleLogService(false);
+  const chromeP: typeof globalThis.chrome =
+    globalThis.chrome && new (NestedProxy<typeof globalThis.chrome> as any)(globalThis.chrome);
+  const patternValidationRegex =
+    /^(https?|wss?|file|ftp|\*):\/\/(\*|\*\.[^*/]+|[^*/]+)\/.*$|^file:\/\/\/.*$|^resource:\/\/(\*|\*\.[^*/]+|[^*/]+)\/.*$|^about:/;
+  const isFirefox = globalThis.navigator?.userAgent.includes("Firefox/");
+  const gotScripting = Boolean(globalThis.chrome?.scripting);
+  const gotNavigation = typeof chrome === "object" && "webNavigation" in chrome;
+
   function NestedProxy<T extends Record<string | symbol, any>>(target: T): T {
     return new Proxy(target, {
       get(target, prop) {
@@ -26,12 +48,14 @@ function buildContentScriptRegisterPolyfill() {
         if (!property) {
           return;
         }
-        if (typeof target[prop] !== "function") {
-          return new (NestedProxy<typeof property> as any)(target[prop]);
+
+        if (typeof property !== "function") {
+          return new (NestedProxy<typeof property> as any)(property);
         }
+
         return (...arguments_: any[]) =>
           new Promise((resolve, reject) => {
-            target[prop](...arguments_, (result: any) => {
+            property(...arguments_, (result: any) => {
               if (chrome.runtime.lastError) {
                 reject(new Error(chrome.runtime.lastError.message));
               } else {
@@ -42,32 +66,26 @@ function buildContentScriptRegisterPolyfill() {
       },
     });
   }
-  const chromeP: typeof globalThis.chrome =
-    globalThis.chrome && new (NestedProxy<typeof globalThis.chrome> as any)(globalThis.chrome);
 
-  const patternValidationRegex =
-    /^(https?|wss?|file|ftp|\*):\/\/(\*|\*\.[^*/]+|[^*/]+)\/.*$|^file:\/\/\/.*$|^resource:\/\/(\*|\*\.[^*/]+|[^*/]+)\/.*$|^about:/;
-  const isFirefox = globalThis.navigator?.userAgent.includes("Firefox/");
-  const allStarsRegex = isFirefox
-    ? /^(https?|wss?):[/][/][^/]+([/].*)?$/
-    : /^https?:[/][/][^/]+([/].*)?$/;
-  const allUrlsRegex = /^(https?|file|ftp):[/]+/;
   function assertValidPattern(matchPattern: string) {
     if (!isValidPattern(matchPattern)) {
       throw new Error(
-        matchPattern + " is an invalid pattern, it must match " + String(patternValidationRegex),
+        `${matchPattern} is an invalid pattern, it must match ${String(patternValidationRegex)}`,
       );
     }
   }
+
   function isValidPattern(matchPattern: string) {
     return matchPattern === "<all_urls>" || patternValidationRegex.test(matchPattern);
   }
+
   function getRawPatternRegex(matchPattern: string) {
     assertValidPattern(matchPattern);
     let [, protocol, host = "", pathname] = matchPattern.split(/(^[^:]+:[/][/])([^/]+)?/);
     protocol = protocol
       .replace("*", isFirefox ? "(https?|wss?)" : "https?")
       .replaceAll(/[/]/g, "[/]");
+
     if (host === "*") {
       host = "[^/]+";
     } else if (host) {
@@ -76,45 +94,57 @@ function buildContentScriptRegisterPolyfill() {
         .replaceAll(/[.]/g, "[.]")
         .replace(/[*]$/, "[^.]+");
     }
+
     pathname = pathname
       .replaceAll(/[/]/g, "[/]")
       .replaceAll(/[.]/g, "[.]")
       .replaceAll(/[*]/g, ".*");
+
     return "^" + protocol + host + "(" + pathname + ")?$";
   }
+
   function patternToRegex(...matchPatterns: string[]) {
     if (matchPatterns.length === 0) {
       return /$./;
     }
+
     if (matchPatterns.includes("<all_urls>")) {
-      return allUrlsRegex;
+      // <all_urls> regex
+      return /^(https?|file|ftp):[/]+/;
     }
+
     if (matchPatterns.includes("*://*/*")) {
-      return allStarsRegex;
+      // all stars regex
+      return isFirefox ? /^(https?|wss?):[/][/][^/]+([/].*)?$/ : /^https?:[/][/][^/]+([/].*)?$/;
     }
+
     return new RegExp(matchPatterns.map((x) => getRawPatternRegex(x)).join("|"));
   }
 
-  const gotScripting = Boolean(globalThis.chrome?.scripting);
   function castAllFramesTarget(target: number | { tabId: number; frameId: number }) {
     if (typeof target === "object") {
       return { ...target, allFrames: false };
     }
+
     return {
       tabId: target,
       frameId: undefined,
       allFrames: true,
     };
   }
+
   function castArray(possibleArray: any | any[]) {
     if (Array.isArray(possibleArray)) {
       return possibleArray;
     }
+
     return [possibleArray];
   }
+
   function arrayOrUndefined(value?: number) {
     return value === undefined ? undefined : [value];
   }
+
   async function insertCSS(
     {
       tabId,
@@ -138,6 +168,7 @@ function buildContentScriptRegisterPolyfill() {
         if (typeof content === "string") {
           content = { file: content };
         }
+
         if (gotScripting) {
           return chrome.scripting.insertCSS({
             target: {
@@ -149,6 +180,7 @@ function buildContentScriptRegisterPolyfill() {
             css: "code" in content ? content.code : undefined,
           });
         }
+
         return chromeP.tabs.insertCSS(tabId, {
           ...content,
           matchAboutBlank,
@@ -158,6 +190,7 @@ function buildContentScriptRegisterPolyfill() {
         });
       }),
     );
+
     if (ignoreTargetErrors) {
       await catchTargetInjectionErrors(everyInsertion);
     } else {
@@ -169,6 +202,7 @@ function buildContentScriptRegisterPolyfill() {
       throw new Error("chrome.scripting does not support injecting strings of `code`");
     }
   }
+
   async function executeScript(
     {
       tabId,
@@ -188,6 +222,7 @@ function buildContentScriptRegisterPolyfill() {
     { ignoreTargetErrors }: { ignoreTargetErrors?: boolean } = {},
   ) {
     const normalizedFiles = files.map((file) => (typeof file === "string" ? { file } : file));
+
     if (gotScripting) {
       assertNoCode(normalizedFiles);
       const injection = chrome.scripting.executeScript({
@@ -198,18 +233,22 @@ function buildContentScriptRegisterPolyfill() {
         },
         files: normalizedFiles.map(({ file }: { file: string }) => file),
       });
+
       if (ignoreTargetErrors) {
         await catchTargetInjectionErrors(injection);
       } else {
         await injection;
       }
+
       return;
     }
+
     const executions = [];
     for (const content of normalizedFiles) {
       if ("code" in content) {
         await executions.at(-1);
       }
+
       executions.push(
         chromeP.tabs.executeScript(tabId, {
           ...content,
@@ -220,12 +259,14 @@ function buildContentScriptRegisterPolyfill() {
         }),
       );
     }
+
     if (ignoreTargetErrors) {
       await catchTargetInjectionErrors(Promise.all(executions));
     } else {
       await Promise.all(executions);
     }
   }
+
   async function injectContentScript(
     where: { tabId: number; frameId: number },
     scripts: {
@@ -243,6 +284,7 @@ function buildContentScriptRegisterPolyfill() {
       ),
     );
   }
+
   async function injectContentScriptInSpecificTarget(
     { frameId, tabId, allFrames }: { frameId?: number; tabId: number; allFrames: boolean },
     scripts: {
@@ -279,22 +321,19 @@ function buildContentScriptRegisterPolyfill() {
     ]);
     await Promise.all(injections);
   }
-  const targetErrors =
-    /^No frame with id \d+ in tab \d+.$|^No tab with id: \d+.$|^The tab was closed.$|^The frame was removed.$/;
+
   async function catchTargetInjectionErrors(promise: Promise<any>) {
     try {
       await promise;
     } catch (error) {
+      const targetErrors =
+        /^No frame with id \d+ in tab \d+.$|^No tab with id: \d+.$|^The tab was closed.$|^The frame was removed.$/;
       if (!targetErrors.test(error?.message)) {
         throw error;
       }
     }
   }
 
-  const noMatchesError =
-    "Type error for parameter contentScriptOptions (Error processing matches: Array requires at least 1 items; you have 0) for contentScripts.register.";
-  const noPermissionError = "Permission denied to register a content script for ";
-  const gotNavigation = typeof chrome === "object" && "webNavigation" in chrome;
   async function isOriginPermitted(url: string) {
     return chromeP.permissions.contains({
       origins: [new URL(url).origin + "/*"],
@@ -314,6 +353,7 @@ function buildContentScriptRegisterPolyfill() {
       runAt,
     } = contentScriptOptions;
     let { allFrames } = contentScriptOptions;
+
     if (gotNavigation) {
       allFrames = false;
     } else if (allFrames) {
@@ -321,16 +361,21 @@ function buildContentScriptRegisterPolyfill() {
         "`allFrames: true` requires the `webNavigation` permission to work correctly: https://github.com/fregante/content-scripts-register-polyfill#permissions",
       );
     }
+
     if (matches.length === 0) {
-      throw new Error(noMatchesError);
+      throw new Error(
+        "Type error for parameter contentScriptOptions (Error processing matches: Array requires at least 1 items; you have 0) for contentScripts.register.",
+      );
     }
+
     await Promise.all(
       matches.map(async (pattern: string) => {
         if (!(await chromeP.permissions.contains({ origins: [pattern] }))) {
-          throw new Error(noPermissionError + pattern);
+          throw new Error(`Permission denied to register a content script for ${pattern}`);
         }
       }),
     );
+
     const matchesRegex = patternToRegex(...matches);
     const excludeMatchesRegex = patternToRegex(
       ...(excludeMatches !== null && excludeMatches !== void 0 ? excludeMatches : []),
@@ -343,20 +388,11 @@ function buildContentScriptRegisterPolyfill() {
       ) {
         return;
       }
+
       await injectContentScript(
-        {
-          tabId,
-          frameId,
-        },
-        {
-          css,
-          js,
-          matchAboutBlank,
-          runAt,
-        },
-        {
-          ignoreTargetErrors: true,
-        },
+        { tabId, frameId },
+        { css, js, matchAboutBlank, runAt },
+        { ignoreTargetErrors: true },
       );
     };
     const tabListener = async (
@@ -375,11 +411,13 @@ function buildContentScriptRegisterPolyfill() {
     }: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
       void inject(url, tabId, frameId);
     };
+
     if (gotNavigation) {
       BrowserApi.addListener(chrome.webNavigation.onCommitted, navListener);
     } else {
       BrowserApi.addListener(chrome.tabs.onUpdated, tabListener);
     }
+
     const registeredContentScript = {
       async unregister() {
         if (gotNavigation) {
@@ -389,24 +427,11 @@ function buildContentScriptRegisterPolyfill() {
         }
       },
     };
+
     if (typeof callback === "function") {
       callback(registeredContentScript);
     }
+
     return registeredContentScript;
   };
-}
-
-let registerContentScript: (
-  contentScriptOptions: browser.contentScripts.RegisteredContentScriptOptions,
-  callback?: (registeredContentScript: browser.contentScripts.RegisteredContentScript) => void,
-) => Promise<browser.contentScripts.RegisteredContentScript>;
-export async function registerContentScriptPolyfill(
-  contentScriptOptions: browser.contentScripts.RegisteredContentScriptOptions,
-  callback?: (registeredContentScript: browser.contentScripts.RegisteredContentScript) => void,
-) {
-  if (!registerContentScript) {
-    registerContentScript = buildContentScriptRegisterPolyfill();
-  }
-
-  return registerContentScript(contentScriptOptions, callback);
 }
