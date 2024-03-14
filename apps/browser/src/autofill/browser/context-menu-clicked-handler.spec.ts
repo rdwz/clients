@@ -19,10 +19,9 @@ import { CipherRepromptType } from "@bitwarden/common/vault/enums/cipher-repromp
 import { Cipher } from "@bitwarden/common/vault/models/domain/cipher";
 import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 
-import {
+import CopyToClipboardOptions, {
   CopyToClipboardAction,
   ContextMenuClickedHandler,
-  CopyToClipboardOptions,
   GeneratePasswordToClipboardAction,
   AutofillAction,
 } from "./context-menu-clicked-handler";

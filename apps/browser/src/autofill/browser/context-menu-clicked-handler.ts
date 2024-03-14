@@ -30,6 +30,7 @@ import {
   authServiceFactory,
   AuthServiceInitOptions,
 } from "../../auth/background/service-factories/auth-service.factory";
+import { KeyConnectorServiceInitOptions } from "../../auth/background/service-factories/key-connector-service.factory";
 import { userVerificationServiceFactory } from "../../auth/background/service-factories/user-verification-service.factory";
 import { openUnlockPopout } from "../../auth/popup/utils/auth-popout-window";
 import { autofillSettingsServiceFactory } from "../../autofill/background/service_factories/autofill-settings-service.factory";
@@ -54,7 +55,8 @@ import { copyToClipboard, GeneratePasswordToClipboardCommand } from "../clipboar
 import { AutofillTabCommand } from "../commands/autofill-tab-command";
 import { AutofillCipherTypeId } from "../types";
 
-export type CopyToClipboardOptions = { text: string; tab: chrome.tabs.Tab };
+type CopyToClipboardOptions = { text: string; tab: chrome.tabs.Tab };
+export default CopyToClipboardOptions;
 export type CopyToClipboardAction = (options: CopyToClipboardOptions) => void;
 export type AutofillAction = (tab: chrome.tabs.Tab, cipher: CipherView) => Promise<void>;
 
@@ -78,7 +80,9 @@ export class ContextMenuClickedHandler {
 
   static async mv3Create(cachedServices: CachedServices) {
     const stateFactory = new StateFactory(GlobalState, Account);
-    const serviceOptions: AuthServiceInitOptions & CipherServiceInitOptions = {
+    const serviceOptions: AuthServiceInitOptions &
+      CipherServiceInitOptions &
+      KeyConnectorServiceInitOptions = {
       apiServiceOptions: {
         logoutCallback: NOT_IMPLEMENTED,
       },
