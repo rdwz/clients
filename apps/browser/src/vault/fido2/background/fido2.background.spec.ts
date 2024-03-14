@@ -1,3 +1,4 @@
+// import registerContentScript from "content-scripts-register-polyfill/ponyfill.js";
 import { mock } from "jest-mock-extended";
 import { Observable } from "rxjs";
 
@@ -145,17 +146,16 @@ describe("Fido2Background", () => {
     });
 
     it("skips destroying and re-injecting the content scripts if the enablePasskeys setting is first being read", async () => {
-      fido2Background["handleEnablePasskeysUpdate"](true);
-      await flushPromises();
+      await fido2Background["handleEnablePasskeysUpdate"](true);
 
       expect(fido2Background["fido2ContentScriptPortsSet"].size).toBe(2);
       expect(executeTabsSpy).not.toHaveBeenCalled();
     });
 
-    it("destroys the content scripts but skips re-injecting them if the enablePasskeys setting is set to `false`", () => {
+    it("destroys the content scripts but skips re-injecting them if the enablePasskeys setting is set to `false`", async () => {
       fido2Background["currentEnablePasskeysSetting"] = true;
 
-      fido2Background["handleEnablePasskeysUpdate"](false);
+      await fido2Background["handleEnablePasskeysUpdate"](false);
 
       expect(portMock.disconnect).toHaveBeenCalled();
       expect(fido2Background["fido2ContentScriptPortsSet"].size).toBe(0);
@@ -165,8 +165,7 @@ describe("Fido2Background", () => {
     it("destroys and re-injects the content scripts if the enablePasskeys setting is set to `true`", async () => {
       fido2Background["currentEnablePasskeysSetting"] = false;
 
-      fido2Background["handleEnablePasskeysUpdate"](true);
-      await flushPromises();
+      await fido2Background["handleEnablePasskeysUpdate"](true);
 
       expect(portMock.disconnect).toHaveBeenCalled();
       expect(fido2Background["fido2ContentScriptPortsSet"].size).toBe(0);

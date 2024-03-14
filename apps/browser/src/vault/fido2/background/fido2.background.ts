@@ -16,13 +16,25 @@ import {
   Fido2Background as Fido2BackgroundInterface,
   Fido2BackgroundExtensionMessageHandlers,
   Fido2ExtensionMessage,
+  SharedFido2ScriptInjectionDetails,
+  SharedFido2ScriptRegistrationOptions,
 } from "./abstractions/fido2.background";
 
 export default class Fido2Background implements Fido2BackgroundInterface {
   private abortManager = new AbortManager();
   private fido2ContentScriptPortsSet = new Set<chrome.runtime.Port>();
   private currentEnablePasskeysSetting: boolean;
-  private extensionMessageHandlers: Fido2BackgroundExtensionMessageHandlers = {
+  private registeredContentScripts: browser.contentScripts.RegisteredContentScript;
+  private readonly sharedInjectionDetails: SharedFido2ScriptInjectionDetails = {
+    allFrames: true,
+    runAt: "document_start",
+  };
+  private readonly sharedRegistrationOptions: SharedFido2ScriptRegistrationOptions = {
+    matches: ["https://*/*"],
+    excludeMatches: ["https://*/*.xml*"],
+    ...this.sharedInjectionDetails,
+  };
+  private readonly extensionMessageHandlers: Fido2BackgroundExtensionMessageHandlers = {
     fido2AbortRequest: ({ message }) => this.abortRequest(message),
     fido2RegisterCredentialRequest: ({ message, sender }) =>
       this.registerCredentialRequest(message, sender),
@@ -69,9 +81,11 @@ export default class Fido2Background implements Fido2BackgroundInterface {
    *
    * @param enablePasskeys - The new value of the enablePasskeys setting.
    */
-  private handleEnablePasskeysUpdate(enablePasskeys: boolean) {
+  private async handleEnablePasskeysUpdate(enablePasskeys: boolean) {
     const previousEnablePasskeysSetting = this.currentEnablePasskeysSetting;
     this.currentEnablePasskeysSetting = enablePasskeys;
+    await this.updateContentScriptRegistration();
+
     if (typeof previousEnablePasskeysSetting === "undefined") {
       return;
     }
@@ -82,18 +96,66 @@ export default class Fido2Background implements Fido2BackgroundInterface {
     }
   }
 
+  private async updateContentScriptRegistration() {
+    if (BrowserApi.isManifestVersion(2)) {
+      await this.registerManifestV2ContentScripts();
+
+      return;
+    }
+
+    await this.registerManifestV3ContentScripts();
+  }
+
+  private async registerManifestV2ContentScripts() {
+    if (!this.currentEnablePasskeysSetting) {
+      await this.registeredContentScripts?.unregister();
+
+      return;
+    }
+
+    this.registeredContentScripts = await BrowserApi.registerContentScriptsMv2({
+      js: [
+        { file: "content/fido2/page-script-append-mv2.js" },
+        { file: "content/fido2/content-script.js" },
+      ],
+      ...this.sharedRegistrationOptions,
+    });
+  }
+
+  private async registerManifestV3ContentScripts() {
+    if (this.currentEnablePasskeysSetting) {
+      void BrowserApi.registerContentScriptsMv3([
+        {
+          id: "fido2-page-script",
+          js: ["content/fido2/page-script.js"],
+          world: "MAIN",
+          ...this.sharedRegistrationOptions,
+        },
+        {
+          id: "fido2-content-script",
+          js: ["content/fido2/content-script.js"],
+          ...this.sharedRegistrationOptions,
+        },
+      ]);
+
+      return;
+    }
+
+    void BrowserApi.unregisterContentScriptsMv3({
+      ids: ["fido2-page-script", "fido2-content-script"],
+    });
+  }
+
   /**
    * Injects the FIDO2 content and page script into the current tab.
    *
    * @param tab - The current tab to inject the scripts into.
    */
   private async injectFido2ContentScripts(tab: chrome.tabs.Tab): Promise<void> {
-    const sharedInjectionDetails = { allFrames: true, runAt: "document_start" };
-
-    this.injectFido2PageScript(tab, sharedInjectionDetails);
+    this.injectFido2PageScript(tab);
     void BrowserApi.executeScriptInTab(tab.id, {
       file: "content/fido2/content-script.js",
-      ...sharedInjectionDetails,
+      ...this.sharedInjectionDetails,
     });
   }
 
@@ -101,16 +163,12 @@ export default class Fido2Background implements Fido2BackgroundInterface {
    * Injects the FIDO2 page script into the current tab.
    *
    * @param tab - The current tab to inject the script into.
-   * @param sharedInjectionDetails - The shared injection details for the script.
    */
-  private injectFido2PageScript(
-    tab: chrome.tabs.Tab,
-    sharedInjectionDetails: { allFrames: boolean; runAt: string },
-  ) {
+  private injectFido2PageScript(tab: chrome.tabs.Tab) {
     if (BrowserApi.isManifestVersion(3)) {
       void BrowserApi.executeScriptInTab(
         tab.id,
-        { file: "content/fido2/page-script.js", ...sharedInjectionDetails },
+        { file: "content/fido2/page-script.js", ...this.sharedInjectionDetails },
         { world: "MAIN" },
       );
       return;
@@ -118,7 +176,7 @@ export default class Fido2Background implements Fido2BackgroundInterface {
 
     void BrowserApi.executeScriptInTab(tab.id, {
       file: "content/fido2/page-script-append-mv2.js",
-      ...sharedInjectionDetails,
+      ...this.sharedInjectionDetails,
     });
   }
 

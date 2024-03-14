@@ -17,7 +17,7 @@ describe("FIDO2 page-script for manifest v2", () => {
   });
 
   it("appends the `page-script.js` file to the document head", () => {
-    jest.spyOn(window.document.head, "appendChild").mockImplementation((node) => {
+    jest.spyOn(window.document.head, "insertBefore").mockImplementation((node) => {
       createdScriptElement = node as HTMLScriptElement;
       return node;
     });
@@ -26,13 +26,16 @@ describe("FIDO2 page-script for manifest v2", () => {
 
     expect(window.document.createElement).toHaveBeenCalledWith("script");
     expect(chrome.runtime.getURL).toHaveBeenCalledWith("content/fido2/page-script.js");
-    expect(window.document.head.appendChild).toHaveBeenCalledWith(expect.any(HTMLScriptElement));
+    expect(window.document.head.insertBefore).toHaveBeenCalledWith(
+      expect.any(HTMLScriptElement),
+      window.document.head.firstChild,
+    );
     expect(createdScriptElement.src).toBe("chrome-extension://id/content/fido2/page-script.js");
   });
 
   it("appends the `page-script.js` file to the document element if the head is not available", () => {
     window.document.documentElement.removeChild(window.document.head);
-    jest.spyOn(window.document.documentElement, "appendChild").mockImplementation((node) => {
+    jest.spyOn(window.document.documentElement, "insertBefore").mockImplementation((node) => {
       createdScriptElement = node as HTMLScriptElement;
       return node;
     });
@@ -41,16 +44,17 @@ describe("FIDO2 page-script for manifest v2", () => {
 
     expect(window.document.createElement).toHaveBeenCalledWith("script");
     expect(chrome.runtime.getURL).toHaveBeenCalledWith("content/fido2/page-script.js");
-    expect(window.document.documentElement.appendChild).toHaveBeenCalledWith(
+    expect(window.document.documentElement.insertBefore).toHaveBeenCalledWith(
       expect.any(HTMLScriptElement),
+      window.document.documentElement.firstChild,
     );
     expect(createdScriptElement.src).toBe("chrome-extension://id/content/fido2/page-script.js");
   });
 
   it("removes the appended `page-script.js` file after the script has triggered a load event", () => {
-    jest.spyOn(window.document.documentElement, "appendChild").mockImplementation((node) => {
-      createdScriptElement = node as HTMLScriptElement;
-      return node;
+    createdScriptElement = document.createElement("script");
+    jest.spyOn(window.document, "createElement").mockImplementation((element) => {
+      return createdScriptElement;
     });
 
     require("./page-script-append.mv2");

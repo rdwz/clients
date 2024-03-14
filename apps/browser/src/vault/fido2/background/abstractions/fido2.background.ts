@@ -5,6 +5,16 @@ import {
   CreateCredentialResult,
 } from "@bitwarden/common/vault/abstractions/fido2/fido2-client.service.abstraction";
 
+type SharedFido2ScriptInjectionDetails = {
+  allFrames: boolean;
+  runAt: browser.contentScripts.RegisteredContentScriptOptions["runAt"];
+};
+
+type SharedFido2ScriptRegistrationOptions = SharedFido2ScriptInjectionDetails & {
+  matches: string[];
+  excludeMatches: string[];
+};
+
 type Fido2ExtensionMessage = {
   [key: string]: any;
   command: string;
@@ -38,4 +48,10 @@ interface Fido2Background {
   injectFido2ContentScriptsInAllTabs(): Promise<void>;
 }
 
-export { Fido2ExtensionMessage, Fido2BackgroundExtensionMessageHandlers, Fido2Background };
+export {
+  SharedFido2ScriptInjectionDetails,
+  SharedFido2ScriptRegistrationOptions,
+  Fido2ExtensionMessage,
+  Fido2BackgroundExtensionMessageHandlers,
+  Fido2Background,
+};
