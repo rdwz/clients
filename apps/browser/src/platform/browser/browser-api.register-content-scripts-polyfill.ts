@@ -1,6 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
-
 /**
  * MIT License
  *
@@ -15,21 +12,24 @@
  * @see https://github.com/fregante/content-scripts-register-polyfill
  * @version 4.0.2
  */
+import { ConsoleLogService } from "@bitwarden/common/platform/services/console-log.service";
+
+const logService = new ConsoleLogService(false);
 
 function buildContentScriptRegisterPolyfill() {
-  function NestedProxy(target) {
-    // eslint-disable-next-line no-undef
+  function NestedProxy<T extends Record<string | symbol, any>>(target: T): T {
     return new Proxy(target, {
       get(target, prop) {
-        if (!target[prop]) {
+        const property = target[prop];
+        if (!property) {
           return;
         }
         if (typeof target[prop] !== "function") {
-          return new NestedProxy(target[prop]);
+          return new (NestedProxy<typeof property> as any)(target[prop]);
         }
-        return (...arguments_) =>
+        return (...arguments_: any[]) =>
           new Promise((resolve, reject) => {
-            target[prop](...arguments_, (result) => {
+            target[prop](...arguments_, (result: any) => {
               if (chrome.runtime.lastError) {
                 reject(new Error(chrome.runtime.lastError.message));
               } else {
@@ -41,7 +41,8 @@ function buildContentScriptRegisterPolyfill() {
     });
   }
   // eslint-disable-next-line no-undef
-  const chromeP = globalThis.chrome && new NestedProxy(globalThis.chrome);
+  const chromeP: typeof globalThis.chrome =
+    globalThis.chrome && new (NestedProxy<typeof globalThis.chrome> as any)(globalThis.chrome);
 
   const patternValidationRegex =
     /^(https?|wss?|file|ftp|\*):\/\/(\*|\*\.[^*/]+|[^*/]+)\/.*$|^file:\/\/\/.*$|^resource:\/\/(\*|\*\.[^*/]+|[^*/]+)\/.*$|^about:/;
@@ -51,17 +52,17 @@ function buildContentScriptRegisterPolyfill() {
     ? /^(https?|wss?):[/][/][^/]+([/].*)?$/
     : /^https?:[/][/][^/]+([/].*)?$/;
   const allUrlsRegex = /^(https?|file|ftp):[/]+/;
-  function assertValidPattern(matchPattern) {
+  function assertValidPattern(matchPattern: string) {
     if (!isValidPattern(matchPattern)) {
       throw new Error(
         matchPattern + " is an invalid pattern, it must match " + String(patternValidationRegex),
       );
     }
   }
-  function isValidPattern(matchPattern) {
+  function isValidPattern(matchPattern: string) {
     return matchPattern === "<all_urls>" || patternValidationRegex.test(matchPattern);
   }
-  function getRawPatternRegex(matchPattern) {
+  function getRawPatternRegex(matchPattern: string) {
     assertValidPattern(matchPattern);
     let [, protocol, host = "", pathname] = matchPattern.split(/(^[^:]+:[/][/])([^/]+)?/);
     protocol = protocol
@@ -81,7 +82,7 @@ function buildContentScriptRegisterPolyfill() {
       .replaceAll(/[*]/g, ".*");
     return "^" + protocol + host + "(" + pathname + ")?$";
   }
-  function patternToRegex(...matchPatterns) {
+  function patternToRegex(...matchPatterns: string[]) {
     if (matchPatterns.length === 0) {
       return /$./;
     }
@@ -96,7 +97,7 @@ function buildContentScriptRegisterPolyfill() {
 
   // eslint-disable-next-line no-undef
   const gotScripting = Boolean(globalThis.chrome?.scripting);
-  function castAllFramesTarget(target) {
+  function castAllFramesTarget(target: number | { tabId: number; frameId: number }) {
     if (typeof target === "object") {
       return { ...target, allFrames: false };
     }
@@ -106,18 +107,32 @@ function buildContentScriptRegisterPolyfill() {
       allFrames: true,
     };
   }
-  function castArray(possibleArray) {
+  function castArray(possibleArray: any | any[]) {
     if (Array.isArray(possibleArray)) {
       return possibleArray;
     }
     return [possibleArray];
   }
-  function arrayOrUndefined(value) {
+  function arrayOrUndefined(value?: number) {
     return value === undefined ? undefined : [value];
   }
   async function insertCSS(
-    { tabId, frameId, files, allFrames, matchAboutBlank, runAt },
-    { ignoreTargetErrors } = {},
+    {
+      tabId,
+      frameId,
+      files,
+      allFrames,
+      matchAboutBlank,
+      runAt,
+    }: {
+      tabId: number;
+      frameId?: number;
+      files: browser.extensionTypes.ExtensionFileOrCode[];
+      allFrames: boolean;
+      matchAboutBlank: boolean;
+      runAt: browser.extensionTypes.RunAt;
+    },
+    { ignoreTargetErrors }: { ignoreTargetErrors?: boolean } = {},
   ) {
     const everyInsertion = Promise.all(
       files.map(async (content) => {
@@ -150,14 +165,28 @@ function buildContentScriptRegisterPolyfill() {
       await everyInsertion;
     }
   }
-  function assertNoCode(files) {
+  function assertNoCode(files: browser.extensionTypes.ExtensionFileOrCode[]) {
     if (files.some((content) => "code" in content)) {
       throw new Error("chrome.scripting does not support injecting strings of `code`");
     }
   }
   async function executeScript(
-    { tabId, frameId, files, allFrames, matchAboutBlank, runAt },
-    { ignoreTargetErrors } = {},
+    {
+      tabId,
+      frameId,
+      files,
+      allFrames,
+      matchAboutBlank,
+      runAt,
+    }: {
+      tabId: number;
+      frameId?: number;
+      files: browser.extensionTypes.ExtensionFileOrCode[];
+      allFrames: boolean;
+      matchAboutBlank: boolean;
+      runAt: browser.extensionTypes.RunAt;
+    },
+    { ignoreTargetErrors }: { ignoreTargetErrors?: boolean } = {},
   ) {
     const normalizedFiles = files.map((file) => (typeof file === "string" ? { file } : file));
     if (gotScripting) {
@@ -168,7 +197,7 @@ function buildContentScriptRegisterPolyfill() {
           frameIds: arrayOrUndefined(frameId),
           allFrames: frameId === undefined ? allFrames : undefined,
         },
-        files: normalizedFiles.map(({ file }) => file),
+        files: normalizedFiles.map(({ file }: { file: string }) => file),
       });
       if (ignoreTargetErrors) {
         await catchTargetInjectionErrors(injection);
@@ -198,7 +227,16 @@ function buildContentScriptRegisterPolyfill() {
       await Promise.all(executions);
     }
   }
-  async function injectContentScript(where, scripts, options = {}) {
+  async function injectContentScript(
+    where: { tabId: number; frameId: number },
+    scripts: {
+      css: browser.extensionTypes.ExtensionFileOrCode[];
+      js: browser.extensionTypes.ExtensionFileOrCode[];
+      matchAboutBlank: boolean;
+      runAt: browser.extensionTypes.RunAt;
+    },
+    options = {},
+  ) {
     const targets = castArray(where);
     await Promise.all(
       targets.map(async (target) =>
@@ -207,8 +245,13 @@ function buildContentScriptRegisterPolyfill() {
     );
   }
   async function injectContentScriptInSpecificTarget(
-    { frameId, tabId, allFrames },
-    scripts,
+    { frameId, tabId, allFrames }: { frameId?: number; tabId: number; allFrames: boolean },
+    scripts: {
+      css: browser.extensionTypes.ExtensionFileOrCode[];
+      js: browser.extensionTypes.ExtensionFileOrCode[];
+      matchAboutBlank: boolean;
+      runAt: browser.extensionTypes.RunAt;
+    },
     options = {},
   ) {
     const injections = castArray(scripts).flatMap((script) => [
@@ -239,7 +282,7 @@ function buildContentScriptRegisterPolyfill() {
   }
   const targetErrors =
     /^No frame with id \d+ in tab \d+.$|^No tab with id: \d+.$|^The tab was closed.$|^The frame was removed.$/;
-  async function catchTargetInjectionErrors(promise) {
+  async function catchTargetInjectionErrors(promise: Promise<any>) {
     try {
       await promise;
     } catch (error) {
@@ -253,13 +296,16 @@ function buildContentScriptRegisterPolyfill() {
     "Type error for parameter contentScriptOptions (Error processing matches: Array requires at least 1 items; you have 0) for contentScripts.register.";
   const noPermissionError = "Permission denied to register a content script for ";
   const gotNavigation = typeof chrome === "object" && "webNavigation" in chrome;
-  async function isOriginPermitted(url) {
+  async function isOriginPermitted(url: string) {
     return chromeP.permissions.contains({
       origins: [new URL(url).origin + "/*"],
     });
   }
 
-  return async (contentScriptOptions, callback) => {
+  return async (
+    contentScriptOptions: browser.contentScripts.RegisteredContentScriptOptions,
+    callback: CallableFunction,
+  ) => {
     const {
       js = [],
       css = [],
@@ -272,8 +318,7 @@ function buildContentScriptRegisterPolyfill() {
     if (gotNavigation) {
       allFrames = false;
     } else if (allFrames) {
-      // eslint-disable-next-line no-console
-      console.warn(
+      logService.warning(
         "`allFrames: true` requires the `webNavigation` permission to work correctly: https://github.com/fregante/content-scripts-register-polyfill#permissions",
       );
     }
@@ -281,7 +326,7 @@ function buildContentScriptRegisterPolyfill() {
       throw new Error(noMatchesError);
     }
     await Promise.all(
-      matches.map(async (pattern) => {
+      matches.map(async (pattern: string) => {
         if (!(await chromeP.permissions.contains({ origins: [pattern] }))) {
           throw new Error(noPermissionError + pattern);
         }
@@ -291,7 +336,7 @@ function buildContentScriptRegisterPolyfill() {
     const excludeMatchesRegex = patternToRegex(
       ...(excludeMatches !== null && excludeMatches !== void 0 ? excludeMatches : []),
     );
-    const inject = async (url, tabId, frameId = 0) => {
+    const inject = async (url: string, tabId: number, frameId = 0) => {
       if (
         !matchesRegex.test(url) ||
         excludeMatchesRegex.test(url) ||
@@ -315,12 +360,20 @@ function buildContentScriptRegisterPolyfill() {
         },
       );
     };
-    const tabListener = async (tabId, { status }, { url }) => {
+    const tabListener = async (
+      tabId: number,
+      { status }: chrome.tabs.TabChangeInfo,
+      { url }: chrome.tabs.Tab,
+    ) => {
       if (status === "loading" && url) {
         void inject(url, tabId);
       }
     };
-    const navListener = async ({ tabId, frameId, url }) => {
+    const navListener = async ({
+      tabId,
+      frameId,
+      url,
+    }: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
       void inject(url, tabId, frameId);
     };
     if (gotNavigation) {
