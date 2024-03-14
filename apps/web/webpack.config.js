@@ -2,7 +2,6 @@ const fs = require("fs");
 const path = require("path");
 
 const { AngularWebpackPlugin } = require("@ngtools/webpack");
-const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackInjector = require("html-webpack-injector");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
@@ -87,7 +86,6 @@ const moduleRules = [
 ];
 
 const plugins = [
-  new CleanWebpackPlugin(),
   new HtmlWebpackPlugin({
     template: "./src/index.html",
     filename: "index.html",
@@ -129,6 +127,11 @@ const plugins = [
     filename: "captcha-mobile-connector.html",
     chunks: ["connectors/captcha"],
   }),
+  new HtmlWebpackPlugin({
+    template: "./src/connectors/duo-redirect.html",
+    filename: "duo-redirect-connector.html",
+    chunks: ["connectors/duo-redirect"],
+  }),
   new CopyWebpackPlugin({
     patterns: [
       { from: "./src/.nojekyll" },
@@ -167,6 +170,7 @@ const plugins = [
     BRAINTREE_KEY: envConfig["braintreeKey"] ?? "",
     PAYPAL_CONFIG: envConfig["paypal"] ?? {},
     FLAGS: envConfig["flags"] ?? {},
+    DEV_FLAGS: NODE_ENV === "development" ? envConfig["devFlags"] : {},
   }),
   new AngularWebpackPlugin({
     tsConfigPath: "tsconfig.json",
@@ -265,6 +269,7 @@ const devServer =
                   https://*.duosecurity.com
                 ;connect-src
                   'self'
+                  ${envConfig.dev.wsConnectSrc ?? ""}
                   wss://notifications.bitwarden.com
                   https://notifications.bitwarden.com
                   https://cdn.bitwarden.net
@@ -317,7 +322,8 @@ const webpackConfig = {
     "connectors/duo": "./src/connectors/duo.ts",
     "connectors/sso": "./src/connectors/sso.ts",
     "connectors/captcha": "./src/connectors/captcha.ts",
-    theme_head: "./src/theme.js",
+    "connectors/duo-redirect": "./src/connectors/duo-redirect.ts",
+    theme_head: "./src/theme.ts",
   },
   optimization: {
     splitChunks: {
@@ -363,6 +369,7 @@ const webpackConfig = {
   output: {
     filename: "[name].[contenthash].js",
     path: path.resolve(__dirname, "build"),
+    clean: true,
   },
   module: {
     noParse: /\.wasm$/,

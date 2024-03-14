@@ -1,3 +1,5 @@
+import { firstValueFrom } from "rxjs";
+
 import { AuthService } from "@bitwarden/common/auth/abstractions/auth.service";
 import { AuthenticationStatus } from "@bitwarden/common/auth/enums/authentication-status";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
@@ -8,13 +10,11 @@ import { LogService } from "@bitwarden/common/platform/abstractions/log.service"
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
+import { BiometricStateService } from "@bitwarden/common/platform/biometrics/biometric-state.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { EncString } from "@bitwarden/common/platform/models/domain/enc-string";
-import {
-  MasterKey,
-  SymmetricCryptoKey,
-  UserKey,
-} from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
+import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
+import { UserKey, MasterKey } from "@bitwarden/common/types/key";
 
 import { BrowserApi } from "../platform/browser/browser-api";
 
@@ -82,20 +82,21 @@ export class NativeMessagingBackground {
     private stateService: StateService,
     private logService: LogService,
     private authService: AuthService,
+    private biometricStateService: BiometricStateService,
   ) {
-    this.stateService.setBiometricFingerprintValidated(false);
-
     if (chrome?.permissions?.onAdded) {
       // Reload extension to activate nativeMessaging
       chrome.permissions.onAdded.addListener((permissions) => {
-        BrowserApi.reloadExtension(null);
+        if (permissions.permissions?.includes("nativeMessaging")) {
+          BrowserApi.reloadExtension(null);
+        }
       });
     }
   }
 
   async connect() {
     this.appId = await this.appIdService.getAppId();
-    this.stateService.setBiometricFingerprintValidated(false);
+    await this.biometricStateService.setFingerprintValidated(false);
 
     return new Promise<void>((resolve, reject) => {
       this.port = BrowserApi.connectNative("com.8bit.bitwarden");
@@ -121,7 +122,7 @@ export class NativeMessagingBackground {
             break;
           case "disconnected":
             if (this.connecting) {
-              reject("startDesktop");
+              reject(new Error("startDesktop"));
             }
             this.connected = false;
             this.port.disconnect();
@@ -141,7 +142,7 @@ export class NativeMessagingBackground {
 
             if (this.validatingFingerprint) {
               this.validatingFingerprint = false;
-              this.stateService.setBiometricFingerprintValidated(true);
+              await this.biometricStateService.setFingerprintValidated(true);
             }
             this.sharedSecret = new SymmetricCryptoKey(decrypted);
             this.secureSetupResolve();
@@ -168,6 +169,8 @@ export class NativeMessagingBackground {
           case "verifyFingerprint": {
             if (this.sharedSecret == null) {
               this.validatingFingerprint = true;
+              // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+              // eslint-disable-next-line @typescript-eslint/no-floating-promises
               this.showFingerprintDialog();
             }
             break;
@@ -181,6 +184,8 @@ export class NativeMessagingBackground {
               return;
             }
 
+            // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.onMessage(message.message);
         }
       });
@@ -198,7 +203,7 @@ export class NativeMessagingBackground {
         this.connected = false;
 
         const reason = error != null ? "desktopIntegrationDisabled" : null;
-        reject(reason);
+        reject(new Error(reason));
       });
     });
   }
@@ -289,8 +294,6 @@ export class NativeMessagingBackground {
 
     switch (message.command) {
       case "biometricUnlock": {
-        await this.stateService.setBiometricAwaitingAcceptance(null);
-
         if (message.response === "not enabled") {
           this.messagingService.send("showDialog", {
             title: { key: "biometricsNotEnabledTitle" },
@@ -309,12 +312,15 @@ export class NativeMessagingBackground {
             type: "danger",
           });
           break;
+        } else if (message.response === "canceled") {
+          break;
         }
 
-        const enabled = await this.stateService.getBiometricUnlock();
+        // Check for initial setup of biometric unlock
+        const enabled = await firstValueFrom(this.biometricStateService.biometricUnlockEnabled$);
         if (enabled === null || enabled === false) {
           if (message.response === "unlocked") {
-            await this.stateService.setBiometricUnlock(true);
+            await this.biometricStateService.setBiometricUnlockEnabled(true);
           }
           break;
         }
@@ -383,6 +389,8 @@ export class NativeMessagingBackground {
             return;
           }
 
+          // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
           this.runtimeBackground.processMessage({ command: "unlocked" }, null);
         }
         break;
@@ -402,6 +410,8 @@ export class NativeMessagingBackground {
     this.publicKey = publicKey;
     this.privateKey = privateKey;
 
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.sendUnencrypted({
       command: "setupEncryption",
       publicKey: Utils.fromBufferToB64(publicKey),

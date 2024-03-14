@@ -1,3 +1,4 @@
+import { DOCUMENT } from "@angular/common";
 import { Inject, Injectable } from "@angular/core";
 
 import { AbstractThemingService } from "@bitwarden/angular/platform/services/theming/theming.service.abstraction";
@@ -38,26 +39,28 @@ export class InitService {
     private themingService: AbstractThemingService,
     private encryptService: EncryptService,
     private configService: ConfigService,
+    @Inject(DOCUMENT) private document: Document,
   ) {}
 
   init() {
     return async () => {
       this.nativeMessagingService.init();
-      await this.stateService.init();
+      await this.stateService.init({ runMigrations: false }); // Desktop will run them in main process
       await this.environmentService.setUrlsFromStorage();
       // Workaround to ignore stateService.activeAccount until URLs are set
       // TODO: Remove this when implementing ticket PM-2637
       this.environmentService.initialized = true;
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.syncService.fullSync(true);
       await this.vaultTimeoutService.init(true);
-      const locale = await this.stateService.getLocale();
-      await (this.i18nService as I18nRendererService).init(locale);
+      await (this.i18nService as I18nRendererService).init();
       (this.eventUploadService as EventUploadService).init(true);
       this.twoFactorService.init();
       setTimeout(() => this.notificationsService.init(), 3000);
       const htmlEl = this.win.document.documentElement;
       htmlEl.classList.add("os_" + this.platformUtilsService.getDeviceString());
-      await this.themingService.monitorThemeChanges();
+      this.themingService.applyThemeChangesTo(this.document);
       let installAction = null;
       const installedVersion = await this.stateService.getInstalledVersion();
       const currentVersion = await this.platformUtilsService.getApplicationVersion();

@@ -1,17 +1,13 @@
 import { Jsonify } from "type-fest";
 
-import { EncryptedOrganizationKeyData } from "../../../admin-console/models/data/encrypted-organization-key.data";
 import { OrganizationData } from "../../../admin-console/models/data/organization.data";
-import { PolicyData } from "../../../admin-console/models/data/policy.data";
-import { ProviderData } from "../../../admin-console/models/data/provider.data";
-import { Policy } from "../../../admin-console/models/domain/policy";
 import { AdminAuthRequestStorable } from "../../../auth/models/domain/admin-auth-req-storable";
-import { EnvironmentUrls } from "../../../auth/models/domain/environment-urls";
 import { ForceSetPasswordReason } from "../../../auth/models/domain/force-set-password-reason";
 import { KeyConnectorUserDecryptionOption } from "../../../auth/models/domain/user-decryption-options/key-connector-user-decryption-option";
 import { TrustedDeviceUserDecryptionOption } from "../../../auth/models/domain/user-decryption-options/trusted-device-user-decryption-option";
 import { IdentityTokenResponse } from "../../../auth/models/response/identity-token.response";
 import { EventData } from "../../../models/data/event.data";
+import { UriMatchStrategySetting } from "../../../models/domain/domain-service";
 import { GeneratorOptions } from "../../../tools/generator/generator-options";
 import {
   GeneratedPasswordHistory,
@@ -21,19 +17,16 @@ import { UsernameGeneratorOptions } from "../../../tools/generator/username/user
 import { SendData } from "../../../tools/send/models/data/send.data";
 import { SendView } from "../../../tools/send/models/view/send.view";
 import { DeepJsonify } from "../../../types/deep-jsonify";
-import { UriMatchType } from "../../../vault/enums";
+import { MasterKey } from "../../../types/key";
 import { CipherData } from "../../../vault/models/data/cipher.data";
-import { CollectionData } from "../../../vault/models/data/collection.data";
-import { FolderData } from "../../../vault/models/data/folder.data";
 import { CipherView } from "../../../vault/models/view/cipher.view";
-import { CollectionView } from "../../../vault/models/view/collection.view";
 import { AddEditCipherInfo } from "../../../vault/types/add-edit-cipher-info";
 import { KdfType } from "../../enums";
 import { Utils } from "../../misc/utils";
 import { ServerConfigData } from "../../models/data/server-config.data";
 
 import { EncryptedString, EncString } from "./enc-string";
-import { MasterKey, SymmetricCryptoKey, UserKey } from "./symmetric-crypto-key";
+import { SymmetricCryptoKey } from "./symmetric-crypto-key";
 
 export class EncryptionPair<TEncrypted, TDecrypted> {
   encrypted?: TEncrypted;
@@ -74,7 +67,7 @@ export class EncryptionPair<TEncrypted, TDecrypted> {
 }
 
 export class DataEncryptionPair<TEncrypted, TDecrypted> {
-  encrypted?: { [id: string]: TEncrypted };
+  encrypted?: Record<string, TEncrypted>;
   decrypted?: TDecrypted[];
 }
 
@@ -90,14 +83,8 @@ export class AccountData {
     CipherData,
     CipherView
   >();
-  folders? = new TemporaryDataEncryption<FolderData>();
   localData?: any;
   sends?: DataEncryptionPair<SendData, SendView> = new DataEncryptionPair<SendData, SendView>();
-  collections?: DataEncryptionPair<CollectionData, CollectionView> = new DataEncryptionPair<
-    CollectionData,
-    CollectionView
-  >();
-  policies?: DataEncryptionPair<PolicyData, Policy> = new DataEncryptionPair<PolicyData, Policy>();
   passwordGenerationHistory?: EncryptionPair<
     GeneratedPasswordHistory[],
     GeneratedPasswordHistory[]
@@ -105,7 +92,6 @@ export class AccountData {
   addEditCipherInfo?: AddEditCipherInfo;
   eventCollection?: EventData[];
   organizations?: { [id: string]: OrganizationData };
-  providers?: { [id: string]: ProviderData };
 
   static fromJSON(obj: DeepJsonify<AccountData>): AccountData {
     if (obj == null) {
@@ -122,22 +108,9 @@ export class AccountData {
 }
 
 export class AccountKeys {
-  userKey?: UserKey;
   masterKey?: MasterKey;
   masterKeyEncryptedUserKey?: string;
   deviceKey?: ReturnType<SymmetricCryptoKey["toJSON"]>;
-  organizationKeys?: EncryptionPair<
-    { [orgId: string]: EncryptedOrganizationKeyData },
-    Record<string, SymmetricCryptoKey>
-  > = new EncryptionPair<
-    { [orgId: string]: EncryptedOrganizationKeyData },
-    Record<string, SymmetricCryptoKey>
-  >();
-  providerKeys?: EncryptionPair<any, Record<string, SymmetricCryptoKey>> = new EncryptionPair<
-    any,
-    Record<string, SymmetricCryptoKey>
-  >();
-  privateKey?: EncryptionPair<string, Uint8Array> = new EncryptionPair<string, Uint8Array>();
   publicKey?: Uint8Array;
   apiKeyClientSecret?: string;
 
@@ -167,18 +140,12 @@ export class AccountKeys {
       return null;
     }
     return Object.assign(new AccountKeys(), obj, {
-      userKey: SymmetricCryptoKey.fromJSON(obj?.userKey),
       masterKey: SymmetricCryptoKey.fromJSON(obj?.masterKey),
       deviceKey: obj?.deviceKey,
       cryptoMasterKey: SymmetricCryptoKey.fromJSON(obj?.cryptoMasterKey),
       cryptoSymmetricKey: EncryptionPair.fromJSON(
         obj?.cryptoSymmetricKey,
         SymmetricCryptoKey.fromJSON,
-      ),
-      organizationKeys: AccountKeys.initRecordEncryptionPairsFromJSON(obj?.organizationKeys),
-      providerKeys: AccountKeys.initRecordEncryptionPairsFromJSON(obj?.providerKeys),
-      privateKey: EncryptionPair.fromJSON<string, Uint8Array>(obj?.privateKey, (decObj: string) =>
-        Utils.fromByteStringToArray(decObj),
       ),
       publicKey: Utils.fromByteStringToArray(obj?.publicKey),
     });
@@ -205,8 +172,6 @@ export class AccountProfile {
   name?: string;
   email?: string;
   emailVerified?: boolean;
-  entityId?: string;
-  entityType?: string;
   everBeenUnlocked?: boolean;
   forceSetPasswordReason?: ForceSetPasswordReason;
   hasPremiumPersonally?: boolean;
@@ -231,24 +196,10 @@ export class AccountProfile {
 
 export class AccountSettings {
   autoConfirmFingerPrints?: boolean;
-  autoFillOnPageLoadDefault?: boolean;
-  biometricUnlock?: boolean;
-  clearClipboard?: number;
-  collapsedGroupings?: string[];
-  defaultUriMatch?: UriMatchType;
-  disableAutoBiometricsPrompt?: boolean;
-  disableAutoTotpCopy?: boolean;
-  disableBadgeCounter?: boolean;
+  defaultUriMatch?: UriMatchStrategySetting;
   disableGa?: boolean;
-  dismissedAutoFillOnPageLoadCallout?: boolean;
-  dontShowCardsCurrentTab?: boolean;
-  dontShowIdentitiesCurrentTab?: boolean;
   enableAlwaysOnTop?: boolean;
-  enableAutoFillOnPageLoad?: boolean;
   enableBiometric?: boolean;
-  enableFullWidth?: boolean;
-  environmentUrls: EnvironmentUrls = new EnvironmentUrls();
-  equivalentDomains?: any;
   minimizeOnCopyToClipboard?: boolean;
   passwordGenerationOptions?: PasswordGeneratorOptions;
   usernameGenerationOptions?: UsernameGeneratorOptions;
@@ -256,15 +207,11 @@ export class AccountSettings {
   pinKeyEncryptedUserKey?: EncryptedString;
   pinKeyEncryptedUserKeyEphemeral?: EncryptedString;
   protectedPin?: string;
-  settings?: AccountSettingsSettings; // TODO: Merge whatever is going on here into the AccountSettings model properly
   vaultTimeout?: number;
   vaultTimeoutAction?: string = "lock";
   serverConfig?: ServerConfigData;
   approveLoginRequests?: boolean;
   avatarColor?: string;
-  activateAutoFillOnPageLoadFromPolicy?: boolean;
-  region?: string;
-  smOnboardingTasks?: Record<string, Record<string, boolean>>;
   trustDeviceChoiceForDecryption?: boolean;
 
   /** @deprecated July 2023, left for migration purposes*/
@@ -276,7 +223,6 @@ export class AccountSettings {
     }
 
     return Object.assign(new AccountSettings(), obj, {
-      environmentUrls: EnvironmentUrls.fromJSON(obj?.environmentUrls),
       pinProtected: EncryptionPair.fromJSON<string, EncString>(
         obj?.pinProtected,
         EncString.fromJSON,
@@ -285,10 +231,6 @@ export class AccountSettings {
     });
   }
 }
-
-export type AccountSettingsSettings = {
-  equivalentDomains?: string[][];
-};
 
 export class AccountTokens {
   accessToken?: string;
@@ -394,25 +336,6 @@ export class AccountDecryptionOptions {
   }
 }
 
-export class LoginState {
-  ssoOrganizationIdentifier?: string;
-
-  constructor(init?: Partial<LoginState>) {
-    if (init) {
-      Object.assign(this, init);
-    }
-  }
-
-  static fromJSON(obj: Jsonify<LoginState>): LoginState {
-    if (obj == null) {
-      return null;
-    }
-
-    const loginState = Object.assign(new LoginState(), obj);
-    return loginState;
-  }
-}
-
 export class Account {
   data?: AccountData = new AccountData();
   keys?: AccountKeys = new AccountKeys();
@@ -420,7 +343,6 @@ export class Account {
   settings?: AccountSettings = new AccountSettings();
   tokens?: AccountTokens = new AccountTokens();
   decryptionOptions?: AccountDecryptionOptions = new AccountDecryptionOptions();
-  loginState?: LoginState = new LoginState();
   adminAuthRequest?: Jsonify<AdminAuthRequestStorable> = null;
 
   constructor(init: Partial<Account>) {
@@ -449,10 +371,6 @@ export class Account {
         ...new AccountDecryptionOptions(),
         ...init?.decryptionOptions,
       },
-      loginState: {
-        ...new LoginState(),
-        ...init?.loginState,
-      },
       adminAuthRequest: init?.adminAuthRequest,
     });
   }
@@ -469,7 +387,6 @@ export class Account {
       settings: AccountSettings.fromJSON(json?.settings),
       tokens: AccountTokens.fromJSON(json?.tokens),
       decryptionOptions: AccountDecryptionOptions.fromJSON(json?.decryptionOptions),
-      loginState: LoginState.fromJSON(json?.loginState),
       adminAuthRequest: AdminAuthRequestStorable.fromJSON(json?.adminAuthRequest),
     });
   }

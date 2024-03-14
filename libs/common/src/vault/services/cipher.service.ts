@@ -3,8 +3,11 @@ import { SemVer } from "semver";
 
 import { ApiService } from "../../abstractions/api.service";
 import { SearchService } from "../../abstractions/search.service";
-import { SettingsService } from "../../abstractions/settings.service";
+import { AutofillSettingsServiceAbstraction } from "../../autofill/services/autofill-settings.service";
+import { DomainSettingsService } from "../../autofill/services/domain-settings.service";
+import { UriMatchStrategySetting } from "../../models/domain/domain-service";
 import { ErrorResponse } from "../../models/response/error.response";
+import { ListResponse } from "../../models/response/list.response";
 import { View } from "../../models/view/view";
 import { ConfigServiceAbstraction } from "../../platform/abstractions/config/config.service.abstraction";
 import { CryptoService } from "../../platform/abstractions/crypto.service";
@@ -17,14 +20,11 @@ import { Utils } from "../../platform/misc/utils";
 import Domain from "../../platform/models/domain/domain-base";
 import { EncArrayBuffer } from "../../platform/models/domain/enc-array-buffer";
 import { EncString } from "../../platform/models/domain/enc-string";
-import {
-  OrgKey,
-  SymmetricCryptoKey,
-  UserKey,
-} from "../../platform/models/domain/symmetric-crypto-key";
+import { SymmetricCryptoKey } from "../../platform/models/domain/symmetric-crypto-key";
+import { UserKey, OrgKey } from "../../types/key";
 import { CipherService as CipherServiceAbstraction } from "../abstractions/cipher.service";
 import { CipherFileUploadService } from "../abstractions/file-upload/cipher-file-upload.service";
-import { FieldType, UriMatchType } from "../enums";
+import { FieldType } from "../enums";
 import { CipherType } from "../enums/cipher-type";
 import { CipherData } from "../models/data/cipher.data";
 import { Attachment } from "../models/domain/attachment";
@@ -53,7 +53,7 @@ import { CipherView } from "../models/view/cipher.view";
 import { FieldView } from "../models/view/field.view";
 import { PasswordHistoryView } from "../models/view/password-history.view";
 
-const CIPHER_KEY_ENC_MIN_SERVER_VER = new SemVer("2023.9.1");
+const CIPHER_KEY_ENC_MIN_SERVER_VER = new SemVer("2024.2.0");
 
 export class CipherService implements CipherServiceAbstraction {
   private sortedCiphersCache: SortedCiphersCache = new SortedCiphersCache(
@@ -62,11 +62,12 @@ export class CipherService implements CipherServiceAbstraction {
 
   constructor(
     private cryptoService: CryptoService,
-    private settingsService: SettingsService,
+    private domainSettingsService: DomainSettingsService,
     private apiService: ApiService,
     private i18nService: I18nService,
     private searchService: SearchService,
     private stateService: StateService,
+    private autofillSettingsService: AutofillSettingsServiceAbstraction,
     private encryptService: EncryptService,
     private cipherFileUploadService: CipherFileUploadService,
     private configService: ConfigServiceAbstraction,
@@ -293,7 +294,7 @@ export class CipherService implements CipherServiceAbstraction {
     const ciphers = await this.getAll();
     const orgKeys = await this.cryptoService.getOrgKeys();
     const userKey = await this.cryptoService.getUserKeyWithLegacySupport();
-    if (orgKeys?.size === 0 && userKey == null) {
+    if (Object.keys(orgKeys).length === 0 && userKey == null) {
       // return early if there are no keys to decrypt with
       return;
     }
@@ -311,7 +312,7 @@ export class CipherService implements CipherServiceAbstraction {
     const decCiphers = (
       await Promise.all(
         Object.entries(grouped).map(([orgId, groupedCiphers]) =>
-          this.encryptService.decryptItems(groupedCiphers, orgKeys.get(orgId) ?? userKey),
+          this.encryptService.decryptItems(groupedCiphers, orgKeys[orgId] ?? userKey),
         ),
       )
     )
@@ -355,15 +356,17 @@ export class CipherService implements CipherServiceAbstraction {
   async getAllDecryptedForUrl(
     url: string,
     includeOtherTypes?: CipherType[],
-    defaultMatch: UriMatchType = null,
+    defaultMatch: UriMatchStrategySetting = null,
   ): Promise<CipherView[]> {
     if (url == null && includeOtherTypes == null) {
       return Promise.resolve([]);
     }
 
-    const equivalentDomains = this.settingsService.getEquivalentDomains(url);
+    const equivalentDomains = await firstValueFrom(
+      this.domainSettingsService.getUrlEquivalentDomains(url),
+    );
     const ciphers = await this.getAllDecrypted();
-    defaultMatch ??= await this.stateService.getDefaultUriMatch();
+    defaultMatch ??= await firstValueFrom(this.domainSettingsService.defaultUriMatchStrategy$);
 
     return ciphers.filter((cipher) => {
       const cipherIsLogin = cipher.type === CipherType.Login && cipher.login !== null;
@@ -390,6 +393,24 @@ export class CipherService implements CipherServiceAbstraction {
 
   async getAllFromApiForOrganization(organizationId: string): Promise<CipherView[]> {
     const response = await this.apiService.getCiphersOrganization(organizationId);
+    return await this.decryptOrganizationCiphersResponse(response, organizationId);
+  }
+
+  async getManyFromApiForOrganization(organizationId: string): Promise<CipherView[]> {
+    const response = await this.apiService.send(
+      "GET",
+      "/ciphers/organization-details/assigned?organizationId=" + organizationId,
+      null,
+      true,
+      true,
+    );
+    return this.decryptOrganizationCiphersResponse(response, organizationId);
+  }
+
+  private async decryptOrganizationCiphersResponse(
+    response: ListResponse<CipherResponse>,
+    organizationId: string,
+  ): Promise<CipherView[]> {
     if (response?.data == null || response.data.length < 1) {
       return [];
     }
@@ -485,12 +506,12 @@ export class CipherService implements CipherServiceAbstraction {
       return;
     }
 
-    let domains = await this.stateService.getNeverDomains();
+    let domains = await firstValueFrom(this.domainSettingsService.neverDomains$);
     if (!domains) {
       domains = {};
     }
     domains[domain] = null;
-    await this.stateService.setNeverDomains(domains);
+    await this.domainSettingsService.setNeverDomains(domains);
   }
 
   async createWithServer(cipher: Cipher, orgAdmin?: boolean): Promise<any> {
@@ -1130,6 +1151,7 @@ export class CipherService implements CipherServiceAbstraction {
 
         if (model.login.uris != null) {
           cipher.login.uris = [];
+          model.login.uris = model.login.uris.filter((u) => u.uri != null);
           for (let i = 0; i < model.login.uris.length; i++) {
             const loginUri = new LoginUri();
             loginUri.match = model.login.uris[i].match;
@@ -1141,6 +1163,8 @@ export class CipherService implements CipherServiceAbstraction {
               },
               key,
             );
+            const uriHash = await this.encryptService.hash(model.login.uris[i].uri, "sha256");
+            loginUri.uriChecksum = await this.cryptoService.encrypt(uriHash, key);
             cipher.login.uris.push(loginUri);
           }
         }
@@ -1231,6 +1255,10 @@ export class CipherService implements CipherServiceAbstraction {
     }
   }
 
+  private async getAutofillOnPageLoadDefault() {
+    return await firstValueFrom(this.autofillSettingsService.autofillOnPageLoadDefault$);
+  }
+
   private async getCipherForUrl(
     url: string,
     lastUsed: boolean,
@@ -1246,7 +1274,8 @@ export class CipherService implements CipherServiceAbstraction {
       }
 
       if (autofillOnPageLoad) {
-        const autofillOnPageLoadDefault = await this.stateService.getAutoFillOnPageLoadDefault();
+        const autofillOnPageLoadDefault = await this.getAutofillOnPageLoadDefault();
+
         ciphers = ciphers.filter(
           (cipher) =>
             cipher.login.autofillOnPageLoad ||

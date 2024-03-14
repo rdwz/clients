@@ -1,5 +1,5 @@
+import { UriMatchStrategySetting } from "../../models/domain/domain-service";
 import { SymmetricCryptoKey } from "../../platform/models/domain/symmetric-crypto-key";
-import { UriMatchType } from "../enums";
 import { CipherType } from "../enums/cipher-type";
 import { CipherData } from "../models/data/cipher.data";
 import { Cipher } from "../models/domain/cipher";
@@ -24,9 +24,14 @@ export abstract class CipherService {
   getAllDecryptedForUrl: (
     url: string,
     includeOtherTypes?: CipherType[],
-    defaultMatch?: UriMatchType,
+    defaultMatch?: UriMatchStrategySetting,
   ) => Promise<CipherView[]>;
   getAllFromApiForOrganization: (organizationId: string) => Promise<CipherView[]>;
+  /**
+   * Gets ciphers belonging to the specified organization that the user has explicit collection level access to.
+   * Ciphers that are not assigned to any collections are only included for users with admin access.
+   */
+  getManyFromApiForOrganization: (organizationId: string) => Promise<CipherView[]>;
   getLastUsedForUrl: (url: string, autofillOnPageLoad: boolean) => Promise<CipherView>;
   getLastLaunchedForUrl: (url: string, autofillOnPageLoad: boolean) => Promise<CipherView>;
   getNextCipherForUrl: (url: string) => Promise<CipherView>;

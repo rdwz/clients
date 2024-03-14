@@ -7,7 +7,9 @@
     *ngIf="data.open || icon"
     class="tw-relative tw-mx-0.5"
     [ngClass]="[
-      showActiveStyles ? 'tw-bg-background-alt4' : 'tw-bg-background-alt3',
+      showActiveStyles
+        ? 'tw-bg-background-alt4'
+        : 'tw-bg-background-alt3 hover:tw-bg-primary-300/60',
       fvwStyles$ | async
     ]"
   >
@@ -51,6 +53,7 @@
         ></i
         ><span
           *ngIf="data.open"
+          [title]="text"
           [ngClass]="showActiveStyles ? 'tw-font-bold' : 'tw-font-semibold'"
           >{{ text }}</span
         >
@@ -63,11 +66,12 @@
         <a
           class="fvw tw-w-full tw-truncate tw-border-none tw-bg-transparent tw-p-0 tw-text-start !tw-text-alt2 hover:tw-text-alt2 hover:tw-no-underline focus:tw-outline-none [&>:not(.bwi)]:hover:tw-underline"
           [routerLink]="route"
+          [relativeTo]="relativeTo"
           [attr.aria-label]="ariaLabel || text"
           routerLinkActive
-          [routerLinkActiveOptions]="rlaOptions"
+          [routerLinkActiveOptions]="routerLinkActiveOptions"
           [ariaCurrentWhenActive]="'page'"
-          (isActiveChange)="setActive($event)"
+          (isActiveChange)="setIsActive($event)"
           (click)="mainContentClicked.emit()"
         >
           <ng-container *ngTemplateOutlet="anchorAndButtonContent"></ng-container>
