@@ -16,6 +16,8 @@ import {
   Fido2Background as Fido2BackgroundInterface,
   Fido2BackgroundExtensionMessageHandlers,
   Fido2ExtensionMessage,
+  SharedFido2ScriptInjectionDetails,
+  SharedFido2ScriptRegistrationOptions,
 } from "./abstractions/fido2.background";
 
 export default class Fido2Background implements Fido2BackgroundInterface {
@@ -23,10 +25,15 @@ export default class Fido2Background implements Fido2BackgroundInterface {
   private fido2ContentScriptPortsSet = new Set<chrome.runtime.Port>();
   private currentEnablePasskeysSetting: boolean;
   private registeredContentScripts: browser.contentScripts.RegisteredContentScript;
-  private sharedInjectionDetails: {
-    allFrames: boolean;
-    runAt: browser.contentScripts.RegisteredContentScriptOptions["runAt"];
-  } = { allFrames: true, runAt: "document_start" };
+  private sharedInjectionDetails: SharedFido2ScriptInjectionDetails = {
+    allFrames: true,
+    runAt: "document_start",
+  };
+  private sharedRegistrationOptions: SharedFido2ScriptRegistrationOptions = {
+    matches: ["https://*/*"],
+    excludeMatches: ["https://*/*.xml*"],
+    ...this.sharedInjectionDetails,
+  };
   private extensionMessageHandlers: Fido2BackgroundExtensionMessageHandlers = {
     fido2AbortRequest: ({ message }) => this.abortRequest(message),
     fido2RegisterCredentialRequest: ({ message, sender }) =>
@@ -90,26 +97,16 @@ export default class Fido2Background implements Fido2BackgroundInterface {
   }
 
   private async updateContentScriptRegistration() {
-    const sharedRegistrationOptions: browser.contentScripts.RegisteredContentScriptOptions = {
-      matches: ["https://*/*"],
-      excludeMatches: ["https://*/*.xml*"],
-      ...this.sharedInjectionDetails,
-    };
-
     if (BrowserApi.isManifestVersion(2)) {
-      await this.registerManifestV2ContentScripts(sharedRegistrationOptions);
+      await this.registerManifestV2ContentScripts();
 
       return;
     }
 
-    await this.registerManifestV3ContentScripts(
-      sharedRegistrationOptions as unknown as chrome.scripting.RegisteredContentScript,
-    );
+    await this.registerManifestV3ContentScripts();
   }
 
-  private async registerManifestV2ContentScripts(
-    sharedRegistrationOptions: browser.contentScripts.RegisteredContentScriptOptions,
-  ) {
+  private async registerManifestV2ContentScripts() {
     if (!this.currentEnablePasskeysSetting) {
       await this.registeredContentScripts?.unregister();
 
@@ -121,25 +118,23 @@ export default class Fido2Background implements Fido2BackgroundInterface {
         { file: "content/fido2/page-script-append-mv2.js" },
         { file: "content/fido2/content-script.js" },
       ],
-      ...sharedRegistrationOptions,
+      ...this.sharedRegistrationOptions,
     });
   }
 
-  private async registerManifestV3ContentScripts(
-    sharedRegistrationOptions: chrome.scripting.RegisteredContentScript,
-  ) {
+  private async registerManifestV3ContentScripts() {
     if (this.currentEnablePasskeysSetting) {
       void BrowserApi.registerContentScriptsMv3([
         {
           id: "fido2-page-script",
           js: ["content/fido2/page-script.js"],
           world: "MAIN",
-          ...sharedRegistrationOptions,
+          ...this.sharedRegistrationOptions,
         },
         {
           id: "fido2-content-script",
           js: ["content/fido2/content-script.js"],
-          ...sharedRegistrationOptions,
+          ...this.sharedRegistrationOptions,
         },
       ]);
 
