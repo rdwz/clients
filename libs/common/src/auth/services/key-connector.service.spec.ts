@@ -242,16 +242,15 @@ describe("KeyConnectorService", () => {
 
       const error = new Error("Failed to get master key");
       apiService.getMasterKeyFromKeyConnector.mockRejectedValue(error);
+      jest.spyOn(logService, "error");
 
-      jest.spyOn(keyConnectorService, "handleKeyConnectorError").mockReturnValue();
-
-      // Act
       try {
+        // Act
         await keyConnectorService.setMasterKeyFromUrl(url);
       } catch {
         // Assert
+        expect(logService.error).toHaveBeenCalledWith(error);
         expect(apiService.getMasterKeyFromKeyConnector).toHaveBeenCalledWith(url);
-        expect(keyConnectorService, "handleKeyConnectorError").toHaveBeenCalledWith(error);
       }
     });
   });
@@ -286,24 +285,26 @@ describe("KeyConnectorService", () => {
       const masterKey = getMockMasterKey();
       const keyConnectorRequest = new KeyConnectorUserKeyRequest(masterKey.encKeyB64);
       const error = new Error("Failed to post user key to key connector");
+      organizationService.getAll.mockResolvedValue([organization]);
 
       jest.spyOn(keyConnectorService, "getManagingOrganization").mockResolvedValue(organization);
       jest.spyOn(cryptoService, "getMasterKey").mockResolvedValue(masterKey);
       jest.spyOn(apiService, "postUserKeyToKeyConnector").mockRejectedValue(error);
-      jest.spyOn(keyConnectorService, "handleKeyConnectorError").mockReturnValue();
+      jest.spyOn(logService, "error");
 
-      // Act
-      await keyConnectorService.migrateUser();
-
-      // Assert
-      expect(keyConnectorService.getManagingOrganization).toHaveBeenCalled();
-      expect(cryptoService.getMasterKey).toHaveBeenCalled();
-      expect(apiService.postUserKeyToKeyConnector).toHaveBeenCalledWith(
-        organization.keyConnectorUrl,
-        keyConnectorRequest,
-      );
-      expect(keyConnectorService.handleKeyConnectorError).toHaveBeenCalledWith(error);
-      expect(apiService.postConvertToKeyConnector).toHaveBeenCalled();
+      try {
+        // Act
+        await keyConnectorService.migrateUser();
+      } catch {
+        // Assert
+        expect(logService.error).toHaveBeenCalledWith(error);
+        expect(keyConnectorService.getManagingOrganization).toHaveBeenCalled();
+        expect(cryptoService.getMasterKey).toHaveBeenCalled();
+        expect(apiService.postUserKeyToKeyConnector).toHaveBeenCalledWith(
+          organization.keyConnectorUrl,
+          keyConnectorRequest,
+        );
+      }
     });
   });
 
