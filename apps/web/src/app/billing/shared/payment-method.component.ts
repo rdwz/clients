@@ -15,7 +15,7 @@ import { LogService } from "@bitwarden/common/platform/abstractions/log.service"
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { DialogService } from "@bitwarden/components";
 
-import { AddCreditDialogResult, openAddCreditDialog } from "./add-credit.component";
+import { AddCreditDialogResult, openAddCreditDialog } from "./add-credit-dialog.component";
 import { TaxInfoComponent } from "./tax-info.component";
 
 @Component({
@@ -28,7 +28,6 @@ export class PaymentMethodComponent implements OnInit {
   loading = false;
   firstLoaded = false;
   showAdjustPayment = false;
-  showAddCredit = false;
   billing: BillingPaymentResponse;
   org: OrganizationSubscriptionResponse;
   sub: SubscriptionResponse;
@@ -110,27 +109,14 @@ export class PaymentMethodComponent implements OnInit {
   }
 
   async addCredit() {
-    this.showAddCredit = true;
-    if (this.showAddCredit) {
-      const dialogRef = openAddCreditDialog(this.dialogService, {
-        data: {
-          organizationId: this.organizationId,
-        },
-      });
-      const result: any = await lastValueFrom(dialogRef.closed);
-      if (result === AddCreditDialogResult.Added) {
-        await this.load();
-      }
-      this.showAddCredit = false;
-    }
-  }
-
-  closeAddCredit(load: boolean) {
-    this.showAddCredit = false;
-    if (load) {
-      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.load();
+    const dialogRef = openAddCreditDialog(this.dialogService, {
+      data: {
+        organizationId: this.organizationId,
+      },
+    });
+    const result: any = await lastValueFrom(dialogRef.closed);
+    if (result === AddCreditDialogResult.Added) {
+      await this.load();
     }
   }
 

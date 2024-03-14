@@ -33,13 +33,7 @@
       <strong>{{ creditOrBalance | currency: "$" }}</strong>
     </p>
     <p>{{ "creditAppliedDesc" | i18n }}</p>
-    <button
-      type="button"
-      bitButton
-      buttonType="secondary"
-      (click)="addCredit()"
-      *ngIf="!showAddCredit"
-    >
+    <button type="button" bitButton buttonType="secondary" (click)="addCredit()">
       {{ "addCredit" | i18n }}
     </button>
     <h2 class="spaced-header">{{ "paymentMethod" | i18n }}</h2>
@@ -73,7 +67,6 @@
             <input bitInput type="number" step="1" placeholder="xx" formControlName="amount2" />
             <span bitPrefix>$0.</span>
           </bit-form-field>
-          {{ verifyForm | json }}
           <button
             type="button"
             bitButton

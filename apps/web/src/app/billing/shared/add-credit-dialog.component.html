@@ -24,10 +24,10 @@
           <span bitPrefix>$USD</span>
         </bit-form-field>
       </div>
-      <small>{{ "creditDelayed" | i18n }}</small>
+      <bit-hint>{{ "creditDelayed" | i18n }}</bit-hint>
     </ng-container>
     <ng-container bitDialogFooter>
-      <button type="submit" bitButton bitFormButton buttonType="primary" [disabled]="ppLoading">
+      <button type="submit" bitButton bitFormButton buttonType="primary">
         {{ "submit" | i18n }}
       </button>
       <button type="button" bitButton buttonType="secondary" bitDialogClose>

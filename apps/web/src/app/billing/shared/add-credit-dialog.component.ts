@@ -24,10 +24,9 @@ export enum AddCreditDialogResult {
 }
 
 @Component({
-  selector: "app-add-credit",
-  templateUrl: "add-credit.component.html",
+  templateUrl: "add-credit-dialog.component.html",
 })
-export class AddCreditComponent implements OnInit {
+export class AddCreditDialogComponent implements OnInit {
   @ViewChild("ppButtonForm", { read: ElementRef, static: true }) ppButtonFormRef: ElementRef;
 
   paymentMethodType = PaymentMethodType;
@@ -68,7 +67,7 @@ export class AddCreditComponent implements OnInit {
   async ngOnInit() {
     if (this.organizationId != null) {
       if (this.formGroup.value.creditAmount == null) {
-        this.formGroup.get("creditAmount").setValue("20.00");
+        this.creditAmount = "20.00";
       }
       this.ppButtonCustomField = "organization_id:" + this.organizationId;
       const org = await this.organizationService.get(this.organizationId);
@@ -78,7 +77,7 @@ export class AddCreditComponent implements OnInit {
       }
     } else {
       if (this.formGroup.value.creditAmount == null) {
-        this.formGroup.get("creditAmount").setValue("10.00");
+        this.creditAmount = "10.00";
       }
       this.userId = await this.stateService.getUserId();
       this.subject = await this.stateService.getEmail();
@@ -91,17 +90,28 @@ export class AddCreditComponent implements OnInit {
     this.returnUrl = window.location.href;
   }
 
+  get creditAmount() {
+    return this.formGroup.value.creditAmount;
+  }
+  set creditAmount(value: string) {
+    this.formGroup.get("creditAmount").setValue(value);
+  }
+
+  get method() {
+    return this.formGroup.value.method;
+  }
+
   submit = async () => {
-    if (this.formGroup.value.creditAmount == null || this.formGroup.value.creditAmount === "") {
+    if (this.creditAmount == null || this.creditAmount === "") {
       return;
     }
 
-    if (this.formGroup.value.method === PaymentMethodType.PayPal) {
+    if (this.method === PaymentMethodType.PayPal) {
       this.ppButtonFormRef.nativeElement.submit();
       this.ppLoading = true;
       return;
     }
-    if (this.formGroup.value.method === PaymentMethodType.BitPay) {
+    if (this.method === PaymentMethodType.BitPay) {
       try {
         const req = new BitPayInvoiceRequest();
         req.email = this.email;
@@ -111,8 +121,7 @@ export class AddCreditComponent implements OnInit {
         req.organizationId = this.organizationId;
         req.userId = this.userId;
         req.returnUrl = this.returnUrl;
-        const response = this.apiService.postBitPayInvoice(req);
-        const bitPayUrl: string = await response;
+        const bitPayUrl: string = await this.apiService.postBitPayInvoice(req);
         this.platformUtilsService.launchUri(bitPayUrl);
       } catch (e) {
         this.logService.error(e);
@@ -133,26 +142,25 @@ export class AddCreditComponent implements OnInit {
 
   formatAmount() {
     try {
-      if (this.formGroup.value.creditAmount != null && this.formGroup.value.creditAmount !== "") {
-        const floatAmount = Math.abs(parseFloat(this.formGroup.value.creditAmount));
+      if (this.creditAmount != null && this.creditAmount !== "") {
+        const floatAmount = Math.abs(parseFloat(this.creditAmount));
         if (floatAmount > 0) {
-          const formattedAmount = parseFloat((Math.round(floatAmount * 100) / 100).toString())
+          this.creditAmount = parseFloat((Math.round(floatAmount * 100) / 100).toString())
             .toFixed(2)
             .toString();
-          this.formGroup.get("creditAmount").setValue(formattedAmount);
           return;
         }
       }
     } catch (e) {
       this.logService.error(e);
     }
-    this.formGroup.get("creditAmount").setValue("");
+    this.creditAmount = "";
   }
 
   get creditAmountNumber(): number {
-    if (this.formGroup.value.creditAmount != null && this.formGroup.value.creditAmount !== "") {
+    if (this.creditAmount != null && this.creditAmount !== "") {
       try {
-        return parseFloat(this.formGroup.value.creditAmount);
+        return parseFloat(this.creditAmount);
       } catch (e) {
         this.logService.error(e);
       }
@@ -170,5 +178,5 @@ export function openAddCreditDialog(
   dialogService: DialogService,
   config: DialogConfig<AddCreditDialogData>,
 ) {
-  return dialogService.open<AddCreditDialogResult>(AddCreditComponent, config);
+  return dialogService.open<AddCreditDialogResult>(AddCreditDialogComponent, config);
 }
