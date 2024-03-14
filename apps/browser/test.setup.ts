@@ -126,6 +126,12 @@ const offscreen = {
   },
 };
 
+const permissions = {
+  contains: jest.fn((permissions, callback) => {
+    callback(true);
+  }),
+};
+
 // set chrome
 global.chrome = {
   i18n,
@@ -139,4 +145,5 @@ global.chrome = {
   privacy,
   extension,
   offscreen,
+  permissions,
 } as any;

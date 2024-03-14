@@ -594,6 +594,12 @@ export class BrowserApi {
     });
   }
 
+  /**
+   * Handles registration of static content
+   * scripts within manifest v2.
+   *
+   * @param contentScriptOptions - Details of the registered content scripts
+   */
   static async registerContentScriptsMv2(
     contentScriptOptions: browser.contentScripts.RegisteredContentScriptOptions,
   ): Promise<browser.contentScripts.RegisteredContentScript> {
@@ -604,12 +610,24 @@ export class BrowserApi {
     return await registerContentScriptsPolyfill(contentScriptOptions);
   }
 
+  /**
+   * Handles registration of static content
+   * scripts within manifest v3.
+   *
+   * @param scripts - Details of the registered content scripts
+   */
   static async registerContentScriptsMv3(
     scripts: chrome.scripting.RegisteredContentScript[],
   ): Promise<void> {
     await chrome.scripting.registerContentScripts(scripts);
   }
 
+  /**
+   * Handles unregistering of static content
+   * scripts within manifest v3.
+   *
+   * @param filter - Optional filter to unregister content scripts. Passing an empty object will unregister all content scripts.
+   */
   static async unregisterContentScriptsMv3(
     filter?: chrome.scripting.ContentScriptFilter,
   ): Promise<void> {
