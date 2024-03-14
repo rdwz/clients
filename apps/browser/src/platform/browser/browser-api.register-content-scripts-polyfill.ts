@@ -14,6 +14,8 @@
  */
 import { ConsoleLogService } from "@bitwarden/common/platform/services/console-log.service";
 
+import { BrowserApi } from "./browser-api";
+
 const logService = new ConsoleLogService(false);
 
 function buildContentScriptRegisterPolyfill() {
@@ -40,13 +42,11 @@ function buildContentScriptRegisterPolyfill() {
       },
     });
   }
-  // eslint-disable-next-line no-undef
   const chromeP: typeof globalThis.chrome =
     globalThis.chrome && new (NestedProxy<typeof globalThis.chrome> as any)(globalThis.chrome);
 
   const patternValidationRegex =
     /^(https?|wss?|file|ftp|\*):\/\/(\*|\*\.[^*/]+|[^*/]+)\/.*$|^file:\/\/\/.*$|^resource:\/\/(\*|\*\.[^*/]+|[^*/]+)\/.*$|^about:/;
-  // eslint-disable-next-line no-undef
   const isFirefox = globalThis.navigator?.userAgent.includes("Firefox/");
   const allStarsRegex = isFirefox
     ? /^(https?|wss?):[/][/][^/]+([/].*)?$/
@@ -95,7 +95,6 @@ function buildContentScriptRegisterPolyfill() {
     return new RegExp(matchPatterns.map((x) => getRawPatternRegex(x)).join("|"));
   }
 
-  // eslint-disable-next-line no-undef
   const gotScripting = Boolean(globalThis.chrome?.scripting);
   function castAllFramesTarget(target: number | { tabId: number; frameId: number }) {
     if (typeof target === "object") {
@@ -377,11 +376,9 @@ function buildContentScriptRegisterPolyfill() {
       void inject(url, tabId, frameId);
     };
     if (gotNavigation) {
-      // eslint-disable-next-line no-restricted-syntax
-      chrome.webNavigation.onCommitted.addListener(navListener);
+      BrowserApi.addListener(chrome.webNavigation.onCommitted, navListener);
     } else {
-      // eslint-disable-next-line no-restricted-syntax
-      chrome.tabs.onUpdated.addListener(tabListener);
+      BrowserApi.addListener(chrome.tabs.onUpdated, tabListener);
     }
     const registeredContentScript = {
       async unregister() {
