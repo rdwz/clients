@@ -406,16 +406,16 @@ function getBgService<T>(service: keyof MainBackground) {
     //   useFactory: getBgService<ConsoleLogService>("logService"),
     //   deps: [],
     // },
-    {
-      provide: BrowserOrganizationService,
-      deps: [StateServiceAbstraction, StateProvider],
-    },
+    // {
+    //   provide: BrowserOrganizationService,
+    //   deps: [StateServiceAbstraction, StateProvider],
+    // },
     {
       provide: OrganizationService,
-      // useFactory: (stateService: StateServiceAbstraction, stateProvider: StateProvider) => {
-      //   return new BrowserOrganizationService(stateService, stateProvider);
-      // },
-      useExisting: BrowserOrganizationService,
+      useFactory: (stateService: StateServiceAbstraction, stateProvider: StateProvider) => {
+        return new BrowserOrganizationService(stateService, stateProvider);
+      },
+      // useExisting: BrowserOrganizationService,
       deps: [StateServiceAbstraction, StateProvider],
     },
     {
