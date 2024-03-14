@@ -1,13 +1,15 @@
 import { APP_INITIALIZER, NgModule, NgZone } from "@angular/core";
+import { DomSanitizer } from "@angular/platform-browser";
+import { ToastrService } from "ngx-toastr";
 
 import { UnauthGuard as BaseUnauthGuardService } from "@bitwarden/angular/auth/guards";
-import { ThemingService } from "@bitwarden/angular/platform/services/theming/theming.service";
-import { AbstractThemingService } from "@bitwarden/angular/platform/services/theming/theming.service.abstraction";
+import { AngularThemingService } from "@bitwarden/angular/platform/services/theming/angular-theming.service";
 import {
   MEMORY_STORAGE,
   SECURE_STORAGE,
   OBSERVABLE_DISK_STORAGE,
   OBSERVABLE_MEMORY_STORAGE,
+  SYSTEM_THEME_OBSERVABLE,
 } from "@bitwarden/angular/services/injection-tokens";
 import { JslibServicesModule } from "@bitwarden/angular/services/jslib-services.module";
 import {
@@ -44,7 +46,6 @@ import {
   UserNotificationSettingsService,
   UserNotificationSettingsServiceAbstraction,
 } from "@bitwarden/common/autofill/services/user-notification-settings.service";
-import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { ConfigApiServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config-api.service.abstraction";
 import { CryptoFunctionService } from "@bitwarden/common/platform/abstractions/crypto-function.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
@@ -90,14 +91,9 @@ import {
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { CollectionService } from "@bitwarden/common/vault/abstractions/collection.service";
 import { CipherFileUploadService } from "@bitwarden/common/vault/abstractions/file-upload/cipher-file-upload.service";
-import { FolderApiServiceAbstraction } from "@bitwarden/common/vault/abstractions/folder/folder-api.service.abstraction";
-import {
-  FolderService as FolderServiceAbstraction,
-  InternalFolderService,
-} from "@bitwarden/common/vault/abstractions/folder/folder.service.abstraction";
+import { FolderService as FolderServiceAbstraction } from "@bitwarden/common/vault/abstractions/folder/folder.service.abstraction";
 import { SyncService } from "@bitwarden/common/vault/abstractions/sync/sync.service.abstraction";
 import { TotpService } from "@bitwarden/common/vault/abstractions/totp.service";
-import { FolderApiService } from "@bitwarden/common/vault/services/folder/folder-api.service";
 import { DialogService } from "@bitwarden/components";
 import { ImportServiceAbstraction } from "@bitwarden/importer/core";
 import { VaultExportServiceAbstraction } from "@bitwarden/vault-export-core";
@@ -118,6 +114,7 @@ import BrowserMessagingPrivateModePopupService from "../../platform/services/bro
 import BrowserMessagingService from "../../platform/services/browser-messaging.service";
 import { BrowserStateService } from "../../platform/services/browser-state.service";
 import I18nService from "../../platform/services/i18n.service";
+import { ForegroundPlatformUtilsService } from "../../platform/services/platform-utils/foreground-platform-utils.service";
 import { ForegroundDerivedStateProvider } from "../../platform/state/foreground-derived-state.provider";
 import { ForegroundMemoryStorageService } from "../../platform/storage/foreground-memory-storage.service";
 import { BrowserSendService } from "../../services/browser-send.service";
@@ -216,17 +213,6 @@ function getBgService<T>(service: keyof MainBackground) {
       deps: [],
     },
     {
-      provide: InternalFolderService,
-      useExisting: FolderServiceAbstraction,
-    },
-    {
-      provide: FolderApiServiceAbstraction,
-      useFactory: (folderService: InternalFolderService, apiService: ApiService) => {
-        return new FolderApiService(folderService, apiService);
-      },
-      deps: [InternalFolderService, ApiService],
-    },
-    {
       provide: CollectionService,
       useFactory: getBgService<CollectionService>("collectionService"),
       deps: [],
@@ -291,8 +277,32 @@ function getBgService<T>(service: keyof MainBackground) {
     },
     {
       provide: PlatformUtilsService,
-      useFactory: getBgService<PlatformUtilsService>("platformUtilsService"),
-      deps: [],
+      useExisting: ForegroundPlatformUtilsService,
+    },
+    {
+      provide: ForegroundPlatformUtilsService,
+      useClass: ForegroundPlatformUtilsService,
+      useFactory: (sanitizer: DomSanitizer, toastrService: ToastrService) => {
+        return new ForegroundPlatformUtilsService(
+          sanitizer,
+          toastrService,
+          (clipboardValue: string, clearMs: number) => {
+            void BrowserApi.sendMessage("clearClipboard", { clipboardValue, clearMs });
+          },
+          async () => {
+            const response = await BrowserApi.sendMessageWithResponse<{
+              result: boolean;
+              error: string;
+            }>("biometricUnlock");
+            if (!response.result) {
+              throw response.error;
+            }
+            return response.result;
+          },
+          window,
+        );
+      },
+      deps: [DomSanitizer, ToastrService],
     },
     {
       provide: PasswordStrengthServiceAbstraction,
@@ -349,7 +359,6 @@ function getBgService<T>(service: keyof MainBackground) {
       useClass: BrowserLocalStorageService,
       deps: [],
     },
-    { provide: AppIdService, useFactory: getBgService<AppIdService>("appIdService"), deps: [] },
     {
       provide: AutofillService,
       useFactory: getBgService<AutofillService>("autofillService"),
@@ -479,11 +488,8 @@ function getBgService<T>(service: keyof MainBackground) {
       deps: [StateServiceAbstraction],
     },
     {
-      provide: AbstractThemingService,
-      useFactory: (
-        stateService: StateServiceAbstraction,
-        platformUtilsService: PlatformUtilsService,
-      ) => {
+      provide: SYSTEM_THEME_OBSERVABLE,
+      useFactory: (platformUtilsService: PlatformUtilsService) => {
         // Safari doesn't properly handle the (prefers-color-scheme) media query in the popup window, it always returns light.
         // In Safari, we have to use the background page instead, which comes with limitations like not dynamically changing the extension theme when the system theme is changed.
         let windowContext = window;
@@ -492,9 +498,9 @@ function getBgService<T>(service: keyof MainBackground) {
           windowContext = backgroundWindow;
         }
 
-        return new ThemingService(stateService, windowContext, document);
+        return AngularThemingService.createSystemThemeFromWindow(windowContext);
       },
-      deps: [StateServiceAbstraction, PlatformUtilsService],
+      deps: [PlatformUtilsService],
     },
     {
       provide: ConfigService,
