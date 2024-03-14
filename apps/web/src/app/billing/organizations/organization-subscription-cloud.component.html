@@ -162,7 +162,7 @@
       <bit-progress [barWidth]="storagePercentage" bgColor="success"></bit-progress>
       <ng-container *ngIf="subscription && !subscription.cancelled && !subscriptionMarkedForCancel">
         <div class="tw-mt-3">
-          <div class="tw-flex tw-space-x-2" *ngIf="!showAdjustStorage">
+          <div class="tw-flex tw-space-x-2">
             <button bitButton buttonType="secondary" type="button" (click)="adjustStorage(true)">
               {{ "addStorage" | i18n }}
             </button>

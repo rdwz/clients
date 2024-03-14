@@ -27,7 +27,6 @@ export enum AdjustStorageDialogResult {
 }
 
 @Component({
-  selector: "app-adjust-storage",
   templateUrl: "adjust-storage.component.html",
 })
 export class AdjustStorageComponent {

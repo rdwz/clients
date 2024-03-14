@@ -30,7 +30,6 @@ export class UserSubscriptionComponent implements OnInit {
   loading = false;
   firstLoaded = false;
   adjustStorageAdd = true;
-  showAdjustStorage = false;
   showUpdateLicense = false;
   sub: SubscriptionResponse;
   selfHosted = false;
@@ -151,19 +150,15 @@ export class UserSubscriptionComponent implements OnInit {
   }
 
   async adjustStorage(add: boolean) {
-    this.showAdjustStorage = true;
-    if (this.showAdjustStorage) {
-      const dialogRef = openAdjustStorageDialog(this.dialogService, {
-        data: {
-          storageGbPrice: 4,
-          add: add,
-        },
-      });
-      const result: any = await lastValueFrom(dialogRef.closed);
-      if (result === AdjustStorageDialogResult.Adjusted) {
-        await this.load();
-      }
-      this.showAdjustStorage = false;
+    const dialogRef = openAdjustStorageDialog(this.dialogService, {
+      data: {
+        storageGbPrice: 4,
+        add: add,
+      },
+    });
+    const result: any = await lastValueFrom(dialogRef.closed);
+    if (result === AdjustStorageDialogResult.Adjusted) {
+      await this.load();
     }
   }
 

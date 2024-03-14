@@ -16,30 +16,26 @@
             step="1"
             required
           />
+          <bit-hint *ngIf="add">
+            <strong>{{ "total" | i18n }}:</strong>
+            {{ formGroup.get("storageAdjustment").value || 0 }} GB &times;
+            {{ storageGbPrice | currency: "$" }} = {{ adjustedStorageTotal | currency: "$" }} /{{
+              interval | i18n
+            }}
+          </bit-hint>
         </bit-form-field>
       </div>
-      <div class="tw-grid tw-grid-cols-2">
-        <bit-hint *ngIf="add">
-          <strong>{{ "total" | i18n }}:</strong>
-          {{ formGroup.get("storageAdjustment").value || 0 }} GB &times;
-          {{ storageGbPrice | currency: "$" }} = {{ adjustedStorageTotal | currency: "$" }} /{{
-            interval | i18n
-          }}
-        </bit-hint>
+      <div class="tw-grid tw-grid-flow-col">
+        <bit-hint>{{ (add ? "storageAddNote" : "storageRemoveNote") | i18n }}</bit-hint>
       </div>
     </ng-container>
     <ng-container bitDialogFooter>
-      <div class="tw-grid tw-grid-flow-col tw-grid-rows-2">
-        <div>
-          <button type="submit" bitButton bitFormButton buttonType="primary">
-            {{ "submit" | i18n }}
-          </button>
-          <button type="button" bitButton buttonType="secondary" bitDialogClose>
-            {{ "cancel" | i18n }}
-          </button>
-        </div>
-        <small>{{ (add ? "storageAddNote" : "storageRemoveNote") | i18n }}</small>
-      </div>
+      <button type="submit" bitButton bitFormButton buttonType="primary">
+        {{ "submit" | i18n }}
+      </button>
+      <button type="button" bitButton buttonType="secondary" bitDialogClose>
+        {{ "cancel" | i18n }}
+      </button>
     </ng-container>
   </bit-dialog>
 </form>

@@ -40,7 +40,6 @@ export class OrganizationSubscriptionCloudComponent implements OnInit, OnDestroy
   userOrg: Organization;
   showChangePlan = false;
   showDownloadLicense = false;
-  showAdjustStorage = false;
   hasBillingSyncToken: boolean;
   showAdjustSecretsManager = false;
   showSecretsManagerSubscribe = false;
@@ -389,21 +388,17 @@ export class OrganizationSubscriptionCloudComponent implements OnInit, OnDestroy
   }
 
   async adjustStorage(add: boolean) {
-    this.showAdjustStorage = true;
-    if (this.showAdjustStorage) {
-      const dialogRef = openAdjustStorageDialog(this.dialogService, {
-        data: {
-          storageGbPrice: this.storageGbPrice,
-          add: add,
-          organizationId: this.organizationId,
-          interval: this.billingInterval,
-        },
-      });
-      const result: any = await lastValueFrom(dialogRef.closed);
-      if (result === AdjustStorageDialogResult.Adjusted) {
-        await this.load();
-      }
-      this.showAdjustStorage = false;
+    const dialogRef = openAdjustStorageDialog(this.dialogService, {
+      data: {
+        storageGbPrice: this.storageGbPrice,
+        add: add,
+        organizationId: this.organizationId,
+        interval: this.billingInterval,
+      },
+    });
+    const result: any = await lastValueFrom(dialogRef.closed);
+    if (result === AdjustStorageDialogResult.Adjusted) {
+      await this.load();
     }
   }
 
