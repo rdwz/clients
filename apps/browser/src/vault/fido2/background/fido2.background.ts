@@ -110,11 +110,8 @@ export default class Fido2Background implements Fido2BackgroundInterface {
   private async registerManifestV2ContentScripts(
     sharedRegistrationOptions: browser.contentScripts.RegisteredContentScriptOptions,
   ) {
-    if (
-      !this.currentEnablePasskeysSetting &&
-      typeof this.registeredContentScripts?.unregister === "function"
-    ) {
-      await this.registeredContentScripts.unregister();
+    if (!this.currentEnablePasskeysSetting) {
+      await this.registeredContentScripts?.unregister();
 
       return;
     }
