@@ -19,5 +19,7 @@ export class NavLogoComponent {
    */
   @Input() route: string | any[];
 
+  @Input() ariaLabel: string;
+
   constructor(protected sidebarService: SidebarService) {}
 }
