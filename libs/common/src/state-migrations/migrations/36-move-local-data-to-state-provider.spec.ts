@@ -3,7 +3,7 @@ import { MockProxy } from "jest-mock-extended";
 import { MigrationHelper } from "../migration-helper";
 import { mockMigrationHelper } from "../migration-helper.spec";
 
-import { LocalDataMigrator } from "./35-move-local-data-to-state-provider";
+import { LocalDataMigrator } from "./36-move-local-data-to-state-provider";
 
 function exampleJSON() {
   return {
@@ -80,8 +80,8 @@ describe("LocalDataMigrator", () => {
 
   describe("migrate", () => {
     beforeEach(() => {
-      helper = mockMigrationHelper(exampleJSON(), 35);
-      sut = new LocalDataMigrator(34, 35);
+      helper = mockMigrationHelper(exampleJSON(), 36);
+      sut = new LocalDataMigrator(35, 36);
     });
 
     it("should remove local data from all accounts", async () => {
@@ -105,8 +105,8 @@ describe("LocalDataMigrator", () => {
 
   describe("rollback", () => {
     beforeEach(() => {
-      helper = mockMigrationHelper(rollbackJSON(), 35);
-      sut = new LocalDataMigrator(34, 35);
+      helper = mockMigrationHelper(rollbackJSON(), 36);
+      sut = new LocalDataMigrator(35, 36);
     });
 
     it.each(["user-1", "user-2"])("should null out new values", async (userId) => {
