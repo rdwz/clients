@@ -25,16 +25,16 @@ export default class Fido2Background implements Fido2BackgroundInterface {
   private fido2ContentScriptPortsSet = new Set<chrome.runtime.Port>();
   private currentEnablePasskeysSetting: boolean;
   private registeredContentScripts: browser.contentScripts.RegisteredContentScript;
-  private sharedInjectionDetails: SharedFido2ScriptInjectionDetails = {
+  private readonly sharedInjectionDetails: SharedFido2ScriptInjectionDetails = {
     allFrames: true,
     runAt: "document_start",
   };
-  private sharedRegistrationOptions: SharedFido2ScriptRegistrationOptions = {
+  private readonly sharedRegistrationOptions: SharedFido2ScriptRegistrationOptions = {
     matches: ["https://*/*"],
     excludeMatches: ["https://*/*.xml*"],
     ...this.sharedInjectionDetails,
   };
-  private extensionMessageHandlers: Fido2BackgroundExtensionMessageHandlers = {
+  private readonly extensionMessageHandlers: Fido2BackgroundExtensionMessageHandlers = {
     fido2AbortRequest: ({ message }) => this.abortRequest(message),
     fido2RegisterCredentialRequest: ({ message, sender }) =>
       this.registerCredentialRequest(message, sender),
