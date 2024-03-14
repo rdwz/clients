@@ -8,7 +8,6 @@ import {
   AuthRequestServiceAbstraction,
   AuthRequestService,
 } from "@bitwarden/auth/common";
-import { AvatarUpdateService as AvatarUpdateServiceAbstraction } from "@bitwarden/common/abstractions/account/avatar-update.service";
 import { ApiService as ApiServiceAbstraction } from "@bitwarden/common/abstractions/api.service";
 import { AuditService as AuditServiceAbstraction } from "@bitwarden/common/abstractions/audit.service";
 import { EventCollectionService as EventCollectionServiceAbstraction } from "@bitwarden/common/abstractions/event/event-collection.service";
@@ -39,6 +38,7 @@ import { AuthenticationStatus } from "@bitwarden/common/auth/enums/authenticatio
 import { ForceSetPasswordReason } from "@bitwarden/common/auth/models/domain/force-set-password-reason";
 import { AccountServiceImplementation } from "@bitwarden/common/auth/services/account.service";
 import { AuthService } from "@bitwarden/common/auth/services/auth.service";
+import { AvatarService } from "@bitwarden/common/auth/services/avatar.service";
 import { DeviceTrustCryptoService } from "@bitwarden/common/auth/services/device-trust-crypto.service.implementation";
 import { DevicesServiceImplementation } from "@bitwarden/common/auth/services/devices/devices.service.implementation";
 import { DevicesApiServiceImplementation } from "@bitwarden/common/auth/services/devices-api.service.implementation";
@@ -56,6 +56,10 @@ import {
   BadgeSettingsServiceAbstraction,
   BadgeSettingsService,
 } from "@bitwarden/common/autofill/services/badge-settings.service";
+import {
+  DomainSettingsService,
+  DefaultDomainSettingsService,
+} from "@bitwarden/common/autofill/services/domain-settings.service";
 import {
   UserNotificationSettingsService,
   UserNotificationSettingsServiceAbstraction,
@@ -112,7 +116,7 @@ import { DefaultSingleUserStateProvider } from "@bitwarden/common/platform/state
 import { DefaultStateProvider } from "@bitwarden/common/platform/state/implementations/default-state.provider";
 import { StateEventRegistrarService } from "@bitwarden/common/platform/state/state-event-registrar.service";
 /* eslint-enable import/no-restricted-paths */
-import { AvatarUpdateService } from "@bitwarden/common/services/account/avatar-update.service";
+import { DefaultThemeStateService } from "@bitwarden/common/platform/theming/theme-state.service";
 import { ApiService } from "@bitwarden/common/services/api.service";
 import { AuditService } from "@bitwarden/common/services/audit.service";
 import { EventCollectionService } from "@bitwarden/common/services/event/event-collection.service";
@@ -120,6 +124,7 @@ import { EventUploadService } from "@bitwarden/common/services/event/event-uploa
 import { NotificationsService } from "@bitwarden/common/services/notifications.service";
 import { SearchService } from "@bitwarden/common/services/search.service";
 import { VaultTimeoutSettingsService } from "@bitwarden/common/services/vault-timeout/vault-timeout-settings.service";
+import { AvatarService as AvatarServiceAbstraction } from "@bitwarden/common/src/auth/abstractions/avatar.service";
 import {
   PasswordGenerationService,
   PasswordGenerationServiceAbstraction,
@@ -259,6 +264,7 @@ export default class MainBackground {
   userNotificationSettingsService: UserNotificationSettingsServiceAbstraction;
   autofillSettingsService: AutofillSettingsServiceAbstraction;
   badgeSettingsService: BadgeSettingsServiceAbstraction;
+  domainSettingsService: DomainSettingsService;
   systemService: SystemServiceAbstraction;
   eventCollectionService: EventCollectionServiceAbstraction;
   eventUploadService: EventUploadServiceAbstraction;
@@ -282,7 +288,7 @@ export default class MainBackground {
   fido2UserInterfaceService: Fido2UserInterfaceServiceAbstraction;
   fido2AuthenticatorService: Fido2AuthenticatorServiceAbstraction;
   fido2ClientService: Fido2ClientServiceAbstraction;
-  avatarUpdateService: AvatarUpdateServiceAbstraction;
+  avatarService: AvatarServiceAbstraction;
   mainContextMenuHandler: MainContextMenuHandler;
   cipherContextMenuHandler: CipherContextMenuHandler;
   configService: BrowserConfigService;
@@ -429,6 +435,9 @@ export default class MainBackground {
       async () => this.biometricUnlock(),
       self,
     );
+
+    const themeStateService = new DefaultThemeStateService(this.globalStateProvider);
+
     this.i18nService = new I18nService(BrowserApi.getUILanguage(), this.globalStateProvider);
     this.cryptoService = new BrowserCryptoService(
       this.keyGenerationService,
@@ -450,6 +459,7 @@ export default class MainBackground {
       this.appIdService,
       (expired: boolean) => this.logout(expired),
     );
+    this.domainSettingsService = new DefaultDomainSettingsService(this.stateProvider);
     this.settingsService = new BrowserSettingsService(this.stateService);
     this.fileUploadService = new FileUploadService(this.logService);
     this.cipherFileUploadService = new CipherFileUploadService(
@@ -557,6 +567,7 @@ export default class MainBackground {
       this.policyService,
       this.deviceTrustCryptoService,
       this.authRequestService,
+      this.globalStateProvider,
     );
 
     this.ssoLoginService = new SsoLoginService(this.stateProvider);
@@ -576,7 +587,7 @@ export default class MainBackground {
 
     this.cipherService = new CipherService(
       this.cryptoService,
-      this.settingsService,
+      this.domainSettingsService,
       this.apiService,
       this.i18nService,
       this.searchService,
@@ -660,10 +671,14 @@ export default class MainBackground {
       this.fileUploadService,
       this.sendService,
     );
+
+    this.avatarService = new AvatarService(this.apiService, this.stateProvider);
+
     this.providerService = new ProviderService(this.stateProvider);
+
     this.syncService = new SyncService(
       this.apiService,
-      this.settingsService,
+      this.domainSettingsService,
       this.folderService,
       this.cipherService,
       this.cryptoService,
@@ -678,6 +693,7 @@ export default class MainBackground {
       this.folderApiService,
       this.organizationService,
       this.sendApiService,
+      this.avatarService,
       this.logoutCallback,
     );
     this.eventUploadService = new EventUploadService(
@@ -700,7 +716,7 @@ export default class MainBackground {
       this.totpService,
       this.eventCollectionService,
       this.logService,
-      this.settingsService,
+      this.domainSettingsService,
       this.userVerificationService,
     );
     this.auditService = new AuditService(this.cryptoFunctionService, this.apiService);
@@ -763,6 +779,7 @@ export default class MainBackground {
       this.authService,
       this.stateService,
       this.vaultSettingsService,
+      this.domainSettingsService,
       this.logService,
     );
 
@@ -790,8 +807,6 @@ export default class MainBackground {
       this.stateService,
       this.apiService,
     );
-
-    this.avatarUpdateService = new AvatarUpdateService(this.apiService, this.stateService);
 
     // Background
     if (!this.popupOnlyContext) {
@@ -842,8 +857,10 @@ export default class MainBackground {
         this.folderService,
         this.stateService,
         this.userNotificationSettingsService,
+        this.domainSettingsService,
         this.environmentService,
         this.logService,
+        themeStateService,
       );
       this.overlayBackground = new OverlayBackground(
         this.cipherService,
@@ -855,6 +872,7 @@ export default class MainBackground {
         this.autofillSettingsService,
         this.i18nService,
         this.platformUtilsService,
+        themeStateService,
       );
       this.filelessImporterBackground = new FilelessImporterBackground(
         this.configService,
@@ -902,19 +920,21 @@ export default class MainBackground {
       );
 
       this.contextMenusBackground = new ContextMenusBackground(contextMenuClickedHandler);
+    }
 
-      this.idleBackground = new IdleBackground(
-        this.vaultTimeoutService,
-        this.stateService,
-        this.notificationsService,
-        this.accountService,
-      );
-      // this.webRequestBackground = new WebRequestBackground(
-      //   this.platformUtilsService,
-      //   this.cipherService,
-      //   this.authService,
-      // );
+    this.idleBackground = new IdleBackground(
+      this.vaultTimeoutService,
+      this.stateService,
+      this.notificationsService,
+      this.accountService,
+    );
+    // this.webRequestBackground = new WebRequestBackground(
+    //   this.platformUtilsService,
+    //   this.cipherService,
+    //   this.authService,
+    // );
 
+    if (!this.popupOnlyContext) {
       this.mainContextMenuHandler = new MainContextMenuHandler(
         this.stateService,
         this.autofillSettingsService,
@@ -1080,7 +1100,6 @@ export default class MainBackground {
     await Promise.all([
       this.syncService.setLastSync(new Date(0), userId),
       this.cryptoService.clearKeys(userId),
-      this.settingsService.clear(userId),
       this.cipherService.clear(userId),
       this.folderService.clear(userId),
       this.collectionService.clear(userId),
