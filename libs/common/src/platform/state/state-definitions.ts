@@ -27,6 +27,7 @@ export const PROVIDERS_DISK = new StateDefinition("providers", "disk");
 
 export const KEY_CONNECTOR_DISK = new StateDefinition("keyConnector", "disk");
 export const ACCOUNT_MEMORY = new StateDefinition("account", "memory");
+export const AVATAR_DISK = new StateDefinition("avatar", "disk", { web: "disk-local" });
 export const SSO_DISK = new StateDefinition("ssoLogin", "disk");
 export const LOGIN_STRATEGY_MEMORY = new StateDefinition("loginStrategy", "memory");
 
