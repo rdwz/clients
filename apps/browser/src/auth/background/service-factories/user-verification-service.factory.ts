@@ -31,6 +31,10 @@ import {
   stateServiceFactory,
 } from "../../../platform/background/service-factories/state-service.factory";
 
+import {
+  KeyConnectorServiceInitOptions,
+  keyConnectorServiceFactory,
+} from "./key-connector-service.factory";
 import { PinCryptoServiceInitOptions, pinCryptoServiceFactory } from "./pin-crypto-service.factory";
 import {
   UserVerificationApiServiceInitOptions,
@@ -42,6 +46,7 @@ type UserVerificationServiceFactoryOptions = FactoryOptions;
 export type UserVerificationServiceInitOptions = UserVerificationServiceFactoryOptions &
   StateServiceInitOptions &
   CryptoServiceInitOptions &
+  KeyConnectorServiceInitOptions &
   I18nServiceInitOptions &
   UserVerificationApiServiceInitOptions &
   PinCryptoServiceInitOptions &
@@ -61,6 +66,7 @@ export function userVerificationServiceFactory(
       new UserVerificationService(
         await stateServiceFactory(cache, opts),
         await cryptoServiceFactory(cache, opts),
+        await keyConnectorServiceFactory(cache, opts),
         await i18nServiceFactory(cache, opts),
         await userVerificationApiServiceFactory(cache, opts),
         await pinCryptoServiceFactory(cache, opts),

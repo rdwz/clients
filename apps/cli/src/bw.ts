@@ -406,7 +406,6 @@ export class Main {
     this.policyApiService = new PolicyApiService(this.policyService, this.apiService);
 
     this.keyConnectorService = new KeyConnectorService(
-      this.stateService,
       this.cryptoService,
       this.apiService,
       this.tokenService,
@@ -414,6 +413,7 @@ export class Main {
       this.organizationService,
       this.keyGenerationService,
       async (expired: boolean) => await this.logout(),
+      this.stateProvider,
     );
 
     this.twoFactorService = new TwoFactorService(this.i18nService, this.platformUtilsService);
@@ -531,6 +531,7 @@ export class Main {
     this.userVerificationService = new UserVerificationService(
       this.stateService,
       this.cryptoService,
+      this.keyConnectorService,
       this.i18nService,
       this.userVerificationApiService,
       this.pinCryptoService,
