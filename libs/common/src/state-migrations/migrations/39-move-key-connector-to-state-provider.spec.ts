@@ -3,7 +3,7 @@ import { MockProxy } from "jest-mock-extended";
 import { KeyDefinitionLike, MigrationHelper } from "../migration-helper";
 import { mockMigrationHelper } from "../migration-helper.spec";
 
-import { KeyConnectorMigrator } from "./38-move-key-connector-to-state-provider";
+import { KeyConnectorMigrator } from "./39-move-key-connector-to-state-provider";
 
 function exampleJSON() {
   return {
@@ -49,8 +49,8 @@ describe("KeyConnectorMigrator", () => {
 
   describe("migrate", () => {
     beforeEach(() => {
-      helper = mockMigrationHelper(exampleJSON(), 37);
-      sut = new KeyConnectorMigrator(37, 38);
+      helper = mockMigrationHelper(exampleJSON(), 38);
+      sut = new KeyConnectorMigrator(38, 39);
     });
 
     it("should remove usesKeyConnector and convertAccountToKeyConnector from Profile", async () => {
@@ -82,8 +82,8 @@ describe("KeyConnectorMigrator", () => {
 
   describe("rollback", () => {
     beforeEach(() => {
-      helper = mockMigrationHelper(rollbackJSON(), 37);
-      sut = new KeyConnectorMigrator(37, 38);
+      helper = mockMigrationHelper(rollbackJSON(), 38);
+      sut = new KeyConnectorMigrator(38, 39);
     });
 
     it("should null out new usesKeyConnector global value", async () => {

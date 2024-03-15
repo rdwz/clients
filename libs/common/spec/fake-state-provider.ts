@@ -1,5 +1,5 @@
 import { mock } from "jest-mock-extended";
-import { Observable, map } from "rxjs";
+import { Observable, map, of, switchMap, take } from "rxjs";
 
 import {
   GlobalState,
@@ -119,7 +119,7 @@ export class FakeActiveUserStateProvider implements ActiveUserStateProvider {
   states: Map<string, FakeActiveUserState<unknown>> = new Map();
 
   constructor(public accountService: FakeAccountService) {
-    this.activeUserId$ = accountService.activeAccountSubject.asObservable().pipe(map((a) => a.id));
+    this.activeUserId$ = accountService.activeAccountSubject.asObservable().pipe(map((a) => a?.id));
   }
 
   get<T>(keyDefinition: KeyDefinition<T> | UserKeyDefinition<T>): ActiveUserState<T> {
@@ -171,7 +171,30 @@ export class FakeStateProvider implements StateProvider {
     if (userId) {
       return this.getUser<T>(userId, keyDefinition).state$;
     }
-    return this.getActive<T>(keyDefinition).state$;
+
+    return this.getActive(keyDefinition).state$;
+  }
+
+  getUserStateOrDefault$<T>(
+    keyDefinition: KeyDefinition<T> | UserKeyDefinition<T>,
+    config: { userId: UserId | undefined; defaultValue?: T },
+  ): Observable<T> {
+    const { userId, defaultValue = null } = config;
+    if (isUserKeyDefinition(keyDefinition)) {
+      this.mock.getUserStateOrDefault$(keyDefinition, config);
+    } else {
+      this.mock.getUserStateOrDefault$(keyDefinition, config);
+    }
+    if (userId) {
+      return this.getUser<T>(userId, keyDefinition).state$;
+    }
+
+    return this.activeUserId$.pipe(
+      take(1),
+      switchMap((userId) =>
+        userId != null ? this.getUser(userId, keyDefinition).state$ : of(defaultValue),
+      ),
+    );
   }
 
   async setUserState<T>(

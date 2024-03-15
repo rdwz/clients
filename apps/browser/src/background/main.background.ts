@@ -409,8 +409,7 @@ export default class MainBackground {
     );
     this.activeUserStateProvider = new DefaultActiveUserStateProvider(
       this.accountService,
-      storageServiceProvider,
-      stateEventRegistrarService,
+      this.singleUserStateProvider,
     );
     this.derivedStateProvider = new BackgroundDerivedStateProvider(
       this.memoryStorageForStateProviders,
@@ -428,6 +427,21 @@ export default class MainBackground {
     );
     this.biometricStateService = new DefaultBiometricStateService(this.stateProvider);
 
+    this.userNotificationSettingsService = new UserNotificationSettingsService(this.stateProvider);
+    this.platformUtilsService = new BackgroundPlatformUtilsService(
+      this.messagingService,
+      (clipboardValue, clearMs) => this.clearClipboard(clipboardValue, clearMs),
+      async () => this.biometricUnlock(),
+      self,
+    );
+
+    this.tokenService = new TokenService(
+      this.singleUserStateProvider,
+      this.globalStateProvider,
+      this.platformUtilsService.supportsSecureStorage(),
+      this.secureStorageService,
+    );
+
     const migrationRunner = new MigrationRunner(
       this.storageService,
       this.logService,
@@ -442,14 +456,8 @@ export default class MainBackground {
       new StateFactory(GlobalState, Account),
       this.accountService,
       this.environmentService,
+      this.tokenService,
       migrationRunner,
-    );
-    this.userNotificationSettingsService = new UserNotificationSettingsService(this.stateProvider);
-    this.platformUtilsService = new BackgroundPlatformUtilsService(
-      this.messagingService,
-      (clipboardValue, clearMs) => this.clearClipboard(clipboardValue, clearMs),
-      async () => this.biometricUnlock(),
-      self,
     );
 
     const themeStateService = new DefaultThemeStateService(this.globalStateProvider);
@@ -466,13 +474,14 @@ export default class MainBackground {
       this.stateProvider,
       this.biometricStateService,
     );
-    this.tokenService = new TokenService(this.stateService);
+
     this.appIdService = new AppIdService(this.globalStateProvider);
     this.apiService = new ApiService(
       this.tokenService,
       this.platformUtilsService,
       this.environmentService,
       this.appIdService,
+      this.stateService,
       (expired: boolean) => this.logout(expired),
     );
     this.domainSettingsService = new DefaultDomainSettingsService(this.stateProvider);
@@ -793,7 +802,6 @@ export default class MainBackground {
       this.fido2AuthenticatorService,
       this.configService,
       this.authService,
-      this.stateService,
       this.vaultSettingsService,
       this.domainSettingsService,
       this.logService,
@@ -841,7 +849,6 @@ export default class MainBackground {
       this.cryptoService,
       this.cryptoFunctionService,
       this.runtimeBackground,
-      this.i18nService,
       this.messagingService,
       this.appIdService,
       this.platformUtilsService,
