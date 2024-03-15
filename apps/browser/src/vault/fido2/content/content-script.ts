@@ -113,7 +113,7 @@ import { MessageWithMetadata, Messenger } from "./messaging/messenger";
     const data: CreateCredentialParams | AssertCredentialParams = {
       ...messageData,
       origin: globalContext.location.origin,
-      sameOriginWithAncestors: isSameOriginWithAncestors(),
+      sameOriginWithAncestors: globalContext.self === globalContext.top,
     };
 
     const result = await sendExtensionMessage(command, { data, requestId });
@@ -123,18 +123,6 @@ import { MessageWithMetadata, Messenger } from "./messaging/messenger";
     }
 
     return Promise.resolve({ type, result });
-  }
-
-  /**
-   * Validates if the current page is in
-   * the same origin with its ancestors.
-   */
-  function isSameOriginWithAncestors() {
-    try {
-      return globalContext.self === globalContext.top;
-    } catch {
-      return false;
-    }
   }
 
   /**

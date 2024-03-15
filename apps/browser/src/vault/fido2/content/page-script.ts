@@ -9,7 +9,6 @@ import { Messenger } from "./messaging/messenger";
   if (globalContext.document.contentType !== "text/html") {
     return;
   }
-
   const BrowserPublicKeyCredential = globalContext.PublicKeyCredential;
   const BrowserNavigatorCredentials = navigator.credentials;
   const BrowserAuthenticatorAttestationResponse = globalContext.AuthenticatorAttestationResponse;
@@ -19,7 +18,7 @@ import { Messenger } from "./messaging/messenger";
   if (!browserNativeWebauthnSupport) {
     // Polyfill webauthn support
     try {
-      // credentials is read-only if supported, use type-casting to force assignment
+      // credentials are read-only if supported, use type-casting to force assignment
       (navigator as any).credentials = {
         async create() {
           throw new Error("Webauthn not supported in this browser.");
@@ -83,6 +82,7 @@ import { Messenger } from "./messaging/messenger";
 
     const authenticatorAttachmentIsPlatform =
       options?.publicKey?.authenticatorSelection?.authenticatorAttachment === "platform";
+
     const fallbackSupported =
       (authenticatorAttachmentIsPlatform && browserNativeWebauthnPlatformAuthenticatorSupport) ||
       (!authenticatorAttachmentIsPlatform && browserNativeWebauthnSupport);
