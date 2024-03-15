@@ -24,12 +24,15 @@ import { RevertLastSyncMigrator } from "./migrations/26-revert-move-last-sync-to
 import { BadgeSettingsMigrator } from "./migrations/27-move-badge-settings-to-state-providers";
 import { MoveBiometricUnlockToStateProviders } from "./migrations/28-move-biometric-unlock-to-state-providers";
 import { UserNotificationSettingsKeyMigrator } from "./migrations/29-move-user-notification-settings-to-state-provider";
-import { FixPremiumMigrator } from "./migrations/3-fix-premium";
 import { PolicyMigrator } from "./migrations/30-move-policy-state-to-state-provider";
 import { EnableContextMenuMigrator } from "./migrations/31-move-enable-context-menu-to-autofill-settings-state-provider";
 import { PreferredLanguageMigrator } from "./migrations/32-move-preferred-language";
 import { AppIdMigrator } from "./migrations/33-move-app-id-to-state-providers";
 import { DomainSettingsMigrator } from "./migrations/34-move-domain-settings-to-state-providers";
+import { MoveThemeToStateProviderMigrator } from "./migrations/35-move-theme-to-state-providers";
+import { VaultSettingsKeyMigrator } from "./migrations/36-move-show-card-and-identity-to-state-provider";
+import { AvatarColorMigrator } from "./migrations/37-move-avatar-color-to-state-providers";
+import { TokenServiceStateProviderMigrator } from "./migrations/38-migrate-token-svc-to-state-provider";
 import { RemoveEverBeenUnlockedMigrator } from "./migrations/4-remove-ever-been-unlocked";
 import { AddKeyTypeToOrgKeysMigrator } from "./migrations/5-add-key-type-to-org-keys";
 import { RemoveLegacyEtmKeyMigrator } from "./migrations/6-remove-legacy-etm-key";
@@ -38,14 +41,13 @@ import { MoveStateVersionMigrator } from "./migrations/8-move-state-version";
 import { MoveBrowserSettingsToGlobal } from "./migrations/9-move-browser-settings-to-global";
 import { MinVersionMigrator } from "./migrations/min-version";
 
-export const MIN_VERSION = 2;
-export const CURRENT_VERSION = 34;
+export const MIN_VERSION = 3;
+export const CURRENT_VERSION = 38;
 export type MinVersion = typeof MIN_VERSION;
 
 export function createMigrationBuilder() {
   return MigrationBuilder.create()
     .with(MinVersionMigrator)
-    .with(FixPremiumMigrator, 2, 3)
     .with(RemoveEverBeenUnlockedMigrator, 3, 4)
     .with(AddKeyTypeToOrgKeysMigrator, 4, 5)
     .with(RemoveLegacyEtmKeyMigrator, 5, 6)
@@ -76,7 +78,11 @@ export function createMigrationBuilder() {
     .with(EnableContextMenuMigrator, 30, 31)
     .with(PreferredLanguageMigrator, 31, 32)
     .with(AppIdMigrator, 32, 33)
-    .with(DomainSettingsMigrator, 33, CURRENT_VERSION);
+    .with(DomainSettingsMigrator, 33, 34)
+    .with(MoveThemeToStateProviderMigrator, 34, 35)
+    .with(VaultSettingsKeyMigrator, 35, 36)
+    .with(AvatarColorMigrator, 36, 37)
+    .with(TokenServiceStateProviderMigrator, 37, CURRENT_VERSION);
 }
 
 export async function currentVersion(

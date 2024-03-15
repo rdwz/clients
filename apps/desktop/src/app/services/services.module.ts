@@ -1,8 +1,5 @@
-import { DOCUMENT } from "@angular/common";
 import { APP_INITIALIZER, InjectionToken, NgModule } from "@angular/core";
 
-import { AbstractThemingService } from "@bitwarden/angular/platform/services/theming/theming.service.abstraction";
-import { safeProvider } from "@bitwarden/angular/platform/utils/safe-provider";
 import {
   SECURE_STORAGE,
   STATE_FACTORY,
@@ -13,7 +10,8 @@ import {
   OBSERVABLE_MEMORY_STORAGE,
   OBSERVABLE_DISK_STORAGE,
   WINDOW,
-  SafeInjectionToken,
+  SUPPORTS_SECURE_STORAGE,
+  SYSTEM_THEME_OBSERVABLE,
 } from "@bitwarden/angular/services/injection-tokens";
 import { JslibServicesModule } from "@bitwarden/angular/services/jslib-services.module";
 import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
@@ -21,6 +19,7 @@ import { PolicyService as PolicyServiceAbstraction } from "@bitwarden/common/adm
 import { AccountService as AccountServiceAbstraction } from "@bitwarden/common/auth/abstractions/account.service";
 import { AuthService as AuthServiceAbstraction } from "@bitwarden/common/auth/abstractions/auth.service";
 import { LoginService as LoginServiceAbstraction } from "@bitwarden/common/auth/abstractions/login.service";
+import { TokenService } from "@bitwarden/common/auth/abstractions/token.service";
 import { LoginService } from "@bitwarden/common/auth/services/login.service";
 import { AutofillSettingsServiceAbstraction } from "@bitwarden/common/autofill/services/autofill-settings.service";
 import { BroadcasterService as BroadcasterServiceAbstraction } from "@bitwarden/common/platform/abstractions/broadcaster.service";
@@ -57,19 +56,22 @@ import { LoginGuard } from "../../auth/guards/login.guard";
 import { Account } from "../../models/account";
 import { ElectronCryptoService } from "../../platform/services/electron-crypto.service";
 import { ElectronLogRendererService } from "../../platform/services/electron-log.renderer.service";
-import { ElectronPlatformUtilsService } from "../../platform/services/electron-platform-utils.service";
+import {
+  ELECTRON_SUPPORTS_SECURE_STORAGE,
+  ElectronPlatformUtilsService,
+} from "../../platform/services/electron-platform-utils.service";
 import { ElectronRendererMessagingService } from "../../platform/services/electron-renderer-messaging.service";
 import { ElectronRendererSecureStorageService } from "../../platform/services/electron-renderer-secure-storage.service";
 import { ElectronRendererStorageService } from "../../platform/services/electron-renderer-storage.service";
 import { ElectronStateService } from "../../platform/services/electron-state.service";
 import { I18nRendererService } from "../../platform/services/i18n.renderer.service";
+import { fromIpcSystemTheme } from "../../platform/utils/from-ipc-system-theme";
 import { EncryptedMessageHandlerService } from "../../services/encrypted-message-handler.service";
 import { NativeMessageHandlerService } from "../../services/native-message-handler.service";
 import { NativeMessagingService } from "../../services/native-messaging.service";
 import { SearchBarService } from "../layout/search/search-bar.service";
 
 import { DesktopFileDownloadService } from "./desktop-file-download.service";
-import { DesktopThemingService } from "./desktop-theming.service";
 import { InitService } from "./init.service";
 import { RendererCryptoFunctionService } from "./renderer-crypto-function.service";
 
@@ -103,6 +105,13 @@ const RELOAD_CALLBACK = new InjectionToken<() => any>("RELOAD_CALLBACK");
       provide: PlatformUtilsServiceAbstraction,
       useClass: ElectronPlatformUtilsService,
       deps: [I18nServiceAbstraction, MessagingServiceAbstraction],
+    },
+    {
+      // We manually override the value of SUPPORTS_SECURE_STORAGE here to avoid
+      // the TokenService having to inject the PlatformUtilsService which introduces a
+      // circular dependency on Desktop only.
+      provide: SUPPORTS_SECURE_STORAGE,
+      useValue: ELECTRON_SUPPORTS_SECURE_STORAGE,
     },
     {
       provide: I18nServiceAbstraction,
@@ -143,6 +152,7 @@ const RELOAD_CALLBACK = new InjectionToken<() => any>("RELOAD_CALLBACK");
         STATE_FACTORY,
         AccountServiceAbstraction,
         EnvironmentService,
+        TokenService,
         MigrationRunner,
         STATE_SERVICE_USE_CACHE,
       ],
@@ -151,11 +161,10 @@ const RELOAD_CALLBACK = new InjectionToken<() => any>("RELOAD_CALLBACK");
       provide: FileDownloadService,
       useClass: DesktopFileDownloadService,
     },
-    safeProvider({
-      provide: AbstractThemingService,
-      useClass: DesktopThemingService,
-      deps: [StateServiceAbstraction, WINDOW, DOCUMENT as SafeInjectionToken<Document>],
-    }),
+    {
+      provide: SYSTEM_THEME_OBSERVABLE,
+      useFactory: () => fromIpcSystemTheme(),
+    },
     {
       provide: EncryptedMessageHandlerService,
       deps: [
@@ -174,7 +183,6 @@ const RELOAD_CALLBACK = new InjectionToken<() => any>("RELOAD_CALLBACK");
         CryptoServiceAbstraction,
         CryptoFunctionServiceAbstraction,
         MessagingServiceAbstraction,
-        I18nServiceAbstraction,
         EncryptedMessageHandlerService,
         DialogService,
       ],

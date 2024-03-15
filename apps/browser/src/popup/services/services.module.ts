@@ -3,13 +3,13 @@ import { DomSanitizer } from "@angular/platform-browser";
 import { ToastrService } from "ngx-toastr";
 
 import { UnauthGuard as BaseUnauthGuardService } from "@bitwarden/angular/auth/guards";
-import { ThemingService } from "@bitwarden/angular/platform/services/theming/theming.service";
-import { AbstractThemingService } from "@bitwarden/angular/platform/services/theming/theming.service.abstraction";
+import { AngularThemingService } from "@bitwarden/angular/platform/services/theming/angular-theming.service";
 import {
   MEMORY_STORAGE,
   SECURE_STORAGE,
   OBSERVABLE_DISK_STORAGE,
   OBSERVABLE_MEMORY_STORAGE,
+  SYSTEM_THEME_OBSERVABLE,
 } from "@bitwarden/angular/services/injection-tokens";
 import { JslibServicesModule } from "@bitwarden/angular/services/jslib-services.module";
 import {
@@ -91,14 +91,9 @@ import {
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { CollectionService } from "@bitwarden/common/vault/abstractions/collection.service";
 import { CipherFileUploadService } from "@bitwarden/common/vault/abstractions/file-upload/cipher-file-upload.service";
-import { FolderApiServiceAbstraction } from "@bitwarden/common/vault/abstractions/folder/folder-api.service.abstraction";
-import {
-  FolderService as FolderServiceAbstraction,
-  InternalFolderService,
-} from "@bitwarden/common/vault/abstractions/folder/folder.service.abstraction";
+import { FolderService as FolderServiceAbstraction } from "@bitwarden/common/vault/abstractions/folder/folder.service.abstraction";
 import { SyncService } from "@bitwarden/common/vault/abstractions/sync/sync.service.abstraction";
 import { TotpService } from "@bitwarden/common/vault/abstractions/totp.service";
-import { FolderApiService } from "@bitwarden/common/vault/services/folder/folder-api.service";
 import { DialogService } from "@bitwarden/components";
 import { ImportServiceAbstraction } from "@bitwarden/importer/core";
 import { VaultExportServiceAbstraction } from "@bitwarden/vault-export-core";
@@ -218,17 +213,6 @@ function getBgService<T>(service: keyof MainBackground) {
       deps: [],
     },
     {
-      provide: InternalFolderService,
-      useExisting: FolderServiceAbstraction,
-    },
-    {
-      provide: FolderApiServiceAbstraction,
-      useFactory: (folderService: InternalFolderService, apiService: ApiService) => {
-        return new FolderApiService(folderService, apiService);
-      },
-      deps: [InternalFolderService, ApiService],
-    },
-    {
       provide: CollectionService,
       useFactory: getBgService<CollectionService>("collectionService"),
       deps: [],
@@ -249,7 +233,6 @@ function getBgService<T>(service: keyof MainBackground) {
       deps: [],
     },
     { provide: TotpService, useFactory: getBgService<TotpService>("totpService"), deps: [] },
-    { provide: TokenService, useFactory: getBgService<TokenService>("tokenService"), deps: [] },
     {
       provide: I18nServiceAbstraction,
       useFactory: (globalStateProvider: GlobalStateProvider) => {
@@ -461,6 +444,7 @@ function getBgService<T>(service: keyof MainBackground) {
         logService: LogServiceAbstraction,
         accountService: AccountServiceAbstraction,
         environmentService: EnvironmentService,
+        tokenService: TokenService,
         migrationRunner: MigrationRunner,
       ) => {
         return new BrowserStateService(
@@ -471,6 +455,7 @@ function getBgService<T>(service: keyof MainBackground) {
           new StateFactory(GlobalState, Account),
           accountService,
           environmentService,
+          tokenService,
           migrationRunner,
         );
       },
@@ -481,6 +466,7 @@ function getBgService<T>(service: keyof MainBackground) {
         LogServiceAbstraction,
         AccountServiceAbstraction,
         EnvironmentService,
+        TokenService,
         MigrationRunner,
       ],
     },
@@ -504,11 +490,8 @@ function getBgService<T>(service: keyof MainBackground) {
       deps: [StateServiceAbstraction],
     },
     {
-      provide: AbstractThemingService,
-      useFactory: (
-        stateService: StateServiceAbstraction,
-        platformUtilsService: PlatformUtilsService,
-      ) => {
+      provide: SYSTEM_THEME_OBSERVABLE,
+      useFactory: (platformUtilsService: PlatformUtilsService) => {
         // Safari doesn't properly handle the (prefers-color-scheme) media query in the popup window, it always returns light.
         // In Safari, we have to use the background page instead, which comes with limitations like not dynamically changing the extension theme when the system theme is changed.
         let windowContext = window;
@@ -517,9 +500,9 @@ function getBgService<T>(service: keyof MainBackground) {
           windowContext = backgroundWindow;
         }
 
-        return new ThemingService(stateService, windowContext, document);
+        return AngularThemingService.createSystemThemeFromWindow(windowContext);
       },
-      deps: [StateServiceAbstraction, PlatformUtilsService],
+      deps: [PlatformUtilsService],
     },
     {
       provide: ConfigService,
