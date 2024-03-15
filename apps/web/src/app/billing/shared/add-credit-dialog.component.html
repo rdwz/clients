@@ -1,13 +1,14 @@
 <form [formGroup]="formGroup" [bitSubmit]="submit">
   <bit-dialog dialogSize="default" [title]="'addCredit' | i18n">
     <ng-container bitDialogContent>
+      <p>{{ "creditDelayed" | i18n }}</p>
       <div class="tw-grid tw-grid-cols-2">
         <bit-radio-group formControlName="method">
           <bit-radio-button id="credit-method-paypal" [value]="paymentMethodType.PayPal">
-            <bit-label> <i class="bwi bwi-paypal"></i>Paypal </bit-label>
+            <bit-label> <i class="bwi bwi-paypal"></i>PayPal</bit-label>
           </bit-radio-button>
           <bit-radio-button id="credit-method-bitcoin" [value]="paymentMethodType.BitPay">
-            <bit-label> <i class="bwi bwi-bitcoin"></i>Bitcoin </bit-label>
+            <bit-label> <i class="bwi bwi-bitcoin"></i>Bitcoin</bit-label>
           </bit-radio-button>
         </bit-radio-group>
       </div>
@@ -24,7 +25,6 @@
           <span bitPrefix>$USD</span>
         </bit-form-field>
       </div>
-      <bit-hint>{{ "creditDelayed" | i18n }}</bit-hint>
     </ng-container>
     <ng-container bitDialogFooter>
       <button type="submit" bitButton bitFormButton buttonType="primary">
