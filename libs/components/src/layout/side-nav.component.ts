@@ -8,13 +8,13 @@ import { LinkModule } from "../link";
 import { NavigationModule } from "../navigation";
 import { SharedModule } from "../shared";
 
-import { SidebarService } from "./sidebar.service";
+import { SideNavService } from "./side-nav.service";
 
 export type LayoutVariant = "primary" | "secondary";
 
 @Component({
-  selector: "bit-sidebar",
-  templateUrl: "sidebar.component.html",
+  selector: "bit-side-nav",
+  templateUrl: "side-nav.component.html",
   standalone: true,
   imports: [
     CommonModule,
@@ -26,13 +26,13 @@ export type LayoutVariant = "primary" | "secondary";
     RouterModule,
   ],
 })
-export class SidebarComponent {
-  constructor(protected sidebarService: SidebarService) {}
+export class SideNavComponent {
+  constructor(protected sideNavService: SideNavService) {}
 
   protected handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
-      this.sidebarService.setClose();
-      document.getElementById("bit-sidebar-toggle-button").focus();
+      this.sideNavService.setClose();
+      document.getElementById("bit-side-nav-toggle-button").focus();
       return false;
     }
 

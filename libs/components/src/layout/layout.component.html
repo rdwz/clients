@@ -1,6 +1,6 @@
 <ng-container
   *ngIf="{
-    open: sidebarService.open$ | async
+    open: sideNavService.open$ | async
   } as data"
 >
   <div
@@ -19,7 +19,7 @@
     </nav>
   </div>
   <div class="tw-group tw-flex tw-w-full">
-    <bit-sidebar
+    <bit-side-nav
       [ngStyle]="
         variant === 'secondary' && {
           '--color-text-alt2': 'var(--color-text-main)',
@@ -28,8 +28,8 @@
         }
       "
     >
-      <ng-content select="[slot=sidebar]"></ng-content>
-    </bit-sidebar>
+      <ng-content select="[slot=side-nav]"></ng-content>
+    </bit-side-nav>
     <main
       [id]="mainContentId"
       tabindex="-1"
@@ -37,14 +37,14 @@
     >
       <ng-content></ng-content>
 
-      <!-- overlay backdrop for sidebar -->
+      <!-- overlay backdrop for side-nav -->
       <div
         class="tw-pointer-events-none tw-fixed tw-inset-0 tw-z-10 tw-bg-black tw-bg-opacity-0 motion-safe:tw-transition-colors md:tw-hidden"
         [ngClass]="[data.open ? 'tw-bg-opacity-30 md:tw-bg-opacity-0' : 'tw-bg-opacity-0']"
       >
         <div
           *ngIf="data.open"
-          (click)="sidebarService.toggle()"
+          (click)="sideNavService.toggle()"
           class="tw-pointer-events-auto tw-h-full tw-w-full"
         ></div>
       </div>

@@ -52,7 +52,7 @@ export const WithContent: Story = {
     props: args,
     template: /* HTML */ `
       <bit-layout>
-        <nav slot="sidebar">
+        <nav slot="side-nav">
           <bit-nav-group text="Tree example" icon="bwi-family" [open]="true">
             <bit-nav-group
               text="Level 1 - with children (empty)"
@@ -236,7 +236,7 @@ export const Secondary: Story = {
     props: args,
     template: /* HTML */ `
       <bit-layout variant="secondary">
-        <nav slot="sidebar">
+        <nav slot="side-nav">
           <bit-nav-item text="Item A" icon="bwi-collection"></bit-nav-item>
           <bit-nav-item text="Item B" icon="bwi-collection"></bit-nav-item>
           <bit-nav-divider></bit-nav-divider>

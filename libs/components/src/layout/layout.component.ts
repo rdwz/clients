@@ -5,8 +5,8 @@ import { RouterModule } from "@angular/router";
 import { LinkModule } from "../link";
 import { SharedModule } from "../shared";
 
-import { SidebarComponent } from "./sidebar.component";
-import { SidebarService } from "./sidebar.service";
+import { SideNavComponent } from "./side-nav.component";
+import { SideNavService } from "./side-nav.service";
 
 export type LayoutVariant = "primary" | "secondary";
 
@@ -14,19 +14,19 @@ export type LayoutVariant = "primary" | "secondary";
   selector: "bit-layout",
   templateUrl: "layout.component.html",
   standalone: true,
-  imports: [CommonModule, SharedModule, LinkModule, RouterModule, SidebarComponent],
+  imports: [CommonModule, SharedModule, LinkModule, RouterModule, SideNavComponent],
 })
 export class LayoutComponent {
   protected mainContentId = "main-content";
 
   @Input() variant: LayoutVariant = "primary";
 
-  constructor(protected sidebarService: SidebarService) {}
+  constructor(protected sideNavService: SideNavService) {}
 
   protected handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
-      this.sidebarService.setClose();
-      document.getElementById("bit-sidebar-toggle-button").focus();
+      this.sideNavService.setClose();
+      document.getElementById("bit-side-nav-toggle-button").focus();
       return false;
     }
 

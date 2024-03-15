@@ -4,7 +4,7 @@ import { map } from "rxjs";
 
 import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
-import { SidebarService } from "@bitwarden/components";
+import { SideNavService } from "@bitwarden/components";
 import { SecretsManagerLogo } from "@bitwarden/web-vault/app/layouts/secrets-manager-logo";
 
 @Component({
@@ -21,6 +21,6 @@ export class NavigationComponent {
   constructor(
     protected route: ActivatedRoute,
     private organizationService: OrganizationService,
-    protected sidebarService: SidebarService,
+    protected sideNavService: SideNavService,
   ) {}
 }

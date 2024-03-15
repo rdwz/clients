@@ -16,7 +16,7 @@ export default {
   component: NavItemComponent,
   decorators: [
     positionFixedWrapperDecorator(
-      (story) => `<bit-layout><div slot="sidebar">${story}</div></bit-layout>`,
+      (story) => `<bit-layout><div slot="side-nav">${story}</div></bit-layout>`,
     ),
     moduleMetadata({
       declarations: [],

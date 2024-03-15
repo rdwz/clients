@@ -1,5 +1,5 @@
 <bit-layout variant="secondary">
-  <nav slot="sidebar" *ngIf="organization$ | async as organization">
+  <nav slot="side-nav" *ngIf="organization$ | async as organization">
     <bit-nav-logo [openIcon]="logo" route="." [ariaLabel]="'adminConsole' | i18n"></bit-nav-logo>
     <org-switcher [filter]="orgFilter"></org-switcher>
 

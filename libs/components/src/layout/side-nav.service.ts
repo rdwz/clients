@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable, combineLatest, fromEvent, map, startWith }
 @Injectable({
   providedIn: "root",
 })
-export class SidebarService {
+export class SideNavService {
   private _open$ = new BehaviorSubject<boolean>(!window.matchMedia("(max-width: 768px)").matches);
   open$ = this._open$.asObservable();
 

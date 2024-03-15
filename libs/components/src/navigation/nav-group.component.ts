@@ -10,7 +10,7 @@ import {
   SkipSelf,
 } from "@angular/core";
 
-import { SidebarService } from "../layout/sidebar.service";
+import { SideNavService } from "../layout/side-nav.service";
 
 import { NavBaseComponent } from "./nav-base.component";
 
@@ -46,7 +46,7 @@ export class NavGroupComponent extends NavBaseComponent implements AfterContentI
 
   constructor(
     @Optional() @SkipSelf() private parentNavGroup: NavGroupComponent,
-    protected sidebarService: SidebarService,
+    protected sideNavService: SideNavService,
   ) {
     super();
   }
@@ -75,9 +75,9 @@ export class NavGroupComponent extends NavBaseComponent implements AfterContentI
   }
 
   protected handleMainContentClicked() {
-    if (!this.sidebarService.open) {
+    if (!this.sideNavService.open) {
       if (!this.route) {
-        this.sidebarService.setOpen();
+        this.sideNavService.setOpen();
       }
       this.open = true;
     } else {

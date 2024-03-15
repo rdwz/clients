@@ -1,2 +1,2 @@
 export * from "./layout.component";
-export * from "./sidebar.service";
+export * from "./side-nav.service";

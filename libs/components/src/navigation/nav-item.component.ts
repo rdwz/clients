@@ -1,7 +1,7 @@
 import { Component, HostListener, Optional } from "@angular/core";
 import { BehaviorSubject, map } from "rxjs";
 
-import { SidebarService } from "../layout/sidebar.service";
+import { SideNavService } from "../layout/side-nav.service";
 
 import { NavBaseComponent } from "./nav-base.component";
 import { NavGroupComponent } from "./nav-group.component";
@@ -50,7 +50,7 @@ export class NavItemComponent extends NavBaseComponent {
 
   constructor(
     @Optional() private parentNavGroup: NavGroupComponent,
-    protected sidebarService: SidebarService,
+    protected sideNavService: SideNavService,
   ) {
     super();
   }

@@ -1,7 +1,7 @@
 import { Component, Input } from "@angular/core";
 
 import { Icon } from "../icon";
-import { SidebarService } from "../layout/sidebar.service";
+import { SideNavService } from "../layout/side-nav.service";
 
 @Component({
   selector: "bit-nav-logo",
@@ -21,5 +21,5 @@ export class NavLogoComponent {
 
   @Input() ariaLabel: string;
 
-  constructor(protected sidebarService: SidebarService) {}
+  constructor(protected sideNavService: SideNavService) {}
 }

@@ -42,7 +42,7 @@
 </bit-nav-item>
 
 <!-- [attr.aria-controls] of the above button expects a unique ID on the controlled element -->
-<ng-container *ngIf="sidebarService.open$ | async">
+<ng-container *ngIf="sideNavService.open$ | async">
   <div
     *ngIf="open"
     [attr.id]="contentId"

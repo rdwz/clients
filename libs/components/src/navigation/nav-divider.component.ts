@@ -1,11 +1,11 @@
 import { Component } from "@angular/core";
 
-import { SidebarService } from "../layout/sidebar.service";
+import { SideNavService } from "../layout/side-nav.service";
 
 @Component({
   selector: "bit-nav-divider",
   templateUrl: "./nav-divider.component.html",
 })
 export class NavDividerComponent {
-  constructor(protected sidebarService: SidebarService) {}
+  constructor(protected sideNavService: SideNavService) {}
 }
