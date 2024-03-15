@@ -4,7 +4,7 @@
     isOverlay: sidebarService.isOverlay$ | async
   } as data"
   id="bit-sidebar"
-  class="tw-fixed tw-inset-y-0 tw-left-0 tw-z-20 tw-flex tw-h-screen tw-flex-col tw-overscroll-none tw-overflow-auto tw-bg-background-alt3 group-[.sidebar-open]:tw-w-60 md:tw-sticky tw-outline-none"
+  class="tw-fixed tw-inset-y-0 tw-left-0 tw-z-30 tw-flex tw-h-screen tw-flex-col tw-overscroll-none tw-overflow-auto tw-bg-background-alt3 group-[.sidebar-open]:tw-w-60 md:tw-sticky tw-outline-none"
   [cdkTrapFocus]="data.isOverlay"
   [attr.role]="data.isOverlay ? 'dialog' : null"
   [attr.aria-modal]="data.isOverlay"
