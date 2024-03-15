@@ -55,8 +55,7 @@ import { copyToClipboard, GeneratePasswordToClipboardCommand } from "../clipboar
 import { AutofillTabCommand } from "../commands/autofill-tab-command";
 import { AutofillCipherTypeId } from "../types";
 
-type CopyToClipboardOptions = { text: string; tab: chrome.tabs.Tab };
-export default CopyToClipboardOptions;
+export type CopyToClipboardOptions = { text: string; tab: chrome.tabs.Tab };
 export type CopyToClipboardAction = (options: CopyToClipboardOptions) => void;
 export type AutofillAction = (tab: chrome.tabs.Tab, cipher: CipherView) => Promise<void>;
 
