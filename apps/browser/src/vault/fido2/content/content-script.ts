@@ -20,7 +20,7 @@ import { MessageWithMetadata, Messenger } from "./messaging/messenger";
   }
 
   // Initialization logic, set up the messenger and connect a port to the background script.
-  const messenger = Messenger.forDOMCommunication(window);
+  const messenger = Messenger.forDOMCommunication(globalContext.window);
   messenger.handler = handleFido2Message;
   const port = chrome.runtime.connect({ name: Fido2PortName.InjectedScript });
   port.onDisconnect.addListener(handlePortOnDisconnect);
