@@ -4,7 +4,7 @@ import {
 } from "@bitwarden/common/vault/abstractions/fido2/fido2-client.service.abstraction";
 
 import { sendExtensionMessage } from "../../../autofill/utils";
-import { Fido2Port } from "../enums/fido2-port.enum";
+import { Fido2PortName } from "../enums/fido2-port-name.enum";
 
 import {
   InsecureAssertCredentialParams,
@@ -22,7 +22,7 @@ import { MessageWithMetadata, Messenger } from "./messaging/messenger";
   const messenger = Messenger.forDOMCommunication(window);
   messenger.handler = handleFido2Message;
 
-  const port = chrome.runtime.connect({ name: Fido2Port.InjectedScript });
+  const port = chrome.runtime.connect({ name: Fido2PortName.InjectedScript });
   port.onDisconnect.addListener(handlePortOnDisconnect);
 
   async function handleFido2Message(
