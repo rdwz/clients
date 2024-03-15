@@ -1,10 +1,9 @@
 import { Component, HostListener, Optional } from "@angular/core";
 import { BehaviorSubject, map } from "rxjs";
 
-import { SideNavService } from "../layout/side-nav.service";
-
 import { NavBaseComponent } from "./nav-base.component";
 import { NavGroupComponent } from "./nav-group.component";
+import { SideNavService } from "./side-nav.service";
 
 @Component({
   selector: "bit-nav-item",

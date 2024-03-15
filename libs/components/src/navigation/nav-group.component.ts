@@ -10,9 +10,8 @@ import {
   SkipSelf,
 } from "@angular/core";
 
-import { SideNavService } from "../layout/side-nav.service";
-
 import { NavBaseComponent } from "./nav-base.component";
+import { SideNavService } from "./side-nav.service";
 
 @Component({
   selector: "bit-nav-group",

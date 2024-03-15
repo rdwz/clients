@@ -1,6 +1,6 @@
 import { Component } from "@angular/core";
 
-import { SideNavService } from "../layout/side-nav.service";
+import { SideNavService } from "./side-nav.service";
 
 @Component({
   selector: "bit-nav-divider",

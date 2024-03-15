@@ -1,5 +1,5 @@
-<bit-layout variant="secondary">
-  <nav slot="side-nav" *ngIf="organization$ | async as organization">
+<bit-layout>
+  <bit-side-nav variant="secondary" *ngIf="organization$ | async as organization">
     <bit-nav-logo [openIcon]="logo" route="." [ariaLabel]="'adminConsole' | i18n"></bit-nav-logo>
     <org-switcher [filter]="orgFilter"></org-switcher>
 
@@ -103,7 +103,7 @@
         *ngIf="organization.canManageScim"
       ></bit-nav-item>
     </bit-nav-group>
-  </nav>
+  </bit-side-nav>
 
   <ng-container *ngIf="organization$ | async as organization">
     <bit-banner

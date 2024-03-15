@@ -1,5 +1,5 @@
 <bit-layout variant="secondary">
-  <nav slot="side-nav" *ngIf="provider">
+  <bit-side-nav *ngIf="provider">
     <bit-nav-logo [openIcon]="logo" route="." [ariaLabel]="'providerPortal' | i18n"></bit-nav-logo>
 
     <bit-nav-item icon="bwi-bank" [text]="'clients' | i18n" route="clients"></bit-nav-item>
@@ -21,7 +21,7 @@
       route="settings"
       *ngIf="showSettingsTab"
     ></bit-nav-item>
-  </nav>
+  </bit-side-nav>
   <app-payment-method-warnings
     *ngIf="showPaymentMethodWarningBanners$ | async"
   ></app-payment-method-warnings>

@@ -19,17 +19,7 @@
     </nav>
   </div>
   <div class="tw-group tw-flex tw-w-full">
-    <bit-side-nav
-      [ngStyle]="
-        variant === 'secondary' && {
-          '--color-text-alt2': 'var(--color-text-main)',
-          '--color-background-alt3': 'var(--color-secondary-100)',
-          '--color-background-alt4': 'var(--color-secondary-300)'
-        }
-      "
-    >
-      <ng-content select="[slot=side-nav]"></ng-content>
-    </bit-side-nav>
+    <ng-content select="bit-side-nav"></ng-content>
     <main
       [id]="mainContentId"
       tabindex="-1"

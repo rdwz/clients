@@ -1,7 +1,8 @@
 import { Component, Input } from "@angular/core";
 
 import { Icon } from "../icon";
-import { SideNavService } from "../layout/side-nav.service";
+
+import { SideNavService } from "./side-nav.service";
 
 @Component({
   selector: "bit-nav-logo",
