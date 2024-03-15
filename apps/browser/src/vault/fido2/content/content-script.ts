@@ -19,22 +19,25 @@ import { MessageWithMetadata, Messenger } from "./messaging/messenger";
     return;
   }
 
+  // Initialization logic, set up the messenger and connect a port to the background script.
   const messenger = Messenger.forDOMCommunication(window);
   messenger.handler = handleFido2Message;
-
   const port = chrome.runtime.connect({ name: Fido2PortName.InjectedScript });
   port.onDisconnect.addListener(handlePortOnDisconnect);
 
+  /**
+   * Handles FIDO2 credential requests and returns the result.
+   *
+   * @param message - The message to handle.
+   * @param abortController - The abort controller used to handle exit conditions from the FIDO2 request.
+   */
   async function handleFido2Message(
     message: MessageWithMetadata,
     abortController: AbortController,
   ) {
     const requestId = Date.now().toString();
     const abortHandler = () =>
-      chrome.runtime.sendMessage({
-        command: "fido2AbortRequest",
-        abortedRequestId: requestId,
-      });
+      sendExtensionMessage("fido2AbortRequest", { abortedRequestId: requestId });
     abortController.signal.addEventListener("abort", abortHandler);
 
     try {
@@ -54,10 +57,14 @@ import { MessageWithMetadata, Messenger } from "./messaging/messenger";
     } finally {
       abortController.signal.removeEventListener("abort", abortHandler);
     }
-
-    return undefined;
   }
 
+  /**
+   * Handles the credential creation request message and returns the result.
+   *
+   * @param requestId - The request ID of the message.
+   * @param data - Data associated with the credential request.
+   */
   async function handleCredentialCreationRequestMessage(
     requestId: string,
     data: InsecureCreateCredentialParams,
@@ -70,6 +77,12 @@ import { MessageWithMetadata, Messenger } from "./messaging/messenger";
     );
   }
 
+  /**
+   * Handles the credential get request message and returns the result.
+   *
+   * @param requestId - The request ID of the message.
+   * @param data - Data associated with the credential request.
+   */
   async function handleCredentialGetRequestMessage(
     requestId: string,
     data: InsecureAssertCredentialParams,
@@ -82,6 +95,15 @@ import { MessageWithMetadata, Messenger } from "./messaging/messenger";
     );
   }
 
+  /**
+   * Sends a message to the extension to handle the
+   * credential request and returns the result.
+   *
+   * @param command - The command to send to the extension.
+   * @param type - The type of message, either CredentialCreationResponse or CredentialGetResponse.
+   * @param requestId - The request ID of the message.
+   * @param messageData - Data associated with the credential request.
+   */
   async function respondToCredentialRequest(
     command: string,
     type: MessageType.CredentialCreationResponse | MessageType.CredentialGetResponse,
@@ -103,6 +125,10 @@ import { MessageWithMetadata, Messenger } from "./messaging/messenger";
     return Promise.resolve({ type, result });
   }
 
+  /**
+   * Validates if the current page is in
+   * the same origin with its ancestors.
+   */
   function isSameOriginWithAncestors() {
     try {
       return globalContext.self === globalContext.top;
@@ -111,7 +137,11 @@ import { MessageWithMetadata, Messenger } from "./messaging/messenger";
     }
   }
 
-  // Cleanup the messenger and remove the event listener
+  /**
+   * Handles the disconnect event of the port. Calls
+   * to the messenger to destroy and tear down the
+   * implemented page-script.js logic.
+   */
   function handlePortOnDisconnect() {
     void messenger.destroy();
   }
