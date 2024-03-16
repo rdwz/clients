@@ -23,7 +23,7 @@ export default {
   component: NavGroupComponent,
   decorators: [
     positionFixedWrapperDecorator(
-      (story) => `<bit-layout><div slot="side-nav">${story}</div></bit-layout>`,
+      (story) => `<bit-layout><bit-side-nav>${story}</bit-side-nav></bit-layout>`,
     ),
     moduleMetadata({
       imports: [

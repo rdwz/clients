@@ -52,7 +52,7 @@ export const WithContent: Story = {
     props: args,
     template: /* HTML */ `
       <bit-layout>
-        <nav slot="side-nav">
+        <bit-side-nav>
           <bit-nav-group text="Tree example" icon="bwi-family" [open]="true">
             <bit-nav-group
               text="Level 1 - with children (empty)"
@@ -217,7 +217,7 @@ export const WithContent: Story = {
               variant="tree"
             ></bit-nav-item>
           </bit-nav-group>
-        </nav>
+        </bit-side-nav>
         <bit-callout title="Foobar"> Hello world! </bit-callout>
       </bit-layout>
     `,
@@ -235,8 +235,8 @@ export const Secondary: Story = {
   render: (args) => ({
     props: args,
     template: /* HTML */ `
-      <bit-layout variant="secondary">
-        <nav slot="side-nav">
+      <bit-layout>
+        <bit-side-nav variant="secondary">
           <bit-nav-item text="Item A" icon="bwi-collection"></bit-nav-item>
           <bit-nav-item text="Item B" icon="bwi-collection"></bit-nav-item>
           <bit-nav-divider></bit-nav-divider>
@@ -309,7 +309,7 @@ export const Secondary: Story = {
               variant="tree"
             ></bit-nav-item>
           </bit-nav-group>
-        </nav>
+        </bit-side-nav>
         <bit-callout title="Foobar"> Hello world! </bit-callout>
       </bit-layout>
     `,
