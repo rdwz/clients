@@ -17,15 +17,6 @@ export class LayoutComponent {
 
   constructor(protected sideNavService: SideNavService) {}
 
-  protected handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Escape") {
-      this.sideNavService.setClose();
-      document.getElementById("bit-side-nav-toggle-button").focus();
-      return false;
-    }
-
-    return true;
-  };
   focusMainContent() {
     document.getElementById(this.mainContentId)?.focus();
   }

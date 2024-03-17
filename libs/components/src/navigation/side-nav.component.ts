@@ -1,4 +1,4 @@
-import { Component, Input } from "@angular/core";
+import { Component, ElementRef, Input, ViewChild } from "@angular/core";
 
 import { SideNavService } from "./side-nav.service";
 
@@ -9,12 +9,15 @@ import { SideNavService } from "./side-nav.service";
 export class SideNavComponent {
   @Input() variant: "primary" | "secondary" = "primary";
 
+  @ViewChild("toggleButton", { read: ElementRef, static: true })
+  private toggleButton: ElementRef<HTMLButtonElement>;
+
   constructor(protected sideNavService: SideNavService) {}
 
   protected handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
       this.sideNavService.setClose();
-      document.getElementById("bit-side-nav-toggle-button").focus();
+      this.toggleButton?.nativeElement.focus();
       return false;
     }
 

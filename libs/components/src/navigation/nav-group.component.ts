@@ -44,8 +44,8 @@ export class NavGroupComponent extends NavBaseComponent implements AfterContentI
   openChange = new EventEmitter<boolean>();
 
   constructor(
-    @Optional() @SkipSelf() private parentNavGroup: NavGroupComponent,
     protected sideNavService: SideNavService,
+    @Optional() @SkipSelf() private parentNavGroup: NavGroupComponent,
   ) {
     super();
   }

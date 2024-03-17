@@ -4,7 +4,7 @@
     isOverlay: sideNavService.isOverlay$ | async
   } as data"
   id="bit-side-nav"
-  class="tw-fixed tw-inset-y-0 tw-left-0 tw-z-30 tw-flex tw-h-screen tw-flex-col tw-overscroll-none tw-overflow-auto tw-bg-background-alt3 md:tw-sticky tw-outline-none"
+  class="tw-fixed md:tw-sticky tw-inset-y-0 tw-left-0 tw-z-30 tw-flex tw-h-screen tw-flex-col tw-overscroll-none tw-overflow-auto tw-bg-background-alt3 tw-outline-none"
   [ngClass]="{ 'tw-w-60': data.open }"
   [ngStyle]="
     variant === 'secondary' && {
@@ -22,7 +22,7 @@
   <div class="tw-sticky tw-bottom-0 tw-left-0 tw-mt-auto tw-w-full tw-bg-background-alt3">
     <div class="tw-mx-0.5 tw-my-4 tw-w-[3.75rem]">
       <button
-        id="bit-side-nav-toggle-button"
+        #toggleButton
         type="button"
         class="tw-mx-auto tw-block tw-max-w-fit"
         [bitIconButton]="data.open ? 'bwi-angle-left' : 'bwi-angle-right'"

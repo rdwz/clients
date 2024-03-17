@@ -13,14 +13,14 @@ export class NavLogoComponent {
   @Input() closedIcon = "bwi-shield";
 
   /** Icon that is displayed when the side nav is open */
-  @Input() openIcon: Icon;
+  @Input({ required: true }) openIcon: Icon;
 
   /**
    * Route to be passed to internal `routerLink`
    */
-  @Input() route: string | any[];
+  @Input({ required: true }) route: string | any[];
 
-  @Input() ariaLabel: string;
+  @Input({ required: true }) ariaLabel: string;
 
   constructor(protected sideNavService: SideNavService) {}
 }

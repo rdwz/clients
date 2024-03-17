@@ -48,8 +48,8 @@ export class NavItemComponent extends NavBaseComponent {
   }
 
   constructor(
-    @Optional() private parentNavGroup: NavGroupComponent,
     protected sideNavService: SideNavService,
+    @Optional() private parentNavGroup: NavGroupComponent,
   ) {
     super();
   }
