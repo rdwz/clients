@@ -36,6 +36,8 @@ import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { EventCollectionService } from "@bitwarden/common/abstractions/event/event-collection.service";
 import { SearchService } from "@bitwarden/common/abstractions/search.service";
 import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
+import { OrganizationUserService } from "@bitwarden/common/admin-console/abstractions/organization-user/organization-user.service";
+import { OrganizationUserUserDetailsResponse } from "@bitwarden/common/admin-console/abstractions/organization-user/responses";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
 import { EventType } from "@bitwarden/common/enums";
 import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
@@ -153,6 +155,7 @@ export class VaultComponent implements OnInit, OnDestroy {
   protected get flexibleCollectionsV1Enabled(): boolean {
     return this._flexibleCollectionsV1FlagEnabled && this.organization?.flexibleCollections;
   }
+  protected orgRevokedUsers: OrganizationUserUserDetailsResponse[];
 
   private searchText$ = new Subject<string>();
   private refresh$ = new BehaviorSubject<void>(null);
@@ -187,6 +190,7 @@ export class VaultComponent implements OnInit, OnDestroy {
     private apiService: ApiService,
     private collectionService: CollectionService,
     protected configService: ConfigServiceAbstraction,
+    private organizationUserService: OrganizationUserService,
   ) {}
 
   async ngOnInit() {
@@ -351,6 +355,12 @@ export class VaultComponent implements OnInit, OnDestroy {
       shareReplay({ refCount: true, bufferSize: 1 }),
     );
 
+    this.orgRevokedUsers = (
+      await this.organizationUserService.getAllUsers(await firstValueFrom(organizationId$))
+    ).data.filter((user: OrganizationUserUserDetailsResponse) => {
+      return user.status === -1;
+    });
+
     const collections$ = combineLatest([
       nestedCollections$,
       filter$,
@@ -369,16 +379,13 @@ export class VaultComponent implements OnInit, OnDestroy {
         let collectionsToReturn = [];
         if (filter.collectionId === undefined || filter.collectionId === All) {
           collectionsToReturn = collections.map((c) => {
-            if (
-              c.node.allGroups.length === 0 &&
-              c.node.allUsers.length === 0 &&
-              !this.organization.canEditAllCiphers(this.flexibleCollectionsV1Enabled)
-            ) {
+            const groupsCanManage = c.node.groupsCanManage();
+            const usersCanManage = c.node.usersCanManage(this.orgRevokedUsers);
+            if (groupsCanManage.length === 0 && usersCanManage.length === 0) {
               c.node.addAccess = true;
               this.showAddAccessToggle = true;
             } else {
               c.node.addAccess = false;
-              this.showAddAccessToggle = false;
             }
             return c.node;
           });

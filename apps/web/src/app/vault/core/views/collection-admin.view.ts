@@ -1,3 +1,4 @@
+import { OrganizationUserUserDetailsResponse } from "@bitwarden/common/admin-console/abstractions/organization-user/responses";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
 import { CollectionAccessDetailsResponse } from "@bitwarden/common/src/vault/models/response/collection.response";
 import { CollectionView } from "@bitwarden/common/vault/models/view/collection.view";
@@ -32,12 +33,31 @@ export class CollectionAdminView extends CollectionView {
     this.assigned = response.assigned;
   }
 
-  get allGroups() {
-    return this.groups;
+  groupsCanManage() {
+    if (this.groups.length === 0) {
+      return this.groups;
+    }
+
+    const returnedGroups = this.groups.filter((group) => {
+      if (group.manage) {
+        return group;
+      }
+    });
+    return returnedGroups;
   }
 
-  get allUsers() {
-    return this.users;
+  usersCanManage(revokedUsers: OrganizationUserUserDetailsResponse[]) {
+    if (this.users.length === 0) {
+      return this.users;
+    }
+
+    const returnedUsers = this.users.filter((user) => {
+      const isRevoked = revokedUsers.some((revoked) => revoked.id === user.id);
+      if (user.manage && !isRevoked) {
+        return user;
+      }
+    });
+    return returnedUsers;
   }
 
   override canEdit(org: Organization): boolean {
