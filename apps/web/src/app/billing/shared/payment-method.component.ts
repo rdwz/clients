@@ -15,6 +15,8 @@ import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/pl
 import { DialogService } from "@bitwarden/components";
 
 import { TaxInfoComponent } from "./tax-info.component";
+import { AdjustPaymentDialogResult, openAdjustPaymentDialog } from "./adjust-payment.component";
+import { lastValueFrom } from "rxjs";
 
 @Component({
   templateUrl: "payment-method.component.html",
@@ -25,7 +27,6 @@ export class PaymentMethodComponent implements OnInit {
 
   loading = false;
   firstLoaded = false;
-  showAdjustPayment = false;
   showAddCredit = false;
   billing: BillingPaymentResponse;
   org: OrganizationSubscriptionResponse;
@@ -120,16 +121,16 @@ export class PaymentMethodComponent implements OnInit {
     }
   }
 
-  changePayment() {
-    this.showAdjustPayment = true;
-  }
-
-  closePayment(load: boolean) {
-    this.showAdjustPayment = false;
-    if (load) {
-      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.load();
+  async changePayment() {
+    const dialogRef = openAdjustPaymentDialog(this.dialogService, {
+      data: {
+        organizationId: this.organizationId,
+        currentType: this.paymentSource !== null ? this.paymentSource.type : null,
+      },
+    });
+    const result: any = await lastValueFrom(dialogRef.closed);
+    if (result === AdjustPaymentDialogResult.Adjusted) {
+      await this.load();
     }
   }
 

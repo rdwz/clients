@@ -1,4 +1,6 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from "@angular/core";
+import { DIALOG_DATA, DialogConfig, DialogRef } from "@angular/cdk/dialog";
+import { Component, Inject, ViewChild } from "@angular/core";
+import { FormGroup } from "@angular/forms";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { OrganizationApiServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/organization/organization-api.service.abstraction";
@@ -8,9 +10,20 @@ import { PaymentRequest } from "@bitwarden/common/billing/models/request/payment
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
+import { DialogService } from "@bitwarden/components";
 
 import { PaymentComponent } from "./payment.component";
 import { TaxInfoComponent } from "./tax-info.component";
+
+export interface AdjustPaymentDialogData {
+  organizationId: string;
+  currentType: PaymentMethodType;
+}
+
+export enum AdjustPaymentDialogResult {
+  Adjusted = "adjusted",
+  Cancelled = "cancelled",
+}
 
 @Component({
   selector: "app-adjust-payment",
@@ -20,24 +33,28 @@ export class AdjustPaymentComponent {
   @ViewChild(PaymentComponent, { static: true }) paymentComponent: PaymentComponent;
   @ViewChild(TaxInfoComponent, { static: true }) taxInfoComponent: TaxInfoComponent;
 
-  @Input() currentType?: PaymentMethodType;
-  @Input() organizationId: string;
-  @Output() onAdjusted = new EventEmitter();
-  @Output() onCanceled = new EventEmitter();
-
+  organizationId: string;
+  currentType: PaymentMethodType;
   paymentMethodType = PaymentMethodType;
   formPromise: Promise<void>;
 
+  protected formGroup = new FormGroup({});
+
   constructor(
+    private dialogRef: DialogRef,
+    @Inject(DIALOG_DATA) protected data: AdjustPaymentDialogData,
     private apiService: ApiService,
     private i18nService: I18nService,
     private platformUtilsService: PlatformUtilsService,
     private logService: LogService,
     private organizationApiService: OrganizationApiServiceAbstraction,
     private paymentMethodWarningService: PaymentMethodWarningService,
-  ) {}
+  ) {
+    this.organizationId = data.organizationId;
+    this.currentType = data.currentType;
+  }
 
-  async submit() {
+  submit = async () => {
     try {
       const request = new PaymentRequest();
       this.formPromise = this.paymentComponent.createPaymentToken().then((result) => {
@@ -66,14 +83,15 @@ export class AdjustPaymentComponent {
         null,
         this.i18nService.t("updatedPaymentMethod"),
       );
-      this.onAdjusted.emit();
+      this.dialogRef.close(AdjustPaymentDialogResult.Adjusted);
     } catch (e) {
       this.logService.error(e);
+      throw e;
     }
-  }
+  };
 
   cancel() {
-    this.onCanceled.emit();
+    this.dialogRef.close(AdjustPaymentDialogResult.Cancelled);
   }
 
   changeCountry() {
@@ -87,4 +105,16 @@ export class AdjustPaymentComponent {
       }
     }
   }
+}
+
+/**
+ * Strongly typed helper to open a AdjustPaymentDialog
+ * @param dialogService Instance of the dialog service that will be used to open the dialog
+ * @param config Configuration for the dialog
+ */
+export function openAdjustPaymentDialog(
+  dialogService: DialogService,
+  config: DialogConfig<AdjustPaymentDialogData>,
+) {
+  return dialogService.open<AdjustPaymentDialogResult>(AdjustPaymentComponent, config);
 }
