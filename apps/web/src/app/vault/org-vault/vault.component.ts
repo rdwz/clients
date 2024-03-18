@@ -706,7 +706,7 @@ export class VaultComponent implements OnInit, OnDestroy {
         ),
       );
     } else {
-      collections = await firstValueFrom(this.vaultFilterService.filteredCollections$);
+      collections = await firstValueFrom(this.allCollectionsWithoutUnassigned$);
     }
     const [modal] = await this.modalService.openViewRef(
       CollectionsComponent,
