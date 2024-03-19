@@ -53,7 +53,7 @@ export class CollectionView implements View, ITreeNodeObject {
       );
     }
 
-    return org?.canEditAnyCollection || (org?.canEditAssignedCollections && this.assigned);
+    return org?.canEditAnyCollection(false) || (org?.canEditAssignedCollections && this.assigned);
   }
 
   // For editing collection details, not the items within it.
