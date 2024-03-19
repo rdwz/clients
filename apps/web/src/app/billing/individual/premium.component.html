@@ -2,7 +2,7 @@
   <h2 *ngIf="!selfHosted" bitTypography="h2">{{ "goPremium" | i18n }}</h2>
   <bit-callout
     type="info"
-    *ngIf="canAccessPremium"
+    *ngIf="canAccessPremium$ | async"
     title="{{ 'youHavePremiumAccess' | i18n }}"
     icon="bwi bwi-star-f"
   >
