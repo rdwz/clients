@@ -55,7 +55,7 @@ export class CollectionsComponent implements OnInit {
     }
 
     if (this.organization == null) {
-      this.organization = this.organizationService.get(this.cipher.organizationId);
+      this.organization = await this.organizationService.get(this.cipher.organizationId);
     }
   }
 
