@@ -80,8 +80,6 @@ export class VaultHeaderComponent implements OnInit {
       FeatureFlag.RestrictProviderAccess,
       false,
     );
-
-    this.restrictProviderAccessFlag = false;
   }
 
   get title() {
