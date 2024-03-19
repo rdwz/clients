@@ -387,20 +387,22 @@ export class OrganizationSubscriptionCloudComponent implements OnInit, OnDestroy
     this.load();
   }
 
-  async adjustStorage(add: boolean) {
-    const dialogRef = openAdjustStorageDialog(this.dialogService, {
-      data: {
-        storageGbPrice: this.storageGbPrice,
-        add: add,
-        organizationId: this.organizationId,
-        interval: this.billingInterval,
-      },
-    });
-    const result: any = await lastValueFrom(dialogRef.closed);
-    if (result === AdjustStorageDialogResult.Adjusted) {
-      await this.load();
-    }
-  }
+  adjustStorage = (add: boolean) => {
+    return async () => {
+      const dialogRef = openAdjustStorageDialog(this.dialogService, {
+        data: {
+          storageGbPrice: this.storageGbPrice,
+          add: add,
+          organizationId: this.organizationId,
+          interval: this.billingInterval,
+        },
+      });
+      const result = await lastValueFrom(dialogRef.closed);
+      if (result === AdjustStorageDialogResult.Adjusted) {
+        await this.load();
+      }
+    };
+  };
 
   removeSponsorship = async () => {
     const confirmed = await this.dialogService.openSimpleDialog({

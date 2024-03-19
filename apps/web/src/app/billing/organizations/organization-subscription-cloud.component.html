@@ -163,10 +163,20 @@
       <ng-container *ngIf="subscription && !subscription.cancelled && !subscriptionMarkedForCancel">
         <div class="tw-mt-3">
           <div class="tw-flex tw-space-x-2">
-            <button bitButton buttonType="secondary" type="button" (click)="adjustStorage(true)">
+            <button
+              bitButton
+              buttonType="secondary"
+              type="button"
+              [bitAction]="adjustStorage(true)"
+            >
               {{ "addStorage" | i18n }}
             </button>
-            <button bitButton buttonType="secondary" type="button" (click)="adjustStorage(false)">
+            <button
+              bitButton
+              buttonType="secondary"
+              type="button"
+              [bitAction]="adjustStorage(false)"
+            >
               {{ "removeStorage" | i18n }}
             </button>
           </div>

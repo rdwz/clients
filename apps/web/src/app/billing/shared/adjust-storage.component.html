@@ -4,15 +4,7 @@
       <div class="tw-grid tw-grid-cols-3">
         <bit-form-field class="tw-col-span-2">
           <bit-label>{{ (add ? "gbStorageAdd" : "gbStorageRemove") | i18n }}</bit-label>
-          <input
-            bitInput
-            type="number"
-            formControlName="storageAdjustment"
-            min="0"
-            max="99"
-            step="1"
-            required
-          />
+          <input bitInput type="number" formControlName="storageAdjustment" />
           <bit-hint *ngIf="add">
             <strong>{{ "total" | i18n }}:</strong>
             {{ formGroup.get("storageAdjustment").value || 0 }} GB &times;
@@ -28,7 +20,7 @@
       <button type="submit" bitButton bitFormButton buttonType="primary">
         {{ "submit" | i18n }}
       </button>
-      <button type="button" bitButton buttonType="secondary" bitDialogClose>
+      <button type="button" bitButton bitFormButton buttonType="secondary" bitDialogClose>
         {{ "cancel" | i18n }}
       </button>
     </ng-container>

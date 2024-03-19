@@ -15,7 +15,7 @@ import { DialogService } from "@bitwarden/components";
 import { PaymentComponent } from "./payment.component";
 
 export interface AdjustStorageDialogData {
-  storageGbPrice: any;
+  storageGbPrice: number;
   add: boolean;
   organizationId?: string;
   interval?: string;

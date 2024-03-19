@@ -171,7 +171,7 @@
     <ng-container *ngIf="subscription && !subscription.cancelled && !subscriptionMarkedForCancel">
       <div class="mt-3">
         <div class="d-flex">
-          <button bitButton type="button" buttonType="secondary" (click)="adjustStorage(true)">
+          <button bitButton type="button" buttonType="secondary" [bitAction]="adjustStorage(true)">
             {{ "addStorage" | i18n }}
           </button>
           <button
@@ -179,7 +179,7 @@
             type="button"
             buttonType="secondary"
             class="tw-ml-1"
-            (click)="adjustStorage(false)"
+            [bitAction]="adjustStorage(false)"
           >
             {{ "removeStorage" | i18n }}
           </button>
