@@ -20,6 +20,7 @@ import { InternalOrganizationServiceAbstraction } from "@bitwarden/common/admin-
 import { PolicyApiServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/policy/policy-api.service.abstraction";
 import { InternalPolicyService as InternalPolicyServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { ProviderService as ProviderServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/provider.service";
+import { OrganizationService } from "@bitwarden/common/admin-console/services/organization/organization.service";
 import { PolicyApiService } from "@bitwarden/common/admin-console/services/policy/policy-api.service";
 import { PolicyService } from "@bitwarden/common/admin-console/services/policy/policy.service";
 import { ProviderService } from "@bitwarden/common/admin-console/services/provider.service";
@@ -64,6 +65,8 @@ import {
   UserNotificationSettingsService,
   UserNotificationSettingsServiceAbstraction,
 } from "@bitwarden/common/autofill/services/user-notification-settings.service";
+import { BillingAccountProfileStateService } from "@bitwarden/common/billing/abstractions/account/billing-account-profile-state.service";
+import { DefaultBillingAccountProfileStateService } from "@bitwarden/common/billing/services/account/billing-account-profile-state.service";
 import { AppIdService as AppIdServiceAbstraction } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { ConfigApiServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config-api.service.abstraction";
 import { CryptoFunctionService as CryptoFunctionServiceAbstraction } from "@bitwarden/common/platform/abstractions/crypto-function.service";
@@ -180,7 +183,6 @@ import {
   VaultExportServiceAbstraction,
 } from "@bitwarden/vault-export-core";
 
-import { BrowserOrganizationService } from "../admin-console/services/browser-organization.service";
 import ContextMenusBackground from "../autofill/background/context-menus.background";
 import NotificationBackground from "../autofill/background/notification.background";
 import OverlayBackground from "../autofill/background/overlay.background";
@@ -311,6 +313,7 @@ export default class MainBackground {
   biometricStateService: BiometricStateService;
   stateEventRunnerService: StateEventRunnerService;
   ssoLoginService: SsoLoginServiceAbstraction;
+  billingAccountProfileStateService: BillingAccountProfileStateService;
 
   onUpdatedRan: boolean;
   onReplacedRan: boolean;
@@ -427,6 +430,21 @@ export default class MainBackground {
     );
     this.biometricStateService = new DefaultBiometricStateService(this.stateProvider);
 
+    this.userNotificationSettingsService = new UserNotificationSettingsService(this.stateProvider);
+    this.platformUtilsService = new BackgroundPlatformUtilsService(
+      this.messagingService,
+      (clipboardValue, clearMs) => this.clearClipboard(clipboardValue, clearMs),
+      async () => this.biometricUnlock(),
+      self,
+    );
+
+    this.tokenService = new TokenService(
+      this.singleUserStateProvider,
+      this.globalStateProvider,
+      this.platformUtilsService.supportsSecureStorage(),
+      this.secureStorageService,
+    );
+
     const migrationRunner = new MigrationRunner(
       this.storageService,
       this.logService,
@@ -441,14 +459,8 @@ export default class MainBackground {
       new StateFactory(GlobalState, Account),
       this.accountService,
       this.environmentService,
+      this.tokenService,
       migrationRunner,
-    );
-    this.userNotificationSettingsService = new UserNotificationSettingsService(this.stateProvider);
-    this.platformUtilsService = new BackgroundPlatformUtilsService(
-      this.messagingService,
-      (clipboardValue, clearMs) => this.clearClipboard(clipboardValue, clearMs),
-      async () => this.biometricUnlock(),
-      self,
     );
 
     const themeStateService = new DefaultThemeStateService(this.globalStateProvider);
@@ -465,13 +477,14 @@ export default class MainBackground {
       this.stateProvider,
       this.biometricStateService,
     );
-    this.tokenService = new TokenService(this.stateService);
+
     this.appIdService = new AppIdService(this.globalStateProvider);
     this.apiService = new ApiService(
       this.tokenService,
       this.platformUtilsService,
       this.environmentService,
       this.appIdService,
+      this.stateService,
       (expired: boolean) => this.logout(expired),
     );
     this.domainSettingsService = new DefaultDomainSettingsService(this.stateProvider);
@@ -489,10 +502,7 @@ export default class MainBackground {
       this.stateProvider,
     );
     this.syncNotifierService = new SyncNotifierService();
-    this.organizationService = new BrowserOrganizationService(
-      this.stateService,
-      this.stateProvider,
-    );
+    this.organizationService = new OrganizationService(this.stateProvider);
     this.policyService = new PolicyService(this.stateProvider, this.organizationService);
     this.autofillSettingsService = new AutofillSettingsService(
       this.stateProvider,
@@ -562,6 +572,10 @@ export default class MainBackground {
       this.stateService,
     );
 
+    this.billingAccountProfileStateService = new DefaultBillingAccountProfileStateService(
+      this.activeUserStateProvider,
+    );
+
     this.loginStrategyService = new LoginStrategyService(
       this.cryptoService,
       this.apiService,
@@ -581,6 +595,7 @@ export default class MainBackground {
       this.deviceTrustCryptoService,
       this.authRequestService,
       this.globalStateProvider,
+      this.billingAccountProfileStateService,
     );
 
     this.ssoLoginService = new SsoLoginService(this.stateProvider);
@@ -708,17 +723,20 @@ export default class MainBackground {
       this.sendApiService,
       this.avatarService,
       logoutCallback,
+      this.billingAccountProfileStateService,
     );
     this.eventUploadService = new EventUploadService(
       this.apiService,
-      this.stateService,
+      this.stateProvider,
       this.logService,
+      this.accountService,
     );
     this.eventCollectionService = new EventCollectionService(
       this.cipherService,
-      this.stateService,
+      this.stateProvider,
       this.organizationService,
       this.eventUploadService,
+      this.accountService,
     );
     this.totpService = new TotpService(this.cryptoFunctionService, this.logService);
 
@@ -731,6 +749,7 @@ export default class MainBackground {
       this.logService,
       this.domainSettingsService,
       this.userVerificationService,
+      this.billingAccountProfileStateService,
     );
     this.auditService = new AuditService(this.cryptoFunctionService, this.apiService);
 
@@ -791,7 +810,6 @@ export default class MainBackground {
       this.fido2AuthenticatorService,
       this.configService,
       this.authService,
-      this.stateService,
       this.vaultSettingsService,
       this.domainSettingsService,
       this.logService,
@@ -839,7 +857,6 @@ export default class MainBackground {
       this.cryptoService,
       this.cryptoFunctionService,
       this.runtimeBackground,
-      this.i18nService,
       this.messagingService,
       this.appIdService,
       this.platformUtilsService,
@@ -953,6 +970,7 @@ export default class MainBackground {
         this.autofillSettingsService,
         this.i18nService,
         this.logService,
+        this.billingAccountProfileStateService,
       );
 
       this.cipherContextMenuHandler = new CipherContextMenuHandler(
@@ -1092,7 +1110,7 @@ export default class MainBackground {
   async logout(expired: boolean, userId?: UserId) {
     userId ??= (await firstValueFrom(this.accountService.activeAccount$))?.id;
 
-    await this.eventUploadService.uploadEvents(userId);
+    await this.eventUploadService.uploadEvents(userId as UserId);
 
     await Promise.all([
       this.syncService.setLastSync(new Date(0), userId),
