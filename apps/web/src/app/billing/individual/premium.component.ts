@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild } from "@angular/core";
+import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
@@ -25,11 +26,15 @@ export class PremiumComponent implements OnInit {
   premiumPrice = 10;
   familyPlanMaxUserCount = 6;
   storageGbPrice = 4;
-  additionalStorage = 0;
   cloudWebVaultUrl: string;
 
   formPromise: Promise<any>;
-
+  protected licenseForm = new FormGroup({
+    file: new FormControl(null, [Validators.required]),
+  });
+  protected addonForm = new FormGroup({
+    additionalStorage: new FormControl(0),
+  });
   constructor(
     private apiService: ApiService,
     private i18nService: I18nService,
@@ -57,7 +62,9 @@ export class PremiumComponent implements OnInit {
     }
   }
 
-  async submit() {
+  submit = async () => {
+    this.licenseForm.markAllAsTouched();
+    this.addonForm.markAllAsTouched();
     let files: FileList = null;
     if (this.selfHosted) {
       const fileEl = document.getElementById("file") as HTMLInputElement;
@@ -86,11 +93,11 @@ export class PremiumComponent implements OnInit {
 
         const fd = new FormData();
         fd.append("license", files[0]);
-        this.formPromise = this.apiService.postAccountLicense(fd).then(() => {
+        await this.apiService.postAccountLicense(fd).then(() => {
           return this.finalizePremium();
         });
       } else {
-        this.formPromise = this.paymentComponent
+        await this.paymentComponent
           .createPaymentToken()
           .then((result) => {
             const fd = new FormData();
@@ -114,11 +121,11 @@ export class PremiumComponent implements OnInit {
             }
           });
       }
-      await this.formPromise;
     } catch (e) {
       this.logService.error(e);
+      throw e;
     }
-  }
+  };
 
   async finalizePremium() {
     await this.apiService.refreshIdentityToken();
@@ -130,6 +137,9 @@ export class PremiumComponent implements OnInit {
     this.router.navigate(["/settings/subscription/user-subscription"]);
   }
 
+  get additionalStorage(): number {
+    return this.addonForm.get("additionalStorage").value;
+  }
   get additionalStorageTotal(): number {
     return this.storageGbPrice * Math.abs(this.additionalStorage || 0);
   }
