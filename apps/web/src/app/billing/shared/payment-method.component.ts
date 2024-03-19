@@ -108,17 +108,17 @@ export class PaymentMethodComponent implements OnInit {
     this.loading = false;
   }
 
-  async addCredit() {
+  addCredit = async () => {
     const dialogRef = openAddCreditDialog(this.dialogService, {
       data: {
         organizationId: this.organizationId,
       },
     });
-    const result: any = await lastValueFrom(dialogRef.closed);
+    const result = await lastValueFrom(dialogRef.closed);
     if (result === AddCreditDialogResult.Added) {
       await this.load();
     }
-  }
+  };
 
   changePayment() {
     this.showAdjustPayment = true;

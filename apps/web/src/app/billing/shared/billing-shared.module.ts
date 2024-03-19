@@ -30,7 +30,6 @@ import { UpdateLicenseComponent } from "./update-license.component";
     SharedModule,
     PaymentComponent,
     TaxInfoComponent,
-    AddCreditDialogComponent,
     AdjustStorageComponent,
     BillingHistoryComponent,
     SecretsManagerSubscribeComponent,

@@ -33,7 +33,7 @@
       <strong>{{ creditOrBalance | currency: "$" }}</strong>
     </p>
     <p>{{ "creditAppliedDesc" | i18n }}</p>
-    <button type="button" bitButton buttonType="secondary" (click)="addCredit()">
+    <button type="button" bitButton buttonType="secondary" [bitAction]="addCredit">
       {{ "addCredit" | i18n }}
     </button>
     <h2 class="spaced-header">{{ "paymentMethod" | i18n }}</h2>
