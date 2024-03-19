@@ -1,11 +1,9 @@
 import { Observable } from "rxjs";
 
-import { OrganizationData } from "../../admin-console/models/data/organization.data";
 import { AdminAuthRequestStorable } from "../../auth/models/domain/admin-auth-req-storable";
 import { ForceSetPasswordReason } from "../../auth/models/domain/force-set-password-reason";
 import { KdfConfig } from "../../auth/models/domain/kdf-config";
 import { BiometricKey } from "../../auth/types/biometric-key";
-import { EventData } from "../../models/data/event.data";
 import { WindowState } from "../../models/domain/window-state";
 import { GeneratorOptions } from "../../tools/generator/generator-options";
 import { GeneratedPasswordHistory, PasswordGeneratorOptions } from "../../tools/generator/password";
@@ -172,14 +170,6 @@ export abstract class StateService<T extends Account = Account> {
    * @deprecated Do not call this directly, use SendService
    */
   setDecryptedSends: (value: SendView[], options?: StorageOptions) => Promise<void>;
-  /**
-   * @deprecated Do not call this, use SettingsService
-   */
-  getDisableFavicon: (options?: StorageOptions) => Promise<boolean>;
-  /**
-   * @deprecated Do not call this, use SettingsService
-   */
-  setDisableFavicon: (value: boolean, options?: StorageOptions) => Promise<void>;
   getDisableGa: (options?: StorageOptions) => Promise<boolean>;
   setDisableGa: (value: boolean, options?: StorageOptions) => Promise<void>;
   getDuckDuckGoSharedKey: (options?: StorageOptions) => Promise<string>;
@@ -254,8 +244,6 @@ export abstract class StateService<T extends Account = Account> {
    * @deprecated Do not call this directly, use SendService
    */
   setEncryptedSends: (value: { [id: string]: SendData }, options?: StorageOptions) => Promise<void>;
-  getEventCollection: (options?: StorageOptions) => Promise<EventData[]>;
-  setEventCollection: (value: EventData[], options?: StorageOptions) => Promise<void>;
   getEverBeenUnlocked: (options?: StorageOptions) => Promise<boolean>;
   setEverBeenUnlocked: (value: boolean, options?: StorageOptions) => Promise<void>;
   getForceSetPasswordReason: (options?: StorageOptions) => Promise<ForceSetPasswordReason>;
@@ -291,17 +279,6 @@ export abstract class StateService<T extends Account = Account> {
   setOpenAtLogin: (value: boolean, options?: StorageOptions) => Promise<void>;
   getOrganizationInvitation: (options?: StorageOptions) => Promise<any>;
   setOrganizationInvitation: (value: any, options?: StorageOptions) => Promise<void>;
-  /**
-   * @deprecated Do not call this directly, use OrganizationService
-   */
-  getOrganizations: (options?: StorageOptions) => Promise<{ [id: string]: OrganizationData }>;
-  /**
-   * @deprecated Do not call this directly, use OrganizationService
-   */
-  setOrganizations: (
-    value: { [id: string]: OrganizationData },
-    options?: StorageOptions,
-  ) => Promise<void>;
   getPasswordGenerationOptions: (options?: StorageOptions) => Promise<PasswordGeneratorOptions>;
   setPasswordGenerationOptions: (
     value: PasswordGeneratorOptions,

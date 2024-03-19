@@ -1,7 +1,6 @@
 import { BehaviorSubject, Observable, map } from "rxjs";
 import { Jsonify, JsonValue } from "type-fest";
 
-import { OrganizationData } from "../../admin-console/models/data/organization.data";
 import { AccountService } from "../../auth/abstractions/account.service";
 import { TokenService } from "../../auth/abstractions/token.service";
 import { AuthenticationStatus } from "../../auth/enums/authentication-status";
@@ -9,7 +8,6 @@ import { AdminAuthRequestStorable } from "../../auth/models/domain/admin-auth-re
 import { ForceSetPasswordReason } from "../../auth/models/domain/force-set-password-reason";
 import { KdfConfig } from "../../auth/models/domain/kdf-config";
 import { BiometricKey } from "../../auth/types/biometric-key";
-import { EventData } from "../../models/data/event.data";
 import { WindowState } from "../../models/domain/window-state";
 import { GeneratorOptions } from "../../tools/generator/generator-options";
 import { GeneratedPasswordHistory, PasswordGeneratorOptions } from "../../tools/generator/password";
@@ -712,27 +710,6 @@ export class StateService<
     );
   }
 
-  async getDisableFavicon(options?: StorageOptions): Promise<boolean> {
-    return (
-      (
-        await this.getGlobals(
-          this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
-        )
-      )?.disableFavicon ?? false
-    );
-  }
-
-  async setDisableFavicon(value: boolean, options?: StorageOptions): Promise<void> {
-    const globals = await this.getGlobals(
-      this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
-    );
-    globals.disableFavicon = value;
-    await this.saveGlobals(
-      globals,
-      this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
-    );
-  }
-
   async getDisableGa(options?: StorageOptions): Promise<boolean> {
     return (
       (await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskOptions())))
@@ -1177,24 +1154,6 @@ export class StateService<
     );
   }
 
-  @withPrototypeForArrayMembers(EventData)
-  async getEventCollection(options?: StorageOptions): Promise<EventData[]> {
-    return (
-      await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskOptions()))
-    )?.data?.eventCollection;
-  }
-
-  async setEventCollection(value: EventData[], options?: StorageOptions): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-    account.data.eventCollection = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-  }
-
   async getEverBeenUnlocked(options?: StorageOptions): Promise<boolean> {
     return (
       (await this.getAccount(this.reconcileOptions(options, await this.defaultInMemoryOptions())))
@@ -1471,32 +1430,6 @@ export class StateService<
     await this.saveGlobals(
       globals,
       this.reconcileOptions(options, await this.defaultInMemoryOptions()),
-    );
-  }
-
-  /**
-   * @deprecated Do not call this directly, use OrganizationService
-   */
-  async getOrganizations(options?: StorageOptions): Promise<{ [id: string]: OrganizationData }> {
-    return (
-      await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskOptions()))
-    )?.data?.organizations;
-  }
-
-  /**
-   * @deprecated Do not call this directly, use OrganizationService
-   */
-  async setOrganizations(
-    value: { [id: string]: OrganizationData },
-    options?: StorageOptions,
-  ): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-    account.data.organizations = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
     );
   }
 
