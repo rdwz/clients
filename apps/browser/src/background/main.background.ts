@@ -1123,7 +1123,6 @@ export default class MainBackground {
       this.policyService.clear(userId),
       this.passwordGenerationService.clear(userId),
       this.vaultTimeoutSettingsService.clear(userId),
-      this.keyConnectorService.clear(userId),
       this.vaultFilterService.clear(),
       this.biometricStateService.logout(userId),
       this.providerService.save(null, userId),

@@ -12,10 +12,9 @@ import { SymmetricCryptoKey } from "../../platform/models/domain/symmetric-crypt
 import {
   ActiveUserState,
   KEY_CONNECTOR_DISK,
-  KeyDefinition,
   StateProvider,
+  UserKeyDefinition,
 } from "../../platform/state";
-import { UserId } from "../../types/guid";
 import { MasterKey } from "../../types/key";
 import { KeyConnectorService as KeyConnectorServiceAbstraction } from "../abstractions/key-connector.service";
 import { TokenService } from "../abstractions/token.service";
@@ -24,19 +23,21 @@ import { KeyConnectorUserKeyRequest } from "../models/request/key-connector-user
 import { SetKeyConnectorKeyRequest } from "../models/request/set-key-connector-key.request";
 import { IdentityTokenResponse } from "../models/response/identity-token.response";
 
-export const USES_KEY_CONNECTOR = new KeyDefinition<boolean>(
+export const USES_KEY_CONNECTOR = new UserKeyDefinition<boolean>(
   KEY_CONNECTOR_DISK,
   "usesKeyConnector",
   {
     deserializer: (usesKeyConnector) => usesKeyConnector,
+    clearOn: ["logout"],
   },
 );
 
-export const CONVERT_ACCOUNT_TO_KEY_CONNECTOR = new KeyDefinition<boolean>(
+export const CONVERT_ACCOUNT_TO_KEY_CONNECTOR = new UserKeyDefinition<boolean>(
   KEY_CONNECTOR_DISK,
   "convertAccountToKeyConnector",
   {
     deserializer: (convertAccountToKeyConnector) => convertAccountToKeyConnector,
+    clearOn: ["logout"],
   },
 );
 
@@ -172,10 +173,6 @@ export class KeyConnectorService implements KeyConnectorServiceAbstraction {
 
   async removeConvertAccountRequired() {
     await this.setConvertAccountRequired(null);
-  }
-
-  async clear(userId: UserId) {
-    await this.stateProvider.setUserState(CONVERT_ACCOUNT_TO_KEY_CONNECTOR, null, userId);
   }
 
   private handleKeyConnectorError(e: any) {

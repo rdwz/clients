@@ -167,25 +167,6 @@ describe("KeyConnectorService", () => {
     });
   });
 
-  describe("clear()", () => {
-    it("should clear the user state for keyConnector", async () => {
-      // Arrange
-      const setUserStateSpy = jest.spyOn(stateProvider, "setUserState");
-
-      // Act
-      await keyConnectorService.clear(mockUserId);
-
-      // Assert
-      expect(setUserStateSpy).toHaveBeenCalledWith(
-        CONVERT_ACCOUNT_TO_KEY_CONNECTOR,
-        null,
-        mockUserId,
-      );
-      expect(await keyConnectorService.getConvertAccountRequired()).toBe(null);
-      expect(await keyConnectorService.getUsesKeyConnector()).toBe(null);
-    });
-  });
-
   describe("userNeedsMigration()", () => {
     it("should return true if the user needs migration", async () => {
       // token
