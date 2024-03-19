@@ -26,17 +26,15 @@ export enum AdjustPaymentDialogResult {
 }
 
 @Component({
-  selector: "app-adjust-payment",
-  templateUrl: "adjust-payment.component.html",
+  templateUrl: "adjust-payment-dialog.component.html",
 })
-export class AdjustPaymentComponent {
+export class AdjustPaymentDialogComponent {
   @ViewChild(PaymentComponent, { static: true }) paymentComponent: PaymentComponent;
   @ViewChild(TaxInfoComponent, { static: true }) taxInfoComponent: TaxInfoComponent;
 
   organizationId: string;
   currentType: PaymentMethodType;
   paymentMethodType = PaymentMethodType;
-  formPromise: Promise<void>;
 
   protected formGroup = new FormGroup({});
 
@@ -57,7 +55,7 @@ export class AdjustPaymentComponent {
   submit = async () => {
     try {
       const request = new PaymentRequest();
-      this.formPromise = this.paymentComponent.createPaymentToken().then((result) => {
+      const response = this.paymentComponent.createPaymentToken().then((result) => {
         request.paymentToken = result[0];
         request.paymentMethodType = result[1];
         request.postalCode = this.taxInfoComponent.taxInfo.postalCode;
@@ -74,7 +72,7 @@ export class AdjustPaymentComponent {
           return this.organizationApiService.updatePayment(this.organizationId, request);
         }
       });
-      await this.formPromise;
+      await response;
       if (this.organizationId) {
         await this.paymentMethodWarningService.removeSubscriptionRisk(this.organizationId);
       }
@@ -116,5 +114,5 @@ export function openAdjustPaymentDialog(
   dialogService: DialogService,
   config: DialogConfig<AdjustPaymentDialogData>,
 ) {
-  return dialogService.open<AdjustPaymentDialogResult>(AdjustPaymentComponent, config);
+  return dialogService.open<AdjustPaymentDialogResult>(AdjustPaymentDialogComponent, config);
 }

@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild } from "@angular/core";
 import { FormBuilder, FormControl, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
+import { lastValueFrom } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { OrganizationApiServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/organization/organization-api.service.abstraction";
@@ -14,9 +15,11 @@ import { LogService } from "@bitwarden/common/platform/abstractions/log.service"
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { DialogService } from "@bitwarden/components";
 
+import {
+  AdjustPaymentDialogResult,
+  openAdjustPaymentDialog,
+} from "./adjust-payment-dialog.component";
 import { TaxInfoComponent } from "./tax-info.component";
-import { AdjustPaymentDialogResult, openAdjustPaymentDialog } from "./adjust-payment.component";
-import { lastValueFrom } from "rxjs";
 
 @Component({
   templateUrl: "payment-method.component.html",
@@ -121,7 +124,7 @@ export class PaymentMethodComponent implements OnInit {
     }
   }
 
-  async changePayment() {
+  changePayment = async () => {
     const dialogRef = openAdjustPaymentDialog(this.dialogService, {
       data: {
         organizationId: this.organizationId,
@@ -132,7 +135,7 @@ export class PaymentMethodComponent implements OnInit {
     if (result === AdjustPaymentDialogResult.Adjusted) {
       await this.load();
     }
-  }
+  };
 
   async verifyBank() {
     if (this.loading || !this.forOrganization) {
