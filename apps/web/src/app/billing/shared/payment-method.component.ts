@@ -131,7 +131,7 @@ export class PaymentMethodComponent implements OnInit {
         currentType: this.paymentSource !== null ? this.paymentSource.type : null,
       },
     });
-    const result: any = await lastValueFrom(dialogRef.closed);
+    const result = await lastValueFrom(dialogRef.closed);
     if (result === AdjustPaymentDialogResult.Adjusted) {
       await this.load();
     }
