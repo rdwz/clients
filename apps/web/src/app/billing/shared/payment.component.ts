@@ -87,11 +87,14 @@ export class PaymentComponent implements OnInit, OnDestroy {
       invalid: "is-invalid",
     };
   }
-
+  set paymentMethod(method: PaymentMethodType) {
+    this.paymentForm.get("method").setValue(method);
+  }
+  get paymentMethod() {
+    return this.paymentForm.get("method").value;
+  }
   async ngOnInit() {
-    this.paymentForm.patchValue({
-      method: this.method,
-    });
+    this.paymentMethod = this.method;
     if (!this.showOptions) {
       this.hidePaypal = this.method !== PaymentMethodType.PayPal;
       this.hideBank = this.method !== PaymentMethodType.BankAccount;
@@ -145,7 +148,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
 
   changeMethod() {
     this.btInstance = null;
-    this.method = this.paymentForm.get("method").value;
+    this.method = this.paymentMethod;
     if (this.method === PaymentMethodType.PayPal) {
       window.setTimeout(() => {
         (window as any).braintree.dropin.create(
