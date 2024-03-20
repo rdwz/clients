@@ -441,9 +441,10 @@ export class SettingsComponent implements OnInit {
 
   async changePassword() {
     const confirmed = await this.dialogService.openSimpleDialog({
-      title: { key: "changeMasterPassword" },
-      content: { key: "changeMasterPasswordConfirmation" },
+      title: { key: "continueToWebApp" },
+      content: { key: "changeMasterPasswordOnWebConfirmation" },
       type: "info",
+      acceptButtonText: { key: "continue" },
     });
     if (confirmed) {
       // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
