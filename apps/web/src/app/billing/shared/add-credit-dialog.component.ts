@@ -43,6 +43,7 @@ export class AddCreditDialogComponent implements OnInit {
   private email: string;
   private region: string;
 
+  protected DialogResult = AddCreditDialogResult;
   protected formGroup = new FormGroup({
     method: new FormControl(PaymentMethodType.PayPal),
     creditAmount: new FormControl(null, [Validators.required]),
@@ -66,7 +67,7 @@ export class AddCreditDialogComponent implements OnInit {
 
   async ngOnInit() {
     if (this.organizationId != null) {
-      if (this.formGroup.value.creditAmount == null) {
+      if (this.creditAmount == null) {
         this.creditAmount = "20.00";
       }
       this.ppButtonCustomField = "organization_id:" + this.organizationId;
@@ -76,7 +77,7 @@ export class AddCreditDialogComponent implements OnInit {
         this.name = org.name;
       }
     } else {
-      if (this.formGroup.value.creditAmount == null) {
+      if (this.creditAmount == null) {
         this.creditAmount = "10.00";
       }
       this.userId = await this.stateService.getUserId();
@@ -112,33 +113,20 @@ export class AddCreditDialogComponent implements OnInit {
       return;
     }
     if (this.method === PaymentMethodType.BitPay) {
-      try {
-        const req = new BitPayInvoiceRequest();
-        req.email = this.email;
-        req.name = this.name;
-        req.credit = true;
-        req.amount = this.creditAmountNumber;
-        req.organizationId = this.organizationId;
-        req.userId = this.userId;
-        req.returnUrl = this.returnUrl;
-        const bitPayUrl: string = await this.apiService.postBitPayInvoice(req);
-        this.platformUtilsService.launchUri(bitPayUrl);
-      } catch (e) {
-        this.logService.error(e);
-        throw e;
-      }
+      const req = new BitPayInvoiceRequest();
+      req.email = this.email;
+      req.name = this.name;
+      req.credit = true;
+      req.amount = this.creditAmountNumber;
+      req.organizationId = this.organizationId;
+      req.userId = this.userId;
+      req.returnUrl = this.returnUrl;
+      const bitPayUrl: string = await this.apiService.postBitPayInvoice(req);
+      this.platformUtilsService.launchUri(bitPayUrl);
       return;
     }
-    try {
-      this.dialogRef.close(AddCreditDialogResult.Added);
-    } catch (e) {
-      this.logService.error(e);
-    }
+    this.dialogRef.close(AddCreditDialogResult.Added);
   };
-
-  cancel() {
-    this.dialogRef.close(AddCreditDialogResult.Cancelled);
-  }
 
   formatAmount() {
     try {
