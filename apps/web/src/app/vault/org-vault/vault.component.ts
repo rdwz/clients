@@ -217,7 +217,7 @@ export class VaultComponent implements OnInit, OnDestroy {
       switchMap(async ([organization]) => {
         this.organization = organization;
 
-        if (!organization.canUseAdminCollections) {
+        if (!organization.canUseAdminCollections(this.flexibleCollectionsV1Enabled)) {
           await this.syncService.fullSync(false);
         }
 
@@ -411,7 +411,8 @@ export class VaultComponent implements OnInit, OnDestroy {
     ]).pipe(
       map(([filter, collection, organization]) => {
         return (
-          (filter.collectionId === Unassigned && !organization.canUseAdminCollections) ||
+          (filter.collectionId === Unassigned &&
+            !organization.canUseAdminCollections(this.flexibleCollectionsV1Enabled)) ||
           (!organization.canEditAllCiphers(this.flexibleCollectionsV1Enabled) &&
             collection != undefined &&
             !collection.node.assigned)
@@ -457,11 +458,12 @@ export class VaultComponent implements OnInit, OnDestroy {
       map(([filter, collection, organization]) => {
         return (
           // Filtering by unassigned, show message if not admin
-          (filter.collectionId === Unassigned && !organization.canUseAdminCollections) ||
+          (filter.collectionId === Unassigned &&
+            !organization.canUseAdminCollections(this.flexibleCollectionsV1Enabled)) ||
           // Filtering by a collection, so show message if user is not assigned
           (collection != undefined &&
             !collection.node.assigned &&
-            !organization.canUseAdminCollections)
+            !organization.canUseAdminCollections(this.flexibleCollectionsV1Enabled))
         );
       }),
       shareReplay({ refCount: true, bufferSize: 1 }),
