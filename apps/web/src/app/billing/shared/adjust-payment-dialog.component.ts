@@ -36,6 +36,7 @@ export class AdjustPaymentDialogComponent {
   currentType: PaymentMethodType;
   paymentMethodType = PaymentMethodType;
 
+  protected DialogResult = AdjustPaymentDialogResult;
   protected formGroup = new FormGroup({});
 
   constructor(
@@ -53,44 +54,35 @@ export class AdjustPaymentDialogComponent {
   }
 
   submit = async () => {
-    try {
-      const request = new PaymentRequest();
-      const response = this.paymentComponent.createPaymentToken().then((result) => {
-        request.paymentToken = result[0];
-        request.paymentMethodType = result[1];
-        request.postalCode = this.taxInfoComponent.taxInfo.postalCode;
-        request.country = this.taxInfoComponent.taxInfo.country;
-        if (this.organizationId == null) {
-          return this.apiService.postAccountPayment(request);
-        } else {
-          request.taxId = this.taxInfoComponent.taxInfo.taxId;
-          request.state = this.taxInfoComponent.taxInfo.state;
-          request.line1 = this.taxInfoComponent.taxInfo.line1;
-          request.line2 = this.taxInfoComponent.taxInfo.line2;
-          request.city = this.taxInfoComponent.taxInfo.city;
-          request.state = this.taxInfoComponent.taxInfo.state;
-          return this.organizationApiService.updatePayment(this.organizationId, request);
-        }
-      });
-      await response;
-      if (this.organizationId) {
-        await this.paymentMethodWarningService.removeSubscriptionRisk(this.organizationId);
+    const request = new PaymentRequest();
+    const response = this.paymentComponent.createPaymentToken().then((result) => {
+      request.paymentToken = result[0];
+      request.paymentMethodType = result[1];
+      request.postalCode = this.taxInfoComponent.taxInfo.postalCode;
+      request.country = this.taxInfoComponent.taxInfo.country;
+      if (this.organizationId == null) {
+        return this.apiService.postAccountPayment(request);
+      } else {
+        request.taxId = this.taxInfoComponent.taxInfo.taxId;
+        request.state = this.taxInfoComponent.taxInfo.state;
+        request.line1 = this.taxInfoComponent.taxInfo.line1;
+        request.line2 = this.taxInfoComponent.taxInfo.line2;
+        request.city = this.taxInfoComponent.taxInfo.city;
+        request.state = this.taxInfoComponent.taxInfo.state;
+        return this.organizationApiService.updatePayment(this.organizationId, request);
       }
-      this.platformUtilsService.showToast(
-        "success",
-        null,
-        this.i18nService.t("updatedPaymentMethod"),
-      );
-      this.dialogRef.close(AdjustPaymentDialogResult.Adjusted);
-    } catch (e) {
-      this.logService.error(e);
-      throw e;
+    });
+    await response;
+    if (this.organizationId) {
+      await this.paymentMethodWarningService.removeSubscriptionRisk(this.organizationId);
     }
+    this.platformUtilsService.showToast(
+      "success",
+      null,
+      this.i18nService.t("updatedPaymentMethod"),
+    );
+    this.dialogRef.close(AdjustPaymentDialogResult.Adjusted);
   };
-
-  cancel() {
-    this.dialogRef.close(AdjustPaymentDialogResult.Cancelled);
-  }
 
   changeCountry() {
     if (this.taxInfoComponent.taxInfo.country === "US") {
