@@ -142,10 +142,6 @@ export class VaultComponent implements OnInit, OnDestroy {
     FeatureFlag.BulkCollectionAccess,
     false,
   );
-  protected flexibleCollectionsV1Enabled$ = this.configService.getFeatureFlag$(
-    FeatureFlag.FlexibleCollectionsV1,
-    false,
-  );
 
   private _flexibleCollectionsV1FlagEnabled: boolean;
 
