@@ -66,6 +66,7 @@ import { StateService as BaseStateServiceAbstraction } from "@bitwarden/common/p
 import {
   AbstractMemoryStorageService,
   AbstractStorageService,
+  ObservableStorageService,
 } from "@bitwarden/common/platform/abstractions/storage.service";
 import { StateFactory } from "@bitwarden/common/platform/factories/state-factory";
 import { GlobalState } from "@bitwarden/common/platform/models/domain/global-state";
@@ -117,7 +118,7 @@ import { BrowserStateService } from "../../platform/services/browser-state.servi
 import I18nService from "../../platform/services/i18n.service";
 import { ForegroundPlatformUtilsService } from "../../platform/services/platform-utils/foreground-platform-utils.service";
 import { ForegroundDerivedStateProvider } from "../../platform/state/foreground-derived-state.provider";
-import { ForegroundMemoryStorageService } from "../../platform/storage/foreground-memory-storage.service";
+// import { ForegroundMemoryStorageService } from "../../platform/storage/foreground-memory-storage.service";
 import { BrowserSendService } from "../../services/browser-send.service";
 import { FilePopoutUtilsService } from "../../tools/popup/services/file-popout-utils.service";
 import { VaultFilterService } from "../../vault/services/vault-filter.service";
@@ -419,12 +420,14 @@ function getBgService<T>(service: keyof MainBackground) {
     },
     {
       provide: MEMORY_STORAGE,
-      // useFactory: getBgService<AbstractStorageService>("memoryStorageService"),
-      useExisting: MemoryStorageService,
+      useFactory: getBgService<AbstractStorageService>("memoryStorageService"),
     },
     {
       provide: OBSERVABLE_MEMORY_STORAGE,
-      useClass: ForegroundMemoryStorageService,
+      // useClass: ForegroundMemoryStorageService,
+      useFactory: getBgService<AbstractStorageService & ObservableStorageService>(
+        "memoryStorageForStateProviders",
+      ),
       deps: [],
     },
     {
