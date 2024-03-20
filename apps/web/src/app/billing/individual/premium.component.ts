@@ -8,7 +8,6 @@ import { TokenService } from "@bitwarden/common/auth/abstractions/token.service"
 import { BillingAccountProfileStateService } from "@bitwarden/common/billing/abstractions/account/billing-account-profile-state.service";
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
-import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { SyncService } from "@bitwarden/common/vault/abstractions/sync/sync.service.abstraction";
@@ -28,13 +27,14 @@ export class PremiumComponent implements OnInit {
   familyPlanMaxUserCount = 6;
   storageGbPrice = 4;
   cloudWebVaultUrl: string;
+  licenseFile: FileList = null;
 
   formPromise: Promise<any>;
   protected licenseForm = new FormGroup({
     file: new FormControl(null, [Validators.required]),
   });
   protected addonForm = new FormGroup({
-    additionalStorage: new FormControl(0),
+    additionalStorage: new FormControl(0, [Validators.max(99), Validators.min(0)]),
   });
   constructor(
     private apiService: ApiService,
@@ -44,7 +44,6 @@ export class PremiumComponent implements OnInit {
     private router: Router,
     private messagingService: MessagingService,
     private syncService: SyncService,
-    private logService: LogService,
     private environmentService: EnvironmentService,
     private billingAccountProfileStateService: BillingAccountProfileStateService,
   ) {
@@ -52,7 +51,11 @@ export class PremiumComponent implements OnInit {
     this.cloudWebVaultUrl = this.environmentService.getCloudWebVaultUrl();
     this.canAccessPremium$ = billingAccountProfileStateService.hasPremiumFromAnySource$;
   }
-
+  protected setSelectedFile(event: Event) {
+    const fileInputEl = <HTMLInputElement>event.target;
+    const file: FileList = fileInputEl.files.length > 0 ? fileInputEl.files : null;
+    this.licenseFile = file;
+  }
   async ngOnInit() {
     if (await firstValueFrom(this.billingAccountProfileStateService.hasPremiumPersonally$)) {
       // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
@@ -61,15 +64,11 @@ export class PremiumComponent implements OnInit {
       return;
     }
   }
-
   submit = async () => {
     this.licenseForm.markAllAsTouched();
     this.addonForm.markAllAsTouched();
-    let files: FileList = null;
     if (this.selfHosted) {
-      const fileEl = document.getElementById("file") as HTMLInputElement;
-      files = fileEl.files;
-      if (files == null || files.length === 0) {
+      if (this.licenseFile == null || this.licenseFile.length === 0) {
         this.platformUtilsService.showToast(
           "error",
           this.i18nService.t("errorOccurred"),
@@ -79,51 +78,46 @@ export class PremiumComponent implements OnInit {
       }
     }
 
-    try {
-      if (this.selfHosted) {
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        if (!this.tokenService.getEmailVerified()) {
-          this.platformUtilsService.showToast(
-            "error",
-            this.i18nService.t("errorOccurred"),
-            this.i18nService.t("verifyEmailFirst"),
-          );
-          return;
-        }
-
-        const fd = new FormData();
-        fd.append("license", files[0]);
-        await this.apiService.postAccountLicense(fd).then(() => {
-          return this.finalizePremium();
-        });
-      } else {
-        await this.paymentComponent
-          .createPaymentToken()
-          .then((result) => {
-            const fd = new FormData();
-            fd.append("paymentMethodType", result[1].toString());
-            if (result[0] != null) {
-              fd.append("paymentToken", result[0]);
-            }
-            fd.append("additionalStorageGb", (this.additionalStorage || 0).toString());
-            fd.append("country", this.taxInfoComponent.taxInfo.country);
-            fd.append("postalCode", this.taxInfoComponent.taxInfo.postalCode);
-            return this.apiService.postPremium(fd);
-          })
-          .then((paymentResponse) => {
-            if (!paymentResponse.success && paymentResponse.paymentIntentClientSecret != null) {
-              return this.paymentComponent.handleStripeCardPayment(
-                paymentResponse.paymentIntentClientSecret,
-                () => this.finalizePremium(),
-              );
-            } else {
-              return this.finalizePremium();
-            }
-          });
+    if (this.selfHosted) {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      if (!this.tokenService.getEmailVerified()) {
+        this.platformUtilsService.showToast(
+          "error",
+          this.i18nService.t("errorOccurred"),
+          this.i18nService.t("verifyEmailFirst"),
+        );
+        return;
       }
-    } catch (e) {
-      this.logService.error(e);
-      throw e;
+
+      const fd = new FormData();
+      fd.append("license", this.licenseFile[0]);
+      await this.apiService.postAccountLicense(fd).then(() => {
+        return this.finalizePremium();
+      });
+    } else {
+      await this.paymentComponent
+        .createPaymentToken()
+        .then((result) => {
+          const fd = new FormData();
+          fd.append("paymentMethodType", result[1].toString());
+          if (result[0] != null) {
+            fd.append("paymentToken", result[0]);
+          }
+          fd.append("additionalStorageGb", (this.additionalStorage || 0).toString());
+          fd.append("country", this.taxInfoComponent.taxInfo.country);
+          fd.append("postalCode", this.taxInfoComponent.taxInfo.postalCode);
+          return this.apiService.postPremium(fd);
+        })
+        .then((paymentResponse) => {
+          if (!paymentResponse.success && paymentResponse.paymentIntentClientSecret != null) {
+            return this.paymentComponent.handleStripeCardPayment(
+              paymentResponse.paymentIntentClientSecret,
+              () => this.finalizePremium(),
+            );
+          } else {
+            return this.finalizePremium();
+          }
+        });
     }
   };
 

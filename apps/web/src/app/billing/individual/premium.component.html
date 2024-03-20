@@ -64,21 +64,19 @@
     </a>
   </bit-callout>
 </bit-section>
-<ng-container *ngIf="selfHosted">
-  <bit-section>
-    <p bitTypography="body1">{{ "uploadLicenseFilePremium" | i18n }}</p>
-    <form [formGroup]="licenseForm" [bitSubmit]="submit">
-      <bit-form-field>
-        <bit-label>{{ "additionalStorageGb" | i18n }}</bit-label>
-        <input bitInput type="file" required id="file" formControlName="file" />
-        <bit-hint>{{ "licenseFileDesc" | i18n: "bitwarden_premium_license.json" }}</bit-hint>
-      </bit-form-field>
-      <button type="submit" buttonType="primary" bitButton bitFormButton>
-        {{ "submit" | i18n }}
-      </button>
-    </form>
-  </bit-section>
-</ng-container>
+<bit-section *ngIf="selfHosted">
+  <p bitTypography="body1">{{ "uploadLicenseFilePremium" | i18n }}</p>
+  <form [formGroup]="licenseForm" [bitSubmit]="submit">
+    <bit-form-field>
+      <bit-label>{{ "additionalStorageGb" | i18n }}</bit-label>
+      <input bitInput type="file" formControlName="file" (change)="setSelectedFile($event)" />
+      <bit-hint>{{ "licenseFileDesc" | i18n: "bitwarden_premium_license.json" }}</bit-hint>
+    </bit-form-field>
+    <button type="submit" buttonType="primary" bitButton bitFormButton>
+      {{ "submit" | i18n }}
+    </button>
+  </form>
+</bit-section>
 <form [formGroup]="addonForm" [bitSubmit]="submit" *ngIf="!selfHosted">
   <bit-section>
     <h2 bitTypography="h2">{{ "addons" | i18n }}</h2>
@@ -89,8 +87,6 @@
           bitInput
           formControlName="additionalStorage"
           type="number"
-          min="0"
-          max="99"
           step="1"
           placeholder="{{ 'additionalStorageGbDesc' | i18n }}"
         />
