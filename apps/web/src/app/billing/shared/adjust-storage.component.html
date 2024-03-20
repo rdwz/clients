@@ -1,8 +1,8 @@
 <form [formGroup]="formGroup" [bitSubmit]="submit">
   <bit-dialog dialogSize="default" [title]="(add ? 'addStorage' : 'removeStorage') | i18n">
     <ng-container bitDialogContent>
-      <div class="tw-grid tw-grid-cols-3">
-        <bit-form-field class="tw-col-span-2">
+      <div class="tw-grid tw-grid-cols-12">
+        <bit-form-field class="tw-col-span-7">
           <bit-label>{{ (add ? "gbStorageAdd" : "gbStorageRemove") | i18n }}</bit-label>
           <input bitInput type="number" formControlName="storageAdjustment" />
           <bit-hint *ngIf="add">
@@ -14,13 +14,19 @@
           </bit-hint>
         </bit-form-field>
       </div>
-      <p>{{ (add ? "storageAddNote" : "storageRemoveNote") | i18n }}</p>
+      <p bitTypography="body1">{{ (add ? "storageAddNote" : "storageRemoveNote") | i18n }}</p>
     </ng-container>
     <ng-container bitDialogFooter>
       <button type="submit" bitButton bitFormButton buttonType="primary">
         {{ "submit" | i18n }}
       </button>
-      <button type="button" bitButton bitFormButton buttonType="secondary" bitDialogClose>
+      <button
+        type="button"
+        bitButton
+        bitFormButton
+        buttonType="secondary"
+        [bitDialogClose]="DialogResult.Cancelled"
+      >
         {{ "cancel" | i18n }}
       </button>
     </ng-container>

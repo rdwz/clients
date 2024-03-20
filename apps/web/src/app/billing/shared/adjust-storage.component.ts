@@ -1,5 +1,5 @@
 import { DIALOG_DATA, DialogConfig, DialogRef } from "@angular/cdk/dialog";
-import { Component, EventEmitter, Inject, Output, ViewChild } from "@angular/core";
+import { Component, Inject, ViewChild } from "@angular/core";
 import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 
@@ -34,11 +34,10 @@ export class AdjustStorageComponent {
   add: boolean;
   organizationId: string;
   interval: string;
-  @Output() onAdjusted = new EventEmitter<number>();
-  @Output() onCanceled = new EventEmitter();
 
   @ViewChild(PaymentComponent, { static: true }) paymentComponent: PaymentComponent;
 
+  protected DialogResult = AdjustStorageDialogResult;
   protected formGroup = new FormGroup({
     storageAdjustment: new FormControl(0, [
       Validators.required,
@@ -65,60 +64,52 @@ export class AdjustStorageComponent {
   }
 
   submit = async () => {
-    try {
-      const request = new StorageRequest();
-      request.storageGbAdjustment = this.formGroup.value.storageAdjustment;
-      if (!this.add) {
-        request.storageGbAdjustment *= -1;
-      }
+    const request = new StorageRequest();
+    request.storageGbAdjustment = this.formGroup.value.storageAdjustment;
+    if (!this.add) {
+      request.storageGbAdjustment *= -1;
+    }
 
-      let paymentFailed = false;
-      const action = async () => {
-        let response: Promise<PaymentResponse>;
-        if (this.organizationId == null) {
-          response = this.apiService.postAccountStorage(request);
-        } else {
-          response = this.organizationApiService.updateStorage(this.organizationId, request);
-        }
-        const result = await response;
-        if (result != null && result.paymentIntentClientSecret != null) {
-          try {
-            await this.paymentComponent.handleStripeCardPayment(
-              result.paymentIntentClientSecret,
-              null,
-            );
-          } catch {
-            paymentFailed = true;
-          }
-        }
-      };
-      await action();
-      this.dialogRef.close(AdjustStorageDialogResult.Adjusted);
-      if (paymentFailed) {
-        this.platformUtilsService.showToast(
-          "warning",
-          null,
-          this.i18nService.t("couldNotChargeCardPayInvoice"),
-          { timeout: 10000 },
-        );
-        // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.router.navigate(["../billing"], { relativeTo: this.activatedRoute });
+    let paymentFailed = false;
+    const action = async () => {
+      let response: Promise<PaymentResponse>;
+      if (this.organizationId == null) {
+        response = this.apiService.postAccountStorage(request);
       } else {
-        this.platformUtilsService.showToast(
-          "success",
-          null,
-          this.i18nService.t("adjustedStorage", request.storageGbAdjustment.toString()),
-        );
+        response = this.organizationApiService.updateStorage(this.organizationId, request);
       }
-    } catch (e) {
-      this.logService.error(e);
+      const result = await response;
+      if (result != null && result.paymentIntentClientSecret != null) {
+        try {
+          await this.paymentComponent.handleStripeCardPayment(
+            result.paymentIntentClientSecret,
+            null,
+          );
+        } catch {
+          paymentFailed = true;
+        }
+      }
+    };
+    await action();
+    this.dialogRef.close(AdjustStorageDialogResult.Adjusted);
+    if (paymentFailed) {
+      this.platformUtilsService.showToast(
+        "warning",
+        null,
+        this.i18nService.t("couldNotChargeCardPayInvoice"),
+        { timeout: 10000 },
+      );
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.router.navigate(["../billing"], { relativeTo: this.activatedRoute });
+    } else {
+      this.platformUtilsService.showToast(
+        "success",
+        null,
+        this.i18nService.t("adjustedStorage", request.storageGbAdjustment.toString()),
+      );
     }
   };
-
-  cancel() {
-    this.dialogRef.close(AdjustStorageDialogResult.Cancelled);
-  }
 
   get adjustedStorageTotal(): number {
     return this.storageGbPrice * this.formGroup.value.storageAdjustment;
@@ -126,7 +117,7 @@ export class AdjustStorageComponent {
 }
 
 /**
- * Strongly typed helper to open a StorageDialog
+ * Strongly typed helper to open an AdjustStorageDialog
  * @param dialogService Instance of the dialog service that will be used to open the dialog
  * @param config Configuration for the dialog
  */
