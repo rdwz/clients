@@ -133,15 +133,13 @@ export class AccessSelectorComponent implements ControlValueAccessor, OnInit, On
 
   set items(val: AccessItemView[]) {
     const selected = (this.selectionList.formArray.getRawValue() ?? []).concat(
-      val.filter((m) => m.readonly),
+      val.filter((m) => isCollectionAccessViaGroup(m)),
     );
     this.selectionList.populateItems(
-      val
-        .filter((v) => !v.readonly)
-        .map((m) => {
-          m.icon = m.icon ?? this.itemIcon(m); // Ensure an icon is set
-          return m;
-        }),
+      val.map((m) => {
+        m.icon = m.icon ?? this.itemIcon(m); // Ensure an icon is set
+        return m;
+      }),
       selected,
     );
   }
@@ -248,9 +246,7 @@ export class AccessSelectorComponent implements ControlValueAccessor, OnInit, On
 
     // We need to also select any collection access via a group - this is readonly but isn't included in the form value
     this.selectionList.selectItems(
-      this.items
-        .filter((m) => m.readonly && m.type === AccessItemType.Collection && m.viaGroupName != null)
-        .map((m) => m.id),
+      this.items.filter((m) => isCollectionAccessViaGroup(m)).map((m) => m.id),
     );
 
     // If the new value is null, then we're done
@@ -334,10 +330,6 @@ export class AccessSelectorComponent implements ControlValueAccessor, OnInit, On
     return this.permissionMode == PermissionMode.Edit && !item.readonly && !item.accessAllItems;
   }
 
-  protected get selectableItems(): AccessItemView[] {
-    return this.selectionList.deselectedItems.filter((item) => !item.readonly);
-  }
-
   private _itemComparator(a: AccessItemView, b: AccessItemView) {
     return (
       a.type - b.type ||
@@ -346,4 +338,8 @@ export class AccessSelectorComponent implements ControlValueAccessor, OnInit, On
       Number(b.readonly) - Number(a.readonly)
     );
   }
+}
+
+function isCollectionAccessViaGroup(item: AccessItemView) {
+  return item.type === AccessItemType.Collection && item.viaGroupName != null;
 }
