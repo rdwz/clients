@@ -330,6 +330,14 @@ export class AccessSelectorComponent implements ControlValueAccessor, OnInit, On
     return this.permissionMode == PermissionMode.Edit && !item.readonly && !item.accessAllItems;
   }
 
+  /**
+   * Deselected items that are capable of being edited/selected. Excludes readonly items that the user does not have
+   * permission to grant access to.
+   */
+  protected get editableDeselectedItems() {
+    return this.selectionList.deselectedItems.filter((i) => !i.readonly);
+  }
+
   private _itemComparator(a: AccessItemView, b: AccessItemView) {
     return (
       a.type - b.type ||
