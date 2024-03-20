@@ -42,7 +42,7 @@ export class MultiSelectComponent implements OnInit, BitFormFieldControl, Contro
   @Input() disabled = false;
 
   // Internal tracking of selected items
-  protected selectedItems: SelectItemView[];
+  @Input() selectedItems: SelectItemView[];
 
   // Default values for our implementation
   loadingText: string;
