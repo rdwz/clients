@@ -18,6 +18,7 @@ export class CollectionView implements View, ITreeNodeObject {
   hidePasswords: boolean = null;
   manage: boolean = null;
   addAccess: boolean = false;
+  assigned: boolean = null;
 
   constructor(c?: Collection | CollectionAccessDetailsResponse) {
     if (!c) {
@@ -31,7 +32,29 @@ export class CollectionView implements View, ITreeNodeObject {
       this.readOnly = c.readOnly;
       this.hidePasswords = c.hidePasswords;
       this.manage = c.manage;
+      this.assigned = true;
     }
+    if (c instanceof CollectionAccessDetailsResponse) {
+      this.assigned = c.assigned;
+    }
+  }
+
+  canEditItems(org: Organization, v1FlexibleCollections: boolean): boolean {
+    if (org != null && org.id !== this.organizationId) {
+      throw new Error(
+        "Id of the organization provided does not match the org id of the collection.",
+      );
+    }
+
+    if (org?.flexibleCollections) {
+      return (
+        org?.canEditAllCiphers(v1FlexibleCollections) ||
+        this.manage ||
+        (this.assigned && !this.readOnly)
+      );
+    }
+
+    return org?.canEditAnyCollection || (org?.canEditAssignedCollections && this.assigned);
   }
 
   // For editing collection details, not the items within it.
