@@ -58,8 +58,6 @@ export class InitService {
       }
 
       this.configService.init();
-      await this.environmentService.setUrlsFromStorage();
-      this.environmentService.initialized = true;
       this.setupVaultPopupHeartbeat();
     };
   }
