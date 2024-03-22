@@ -14,11 +14,12 @@
 </app-header>
 
 <bit-container>
-  <h1 bitTypography="h1" *ngIf="!organizationId">{{ "paymentMethod" | i18n }}</h1>
+  <!-- TODO: Organization and individual should use different "page" components -->
+  <h2 bitTypography="h1" *ngIf="!organizationId">{{ "paymentMethod" | i18n }}</h2>
 
   <ng-container *ngIf="!firstLoaded && loading">
     <i
-      class="bwi bwi-spinner bwi-spin text-muted"
+      class="bwi bwi-spinner bwi-spin tw-text-muted"
       title="{{ 'loading' | i18n }}"
       aria-hidden="true"
     ></i>
@@ -29,7 +30,7 @@
       <h2 bitTypography="h2">
         {{ (isCreditBalance ? "accountCredit" : "accountBalance") | i18n }}
       </h2>
-      <h3 bitTypography="h3">{{ creditOrBalance | currency: "$" }}</h3>
+      <p class="tw-text-lg tw-font-bold">{{ creditOrBalance | currency: "$" }}</p>
       <p bitTypography="body1">{{ "creditAppliedDesc" | i18n }}</p>
       <button
         type="button"
