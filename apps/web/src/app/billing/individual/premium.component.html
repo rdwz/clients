@@ -69,7 +69,20 @@
   <form [formGroup]="licenseForm" [bitSubmit]="submit">
     <bit-form-field>
       <bit-label>{{ "additionalStorageGb" | i18n }}</bit-label>
-      <input bitInput type="file" formControlName="file" (change)="setSelectedFile($event)" />
+      <div>
+        <button bitButton type="button" buttonType="secondary" (click)="fileSelector.click()">
+          {{ "chooseFile" | i18n }}
+        </button>
+        {{ this.licenseFile ? this.licenseFile.name : ("noFileChosen" | i18n) }}
+      </div>
+      <input
+        bitInput
+        #fileSelector
+        type="file"
+        formControlName="file"
+        (change)="setSelectedFile($event)"
+        hidden
+      />
       <bit-hint>{{ "licenseFileDesc" | i18n: "bitwarden_premium_license.json" }}</bit-hint>
     </bit-form-field>
     <button type="submit" buttonType="primary" bitButton bitFormButton>

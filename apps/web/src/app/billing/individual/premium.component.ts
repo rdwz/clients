@@ -27,7 +27,7 @@ export class PremiumComponent implements OnInit {
   familyPlanMaxUserCount = 6;
   storageGbPrice = 4;
   cloudWebVaultUrl: string;
-  licenseFile: FileList = null;
+  licenseFile: File = null;
 
   formPromise: Promise<any>;
   protected licenseForm = new FormGroup({
@@ -52,7 +52,7 @@ export class PremiumComponent implements OnInit {
   }
   protected setSelectedFile(event: Event) {
     const fileInputEl = <HTMLInputElement>event.target;
-    const file: FileList = fileInputEl.files.length > 0 ? fileInputEl.files : null;
+    const file: File = fileInputEl.files.length > 0 ? fileInputEl.files[0] : null;
     this.licenseFile = file;
   }
   async ngOnInit() {
@@ -68,7 +68,7 @@ export class PremiumComponent implements OnInit {
     this.licenseForm.markAllAsTouched();
     this.addonForm.markAllAsTouched();
     if (this.selfHosted) {
-      if (this.licenseFile == null || this.licenseFile.length === 0) {
+      if (this.licenseFile == null) {
         this.platformUtilsService.showToast(
           "error",
           this.i18nService.t("errorOccurred"),
@@ -90,7 +90,7 @@ export class PremiumComponent implements OnInit {
       }
 
       const fd = new FormData();
-      fd.append("license", this.licenseFile[0]);
+      fd.append("license", this.licenseFile);
       await this.apiService.postAccountLicense(fd).then(() => {
         return this.finalizePremium();
       });
