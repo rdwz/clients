@@ -48,7 +48,6 @@ export class PremiumComponent implements OnInit {
     private billingAccountProfileStateService: BillingAccountProfileStateService,
   ) {
     this.selfHosted = platformUtilsService.isSelfHost();
-    this.cloudWebVaultUrl = this.environmentService.getCloudWebVaultUrl();
     this.canAccessPremium$ = billingAccountProfileStateService.hasPremiumFromAnySource$;
   }
   protected setSelectedFile(event: Event) {
@@ -57,6 +56,7 @@ export class PremiumComponent implements OnInit {
     this.licenseFile = file;
   }
   async ngOnInit() {
+    this.cloudWebVaultUrl = await firstValueFrom(this.environmentService.cloudWebVaultUrl$);
     if (await firstValueFrom(this.billingAccountProfileStateService.hasPremiumPersonally$)) {
       // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
