@@ -17,7 +17,7 @@ const CIPHERS_DISK: KeyDefinitionLike = {
   },
 };
 
-export class LocalDataMigrator extends Migrator<35, 36> {
+export class LocalDataMigrator extends Migrator<43, 44> {
   async migrate(helper: MigrationHelper): Promise<void> {
     const accounts = await helper.getAccounts<ExpectedAccountType>();
     async function migrateAccount(userId: string, account: ExpectedAccountType): Promise<void> {
