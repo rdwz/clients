@@ -27,7 +27,13 @@
       </bit-form-field>
       <bit-form-field formGroupName="kdfConfig" *ngIf="kdfValue == kdfType.Argon2id">
         <bit-label>{{ "kdfMemory" | i18n }}</bit-label>
-        <input bitInput formControlName="memory" type="number" />
+        <input
+          bitInput
+          formControlName="memory"
+          type="number"
+          [min]="ARGON2_MEMORY.min"
+          [max]="ARGON2_MEMORY.max"
+        />
       </bit-form-field>
     </div>
     <div class="tw-col-span-6">
@@ -46,20 +52,38 @@
               <i class="bwi bwi-question-circle" aria-hidden="true"></i>
             </a>
           </bit-label>
-          <input bitInput type="number" formControlName="iterations" />
+          <input
+            bitInput
+            type="number"
+            formControlName="iterations"
+            [min]="PBKDF2_ITERATIONS.min"
+            [max]="PBKDF2_ITERATIONS.max"
+          />
         </bit-form-field>
 
         <bit-form-field formGroupName="kdfConfig" *ngIf="kdfValue == kdfType.Argon2id">
           <bit-label>
             {{ "kdfIterations" | i18n }}
           </bit-label>
-          <input bitInput type="number" formControlName="iterations" />
+          <input
+            bitInput
+            type="number"
+            formControlName="iterations"
+            [min]="ARGON2_ITERATIONS.min"
+            [max]="ARGON2_ITERATIONS.max"
+          />
         </bit-form-field>
         <bit-form-field formGroupName="kdfConfig" *ngIf="kdfValue == kdfType.Argon2id">
           <bit-label>
             {{ "kdfParallelism" | i18n }}
           </bit-label>
-          <input bitInput type="number" formControlName="parallelism" />
+          <input
+            bitInput
+            type="number"
+            formControlName="parallelism"
+            [min]="ARGON2_PARALLELISM.min"
+            [max]="ARGON2_PARALLELISM.max"
+          />
         </bit-form-field>
       </div>
     </div>
