@@ -26,6 +26,7 @@ import { StateEventRegistrarService } from "@bitwarden/common/platform/state/sta
 import { MemoryStorageService as MemoryStorageServiceForStateProviders } from "@bitwarden/common/platform/state/storage/memory-storage.service";
 /* eslint-enable import/no-restricted-paths */
 
+import { DesktopAutofillSettingsService } from "./autofill/services/desktop-autofill-settings.service";
 import { MenuMain } from "./main/menu/menu.main";
 import { MessagingMain } from "./main/messaging.main";
 import { NativeMessagingMain } from "./main/native-messaging.main";
@@ -45,6 +46,7 @@ import { ElectronStateService } from "./platform/services/electron-state.service
 import { ElectronStorageService } from "./platform/services/electron-storage.service";
 import { I18nMainService } from "./platform/services/i18n.main.service";
 import { ElectronMainMessagingService } from "./services/electron-main-messaging.service";
+import { isMacAppStore } from "./utils";
 
 export class Main {
   logService: ElectronLogMainService;
@@ -70,6 +72,7 @@ export class Main {
   biometricsService: BiometricsServiceAbstraction;
   nativeMessagingMain: NativeMessagingMain;
   clipboardMain: ClipboardMain;
+  desktopAutofillSettingsService: DesktopAutofillSettingsService;
 
   constructor() {
     // Set paths for portable builds
@@ -207,6 +210,7 @@ export class Main {
       this.environmentService,
       this.windowMain,
       this.updaterMain,
+      this.desktopSettingsService,
     );
 
     this.biometricsService = new BiometricsService(
@@ -230,6 +234,8 @@ export class Main {
       app.getPath("userData"),
       app.getPath("exe"),
     );
+
+    this.desktopAutofillSettingsService = new DesktopAutofillSettingsService(stateProvider);
 
     this.clipboardMain = new ClipboardMain();
     this.clipboardMain.init();
@@ -266,7 +272,7 @@ export class Main {
 
         const [browserIntegrationEnabled, ddgIntegrationEnabled] = await Promise.all([
           this.stateService.getEnableBrowserIntegration(),
-          this.stateService.getEnableDuckDuckGoBrowserIntegration(),
+          firstValueFrom(this.desktopAutofillSettingsService.enableDuckDuckGoBrowserIntegration$),
         ]);
 
         if (browserIntegrationEnabled || ddgIntegrationEnabled) {
@@ -277,6 +283,7 @@ export class Main {
           if (ddgIntegrationEnabled) {
             this.nativeMessagingMain.generateDdgManifests().catch(this.logService.error);
           }
+
           this.nativeMessagingMain.listen();
         }
 
@@ -328,6 +335,19 @@ export class Main {
     if (!hardwareAcceleration) {
       this.logService.warning("Hardware acceleration is disabled");
       app.disableHardwareAcceleration();
+    } else if (isMacAppStore()) {
+      // We disable hardware acceleration on Mac App Store builds for iMacs with amd switchable GPUs due to:
+      // https://github.com/electron/electron/issues/41346
+      const gpuInfo: any = await app.getGPUInfo("basic");
+      const badGpu = gpuInfo?.auxAttributes?.amdSwitchable ?? false;
+      const isImac = gpuInfo?.machineModelName == "iMac";
+
+      if (isImac && badGpu) {
+        this.logService.warning(
+          "Bad GPU detected, hardware acceleration is disabled for compatibility",
+        );
+        app.disableHardwareAcceleration();
+      }
     }
   }
 }

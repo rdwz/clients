@@ -24,6 +24,7 @@ import { ThemeStateService } from "@bitwarden/common/platform/theming/theme-stat
 import { DialogService } from "@bitwarden/components";
 
 import { SetPinComponent } from "../../auth/components/set-pin.component";
+import { DesktopAutofillSettingsService } from "../../autofill/services/desktop-autofill-settings.service";
 import { flagEnabled } from "../../platform/flags";
 import { DesktopSettingsService } from "../../platform/services/desktop-settings.service";
 import { NativeMessagingManifestService } from "../services/native-messaging-manifest.service";
@@ -124,6 +125,7 @@ export class SettingsComponent implements OnInit {
     private userVerificationService: UserVerificationServiceAbstraction,
     private desktopSettingsService: DesktopSettingsService,
     private biometricStateService: BiometricStateService,
+    private desktopAutofillSettingsService: DesktopAutofillSettingsService,
     private logService: LogService,
     private nativeMessagingManifestService: NativeMessagingManifestService,
   ) {
@@ -266,11 +268,12 @@ export class SettingsComponent implements OnInit {
       enableBrowserIntegration: await this.stateService.getEnableBrowserIntegration(),
       enableBrowserIntegrationFingerprint:
         await this.stateService.getEnableBrowserIntegrationFingerprint(),
+      enableDuckDuckGoBrowserIntegration: await firstValueFrom(
+        this.desktopAutofillSettingsService.enableDuckDuckGoBrowserIntegration$,
+      ),
       enableHardwareAcceleration: await firstValueFrom(
         this.desktopSettingsService.hardwareAcceleration$,
       ),
-      enableDuckDuckGoBrowserIntegration:
-        await this.stateService.getEnableDuckDuckGoBrowserIntegration(),
       theme: await firstValueFrom(this.themeStateService.selectedTheme$),
       locale: await firstValueFrom(this.i18nService.userSetLocale$),
     };
@@ -653,7 +656,7 @@ export class SettingsComponent implements OnInit {
   }
 
   async saveDdgBrowserIntegration() {
-    await this.stateService.setEnableDuckDuckGoBrowserIntegration(
+    await this.desktopAutofillSettingsService.setEnableDuckDuckGoBrowserIntegration(
       this.form.value.enableDuckDuckGoBrowserIntegration,
     );
 
