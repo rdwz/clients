@@ -334,7 +334,7 @@ export class AccessSelectorComponent implements ControlValueAccessor, OnInit, On
    * Deselected items that are capable of being edited/selected. Excludes readonly items that the user does not have
    * permission to grant access to.
    */
-  protected get editableDeselectedItems() {
+  protected get readonlyDeselectedItems() {
     return this.selectionList.deselectedItems.filter((i) => !i.readonly);
   }
 
