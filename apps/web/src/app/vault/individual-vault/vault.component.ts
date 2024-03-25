@@ -406,10 +406,6 @@ export class VaultComponent implements OnInit, OnDestroy {
             (filter.organizationId === undefined || filter.organizationId === Unassigned);
           this.isEmpty = collections?.length === 0 && ciphers?.length === 0;
 
-          // This is a temporary fix to avoid double fetching collections.
-          // TODO: Remove when implementing new VVR menu
-          this.vaultFilterService.reloadCollections(allCollections);
-
           this.performingInitialLoad = false;
           this.refreshing = false;
         },
@@ -518,7 +514,7 @@ export class VaultComponent implements OnInit, OnDestroy {
       this.messagingService.send("premiumRequired");
       return;
     } else if (cipher.organizationId != null) {
-      const org = this.organizationService.get(cipher.organizationId);
+      const org = await this.organizationService.get(cipher.organizationId);
       if (org != null && (org.maxStorageGb == null || org.maxStorageGb === 0)) {
         this.messagingService.send("upgradeOrganization", {
           organizationId: cipher.organizationId,
@@ -697,7 +693,7 @@ export class VaultComponent implements OnInit, OnDestroy {
   }
 
   async deleteCollection(collection: CollectionView): Promise<void> {
-    const organization = this.organizationService.get(collection.organizationId);
+    const organization = await this.organizationService.get(collection.organizationId);
     if (!collection.canDelete(organization)) {
       this.platformUtilsService.showToast(
         "error",

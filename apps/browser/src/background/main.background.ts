@@ -5,6 +5,8 @@ import {
   PinCryptoService,
   LoginStrategyServiceAbstraction,
   LoginStrategyService,
+  InternalUserDecryptionOptionsServiceAbstraction,
+  UserDecryptionOptionsService,
   AuthRequestServiceAbstraction,
   AuthRequestService,
 } from "@bitwarden/auth/common";
@@ -14,12 +16,12 @@ import { EventCollectionService as EventCollectionServiceAbstraction } from "@bi
 import { EventUploadService as EventUploadServiceAbstraction } from "@bitwarden/common/abstractions/event/event-upload.service";
 import { NotificationsService as NotificationsServiceAbstraction } from "@bitwarden/common/abstractions/notifications.service";
 import { SearchService as SearchServiceAbstraction } from "@bitwarden/common/abstractions/search.service";
-import { SettingsService as SettingsServiceAbstraction } from "@bitwarden/common/abstractions/settings.service";
 import { VaultTimeoutSettingsService as VaultTimeoutSettingsServiceAbstraction } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
 import { InternalOrganizationServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 import { PolicyApiServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/policy/policy-api.service.abstraction";
 import { InternalPolicyService as InternalPolicyServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { ProviderService as ProviderServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/provider.service";
+import { OrganizationService } from "@bitwarden/common/admin-console/services/organization/organization.service";
 import { PolicyApiService } from "@bitwarden/common/admin-console/services/policy/policy-api.service";
 import { PolicyService } from "@bitwarden/common/admin-console/services/policy/policy.service";
 import { ProviderService } from "@bitwarden/common/admin-console/services/provider.service";
@@ -182,7 +184,6 @@ import {
   VaultExportServiceAbstraction,
 } from "@bitwarden/vault-export-core";
 
-import { BrowserOrganizationService } from "../admin-console/services/browser-organization.service";
 import ContextMenusBackground from "../autofill/background/context-menus.background";
 import NotificationBackground from "../autofill/background/notification.background";
 import OverlayBackground from "../autofill/background/overlay.background";
@@ -213,7 +214,6 @@ import { BrowserPlatformUtilsService } from "../platform/services/platform-utils
 import { BackgroundDerivedStateProvider } from "../platform/state/background-derived-state.provider";
 import { BackgroundMemoryStorageService } from "../platform/storage/background-memory-storage.service";
 import { BrowserSendService } from "../services/browser-send.service";
-import { BrowserSettingsService } from "../services/browser-settings.service";
 import VaultTimeoutService from "../services/vault-timeout/vault-timeout.service";
 import FilelessImporterBackground from "../tools/background/fileless-importer.background";
 import { Fido2Background as Fido2BackgroundAbstraction } from "../vault/fido2/background/abstractions/fido2.background";
@@ -242,9 +242,9 @@ export default class MainBackground {
   appIdService: AppIdServiceAbstraction;
   apiService: ApiServiceAbstraction;
   environmentService: BrowserEnvironmentService;
-  settingsService: SettingsServiceAbstraction;
   cipherService: CipherServiceAbstraction;
   folderService: InternalFolderServiceAbstraction;
+  userDecryptionOptionsService: InternalUserDecryptionOptionsServiceAbstraction;
   collectionService: CollectionServiceAbstraction;
   vaultTimeoutService: VaultTimeoutService;
   vaultTimeoutSettingsService: VaultTimeoutSettingsServiceAbstraction;
@@ -488,7 +488,6 @@ export default class MainBackground {
       (expired: boolean) => this.logout(expired),
     );
     this.domainSettingsService = new DefaultDomainSettingsService(this.stateProvider);
-    this.settingsService = new BrowserSettingsService(this.stateService);
     this.fileUploadService = new FileUploadService(this.logService);
     this.cipherFileUploadService = new CipherFileUploadService(
       this.apiService,
@@ -502,10 +501,7 @@ export default class MainBackground {
       this.stateProvider,
     );
     this.syncNotifierService = new SyncNotifierService();
-    this.organizationService = new BrowserOrganizationService(
-      this.stateService,
-      this.stateProvider,
-    );
+    this.organizationService = new OrganizationService(this.stateProvider);
     this.policyService = new PolicyService(this.stateProvider, this.organizationService);
     this.autofillSettingsService = new AutofillSettingsService(
       this.stateProvider,
@@ -546,6 +542,8 @@ export default class MainBackground {
       };
     })();
 
+    this.userDecryptionOptionsService = new UserDecryptionOptionsService(this.stateProvider);
+
     this.devicesApiService = new DevicesApiServiceImplementation(this.apiService);
     this.deviceTrustCryptoService = new DeviceTrustCryptoService(
       this.keyGenerationService,
@@ -557,6 +555,7 @@ export default class MainBackground {
       this.devicesApiService,
       this.i18nService,
       this.platformUtilsService,
+      this.userDecryptionOptionsService,
     );
 
     this.devicesService = new DevicesServiceImplementation(this.devicesApiService);
@@ -597,6 +596,7 @@ export default class MainBackground {
       this.policyService,
       this.deviceTrustCryptoService,
       this.authRequestService,
+      this.userDecryptionOptionsService,
       this.globalStateProvider,
       this.billingAccountProfileStateService,
     );
@@ -613,6 +613,7 @@ export default class MainBackground {
       this.authService,
       this.environmentService,
       this.logService,
+      this.stateProvider,
       true,
     );
 
@@ -638,6 +639,7 @@ export default class MainBackground {
     this.folderApiService = new FolderApiService(this.folderService, this.apiService);
 
     this.vaultTimeoutSettingsService = new VaultTimeoutSettingsService(
+      this.userDecryptionOptionsService,
       this.cryptoService,
       this.tokenService,
       this.policyService,
@@ -657,6 +659,7 @@ export default class MainBackground {
       this.cryptoService,
       this.i18nService,
       this.userVerificationApiService,
+      this.userDecryptionOptionsService,
       this.pinCryptoService,
       this.logService,
       this.vaultTimeoutSettingsService,
@@ -724,20 +727,23 @@ export default class MainBackground {
       this.folderApiService,
       this.organizationService,
       this.sendApiService,
+      this.userDecryptionOptionsService,
       this.avatarService,
       logoutCallback,
       this.billingAccountProfileStateService,
     );
     this.eventUploadService = new EventUploadService(
       this.apiService,
-      this.stateService,
+      this.stateProvider,
       this.logService,
+      this.accountService,
     );
     this.eventCollectionService = new EventCollectionService(
       this.cipherService,
-      this.stateService,
+      this.stateProvider,
       this.organizationService,
       this.eventUploadService,
+      this.accountService,
     );
     this.totpService = new TotpService(this.cryptoFunctionService, this.logService);
 
@@ -894,7 +900,7 @@ export default class MainBackground {
       this.autofillService,
       this.authService,
       this.environmentService,
-      this.settingsService,
+      this.domainSettingsService,
       this.stateService,
       this.autofillSettingsService,
       this.i18nService,
@@ -1029,10 +1035,6 @@ export default class MainBackground {
 
     return new Promise<void>((resolve) => {
       setTimeout(async () => {
-        await this.environmentService.setUrlsFromStorage();
-        // Workaround to ignore stateService.activeAccount until URLs are set
-        // TODO: Remove this when implementing ticket PM-2637
-        this.environmentService.initialized = true;
         if (!this.isPrivateMode) {
           await this.refreshBadge();
         }
@@ -1113,7 +1115,7 @@ export default class MainBackground {
   async logout(expired: boolean, userId?: UserId) {
     userId ??= (await firstValueFrom(this.accountService.activeAccount$))?.id;
 
-    await this.eventUploadService.uploadEvents(userId);
+    await this.eventUploadService.uploadEvents(userId as UserId);
 
     await Promise.all([
       this.syncService.setLastSync(new Date(0), userId),

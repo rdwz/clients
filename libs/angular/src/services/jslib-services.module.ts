@@ -8,6 +8,9 @@ import {
   PinCryptoService,
   LoginStrategyServiceAbstraction,
   LoginStrategyService,
+  InternalUserDecryptionOptionsServiceAbstraction,
+  UserDecryptionOptionsService,
+  UserDecryptionOptionsServiceAbstraction,
 } from "@bitwarden/auth/common";
 import { ApiService as ApiServiceAbstraction } from "@bitwarden/common/abstractions/api.service";
 import { AuditService as AuditServiceAbstraction } from "@bitwarden/common/abstractions/audit.service";
@@ -15,7 +18,6 @@ import { EventCollectionService as EventCollectionServiceAbstraction } from "@bi
 import { EventUploadService as EventUploadServiceAbstraction } from "@bitwarden/common/abstractions/event/event-upload.service";
 import { NotificationsService as NotificationsServiceAbstraction } from "@bitwarden/common/abstractions/notifications.service";
 import { SearchService as SearchServiceAbstraction } from "@bitwarden/common/abstractions/search.service";
-import { SettingsService as SettingsServiceAbstraction } from "@bitwarden/common/abstractions/settings.service";
 import { VaultTimeoutSettingsService as VaultTimeoutSettingsServiceAbstraction } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
 import { VaultTimeoutService as VaultTimeoutServiceAbstraction } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout.service";
 import { OrganizationApiServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/organization/organization-api.service.abstraction";
@@ -28,6 +30,7 @@ import {
   OrgDomainInternalServiceAbstraction,
   OrgDomainServiceAbstraction,
 } from "@bitwarden/common/admin-console/abstractions/organization-domain/org-domain.service.abstraction";
+import { OrganizationManagementPreferencesService } from "@bitwarden/common/admin-console/abstractions/organization-management-preferences/organization-management-preferences.service";
 import { OrganizationUserService } from "@bitwarden/common/admin-console/abstractions/organization-user/organization-user.service";
 import { PolicyApiServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/policy/policy-api.service.abstraction";
 import {
@@ -39,6 +42,7 @@ import { OrganizationApiService } from "@bitwarden/common/admin-console/services
 import { OrganizationService } from "@bitwarden/common/admin-console/services/organization/organization.service";
 import { OrgDomainApiService } from "@bitwarden/common/admin-console/services/organization-domain/org-domain-api.service";
 import { OrgDomainService } from "@bitwarden/common/admin-console/services/organization-domain/org-domain.service";
+import { DefaultOrganizationManagementPreferencesService } from "@bitwarden/common/admin-console/services/organization-management-preferences/default-organization-management-preferences.service";
 import { OrganizationUserServiceImplementation } from "@bitwarden/common/admin-console/services/organization-user/organization-user.service.implementation";
 import { PolicyApiService } from "@bitwarden/common/admin-console/services/policy/policy-api.service";
 import { PolicyService } from "@bitwarden/common/admin-console/services/policy/policy.service";
@@ -111,7 +115,7 @@ import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstraction
 import { CryptoFunctionService as CryptoFunctionServiceAbstraction } from "@bitwarden/common/platform/abstractions/crypto-function.service";
 import { CryptoService as CryptoServiceAbstraction } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { EncryptService } from "@bitwarden/common/platform/abstractions/encrypt.service";
-import { EnvironmentService as EnvironmentServiceAbstraction } from "@bitwarden/common/platform/abstractions/environment.service";
+import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { FileUploadService as FileUploadServiceAbstraction } from "@bitwarden/common/platform/abstractions/file-upload/file-upload.service";
 import { I18nService as I18nServiceAbstraction } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { KeyGenerationService as KeyGenerationServiceAbstraction } from "@bitwarden/common/platform/abstractions/key-generation.service";
@@ -136,7 +140,7 @@ import { ConsoleLogService } from "@bitwarden/common/platform/services/console-l
 import { CryptoService } from "@bitwarden/common/platform/services/crypto.service";
 import { EncryptServiceImplementation } from "@bitwarden/common/platform/services/cryptography/encrypt.service.implementation";
 import { MultithreadEncryptServiceImplementation } from "@bitwarden/common/platform/services/cryptography/multithread-encrypt.service.implementation";
-import { EnvironmentService } from "@bitwarden/common/platform/services/environment.service";
+import { DefaultEnvironmentService } from "@bitwarden/common/platform/services/default-environment.service";
 import { FileUploadService } from "@bitwarden/common/platform/services/file-upload/file-upload.service";
 import { KeyGenerationService } from "@bitwarden/common/platform/services/key-generation.service";
 import { MigrationBuilderService } from "@bitwarden/common/platform/services/migration-builder.service";
@@ -172,7 +176,6 @@ import { EventCollectionService } from "@bitwarden/common/services/event/event-c
 import { EventUploadService } from "@bitwarden/common/services/event/event-upload.service";
 import { NotificationsService } from "@bitwarden/common/services/notifications.service";
 import { SearchService } from "@bitwarden/common/services/search.service";
-import { SettingsService } from "@bitwarden/common/services/settings.service";
 import { VaultTimeoutSettingsService } from "@bitwarden/common/services/vault-timeout/vault-timeout-settings.service";
 import { VaultTimeoutService } from "@bitwarden/common/services/vault-timeout/vault-timeout.service";
 import {
@@ -243,8 +246,8 @@ import { safeProvider, SafeProvider } from "../platform/utils/safe-provider";
 import {
   LOCALES_DIRECTORY,
   LOCKED_CALLBACK,
-  LOG_MAC_FAILURES,
   LOGOUT_CALLBACK,
+  LOG_MAC_FAILURES,
   MEMORY_STORAGE,
   OBSERVABLE_DISK_STORAGE,
   OBSERVABLE_MEMORY_STORAGE,
@@ -360,7 +363,7 @@ const typesafeProviders: Array<SafeProvider> = [
       MessagingServiceAbstraction,
       LogService,
       KeyConnectorServiceAbstraction,
-      EnvironmentServiceAbstraction,
+      EnvironmentService,
       StateServiceAbstraction,
       TwoFactorServiceAbstraction,
       I18nServiceAbstraction,
@@ -369,6 +372,7 @@ const typesafeProviders: Array<SafeProvider> = [
       PolicyServiceAbstraction,
       DeviceTrustCryptoServiceAbstraction,
       AuthRequestServiceAbstraction,
+      InternalUserDecryptionOptionsServiceAbstraction,
       GlobalStateProvider,
       BillingAccountProfileStateService,
     ],
@@ -473,9 +477,18 @@ const typesafeProviders: Array<SafeProvider> = [
     deps: [CryptoServiceAbstraction, I18nServiceAbstraction, StateProvider],
   }),
   safeProvider({
-    provide: EnvironmentServiceAbstraction,
-    useClass: EnvironmentService,
+    provide: EnvironmentService,
+    useClass: DefaultEnvironmentService,
     deps: [StateProvider, AccountServiceAbstraction],
+  }),
+  safeProvider({
+    provide: InternalUserDecryptionOptionsServiceAbstraction,
+    useClass: UserDecryptionOptionsService,
+    deps: [StateProvider],
+  }),
+  safeProvider({
+    provide: UserDecryptionOptionsServiceAbstraction,
+    useExisting: InternalUserDecryptionOptionsServiceAbstraction,
   }),
   safeProvider({
     provide: TotpServiceAbstraction,
@@ -485,7 +498,12 @@ const typesafeProviders: Array<SafeProvider> = [
   safeProvider({
     provide: TokenServiceAbstraction,
     useClass: TokenService,
-    deps: [SingleUserStateProvider, GlobalStateProvider, SUPPORTS_SECURE_STORAGE, SECURE_STORAGE],
+    deps: [
+      SingleUserStateProvider,
+      GlobalStateProvider,
+      SUPPORTS_SECURE_STORAGE,
+      AbstractStorageService,
+    ],
   }),
   safeProvider({
     provide: KeyGenerationServiceAbstraction,
@@ -527,7 +545,7 @@ const typesafeProviders: Array<SafeProvider> = [
     deps: [
       TokenServiceAbstraction,
       PlatformUtilsServiceAbstraction,
-      EnvironmentServiceAbstraction,
+      EnvironmentService,
       AppIdServiceAbstraction,
       StateServiceAbstraction,
       LOGOUT_CALLBACK,
@@ -572,6 +590,7 @@ const typesafeProviders: Array<SafeProvider> = [
       FolderApiServiceAbstraction,
       InternalOrganizationServiceAbstraction,
       SendApiServiceAbstraction,
+      UserDecryptionOptionsServiceAbstraction,
       AvatarServiceAbstraction,
       LOGOUT_CALLBACK,
       BillingAccountProfileStateService,
@@ -579,14 +598,10 @@ const typesafeProviders: Array<SafeProvider> = [
   }),
   safeProvider({ provide: BroadcasterServiceAbstraction, useClass: BroadcasterService, deps: [] }),
   safeProvider({
-    provide: SettingsServiceAbstraction,
-    useClass: SettingsService,
-    deps: [StateServiceAbstraction],
-  }),
-  safeProvider({
     provide: VaultTimeoutSettingsServiceAbstraction,
     useClass: VaultTimeoutSettingsService,
     deps: [
+      UserDecryptionOptionsServiceAbstraction,
       CryptoServiceAbstraction,
       TokenServiceAbstraction,
       PolicyServiceAbstraction,
@@ -632,7 +647,7 @@ const typesafeProviders: Array<SafeProvider> = [
       LogService,
       STATE_FACTORY,
       AccountServiceAbstraction,
-      EnvironmentServiceAbstraction,
+      EnvironmentService,
       TokenServiceAbstraction,
       MigrationRunner,
       STATE_SERVICE_USE_CACHE,
@@ -696,7 +711,7 @@ const typesafeProviders: Array<SafeProvider> = [
       SyncServiceAbstraction,
       AppIdServiceAbstraction,
       ApiServiceAbstraction,
-      EnvironmentServiceAbstraction,
+      EnvironmentService,
       LOGOUT_CALLBACK,
       StateServiceAbstraction,
       AuthServiceAbstraction,
@@ -716,16 +731,17 @@ const typesafeProviders: Array<SafeProvider> = [
   safeProvider({
     provide: EventUploadServiceAbstraction,
     useClass: EventUploadService,
-    deps: [ApiServiceAbstraction, StateServiceAbstraction, LogService],
+    deps: [ApiServiceAbstraction, StateProvider, LogService, AccountServiceAbstraction],
   }),
   safeProvider({
     provide: EventCollectionServiceAbstraction,
     useClass: EventCollectionService,
     deps: [
       CipherServiceAbstraction,
-      StateServiceAbstraction,
+      StateProvider,
       OrganizationServiceAbstraction,
       EventUploadServiceAbstraction,
+      AccountServiceAbstraction,
     ],
   }),
   safeProvider({
@@ -764,6 +780,7 @@ const typesafeProviders: Array<SafeProvider> = [
       CryptoServiceAbstraction,
       I18nServiceAbstraction,
       UserVerificationApiServiceAbstraction,
+      UserDecryptionOptionsServiceAbstraction,
       PinCryptoServiceAbstraction,
       LogService,
       VaultTimeoutSettingsServiceAbstraction,
@@ -773,7 +790,7 @@ const typesafeProviders: Array<SafeProvider> = [
   safeProvider({
     provide: InternalOrganizationServiceAbstraction,
     useClass: OrganizationService,
-    deps: [StateServiceAbstraction, StateProvider],
+    deps: [StateProvider],
   }),
   safeProvider({
     provide: OrganizationServiceAbstraction,
@@ -836,8 +853,9 @@ const typesafeProviders: Array<SafeProvider> = [
       StateServiceAbstraction,
       ConfigApiServiceAbstraction,
       AuthServiceAbstraction,
-      EnvironmentServiceAbstraction,
+      EnvironmentService,
       LogService,
+      StateProvider,
     ],
   }),
   safeProvider({
@@ -852,7 +870,7 @@ const typesafeProviders: Array<SafeProvider> = [
   safeProvider({
     provide: AnonymousHubServiceAbstraction,
     useClass: AnonymousHubService,
-    deps: [EnvironmentServiceAbstraction, LoginStrategyServiceAbstraction, LogService],
+    deps: [EnvironmentService, LoginStrategyServiceAbstraction, LogService],
   }),
   safeProvider({
     provide: ValidationServiceAbstraction,
@@ -901,6 +919,7 @@ const typesafeProviders: Array<SafeProvider> = [
       DevicesApiServiceAbstraction,
       I18nServiceAbstraction,
       PlatformUtilsServiceAbstraction,
+      UserDecryptionOptionsServiceAbstraction,
     ],
   }),
   safeProvider({
@@ -931,7 +950,7 @@ const typesafeProviders: Array<SafeProvider> = [
   safeProvider({
     provide: WebAuthnLoginApiServiceAbstraction,
     useClass: WebAuthnLoginApiService,
-    deps: [ApiServiceAbstraction, EnvironmentServiceAbstraction],
+    deps: [ApiServiceAbstraction, EnvironmentService],
   }),
   safeProvider({
     provide: WebAuthnLoginServiceAbstraction,
@@ -1048,6 +1067,11 @@ const typesafeProviders: Array<SafeProvider> = [
     provide: BillingAccountProfileStateService,
     useClass: DefaultBillingAccountProfileStateService,
     deps: [ActiveUserStateProvider],
+  }),
+  safeProvider({
+    provide: OrganizationManagementPreferencesService,
+    useClass: DefaultOrganizationManagementPreferencesService,
+    deps: [StateProvider],
   }),
 ];
 

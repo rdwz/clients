@@ -88,7 +88,7 @@
     "copy-webpack-plugin": "11.0.0",
     "cross-env": "7.0.3",
     "css-loader": "6.8.1",
-    "electron": "28.2.7",
+    "electron": "28.2.8",
     "electron-builder": "24.13.3",
     "electron-log": "5.0.1",
     "electron-reload": "2.0.0-alpha.1",
@@ -101,7 +101,7 @@
     "eslint-plugin-rxjs": "5.0.3",
     "eslint-plugin-rxjs-angular": "2.0.1",
     "eslint-plugin-storybook": "0.8.0",
-    "eslint-plugin-tailwindcss": "3.14.3",
+    "eslint-plugin-tailwindcss": "3.15.1",
     "gulp": "4.0.2",
     "gulp-filter": "9.0.1",
     "gulp-if": "3.0.0",
@@ -220,7 +220,7 @@
     "*.ts": "eslint --cache --cache-strategy content --fix"
   },
   "engines": {
-    "node": "~18",
+    "node": "^18.18.0",
     "npm": "~9"
   }
 }
