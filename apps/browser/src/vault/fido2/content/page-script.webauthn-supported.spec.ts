@@ -85,6 +85,18 @@ describe("Fido2 page script with native WebAuthn support", () => {
       });
     });
 
+    it("falls back to the default browser credentials API if an error occurs", async () => {
+      window.top.document.hasFocus = jest.fn().mockReturnValue(true);
+      messenger.request = jest.fn().mockRejectedValue({ fallbackRequested: true });
+
+      try {
+        await navigator.credentials.get(mockCredentialRequestOptions);
+        expect("This will fail the test").toBe(true);
+      } catch {
+        expect(WebauthnUtils.mapCredentialAssertResult).not.toHaveBeenCalled();
+      }
+    });
+
     it("gets and returns the WebAuthn credentials", async () => {
       await navigator.credentials.get(mockCredentialRequestOptions);
 
@@ -95,6 +107,17 @@ describe("Fido2 page script with native WebAuthn support", () => {
       expect(WebauthnUtils.mapCredentialAssertResult).toHaveBeenCalledWith(
         mockCredentialAssertResult,
       );
+    });
+  });
+
+  describe("destroy", () => {
+    it("should ", async () => {
+      jest.spyOn(globalThis.top, "removeEventListener");
+      const SENDER = "bitwarden-webauthn";
+      void messenger.handler({ type: MessageType.DisconnectRequest, SENDER, senderId: "1" });
+
+      expect(globalThis.top.removeEventListener).toHaveBeenCalledWith("focus", undefined);
+      expect(messenger.destroy).toHaveBeenCalled();
     });
   });
 });

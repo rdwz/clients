@@ -82,4 +82,15 @@ describe("Fido2 page script without native WebAuthn support", () => {
       );
     });
   });
+
+  describe("destroy", () => {
+    it("should ", async () => {
+      jest.spyOn(globalThis.top, "removeEventListener");
+      const SENDER = "bitwarden-webauthn";
+      void messenger.handler({ type: MessageType.DisconnectRequest, SENDER, senderId: "1" });
+
+      expect(globalThis.top.removeEventListener).toHaveBeenCalledWith("focus", undefined);
+      expect(messenger.destroy).toHaveBeenCalled();
+    });
+  });
 });
