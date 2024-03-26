@@ -19,14 +19,18 @@ on:
         description: "Branch or Tag name to deploy (examples: 'main', 'feature/sm', 'web-v2023.12.0')"
         type: string
         default: main
-      invert-default-sync-delete-destination-files-value:
-        description: "Invert the default sync-delete-destination-files value"
+      force-delete-destination:
+        description: "Delete remote files that are not found locally"
         type: boolean
         default: false
       debug:
         description: "Debug mode"
         type: boolean
-        default: false
+        default: true
+      build-web-run-id:
+        description: "Build-web workflow Run ID to use for artifact download"
+        type: string
+        required: false
 
   workflow_call:
     inputs:
@@ -38,14 +42,18 @@ on:
         description: "Branch or Tag name to deploy (examples: 'main', 'feature/sm', 'web-v2023.12.0')"
         type: string
         default: main
-      invert-default-sync-delete-destination-files-value:
-        description: "Invert the default sync-delete-destination-files value"
+      force-delete-destination:
+        description: "Delete remote files that are not found locally"
         type: boolean
         default: false
       debug:
         description: "Debug mode"
         type: boolean
         default: true
+      build-web-run-id:
+        description: "Build-web workflow Run ID to use for artifact download"
+        type: string
+        required: false
 
 permissions:
   deployments: write
@@ -70,14 +78,6 @@ jobs:
           ENV_NAME_LOWER=$(echo "${{ inputs.environment }}" | awk '{print tolower($0)}')
           echo "configuring the Web deploy for ${{ inputs.environment }}"
           echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
-
-          # Invert the default value for sync-delete-destination-files
-          if [ ${{ inputs.invert-default-sync-delete-destination-files-value }} ]; then
-            echo "sync-delete-destination-files=true" >> $GITHUB_OUTPUT
-          else
-          # This is the default value for USQA, EUQA, USPROD, and EUPROD
-          echo "sync-delete-destination-files=false" >> $GITHUB_OUTPUT
-          fi
 
           case ${{ inputs.environment }} in
             "USQA")
@@ -114,13 +114,6 @@ jobs:
               echo "environment-artifact=web-*-cloud-usdev.zip" >> $GITHUB_OUTPUT
               echo "environment-name=Web Vault - US Development Cloud" >> $GITHUB_OUTPUT
               echo "environment-url=http://vault.$ENV_NAME_LOWER.bitwarden.pw" >> $GITHUB_OUTPUT
-
-              if [ ${{ inputs.invert-default-sync-delete-destination-files-value }} ]; then
-                echo "sync-delete-destination-files=false" >> $GITHUB_OUTPUT
-              else
-                # This is the default value for USDEV
-                echo "sync-delete-destination-files=true" >> $GITHUB_OUTPUT
-              fi
               ;;
           esac
           # Set the sync utility to use for deployment to the environment (az-sync or azcopy)
@@ -183,7 +176,20 @@ jobs:
     env:
       _ENVIRONMENT_ARTIFACT: ${{ needs.setup.outputs.environment-artifact }}
     steps:
+      - name: 'Download latest cloud asset using GitHub Run ID: ${{ inputs.build-web-run-id }}'
+        if: ${{ inputs.build-web-run-id }}
+        uses: bitwarden/gh-actions/download-artifacts@main
+        id: download-latest-artifacts
+        continue-on-error: true
+        with:
+          workflow: build-web.yml
+          path: apps/web
+          workflow_conclusion: success
+          run_id: ${{ inputs.build-web-run-id }}
+          artifacts: ${{ env._ENVIRONMENT_ARTIFACT }}
+
       - name: 'Download latest cloud asset from branch/tag: ${{ inputs.branch-or-tag }}'
+        if: ${{ !inputs.build-web-run-id }}
         uses: bitwarden/gh-actions/download-artifacts@main
         id: download-artifacts
         continue-on-error: true
@@ -264,7 +270,20 @@ jobs:
           keyvault: ${{ needs.setup.outputs.retrieve-secrets-keyvault }}
           secrets: "sa-bitwarden-web-vault-name,sp-bitwarden-web-vault-password,sp-bitwarden-web-vault-appid,sp-bitwarden-web-vault-tenant"
 
+      - name: 'Download latest cloud asset using GitHub Run ID: ${{ inputs.build-web-run-id }}'
+        if: ${{ inputs.build-web-run-id }}
+        uses: bitwarden/gh-actions/download-artifacts@main
+        id: download-latest-artifacts
+        continue-on-error: true
+        with:
+          workflow: build-web.yml
+          path: apps/web
+          workflow_conclusion: success
+          run_id: ${{ inputs.build-web-run-id }}
+          artifacts: ${{ env._ENVIRONMENT_ARTIFACT }}
+
       - name: 'Download cloud asset from branch/tag: ${{ inputs.branch-or-tag }}'
+        if: ${{ !inputs.build-web-run-id }}
         uses: bitwarden/gh-actions/download-artifacts@main
         with:
           workflow: build-web.yml
@@ -285,7 +304,7 @@ jobs:
             --source "./build" \
             --container '$web' \
             --connection-string "${{ steps.retrieve-secrets-az-sync.outputs.sa-bitwarden-web-vault-dev-key-temp }}" \
-            --delete-destination=${{ needs.setup.outputs.sync-delete-destination-files }}
+            --delete-destination=${{ inputs.force-delete-destination }}
 
       - name: Sync to Azure Storage Account using azcopy
         if: ${{ needs.setup.outputs.sync-utility == 'azcopy' }}
@@ -297,7 +316,7 @@ jobs:
           AZCOPY_TENANT_ID: ${{ steps.retrieve-secrets-azcopy.outputs.sp-bitwarden-web-vault-tenant }}
         run: |
           azcopy sync ./build 'https://${{ steps.retrieve-secrets-azcopy.outputs.sa-bitwarden-web-vault-name }}.blob.core.windows.net/$web/' \
-            --delete-destination=${{ needs.setup.outputs.sync-delete-destination-files }} --compare-hash="MD5"
+            --delete-destination=${{ inputs.force-delete-destination }} --compare-hash="MD5"
 
       - name: Debug sync logs
         if: ${{ inputs.debug }}
