@@ -234,9 +234,9 @@ export class EmergencyAccessService {
     const masterKey = await this.cryptoService.makeMasterKey(
       masterPassword,
       email,
-      takeoverResponse.kdf,
       new KdfConfig(
         takeoverResponse.kdfIterations,
+        takeoverResponse.kdf,
         takeoverResponse.kdfMemory,
         takeoverResponse.kdfParallelism,
       ),

@@ -6,6 +6,7 @@ import { ProfileOrganizationResponse } from "../../admin-console/models/response
 import { ProfileProviderOrganizationResponse } from "../../admin-console/models/response/profile-provider-organization.response";
 import { ProfileProviderResponse } from "../../admin-console/models/response/profile-provider.response";
 import { AccountService } from "../../auth/abstractions/account.service";
+import { KdfConfigServiceAbstraction } from "../../auth/abstractions/kdf-config.service.abstraction";
 import { AuthenticationStatus } from "../../auth/enums/authentication-status";
 import { KdfConfig } from "../../auth/models/domain/kdf-config";
 import { Utils } from "../../platform/misc/utils";
@@ -90,6 +91,7 @@ export class CryptoService implements CryptoServiceAbstraction {
     protected stateService: StateService,
     protected accountService: AccountService,
     protected stateProvider: StateProvider,
+    protected kdfConfigService: KdfConfigServiceAbstraction,
   ) {
     // User Key
     this.activeUserKeyState = stateProvider.getActive(USER_KEY);
@@ -290,8 +292,7 @@ export class CryptoService implements CryptoServiceAbstraction {
     return (masterKey ||= await this.makeMasterKey(
       password,
       await this.stateService.getEmail({ userId: userId }),
-      await this.stateService.getKdfType({ userId: userId }),
-      await this.stateService.getKdfConfig({ userId: userId }),
+      await this.kdfConfigService.getKdfConfig(),
     ));
   }
 
@@ -301,16 +302,10 @@ export class CryptoService implements CryptoServiceAbstraction {
    * @remarks
    * Does not validate the kdf config to ensure it satisfies the minimum requirements for the given kdf type.
    */
-  async makeMasterKey(
-    password: string,
-    email: string,
-    kdf: KdfType,
-    KdfConfig: KdfConfig,
-  ): Promise<MasterKey> {
+  async makeMasterKey(password: string, email: string, KdfConfig: KdfConfig): Promise<MasterKey> {
     return (await this.keyGenerationService.deriveKeyFromPassword(
       password,
       email,
-      kdf,
       KdfConfig,
     )) as MasterKey;
   }
@@ -613,8 +608,8 @@ export class CryptoService implements CryptoServiceAbstraction {
     }
   }
 
-  async makePinKey(pin: string, salt: string, kdf: KdfType, kdfConfig: KdfConfig): Promise<PinKey> {
-    const pinKey = await this.keyGenerationService.deriveKeyFromPassword(pin, salt, kdf, kdfConfig);
+  async makePinKey(pin: string, salt: string, kdfConfig: KdfConfig): Promise<PinKey> {
+    const pinKey = await this.keyGenerationService.deriveKeyFromPassword(pin, salt, kdfConfig);
     return (await this.stretchKey(pinKey)) as PinKey;
   }
 
@@ -628,7 +623,6 @@ export class CryptoService implements CryptoServiceAbstraction {
   async decryptUserKeyWithPin(
     pin: string,
     salt: string,
-    kdf: KdfType,
     kdfConfig: KdfConfig,
     pinProtectedUserKey?: EncString,
   ): Promise<UserKey> {
@@ -637,7 +631,7 @@ export class CryptoService implements CryptoServiceAbstraction {
     if (!pinProtectedUserKey) {
       throw new Error("No PIN protected key found.");
     }
-    const pinKey = await this.makePinKey(pin, salt, kdf, kdfConfig);
+    const pinKey = await this.makePinKey(pin, salt, kdfConfig);
     const userKey = await this.encryptService.decryptToBytes(pinProtectedUserKey, pinKey);
     return new SymmetricCryptoKey(userKey) as UserKey;
   }
@@ -646,7 +640,6 @@ export class CryptoService implements CryptoServiceAbstraction {
   async decryptMasterKeyWithPin(
     pin: string,
     salt: string,
-    kdf: KdfType,
     kdfConfig: KdfConfig,
     pinProtectedMasterKey?: EncString,
   ): Promise<MasterKey> {
@@ -657,7 +650,7 @@ export class CryptoService implements CryptoServiceAbstraction {
       }
       pinProtectedMasterKey = new EncString(pinProtectedMasterKeyString);
     }
-    const pinKey = await this.makePinKey(pin, salt, kdf, kdfConfig);
+    const pinKey = await this.makePinKey(pin, salt, kdfConfig);
     const masterKey = await this.encryptService.decryptToBytes(pinProtectedMasterKey, pinKey);
     return new SymmetricCryptoKey(masterKey) as MasterKey;
   }
@@ -878,8 +871,7 @@ export class CryptoService implements CryptoServiceAbstraction {
     const pinKey = await this.makePinKey(
       pin,
       await this.stateService.getEmail({ userId: userId }),
-      await this.stateService.getKdfType({ userId: userId }),
-      await this.stateService.getKdfConfig({ userId: userId }),
+      await this.kdfConfigService.getKdfConfig(),
     );
     const encPin = await this.encryptService.encrypt(key.key, pinKey);
 
@@ -1053,16 +1045,15 @@ export class CryptoService implements CryptoServiceAbstraction {
     masterPasswordOnRestart: boolean,
     pin: string,
     email: string,
-    kdf: KdfType,
     kdfConfig: KdfConfig,
     oldPinKey: EncString,
   ): Promise<UserKey> {
     // Decrypt
-    const masterKey = await this.decryptMasterKeyWithPin(pin, email, kdf, kdfConfig, oldPinKey);
+    const masterKey = await this.decryptMasterKeyWithPin(pin, email, kdfConfig, oldPinKey);
     const encUserKey = await this.stateService.getEncryptedCryptoSymmetricKey();
     const userKey = await this.decryptUserKeyWithMasterKey(masterKey, new EncString(encUserKey));
     // Migrate
-    const pinKey = await this.makePinKey(pin, email, kdf, kdfConfig);
+    const pinKey = await this.makePinKey(pin, email, kdfConfig);
     const pinProtectedKey = await this.encryptService.encrypt(userKey.key, pinKey);
     if (masterPasswordOnRestart) {
       await this.stateService.setDecryptedPinProtected(null);

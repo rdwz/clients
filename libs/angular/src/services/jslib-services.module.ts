@@ -53,6 +53,7 @@ import { AvatarService as AvatarServiceAbstraction } from "@bitwarden/common/aut
 import { DeviceTrustCryptoServiceAbstraction } from "@bitwarden/common/auth/abstractions/device-trust-crypto.service.abstraction";
 import { DevicesServiceAbstraction } from "@bitwarden/common/auth/abstractions/devices/devices.service.abstraction";
 import { DevicesApiServiceAbstraction } from "@bitwarden/common/auth/abstractions/devices-api.service.abstraction";
+import { KdfConfigServiceAbstraction } from "@bitwarden/common/auth/abstractions/kdf-config.service.abstraction";
 import { KeyConnectorService as KeyConnectorServiceAbstraction } from "@bitwarden/common/auth/abstractions/key-connector.service";
 import { LoginService as LoginServiceAbstraction } from "@bitwarden/common/auth/abstractions/login.service";
 import { PasswordResetEnrollmentServiceAbstraction } from "@bitwarden/common/auth/abstractions/password-reset-enrollment.service.abstraction";
@@ -507,6 +508,7 @@ const typesafeProviders: Array<SafeProvider> = [
       StateServiceAbstraction,
       AccountServiceAbstraction,
       StateProvider,
+      KdfConfigServiceAbstraction,
     ],
   }),
   safeProvider({
@@ -661,7 +663,7 @@ const typesafeProviders: Array<SafeProvider> = [
       CipherServiceAbstraction,
       CryptoServiceAbstraction,
       CryptoFunctionServiceAbstraction,
-      StateServiceAbstraction,
+      KdfConfigServiceAbstraction,
     ],
   }),
   safeProvider({
@@ -672,8 +674,8 @@ const typesafeProviders: Array<SafeProvider> = [
       ApiServiceAbstraction,
       CryptoServiceAbstraction,
       CryptoFunctionServiceAbstraction,
-      StateServiceAbstraction,
       CollectionServiceAbstraction,
+      KdfConfigServiceAbstraction,
     ],
   }),
   safeProvider({
@@ -768,6 +770,7 @@ const typesafeProviders: Array<SafeProvider> = [
       LogService,
       VaultTimeoutSettingsServiceAbstraction,
       PlatformUtilsServiceAbstraction,
+      KdfConfigServiceAbstraction,
     ],
   }),
   safeProvider({
@@ -921,6 +924,7 @@ const typesafeProviders: Array<SafeProvider> = [
       CryptoServiceAbstraction,
       VaultTimeoutSettingsServiceAbstraction,
       LogService,
+      KdfConfigServiceAbstraction,
     ],
   }),
   safeProvider({

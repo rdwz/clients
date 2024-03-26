@@ -5,6 +5,7 @@ import { ChangePasswordComponent as BaseChangePasswordComponent } from "@bitward
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { AuditService } from "@bitwarden/common/abstractions/audit.service";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
+import { KdfConfigServiceAbstraction } from "@bitwarden/common/auth/abstractions/kdf-config.service.abstraction";
 import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
 import { PasswordRequest } from "@bitwarden/common/auth/models/request/password.request";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
@@ -48,6 +49,7 @@ export class ChangePasswordComponent extends BaseChangePasswordComponent {
     dialogService: DialogService,
     private userVerificationService: UserVerificationService,
     private keyRotationService: UserKeyRotationService,
+    kdfConfigService: KdfConfigServiceAbstraction,
   ) {
     super(
       i18nService,
@@ -58,6 +60,7 @@ export class ChangePasswordComponent extends BaseChangePasswordComponent {
       policyService,
       stateService,
       dialogService,
+      kdfConfigService,
     );
   }
 

@@ -94,8 +94,12 @@ export class OrganizationUserResetPasswordService {
     const newMasterKey = await this.cryptoService.makeMasterKey(
       newMasterPassword,
       email.trim().toLowerCase(),
-      response.kdf,
-      new KdfConfig(response.kdfIterations, response.kdfMemory, response.kdfParallelism),
+      new KdfConfig(
+        response.kdfIterations,
+        response.kdf,
+        response.kdfMemory,
+        response.kdfParallelism,
+      ),
     );
     const newMasterKeyHash = await this.cryptoService.hashMasterKey(
       newMasterPassword,

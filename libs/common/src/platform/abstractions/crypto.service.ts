@@ -129,12 +129,7 @@ export abstract class CryptoService {
    * @param KdfConfig The user's key derivation function configuration
    * @returns A master key derived from the provided password
    */
-  makeMasterKey: (
-    password: string,
-    email: string,
-    kdf: KdfType,
-    KdfConfig: KdfConfig,
-  ) => Promise<MasterKey>;
+  makeMasterKey: (password: string, email: string, KdfConfig: KdfConfig) => Promise<MasterKey>;
   /**
    * Clears the user's master key
    * @param userId The desired user
@@ -303,7 +298,7 @@ export abstract class CryptoService {
    * @param kdfConfig The user's kdf config
    * @returns A key derived from the user's pin
    */
-  makePinKey: (pin: string, salt: string, kdf: KdfType, kdfConfig: KdfConfig) => Promise<PinKey>;
+  makePinKey: (pin: string, salt: string, kdfConfig: KdfConfig) => Promise<PinKey>;
   /**
    * Clears the user's pin keys from storage
    * Note: This will remove the stored pin and as a result,
@@ -324,7 +319,6 @@ export abstract class CryptoService {
   decryptUserKeyWithPin: (
     pin: string,
     salt: string,
-    kdf: KdfType,
     kdfConfig: KdfConfig,
     protectedKeyCs?: EncString,
   ) => Promise<UserKey>;
@@ -344,7 +338,6 @@ export abstract class CryptoService {
     masterPasswordOnRestart: boolean,
     pin: string,
     email: string,
-    kdf: KdfType,
     kdfConfig: KdfConfig,
     oldPinKey: EncString,
   ) => Promise<UserKey>;
@@ -408,7 +401,6 @@ export abstract class CryptoService {
   decryptMasterKeyWithPin: (
     pin: string,
     salt: string,
-    kdf: KdfType,
     kdfConfig: KdfConfig,
     protectedKeyCs?: EncString,
   ) => Promise<MasterKey>;

@@ -80,7 +80,6 @@ export class ChangeKdfConfirmationComponent {
     const newMasterKey = await this.cryptoService.makeMasterKey(
       masterPassword,
       email,
-      this.kdf,
       this.kdfConfig,
     );
     request.newMasterPasswordHash = await this.cryptoService.hashMasterKey(

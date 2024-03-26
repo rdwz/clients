@@ -72,8 +72,7 @@ export class BitwardenPasswordProtectedImporter extends BitwardenJsonImporter im
     this.key = await this.cryptoService.makePinKey(
       password,
       jdoc.salt,
-      jdoc.kdfType,
-      new KdfConfig(jdoc.kdfIterations, jdoc.kdfMemory, jdoc.kdfParallelism),
+      new KdfConfig(jdoc.kdfIterations, jdoc.kdfType, jdoc.kdfMemory, jdoc.kdfParallelism),
     );
 
     const encKeyValidation = new EncString(jdoc.encKeyValidation_DO_NOT_EDIT);

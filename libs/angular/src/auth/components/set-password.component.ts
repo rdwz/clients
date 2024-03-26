@@ -11,6 +11,7 @@ import { PolicyApiServiceAbstraction } from "@bitwarden/common/admin-console/abs
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { MasterPasswordPolicyOptions } from "@bitwarden/common/admin-console/models/domain/master-password-policy-options";
 import { OrganizationAutoEnrollStatusResponse } from "@bitwarden/common/admin-console/models/response/organization-auto-enroll-status.response";
+import { KdfConfigServiceAbstraction } from "@bitwarden/common/auth/abstractions/kdf-config.service.abstraction";
 import { SsoLoginServiceAbstraction } from "@bitwarden/common/auth/abstractions/sso-login.service.abstraction";
 import { ForceSetPasswordReason } from "@bitwarden/common/auth/models/domain/force-set-password-reason";
 import { SetPasswordRequest } from "@bitwarden/common/auth/models/request/set-password.request";
@@ -20,11 +21,7 @@ import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.servic
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
-import {
-  HashPurpose,
-  DEFAULT_KDF_TYPE,
-  DEFAULT_KDF_CONFIG,
-} from "@bitwarden/common/platform/enums";
+import { HashPurpose, DEFAULT_KDF_CONFIG } from "@bitwarden/common/platform/enums";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { AccountDecryptionOptions } from "@bitwarden/common/platform/models/domain/account";
 import { EncString } from "@bitwarden/common/platform/models/domain/enc-string";
@@ -66,6 +63,7 @@ export class SetPasswordComponent extends BaseChangePasswordComponent {
     private organizationUserService: OrganizationUserService,
     private ssoLoginService: SsoLoginServiceAbstraction,
     dialogService: DialogService,
+    KdfConfigService: KdfConfigServiceAbstraction,
   ) {
     super(
       i18nService,
@@ -76,6 +74,7 @@ export class SetPasswordComponent extends BaseChangePasswordComponent {
       policyService,
       stateService,
       dialogService,
+      KdfConfigService,
     );
   }
 
@@ -128,7 +127,6 @@ export class SetPasswordComponent extends BaseChangePasswordComponent {
   }
 
   async setupSubmitActions() {
-    this.kdf = DEFAULT_KDF_TYPE;
     this.kdfConfig = DEFAULT_KDF_CONFIG;
     return true;
   }
@@ -158,7 +156,7 @@ export class SetPasswordComponent extends BaseChangePasswordComponent {
       this.hint,
       this.orgSsoIdentifier,
       keysRequest,
-      this.kdf,
+      this.kdfConfig.kdfType,
       this.kdfConfig.iterations,
       this.kdfConfig.memory,
       this.kdfConfig.parallelism,
@@ -234,8 +232,7 @@ export class SetPasswordComponent extends BaseChangePasswordComponent {
     acctDecryptionOpts.hasMasterPassword = true;
     await this.stateService.setAccountDecryptionOptions(acctDecryptionOpts);
 
-    await this.stateService.setKdfType(this.kdf);
-    await this.stateService.setKdfConfig(this.kdfConfig);
+    await this.KdfConfigService.setKdfConfig(this.kdfConfig);
     await this.cryptoService.setMasterKey(masterKey);
     await this.cryptoService.setUserKey(userKey[0]);
 

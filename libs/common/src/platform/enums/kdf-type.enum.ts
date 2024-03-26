@@ -12,4 +12,4 @@ export const ARGON2_ITERATIONS = new RangeWithDefault(2, 10, 3);
 
 export const DEFAULT_KDF_TYPE = KdfType.PBKDF2_SHA256;
 export const PBKDF2_ITERATIONS = new RangeWithDefault(600_000, 2_000_000, 600_000);
-export const DEFAULT_KDF_CONFIG = new KdfConfig(PBKDF2_ITERATIONS.defaultValue);
+export const DEFAULT_KDF_CONFIG = new KdfConfig(PBKDF2_ITERATIONS.defaultValue, DEFAULT_KDF_TYPE);

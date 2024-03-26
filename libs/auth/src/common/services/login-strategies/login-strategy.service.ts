@@ -33,7 +33,6 @@ import { LogService } from "@bitwarden/common/platform/abstractions/log.service"
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
-import { KdfType } from "@bitwarden/common/platform/enums";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { GlobalState, GlobalStateProvider } from "@bitwarden/common/platform/state";
 import { PasswordStrengthServiceAbstraction } from "@bitwarden/common/tools/password-strength";
@@ -234,14 +233,13 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
 
   async makePreloginKey(masterPassword: string, email: string): Promise<MasterKey> {
     email = email.trim().toLowerCase();
-    let kdf: KdfType = null;
     let kdfConfig: KdfConfig = null;
     try {
       const preloginResponse = await this.apiService.postPrelogin(new PreloginRequest(email));
       if (preloginResponse != null) {
-        kdf = preloginResponse.kdf;
         kdfConfig = new KdfConfig(
           preloginResponse.kdfIterations,
+          preloginResponse.kdf,
           preloginResponse.kdfMemory,
           preloginResponse.kdfParallelism,
         );
@@ -251,7 +249,7 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
         throw e;
       }
     }
-    return await this.cryptoService.makeMasterKey(masterPassword, email, kdf, kdfConfig);
+    return await this.cryptoService.makeMasterKey(masterPassword, email, kdfConfig);
   }
 
   // TODO move to auth request service

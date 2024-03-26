@@ -127,12 +127,11 @@ export class KeyConnectorService implements KeyConnectorServiceAbstraction {
       userDecryptionOptions,
     } = tokenResponse;
     const password = await this.keyGenerationService.createKey(512);
-    const kdfConfig = new KdfConfig(kdfIterations, kdfMemory, kdfParallelism);
+    const kdfConfig = new KdfConfig(kdfIterations, kdf, kdfMemory, kdfParallelism);
 
     const masterKey = await this.cryptoService.makeMasterKey(
       password.keyB64,
       await this.tokenService.getEmail(),
-      kdf,
       kdfConfig,
     );
     const keyConnectorRequest = new KeyConnectorUserKeyRequest(masterKey.encKeyB64);
@@ -155,7 +154,6 @@ export class KeyConnectorService implements KeyConnectorServiceAbstraction {
     const keys = new KeysRequest(pubKey, privKey.encryptedString);
     const setPasswordRequest = new SetKeyConnectorKeyRequest(
       userKey[1].encryptedString,
-      kdf,
       kdfConfig,
       orgId,
       keys,

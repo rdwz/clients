@@ -11,15 +11,9 @@ export class SetKeyConnectorKeyRequest {
   kdfParallelism?: number;
   orgIdentifier: string;
 
-  constructor(
-    key: string,
-    kdf: KdfType,
-    kdfConfig: KdfConfig,
-    orgIdentifier: string,
-    keys: KeysRequest,
-  ) {
+  constructor(key: string, kdfConfig: KdfConfig, orgIdentifier: string, keys: KeysRequest) {
     this.key = key;
-    this.kdf = kdf;
+    this.kdf = kdfConfig.kdfType;
     this.kdfIterations = kdfConfig.iterations;
     this.kdfMemory = kdfConfig.memory;
     this.kdfParallelism = kdfConfig.parallelism;

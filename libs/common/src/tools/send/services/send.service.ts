@@ -88,8 +88,10 @@ export class SendService implements InternalSendServiceAbstraction {
       const passwordKey = await this.keyGenerationService.deriveKeyFromPassword(
         password,
         model.key,
-        KdfType.PBKDF2_SHA256,
-        { iterations: SEND_KDF_ITERATIONS },
+        {
+          iterations: SEND_KDF_ITERATIONS,
+          kdfType: KdfType.PBKDF2_SHA256,
+        },
       );
       send.password = passwordKey.keyB64;
     }
