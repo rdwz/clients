@@ -881,6 +881,7 @@ export default class MainBackground {
       this.autofillSettingsService,
       this.vaultTimeoutSettingsService,
       this.biometricStateService,
+      this.accountService,
     );
 
     // Other fields
@@ -1121,6 +1122,7 @@ export default class MainBackground {
   async switchAccount(userId: UserId) {
     try {
       await this.stateService.setActiveUser(userId);
+      await this.accountService.switchAccount(userId);
 
       if (userId == null) {
         this.loginEmailService.setRememberEmail(false);

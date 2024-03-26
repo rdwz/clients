@@ -122,6 +122,7 @@ describe("AuthRequestLoginStrategy", () => {
 
     masterPasswordService.masterKeySubject.next(masterKey);
     cryptoService.decryptUserKeyWithMasterKey.mockResolvedValue(userKey);
+    tokenService.decodeAccessToken.mockResolvedValue({ sub: mockUserId });
 
     await authRequestLoginStrategy.logIn(credentials);
 

@@ -1,4 +1,4 @@
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, firstValueFrom, map } from "rxjs";
 import { Jsonify, JsonValue } from "type-fest";
 
 import { AccountService } from "../../auth/abstractions/account.service";
@@ -134,18 +134,6 @@ export class StateService<
       }
       await this.pushAccounts();
       this.activeAccountSubject.next(state.activeUserId);
-      // TODO: Temporary update to avoid routing all account status changes through account service for now.
-      // account service tracks logged out accounts, but State service does not, so we need to add the active account
-      // if it's not in the accounts list.
-      if (state.activeUserId != null && this.accountsSubject.value[state.activeUserId] == null) {
-        const activeDiskAccount = await this.getAccountFromDisk({ userId: state.activeUserId });
-        await this.accountService.addAccount(state.activeUserId as UserId, {
-          name: activeDiskAccount.profile.name,
-          email: activeDiskAccount.profile.email,
-        });
-      }
-      await this.accountService.switchAccount(state.activeUserId as UserId);
-      // End TODO
 
       return state;
     });
@@ -165,13 +153,6 @@ export class StateService<
       return state;
     });
 
-    // TODO: Temporary update to avoid routing all account status changes through account service for now.
-    // The determination of state should be handled by the various services that control those values.
-    await this.accountService.addAccount(userId as UserId, {
-      name: diskAccount.profile.name,
-      email: diskAccount.profile.email,
-    });
-
     return state;
   }
 
@@ -185,11 +166,6 @@ export class StateService<
     });
     await this.scaffoldNewAccountStorage(account);
     await this.setLastActive(new Date().getTime(), { userId: account.profile.userId });
-    // TODO: Temporary update to avoid routing all account status changes through account service for now.
-    await this.accountService.addAccount(account.profile.userId as UserId, {
-      name: account.profile.name,
-      email: account.profile.email,
-    });
     await this.setActiveUser(account.profile.userId);
   }
 
@@ -199,8 +175,6 @@ export class StateService<
       state.activeUserId = userId;
       await this.storageService.save(keys.activeUserId, userId);
       this.activeAccountSubject.next(state.activeUserId);
-      // TODO: temporary update to avoid routing all account status changes through account service for now.
-      await this.accountService.switchAccount(userId as UserId);
 
       return state;
     });
@@ -1343,7 +1317,7 @@ export class StateService<
   }
 
   protected async getActiveUserIdFromStorage(): Promise<string> {
-    return await this.storageService.get<string>(keys.activeUserId);
+    return await firstValueFrom(this.accountService.activeAccount$.pipe(map((a) => a?.id)));
   }
 
   protected async removeAccountFromLocalStorage(userId: string = null): Promise<void> {

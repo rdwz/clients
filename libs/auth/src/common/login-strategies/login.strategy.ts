@@ -32,6 +32,7 @@ import {
   AccountProfile,
   AccountTokens,
 } from "@bitwarden/common/platform/models/domain/account";
+import { UserId } from "@bitwarden/common/types/guid";
 
 import { InternalUserDecryptionOptionsServiceAbstraction } from "../abstractions/user-decryption-options.service.abstraction";
 import {
@@ -163,13 +164,18 @@ export abstract class LoginStrategy {
   protected async saveAccountInformation(tokenResponse: IdentityTokenResponse): Promise<void> {
     const accountInformation = await this.tokenService.decodeAccessToken(tokenResponse.accessToken);
 
-    const userId = accountInformation.sub;
+    const userId = accountInformation.sub as UserId;
 
     // If you don't persist existing admin auth requests on login, they will get deleted.
     const adminAuthRequest = await this.stateService.getAdminAuthRequest({ userId });
 
     const vaultTimeoutAction = await this.stateService.getVaultTimeoutAction();
     const vaultTimeout = await this.stateService.getVaultTimeout();
+
+    await this.accountService.addAccount(userId, {
+      name: accountInformation.name,
+      email: accountInformation.email,
+    });
 
     // set access token and refresh token before account initialization so authN status can be accurate
     // User id will be derived from the access token.
@@ -179,6 +185,8 @@ export abstract class LoginStrategy {
       vaultTimeout,
       tokenResponse.refreshToken, // Note: CLI login via API key sends undefined for refresh token.
     );
+
+    await this.accountService.switchAccount(userId);
 
     await this.stateService.addAccount(
       new Account({

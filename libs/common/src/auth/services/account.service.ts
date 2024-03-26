@@ -8,7 +8,7 @@ import {
 import { LogService } from "../../platform/abstractions/log.service";
 import { MessagingService } from "../../platform/abstractions/messaging.service";
 import {
-  ACCOUNT_MEMORY,
+  ACCOUNT_DISK,
   GlobalState,
   GlobalStateProvider,
   KeyDefinition,
@@ -16,14 +16,14 @@ import {
 import { UserId } from "../../types/guid";
 
 export const ACCOUNT_ACCOUNTS = KeyDefinition.record<AccountInfo, UserId>(
-  ACCOUNT_MEMORY,
+  ACCOUNT_DISK,
   "accounts",
   {
     deserializer: (accountInfo) => accountInfo,
   },
 );
 
-export const ACCOUNT_ACTIVE_ACCOUNT_ID = new KeyDefinition(ACCOUNT_MEMORY, "activeAccountId", {
+export const ACCOUNT_ACTIVE_ACCOUNT_ID = new KeyDefinition(ACCOUNT_DISK, "activeAccountId", {
   deserializer: (id: UserId) => id,
 });
 
