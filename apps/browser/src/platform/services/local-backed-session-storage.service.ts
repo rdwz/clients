@@ -1,4 +1,4 @@
-import { Observable, Subject, filter, map, merge, tap } from "rxjs";
+import { Observable, Subject, filter, map, merge, share, tap } from "rxjs";
 import { Jsonify } from "type-fest";
 
 import { EncryptService } from "@bitwarden/common/platform/abstractions/encrypt.service";
@@ -22,11 +22,6 @@ import { devFlagEnabled } from "../flags";
 import BrowserLocalStorageService from "./browser-local-storage.service";
 import BrowserMemoryStorageService from "./browser-memory-storage.service";
 
-const keys = {
-  encKey: "localEncryptionKey",
-  sessionKey: "session",
-};
-
 export class LocalBackedSessionStorageService
   extends AbstractMemoryStorageService
   implements ObservableStorageService
@@ -37,28 +32,35 @@ export class LocalBackedSessionStorageService
   private updatesSubject = new Subject<StorageUpdate>();
   // private _ports: chrome.runtime.Port[] = [];
 
+  private commandName = `localBackedSessionStorage_${this.name}`;
+  private encKey = `localEncryptionKey_${this.name}`;
+  private sessionKey = `session_${this.name}`;
+
   updates$: Observable<StorageUpdate>;
 
   constructor(
     private encryptService: EncryptService,
     private keyGenerationService: KeyGenerationService,
+    private name: string,
   ) {
     super();
 
-    this.updates$ = merge(
-      this.updatesSubject.asObservable(),
-      fromChromeEvent(chrome.runtime.onMessage)
-        .pipe(
-          filter(([msg]) => msg.command === "localBackedSessionStorage"),
-          map(([msg]) => msg.update),
-        )
-        .pipe(
-          tap((update) => {
-            this.cache.delete(update.key);
-          }),
-        ),
+    const remoteObservable = fromChromeEvent(chrome.runtime.onMessage).pipe(
+      filter(([msg]) => msg.command === this.commandName),
+      map(([msg]) => msg.update as StorageUpdate),
+      tap((update) => {
+        if (update.updateType === "remove") {
+          this.cache.set(update.key, null);
+        } else {
+          this.cache.delete(update.key);
+        }
+      }),
+      share(),
     );
-    // this.setupPortListener();
+
+    remoteObservable.subscribe();
+
+    this.updates$ = merge(this.updatesSubject.asObservable(), remoteObservable);
   }
 
   get valuesRequireDeserialization(): boolean {
@@ -97,11 +99,12 @@ export class LocalBackedSessionStorageService
       return await this.remove(key);
     }
 
+    // console.log("save", key, obj);
     this.cache.set(key, obj);
     await this.updateLocalSessionValue(key, obj);
     this.updatesSubject.next({ key, updateType: "save" });
     void chrome.runtime.sendMessage({
-      command: "localBackedSessionStorage",
+      command: this.commandName,
       update: {
         key,
         updateType: "save",
@@ -114,7 +117,7 @@ export class LocalBackedSessionStorageService
     await this.updateLocalSessionValue(key, null);
     this.updatesSubject.next({ key, updateType: "remove" });
     void chrome.runtime.sendMessage({
-      command: "localBackedSessionStorage",
+      command: this.commandName,
       update: {
         key,
         updateType: "remove",
@@ -130,7 +133,7 @@ export class LocalBackedSessionStorageService
   }
 
   async getLocalSession(encKey: SymmetricCryptoKey): Promise<Record<string, unknown>> {
-    const local = await this.localStorage.get<string>(keys.sessionKey);
+    const local = await this.localStorage.get<string>(this.sessionKey);
 
     if (local == null) {
       return null;
@@ -144,7 +147,7 @@ export class LocalBackedSessionStorageService
     if (sessionJson == null) {
       // Error with decryption -- session is lost, delete state and key and start over
       await this.setSessionEncKey(null);
-      await this.localStorage.remove(keys.sessionKey);
+      await this.localStorage.remove(this.sessionKey);
       return null;
     }
     return JSON.parse(sessionJson);
@@ -163,9 +166,9 @@ export class LocalBackedSessionStorageService
     // Make sure we're storing the jsonified version of the session
     const jsonSession = JSON.parse(JSON.stringify(session));
     if (session == null) {
-      await this.localStorage.remove(keys.sessionKey);
+      await this.localStorage.remove(this.sessionKey);
     } else {
-      await this.localStorage.save(keys.sessionKey, jsonSession);
+      await this.localStorage.save(this.sessionKey, jsonSession);
     }
   }
 
@@ -174,13 +177,13 @@ export class LocalBackedSessionStorageService
     const encSession = await this.encryptService.encrypt(jsonSession, key);
 
     if (encSession == null) {
-      return await this.localStorage.remove(keys.sessionKey);
+      return await this.localStorage.remove(this.sessionKey);
     }
-    await this.localStorage.save(keys.sessionKey, encSession.encryptedString);
+    await this.localStorage.save(this.sessionKey, encSession.encryptedString);
   }
 
   async getSessionEncKey(): Promise<SymmetricCryptoKey> {
-    let storedKey = await this.sessionStorage.get<SymmetricCryptoKey>(keys.encKey);
+    let storedKey = await this.sessionStorage.get<SymmetricCryptoKey>(this.encKey);
     if (storedKey == null || Object.keys(storedKey).length == 0) {
       const generatedKey = await this.keyGenerationService.createKeyWithPurpose(
         128,
@@ -197,9 +200,9 @@ export class LocalBackedSessionStorageService
 
   async setSessionEncKey(input: SymmetricCryptoKey): Promise<void> {
     if (input == null) {
-      await this.sessionStorage.remove(keys.encKey);
+      await this.sessionStorage.remove(this.encKey);
     } else {
-      await this.sessionStorage.save(keys.encKey, input);
+      await this.sessionStorage.save(this.encKey, input);
     }
   }
 

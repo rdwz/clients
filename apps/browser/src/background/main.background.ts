@@ -350,12 +350,14 @@ export default class MainBackground {
       ? new LocalBackedSessionStorageService(
           new EncryptServiceImplementation(this.cryptoFunctionService, this.logService, false),
           this.keyGenerationService,
+          "stateService",
         )
       : new MemoryStorageService();
     this.memoryStorageForStateProviders = BrowserApi.isManifestVersion(3)
       ? new LocalBackedSessionStorageService(
           new EncryptServiceImplementation(this.cryptoFunctionService, this.logService, false),
           this.keyGenerationService,
+          "stateProviders",
         )
       : new BackgroundMemoryStorageService();
 
@@ -995,9 +997,8 @@ export default class MainBackground {
   async bootstrap() {
     this.containerService.attachToGlobal(self);
 
-    await this.stateService.init();
+    await this.stateService.init({ runMigrations: !this.popupOnlyContext });
 
-    await this.vaultTimeoutService.init(true);
     await (this.i18nService as I18nService).init();
     await (this.eventUploadService as EventUploadService).init(true);
     this.configService.init();
