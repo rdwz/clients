@@ -49,7 +49,7 @@ describe("LockComponent", () => {
   let component: LockComponent;
   let fixture: ComponentFixture<LockComponent>;
   let stateServiceMock: MockProxy<StateService>;
-  const biometricStateService = mock<BiometricStateService>();
+  let biometricStateService: MockProxy<BiometricStateService>;
   let messagingServiceMock: MockProxy<MessagingService>;
   let broadcasterServiceMock: MockProxy<BroadcasterService>;
   let platformUtilsServiceMock: MockProxy<PlatformUtilsService>;
@@ -61,7 +61,6 @@ describe("LockComponent", () => {
 
   beforeEach(async () => {
     stateServiceMock = mock<StateService>();
-    stateServiceMock.activeAccount$ = of(null);
 
     messagingServiceMock = mock<MessagingService>();
     broadcasterServiceMock = mock<BroadcasterService>();
@@ -72,6 +71,7 @@ describe("LockComponent", () => {
 
     mockMasterPasswordService = new FakeMasterPasswordService();
 
+    biometricStateService = mock();
     biometricStateService.dismissedRequirePasswordOnStartCallout$ = of(false);
     biometricStateService.promptAutomatically$ = of(false);
     biometricStateService.promptCancelled$ = of(false);
