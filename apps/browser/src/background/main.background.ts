@@ -833,6 +833,7 @@ export default class MainBackground {
     };
 
     this.systemService = new SystemService(
+      this.cryptoService,
       this.messagingService,
       this.platformUtilsService,
       systemUtilsServiceReloadCallback,
