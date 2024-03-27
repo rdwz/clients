@@ -3,7 +3,7 @@ import { firstValueFrom } from "rxjs";
 import { NotificationsService } from "@bitwarden/common/abstractions/notifications.service";
 import { AutofillOverlayVisibility } from "@bitwarden/common/autofill/constants";
 import { AutofillSettingsServiceAbstraction } from "@bitwarden/common/autofill/services/autofill-settings.service";
-import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
+import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { SystemService } from "@bitwarden/common/platform/abstractions/system.service";
@@ -42,7 +42,7 @@ export default class RuntimeBackground {
     private environmentService: BrowserEnvironmentService,
     private messagingService: MessagingService,
     private logService: LogService,
-    private configService: ConfigServiceAbstraction,
+    private configService: ConfigService,
     private fido2Background: Fido2Background,
   ) {
     // onInstalled listener must be wired up before anything else, so we do it in the ctor
@@ -124,7 +124,7 @@ export default class RuntimeBackground {
             await this.main.refreshBadge();
             await this.main.refreshMenu();
           }, 2000);
-          this.configService.triggerServerConfigFetch();
+          await this.configService.ensureConfigFetched();
         }
         break;
       case "openPopup":
