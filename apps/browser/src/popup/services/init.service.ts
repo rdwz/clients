@@ -27,7 +27,7 @@ export class InitService {
 
   init() {
     return async () => {
-      await this.stateService.init();
+      await this.stateService.init({ runMigrations: false }); // Background will run the migrations
       await this.i18nService.init();
 
       if (!BrowserPopupUtils.inPopup(window)) {
