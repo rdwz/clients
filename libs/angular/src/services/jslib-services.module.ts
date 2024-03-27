@@ -4,8 +4,8 @@ import { UnwrapOpaque } from "type-fest";
 import {
   AuthRequestServiceAbstraction,
   AuthRequestService,
-  PinCryptoServiceAbstraction,
-  PinCryptoService,
+  PinServiceAbstraction,
+  PinService,
   LoginStrategyServiceAbstraction,
   LoginStrategyService,
   InternalUserDecryptionOptionsServiceAbstraction,
@@ -785,7 +785,7 @@ const typesafeProviders: Array<SafeProvider> = [
       I18nServiceAbstraction,
       UserVerificationApiServiceAbstraction,
       UserDecryptionOptionsServiceAbstraction,
-      PinCryptoServiceAbstraction,
+      PinServiceAbstraction,
       LogService,
       VaultTimeoutSettingsServiceAbstraction,
       PlatformUtilsServiceAbstraction,
@@ -930,8 +930,8 @@ const typesafeProviders: Array<SafeProvider> = [
     ],
   }),
   safeProvider({
-    provide: PinCryptoServiceAbstraction,
-    useClass: PinCryptoService,
+    provide: PinServiceAbstraction,
+    useClass: PinService,
     deps: [
       StateServiceAbstraction,
       CryptoServiceAbstraction,

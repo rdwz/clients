@@ -8,9 +8,9 @@ import { EncString } from "@bitwarden/common/platform/models/domain/enc-string";
 import { PinLockType } from "@bitwarden/common/services/vault-timeout/vault-timeout-settings.service";
 import { UserKey } from "@bitwarden/common/types/key";
 
-import { PinCryptoServiceAbstraction } from "../../abstractions/pin-crypto.service.abstraction";
+import { PinServiceAbstraction } from "../../abstractions/pin.service.abstraction";
 
-export class PinCryptoService implements PinCryptoServiceAbstraction {
+export class PinService implements PinServiceAbstraction {
   constructor(
     private stateService: StateService,
     private cryptoService: CryptoService,
