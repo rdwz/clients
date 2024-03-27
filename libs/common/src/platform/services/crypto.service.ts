@@ -145,40 +145,33 @@ export class CryptoService implements CryptoServiceAbstraction {
   }
 
   async getPinKeyEncryptedUserKey(userId?: UserId): Promise<EncString> {
-    const activeUserId = (await firstValueFrom(this.accountService.activeAccount$))?.id;
-
-    const encryptedString = await firstValueFrom(
-      this.stateProvider.getUser(userId ?? activeUserId, PIN_KEY_ENCRYPTED_USER_KEY).state$,
+    return EncString.fromJSON(
+      await firstValueFrom(this.stateProvider.getUserState$(PIN_KEY_ENCRYPTED_USER_KEY, userId)),
     );
-
-    return EncString.fromJSON(encryptedString);
   }
 
-  async setPinKeyEncryptedUserKey(encString: EncString, userId?: UserId): Promise<void> {
-    const activeUserId = (await firstValueFrom(this.accountService.activeAccount$))?.id;
-
-    await this.stateProvider
-      .getUser(userId ?? activeUserId, PIN_KEY_ENCRYPTED_USER_KEY)
-      .update(() => encString?.encryptedString);
+  async setPinKeyEncryptedUserKey(value: EncString, userId?: UserId): Promise<void> {
+    await this.stateProvider.setUserState(
+      PIN_KEY_ENCRYPTED_USER_KEY,
+      value?.encryptedString,
+      userId,
+    );
   }
 
   async getPinKeyEncryptedUserKeyEphemeral(userId?: UserId): Promise<EncString> {
-    const activeUserId = (await firstValueFrom(this.accountService.activeAccount$))?.id;
-
-    const encryptedString = await firstValueFrom(
-      this.stateProvider.getUser(userId ?? activeUserId, PIN_KEY_ENCRYPTED_USER_KEY_EPHEMERAL)
-        .state$,
+    return EncString.fromJSON(
+      await firstValueFrom(
+        this.stateProvider.getUserState$(PIN_KEY_ENCRYPTED_USER_KEY_EPHEMERAL, userId),
+      ),
     );
-
-    return EncString.fromJSON(encryptedString);
   }
 
-  async setPinKeyEncryptedUserKeyEphemeral(encString: EncString, userId?: UserId): Promise<void> {
-    const activeUserId = (await firstValueFrom(this.accountService.activeAccount$))?.id;
-
-    await this.stateProvider
-      .getUser(userId ?? activeUserId, PIN_KEY_ENCRYPTED_USER_KEY_EPHEMERAL)
-      .update(() => encString?.encryptedString);
+  async setPinKeyEncryptedUserKeyEphemeral(value: EncString, userId?: UserId): Promise<void> {
+    await this.stateProvider.setUserState(
+      PIN_KEY_ENCRYPTED_USER_KEY_EPHEMERAL,
+      value?.encryptedString,
+      userId,
+    );
   }
 
   async setUserKey(key: UserKey, userId?: UserId): Promise<void> {
