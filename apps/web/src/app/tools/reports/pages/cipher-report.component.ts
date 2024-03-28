@@ -1,9 +1,10 @@
-import { Directive, ViewChild, ViewContainerRef } from "@angular/core";
-import { Observable } from "rxjs";
+import { Directive, ViewChild, ViewContainerRef, OnDestroy } from "@angular/core";
+import { Observable, Subject, takeUntil } from "rxjs";
 
 import { ModalService } from "@bitwarden/angular/services/modal.service";
 import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
+import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { CipherRepromptType } from "@bitwarden/common/vault/enums/cipher-reprompt-type";
 import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { PasswordRepromptService } from "@bitwarden/vault";
@@ -12,7 +13,7 @@ import { AddEditComponent } from "../../../vault/individual-vault/add-edit.compo
 import { AddEditComponent as OrgAddEditComponent } from "../../../vault/org-vault/add-edit.component";
 
 @Directive()
-export class CipherReportComponent {
+export class CipherReportComponent implements OnDestroy {
   @ViewChild("cipherAddEdit", { read: ViewContainerRef, static: true })
   cipherAddEditModalRef: ViewContainerRef;
 
@@ -22,12 +23,53 @@ export class CipherReportComponent {
   organization: Organization;
   organizations$: Observable<Organization[]>;
 
+  filterStatus: any = [0, 1];
+  showFilterToggle: boolean = false;
+  filterOrgStatus = 0;
+  private destroyed$: Subject<void> = new Subject();
+
   constructor(
     private modalService: ModalService,
     protected passwordRepromptService: PasswordRepromptService,
     protected organizationService: OrganizationService,
+    protected i18nService: I18nService,
   ) {
     this.organizations$ = this.organizationService.organizations$;
+  }
+
+  getOrgName(filterId: string | number) {
+    let orgName;
+    if (filterId === 0) {
+      orgName = this.i18nService.t("all");
+    } else if (filterId === 1) {
+      orgName = this.i18nService.t("me");
+    } else {
+      this.organizations$.pipe(takeUntil(this.destroyed$)).subscribe((orgs) => {
+        orgs.filter((org: Organization) => {
+          if (org.id === filterId) {
+            orgName = org.name;
+            return org;
+          }
+        });
+      });
+    }
+    return orgName;
+  }
+
+  async filterOrgToggle(e: any) {
+    await this.setCiphers();
+    if (e === 0) {
+      return;
+    } else if (e === 1) {
+      this.ciphers = this.ciphers.filter((c: any) => c.orgFilterStatus == null);
+    } else {
+      this.ciphers = this.ciphers.filter((c: any) => c.orgFilterStatus === e);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed$.next();
+    this.destroyed$.complete();
   }
 
   async load() {

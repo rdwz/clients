@@ -1,10 +1,9 @@
 import { Component, OnDestroy, OnInit } from "@angular/core";
-import { Subject, takeUntil } from "rxjs";
 
 import { ModalService } from "@bitwarden/angular/services/modal.service";
 import { AuditService } from "@bitwarden/common/abstractions/audit.service";
 import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
-import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
+import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { CipherType } from "@bitwarden/common/vault/enums";
 import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
@@ -22,11 +21,6 @@ export class ExposedPasswordsReportComponent
 {
   exposedPasswordMap = new Map<string, number>();
   disabled = true;
-  orgList: string[] = [];
-  filterStatus: any = [0, 1];
-  showFilterToggle: boolean = false;
-  filterOrgStatus = 0;
-  private destroyed$: Subject<void> = new Subject();
 
   constructor(
     protected cipherService: CipherService,
@@ -34,35 +28,13 @@ export class ExposedPasswordsReportComponent
     protected organizationService: OrganizationService,
     modalService: ModalService,
     passwordRepromptService: PasswordRepromptService,
+    i18nService: I18nService,
   ) {
-    super(modalService, passwordRepromptService, organizationService);
-  }
-
-  getOrgName(filterId: string | number) {
-    let orgName;
-    if (filterId === 0) {
-      orgName = "All";
-    } else if (filterId === 1) {
-      orgName = "Me";
-    } else
-      {this.organizations$.pipe(takeUntil(this.destroyed$)).subscribe((orgs) => {
-        orgs.filter((org: Organization) => {
-          if (org.id === filterId) {
-            orgName = org.name;
-            return org;
-          }
-        });
-      });}
-    return orgName;
+    super(modalService, passwordRepromptService, organizationService, i18nService);
   }
 
   async ngOnInit() {
     await super.load();
-  }
-
-  ngOnDestroy(): void {
-    this.destroyed$.next();
-    this.destroyed$.complete();
   }
 
   async setCiphers() {
@@ -102,17 +74,6 @@ export class ExposedPasswordsReportComponent
     });
     await Promise.all(promises);
     this.ciphers = [...exposedPasswordCiphers];
-  }
-
-  async filterOrgToggle(e: any) {
-    await this.setCiphers();
-    if (e === 0) {
-      return;
-    } else if (e === 1) {
-      this.ciphers = this.ciphers.filter((c: any) => c.orgFilterStatus == null);
-    } else {
-      this.ciphers = this.ciphers.filter((c: any) => c.orgFilterStatus === e);
-    }
   }
 
   protected getAllCiphers(): Promise<CipherView[]> {

@@ -2,6 +2,7 @@ import { Component, OnInit } from "@angular/core";
 
 import { ModalService } from "@bitwarden/angular/services/modal.service";
 import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
+import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { CipherType } from "@bitwarden/common/vault/enums";
 import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
@@ -22,8 +23,9 @@ export class ReusedPasswordsReportComponent extends CipherReportComponent implem
     protected organizationService: OrganizationService,
     modalService: ModalService,
     passwordRepromptService: PasswordRepromptService,
+    i18nService: I18nService,
   ) {
-    super(modalService, passwordRepromptService, organizationService);
+    super(modalService, passwordRepromptService, organizationService, i18nService);
   }
 
   async ngOnInit() {
@@ -34,7 +36,7 @@ export class ReusedPasswordsReportComponent extends CipherReportComponent implem
     const allCiphers = await this.getAllCiphers();
     const ciphersWithPasswords: CipherView[] = [];
     this.passwordUseMap = new Map<string, number>();
-    allCiphers.forEach((ciph) => {
+    allCiphers.forEach((ciph: any) => {
       const { type, login, isDeleted, edit, viewPassword } = ciph;
       if (
         type !== CipherType.Login ||
@@ -46,6 +48,14 @@ export class ReusedPasswordsReportComponent extends CipherReportComponent implem
       ) {
         return;
       }
+
+      ciph.orgFilterStatus = ciph.organizationId;
+
+      if (this.filterStatus.indexOf(ciph.organizationId) === -1 && ciph.organizationId != null) {
+        this.filterStatus.push(ciph.organizationId);
+        this.showFilterToggle = true;
+      }
+
       ciphersWithPasswords.push(ciph);
       if (this.passwordUseMap.has(login.password)) {
         this.passwordUseMap.set(login.password, this.passwordUseMap.get(login.password) + 1);
