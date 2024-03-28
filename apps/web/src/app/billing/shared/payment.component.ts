@@ -18,20 +18,30 @@ import { SharedModule } from "../../shared";
 export class PaymentComponent implements OnInit, OnDestroy {
   @Input() showMethods = true;
   @Input() showOptions = true;
-  @Input() method = PaymentMethodType.Card;
   @Input() hideBank = false;
   @Input() hidePaypal = false;
   @Input() hideCredit = false;
   @Input() trialFlow = false;
 
+  @Input()
+  set method(value: PaymentMethodType) {
+    this._method = value;
+    this.paymentForm?.controls.method.setValue(value, { emitEvent: false });
+  }
+
+  get method(): PaymentMethodType {
+    return this._method;
+  }
+  private _method: PaymentMethodType = PaymentMethodType.Card;
+
   private destroy$ = new Subject<void>();
   protected paymentForm = new FormGroup({
-    method: new FormControl(null as PaymentMethodType),
+    method: new FormControl(this.method),
     bank: new FormGroup({
-      routing_number: new FormControl(null, Validators.required),
-      account_number: new FormControl(null, Validators.required),
-      account_holder_name: new FormControl(null, Validators.required),
-      account_holder_type: new FormControl("", Validators.required),
+      routing_number: new FormControl(null, [Validators.required]),
+      account_number: new FormControl(null, [Validators.required]),
+      account_holder_name: new FormControl(null, [Validators.required]),
+      account_holder_type: new FormControl("", [Validators.required]),
       currency: new FormControl("USD"),
       country: new FormControl("US"),
     }),
@@ -87,14 +97,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
       invalid: "is-invalid",
     };
   }
-  set paymentMethod(method: PaymentMethodType) {
-    this.paymentForm.get("method").setValue(method);
-  }
-  get paymentMethod() {
-    return this.paymentForm.get("method").value;
-  }
   async ngOnInit() {
-    this.paymentMethod = this.method;
     if (!this.showOptions) {
       this.hidePaypal = this.method !== PaymentMethodType.PayPal;
       this.hideBank = this.method !== PaymentMethodType.BankAccount;
@@ -105,6 +108,13 @@ export class PaymentComponent implements OnInit, OnDestroy {
     if (!this.hidePaypal) {
       window.document.head.appendChild(this.btScript);
     }
+    this.paymentForm
+      .get("method")
+      .valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe((v) => {
+        this.method = v;
+        this.changeMethod();
+      });
   }
 
   ngOnDestroy() {
@@ -148,7 +158,6 @@ export class PaymentComponent implements OnInit, OnDestroy {
 
   changeMethod() {
     this.btInstance = null;
-    this.method = this.paymentMethod;
     if (this.method === PaymentMethodType.PayPal) {
       window.setTimeout(() => {
         (window as any).braintree.dropin.create(

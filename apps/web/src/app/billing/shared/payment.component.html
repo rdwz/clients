@@ -1,36 +1,22 @@
 <div [formGroup]="paymentForm">
   <div class="tw-mb-4 tw-text-lg" *ngIf="showOptions && showMethods">
     <bit-radio-group formControlName="method">
-      <bit-radio-button id="method-card" [value]="paymentMethodType.Card" (change)="changeMethod()">
+      <bit-radio-button id="method-card" [value]="paymentMethodType.Card">
         <bit-label>
           <i class="bwi bwi-fw bwi-credit-card" aria-hidden="true"></i>
           {{ "creditCard" | i18n }}</bit-label
         >
       </bit-radio-button>
-      <bit-radio-button
-        id="method-bank"
-        [value]="paymentMethodType.BankAccount"
-        (change)="changeMethod()"
-      >
+      <bit-radio-button id="method-bank" [value]="paymentMethodType.BankAccount" *ngIf="!hideBank">
         <bit-label>
           <i class="bwi bwi-fw bwi-bank" aria-hidden="true"></i>
           {{ "bankAccount" | i18n }}</bit-label
         >
       </bit-radio-button>
-      <bit-radio-button
-        id="method-paypal"
-        [value]="paymentMethodType.PayPal"
-        (change)="changeMethod()"
-        *ngIf="!hidePaypal"
-      >
+      <bit-radio-button id="method-paypal" [value]="paymentMethodType.PayPal" *ngIf="!hidePaypal">
         <bit-label> <i class="bwi bwi-fw bwi-paypal" aria-hidden="true"></i> PayPal</bit-label>
       </bit-radio-button>
-      <bit-radio-button
-        id="method-credit"
-        [value]="paymentMethodType.Credit"
-        (change)="changeMethod()"
-        *ngIf="!hideCredit"
-      >
+      <bit-radio-button id="method-credit" [value]="paymentMethodType.Credit" *ngIf="!hideCredit">
         <bit-label>
           <i class="bwi bwi-fw bwi-dollar" aria-hidden="true"></i>
           {{ "accountCredit" | i18n }}</bit-label
@@ -57,7 +43,7 @@
         <div id="stripe-card-expiry-element" class="form-control stripe-form-control"></div>
       </div>
       <div class="tw-col-span-4">
-        <div class="d-flex">
+        <div class="tw-flex">
           <label for="stripe-card-cvc-element">
             {{ "securityCode" | i18n }}
           </label>
