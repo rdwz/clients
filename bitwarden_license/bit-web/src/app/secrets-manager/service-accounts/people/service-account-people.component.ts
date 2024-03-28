@@ -95,12 +95,13 @@ export class ServiceAccountPeopleComponent implements OnInit, OnDestroy {
     if (this.isFormInvalid()) {
       return;
     }
+    const formValues = this.formGroup.value.accessPolicies;
     this.formGroup.disable();
 
     const showAccessRemovalWarning =
       await this.accessPolicySelectorService.showAccessRemovalWarning(
         this.organizationId,
-        this.formGroup.value.accessPolicies,
+        formValues,
       );
 
     if (
@@ -113,13 +114,13 @@ export class ServiceAccountPeopleComponent implements OnInit, OnDestroy {
     try {
       const peoplePoliciesViews = await this.updateServiceAccountPeopleAccessPolicies(
         this.serviceAccountId,
-        this.formGroup.value.accessPolicies,
+        formValues,
       );
 
       await this.handleAccessTokenAvailableWarning(
         showAccessRemovalWarning,
         this.currentAccessPolicies,
-        this.formGroup.value.accessPolicies,
+        formValues,
       );
 
       this.currentAccessPolicies = convertToAccessPolicyItemViews(peoplePoliciesViews);

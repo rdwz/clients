@@ -97,12 +97,13 @@ export class ProjectPeopleComponent implements OnInit, OnDestroy {
     if (this.formGroup.invalid) {
       return;
     }
+    const formValues = this.formGroup.value.accessPolicies;
     this.formGroup.disable();
 
     const showAccessRemovalWarning =
       await this.accessPolicySelectorService.showAccessRemovalWarning(
         this.organizationId,
-        this.formGroup.value.accessPolicies,
+        formValues,
       );
 
     if (showAccessRemovalWarning) {
@@ -117,7 +118,7 @@ export class ProjectPeopleComponent implements OnInit, OnDestroy {
     try {
       const projectPeopleView = convertToProjectPeopleAccessPoliciesView(
         this.projectId,
-        this.formGroup.value.accessPolicies,
+        formValues,
       );
       const peoplePoliciesViews = await this.accessPolicyService.putProjectPeopleAccessPolicies(
         this.projectId,
