@@ -47,6 +47,7 @@
   --button-disabled-secondary-bg: theme(colors.transparent.DEFAULT);
   --button-disabled-secondary-border: rgb(var(--color-text-muted) / 0.6);
   --button-disabled-secondary-text: rgb(var(--color-text-muted) / 0.6);
+  --button-hover-primary: rgb(var(--color-primary-700));
 
   .ui_refresh {
     /* BUTTON COMPONENT */
@@ -57,6 +58,7 @@
     --button-disabled-secondary-bg: rgb(var(--color-secondary-500));
     --button-disabled-secondary-border: rgb(var(--color-secondary-500));
     --button-disabled-secondary-text: rgb(var(--color-secondary-700));
+    --button-hover-primary: rgb(var(--color-primary-300));
   }
 }
 
@@ -107,10 +109,11 @@
   --button-disabled-primary-text: rgb(var(--color-text-contrast) / 0.6);
   --button-disabled-secondary-border: rgb(var(--color-text-muted) / 0.6);
   --button-disabled-secondary-text: rgb(var(--color-text-muted) / 0.6);
+  --button-hover-primary: rgb(var(--color-primary-700));
 
   .ui_refresh {
     /* BUTTON COMPONENT */
-    /* colors are temporaryi */
+    /* colors are temporary */
     --button-disabled-primary-bg: rgb(var(--color-secondary-500));
     --button-disabled-secondary-bg: rgb(var(--color-secondary-500));
     --button-disabled-secondary-border: rgb(var(--color-secondary-500));
