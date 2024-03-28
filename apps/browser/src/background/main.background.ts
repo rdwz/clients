@@ -500,7 +500,6 @@ export default class MainBackground {
     this.badgeSettingsService = new BadgeSettingsService(this.stateProvider);
     this.policyApiService = new PolicyApiService(this.policyService, this.apiService);
     this.keyConnectorService = new KeyConnectorService(
-      this.stateService,
       this.cryptoService,
       this.apiService,
       this.tokenService,
@@ -508,6 +507,7 @@ export default class MainBackground {
       this.organizationService,
       this.keyGenerationService,
       this.logoutCallback,
+      this.stateProvider,
     );
 
     this.passwordStrengthService = new PasswordStrengthService();
@@ -1128,7 +1128,6 @@ export default class MainBackground {
       this.policyService.clear(userId),
       this.passwordGenerationService.clear(userId),
       this.vaultTimeoutSettingsService.clear(userId),
-      this.keyConnectorService.clear(),
       this.vaultFilterService.clear(),
       this.biometricStateService.logout(userId),
       this.providerService.save(null, userId),
