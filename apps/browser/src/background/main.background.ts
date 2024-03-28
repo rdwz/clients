@@ -1184,6 +1184,7 @@ export default class MainBackground {
     const needStorageReseed = await this.needsStorageReseed();
 
     const newActiveUser = await this.stateService.clean({ userId: userId });
+    await this.accountService.clean(userId);
 
     await this.stateEventRunnerService.handleEvent("logout", userId);
 

@@ -198,6 +198,25 @@ describe("accountService", () => {
     });
   });
 
+  describe("clean", () => {
+    beforeEach(() => {
+      accountsState.stateSubject.next({ [userId]: userInfo });
+    });
+
+    it("removes account info of the given user", async () => {
+      await sut.clean(userId);
+      const currentState = await firstValueFrom(accountsState.state$);
+
+      expect(currentState).toEqual({
+        [userId]: {
+          email: "",
+          emailVerified: false,
+          name: undefined,
+        },
+      });
+    });
+  });
+
   describe("switchAccount", () => {
     beforeEach(() => {
       accountsState.stateSubject.next({ [userId]: userInfo });

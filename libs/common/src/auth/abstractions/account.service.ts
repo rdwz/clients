@@ -59,6 +59,11 @@ export abstract class AccountService {
    * @param userId
    */
   abstract switchAccount(userId: UserId): Promise<void>;
+  /**
+   * Cleans personal information for the given account from the `accounts$` observable. Does not remove the userId from the observable.
+   * @param userId
+   */
+  abstract clean(userId: UserId): Promise<void>;
 }
 
 export abstract class InternalAccountService extends AccountService {

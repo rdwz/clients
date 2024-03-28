@@ -26,6 +26,11 @@ export const ACCOUNT_ACCOUNTS = KeyDefinition.record<AccountInfo, UserId>(
 export const ACCOUNT_ACTIVE_ACCOUNT_ID = new KeyDefinition(ACCOUNT_DISK, "activeAccountId", {
   deserializer: (id: UserId) => id,
 });
+const loggedOutInfo: AccountInfo = {
+  email: "",
+  emailVerified: false,
+  name: undefined,
+};
 
 export class AccountServiceImplementation implements InternalAccountService {
   private lock = new Subject<UserId>();
@@ -73,6 +78,10 @@ export class AccountServiceImplementation implements InternalAccountService {
 
   async setAccountEmailVerified(userId: UserId, emailVerified: boolean): Promise<void> {
     await this.setAccountInfo(userId, { emailVerified });
+  }
+
+  async clean(userId: UserId) {
+    await this.setAccountInfo(userId, loggedOutInfo);
   }
 
   async switchAccount(userId: UserId): Promise<void> {
