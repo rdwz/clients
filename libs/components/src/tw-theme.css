@@ -1,6 +1,7 @@
 @import "./reset.css";
 
 :root {
+  /* COLORS */
   --color-transparent-hover: rgb(0 0 0 / 0.03);
 
   --color-background: 255 255 255;
@@ -37,6 +38,26 @@
   --color-text-code: 192 17 118;
 
   --tw-ring-offset-color: #ffffff;
+
+  /* BUTTON COMPONENT */
+  --button-border-radius: theme(borderRadius.DEFAULT);
+  --button-border-width: theme(borderWidth.DEFAULT);
+  --button-disabled-primary-bg: rgb(var(--color-primary-500) / 0.6);
+  --button-disabled-primary-text: rgb(var(--color-text-contrast) / 0.6);
+  --button-disabled-secondary-bg: theme(colors.transparent.DEFAULT);
+  --button-disabled-secondary-border: rgb(var(--color-text-muted) / 0.6);
+  --button-disabled-secondary-text: rgb(var(--color-text-muted) / 0.6);
+
+  .ui_refresh {
+    /* BUTTON COMPONENT */
+    /* colors are temporary */
+    --button-border-radius: theme(borderRadius.3xl);
+    --button-border-width: theme(borderWidth.2);
+    --button-disabled-primary-bg: rgb(var(--color-secondary-500));
+    --button-disabled-secondary-bg: rgb(var(--color-secondary-500));
+    --button-disabled-secondary-border: rgb(var(--color-secondary-500));
+    --button-disabled-secondary-text: rgb(var(--color-secondary-700));
+  }
 }
 
 .theme_light {
@@ -80,6 +101,21 @@
   --color-text-code: 240 141 199;
 
   --tw-ring-offset-color: #1f242e;
+
+  /* BUTTON COMPONENT */
+  --button-disabled-primary-bg: rgb(var(--color-primary-500) / 0.6);
+  --button-disabled-primary-text: rgb(var(--color-text-contrast) / 0.6);
+  --button-disabled-secondary-border: rgb(var(--color-text-muted) / 0.6);
+  --button-disabled-secondary-text: rgb(var(--color-text-muted) / 0.6);
+
+  .ui_refresh {
+    /* BUTTON COMPONENT */
+    /* colors are temporaryi */
+    --button-disabled-primary-bg: rgb(var(--color-secondary-500));
+    --button-disabled-secondary-bg: rgb(var(--color-secondary-500));
+    --button-disabled-secondary-border: rgb(var(--color-secondary-500));
+    --button-disabled-secondary-text: rgb(var(--color-secondary-700));
+  }
 }
 
 .theme_nord {

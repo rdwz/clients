@@ -24,7 +24,7 @@ export const Primary: Story = {
   render: (args) => ({
     props: args,
     template: `
-      <button bitButton [disabled]="disabled" [loading]="loading" [buttonType]="buttonType" [block]="block">Button</button>
+      <button bitButton [disabled]="disabled" [loading]="loading" [buttonType]="buttonType" [block]="block">Button with some text</button>
       <a bitButton [disabled]="disabled" [loading]="loading" [buttonType]="buttonType" [block]="block" href="#" class="tw-ml-2">Link</a>
     `,
   }),

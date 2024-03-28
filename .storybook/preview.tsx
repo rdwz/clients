@@ -24,6 +24,22 @@ const decorator = componentWrapperDecorator(
         ${story}
       </div>
     </ng-template>
+    <ng-template #lightPreviewNew>
+      <div
+        class="theme_light ui_refresh tw-border-2 tw-border-solid tw-border-secondary-300 tw-bg-[#ffffff] tw-px-5 tw-py-10 tw-mb-5"
+        *ngIf="theme == 'both' || theme == 'light'"
+      >
+        ${story}
+      </div>
+    </ng-template>
+    <ng-template #darkPreviewNew>
+      <div
+        class="theme_dark ui_refresh tw-border-2 tw-border-solid tw-bg-[#1f242e] tw-px-5 tw-py-10"
+        *ngIf="theme == 'both' || theme == 'dark'"
+      >
+        ${story}
+      </div>
+    </ng-template>
     <ng-template #nordPreview>
       <div
         class="theme_nord tw-border-2 tw-border-solid tw-bg-[#434C5E] tw-px-5 tw-py-10"
@@ -42,6 +58,8 @@ const decorator = componentWrapperDecorator(
 
     <ng-container *ngTemplateOutlet="lightPreview"></ng-container>
     <ng-container *ngTemplateOutlet="darkPreview"></ng-container>
+    <ng-container *ngTemplateOutlet="lightPreviewNew"></ng-container>
+    <ng-container *ngTemplateOutlet="darkPreviewNew"></ng-container>
     <ng-container *ngTemplateOutlet="nordPreview"></ng-container>
     <ng-container *ngTemplateOutlet="solarizedPreview"></ng-container>
   `;
