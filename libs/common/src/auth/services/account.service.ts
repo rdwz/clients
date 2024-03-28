@@ -26,6 +26,11 @@ export const ACCOUNT_ACCOUNTS = KeyDefinition.record<AccountInfo, UserId>(
 export const ACCOUNT_ACTIVE_ACCOUNT_ID = new KeyDefinition(ACCOUNT_DISK, "activeAccountId", {
   deserializer: (id: UserId) => id,
 });
+
+export const ACCOUNT_ACTIVITY = KeyDefinition.record<Date, UserId>(ACCOUNT_DISK, "activity", {
+  deserializer: (activity) => new Date(activity),
+});
+
 const loggedOutInfo: AccountInfo = {
   email: "",
   emailVerified: false,
@@ -40,6 +45,7 @@ export class AccountServiceImplementation implements InternalAccountService {
 
   accounts$;
   activeAccount$;
+  accountActivity$;
 
   constructor(
     private messagingService: MessagingService,
@@ -58,6 +64,7 @@ export class AccountServiceImplementation implements InternalAccountService {
       distinctUntilChanged((a, b) => a?.id === b?.id && accountInfoEqual(a, b)),
       shareReplay({ bufferSize: 1, refCount: false }),
     );
+    this.accountActivity$ = this.globalStateProvider.get(ACCOUNT_ACTIVITY).state$;
   }
 
   async addAccount(userId: UserId, accountData: AccountInfo): Promise<void> {
@@ -82,6 +89,7 @@ export class AccountServiceImplementation implements InternalAccountService {
 
   async clean(userId: UserId) {
     await this.setAccountInfo(userId, loggedOutInfo);
+    await this.removeAccountActivity(userId);
   }
 
   async switchAccount(userId: UserId): Promise<void> {
@@ -103,6 +111,19 @@ export class AccountServiceImplementation implements InternalAccountService {
           // update only if userId changes
           return id !== userId;
         },
+      },
+    );
+  }
+
+  async setAccountActivity(userId: UserId, date: Date): Promise<void> {
+    await this.globalStateProvider.get(ACCOUNT_ACTIVITY).update(
+      (activity) => {
+        activity ??= {};
+        activity[userId] = date;
+        return activity;
+      },
+      {
+        shouldUpdate: (activity) => activity?.[userId] != date,
       },
     );
   }
@@ -136,6 +157,18 @@ export class AccountServiceImplementation implements InternalAccountService {
 
           return !accountInfoEqual(accounts[userId], newAccountInfo(accounts[userId]));
         },
+      },
+    );
+  }
+
+  private async removeAccountActivity(userId: UserId): Promise<void> {
+    await this.globalStateProvider.get(ACCOUNT_ACTIVITY).update(
+      (activity) => {
+        delete activity?.[userId];
+        return activity;
+      },
+      {
+        shouldUpdate: (activity) => activity?.[userId] != null,
       },
     );
   }

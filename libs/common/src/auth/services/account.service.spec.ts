@@ -12,6 +12,7 @@ import { AccountInfo, accountInfoEqual } from "../abstractions/account.service";
 import {
   ACCOUNT_ACCOUNTS,
   ACCOUNT_ACTIVE_ACCOUNT_ID,
+  ACCOUNT_ACTIVITY,
   AccountServiceImplementation,
 } from "./account.service";
 
@@ -215,6 +216,16 @@ describe("accountService", () => {
         },
       });
     });
+
+    it("removes account activity of the given user", async () => {
+      const state = globalStateProvider.getFake(ACCOUNT_ACTIVITY);
+      state.stateSubject.next({ [userId]: new Date() });
+
+      await sut.clean(userId);
+      const activityState = await firstValueFrom(state.state$);
+
+      expect(activityState).toEqual({});
+    });
   });
 
   describe("switchAccount", () => {
@@ -233,6 +244,32 @@ describe("accountService", () => {
       // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       expect(sut.switchAccount("unknown" as UserId)).rejects.toThrowError("Account does not exist");
+    });
+  });
+
+  describe("setAccountActivity", () => {
+    it("should update the account activity", async () => {
+      await sut.setAccountActivity(userId, new Date());
+      const state = globalStateProvider.getFake(ACCOUNT_ACTIVITY);
+
+      expect(state.nextMock).toHaveBeenCalledWith({ [userId]: expect.any(Date) });
+    });
+
+    it("should not update if the activity is the same", async () => {
+      const date = new Date();
+      const state = globalStateProvider.getFake(ACCOUNT_ACTIVITY);
+      state.stateSubject.next({ [userId]: date });
+
+      await sut.setAccountActivity(userId, date);
+
+      expect(state.nextMock).not.toHaveBeenCalled();
+    });
+
+    it("should update accountActivity$ with the new activity", async () => {
+      await sut.setAccountActivity(userId, new Date());
+      const currentState = await firstValueFrom(sut.accountActivity$);
+
+      expect(currentState[userId]).toBeInstanceOf(Date);
     });
   });
 });
