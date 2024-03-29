@@ -993,7 +993,8 @@ export default class MainBackground {
   async bootstrap() {
     this.containerService.attachToGlobal(self);
 
-    await this.stateService.init();
+    // Only the "true" background should run migrations
+    await this.stateService.init({ runMigrations: !this.popupOnlyContext });
 
     await this.vaultTimeoutService.init(true);
     await (this.i18nService as I18nService).init();
