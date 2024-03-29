@@ -1,5 +1,6 @@
 import { Component, Inject, OnDestroy, ViewChild, ViewContainerRef } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
+import { lastValueFrom } from "rxjs";
 
 import { TwoFactorComponent as BaseTwoFactorComponent } from "@bitwarden/angular/auth/components/two-factor.component";
 import { WINDOW } from "@bitwarden/angular/services/injection-tokens";
@@ -12,7 +13,6 @@ import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { LoginService } from "@bitwarden/common/auth/abstractions/login.service";
 import { SsoLoginServiceAbstraction } from "@bitwarden/common/auth/abstractions/sso-login.service.abstraction";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
-import { TwoFactorProviderType } from "@bitwarden/common/auth/enums/two-factor-provider-type";
 import { AuthResult } from "@bitwarden/common/auth/models/domain/auth-result";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
@@ -21,8 +21,12 @@ import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.servic
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
+import { DialogService } from "@bitwarden/components";
 
-import { TwoFactorOptionsComponent } from "./two-factor-options.component";
+import {
+  TwoFactorOptionsDialogResult,
+  TwoFactorOptionsComponent,
+} from "./two-factor-options.component";
 
 @Component({
   selector: "app-two-factor",
@@ -50,6 +54,7 @@ export class TwoFactorComponent extends BaseTwoFactorComponent implements OnDest
     userDecryptionOptionsService: UserDecryptionOptionsServiceAbstraction,
     ssoLoginService: SsoLoginServiceAbstraction,
     configService: ConfigServiceAbstraction,
+    private dialogService: DialogService,
     @Inject(WINDOW) protected win: Window,
   ) {
     super(
@@ -74,22 +79,12 @@ export class TwoFactorComponent extends BaseTwoFactorComponent implements OnDest
   }
 
   async anotherMethod() {
-    const [modal] = await this.modalService.openViewRef(
-      TwoFactorOptionsComponent,
-      this.twoFactorOptionsModal,
-      (comp) => {
-        // eslint-disable-next-line rxjs-angular/prefer-takeuntil, rxjs/no-async-subscribe
-        comp.onProviderSelected.subscribe(async (provider: TwoFactorProviderType) => {
-          modal.close();
-          this.selectedProviderType = provider;
-          await this.init();
-        });
-        // eslint-disable-next-line rxjs-angular/prefer-takeuntil
-        comp.onRecoverSelected.subscribe(() => {
-          modal.close();
-        });
-      },
-    );
+    const dialogRef = TwoFactorOptionsComponent.openTwoFactorOptionsDialog(this.dialogService);
+    const response: any = await lastValueFrom(dialogRef.closed);
+    if (response.result === TwoFactorOptionsDialogResult.Provider) {
+      this.selectedProviderType = response.type;
+      await this.init();
+    }
   }
 
   protected override handleMigrateEncryptionKey(result: AuthResult): boolean {
