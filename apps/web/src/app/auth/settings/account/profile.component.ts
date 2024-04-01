@@ -1,5 +1,4 @@
 import { Component, OnInit } from "@angular/core";
-import { lastValueFrom } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { UpdateProfileRequest } from "@bitwarden/common/auth/models/request/update-profile.request";
@@ -10,7 +9,7 @@ import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/pl
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
 import { DialogService } from "@bitwarden/components";
 
-import { ChangeAvatarComponent } from "./change-avatar.component";
+import { ChangeAvatarDialogComponent } from "./change-avatar-dailog.component";
 
 @Component({
   selector: "app-profile",
@@ -39,11 +38,9 @@ export class ProfileComponent implements OnInit {
   }
 
   async openChangeAvatar() {
-    const dialogRef = ChangeAvatarComponent.openChangeAvatarDialog(this.dialogService, {
+    ChangeAvatarDialogComponent.open(this.dialogService, {
       data: { profile: this.profile },
     });
-    const result = await lastValueFrom(dialogRef.closed);
-    return result;
   }
 
   async submit() {

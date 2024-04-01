@@ -17,21 +17,15 @@ import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/pl
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { DialogService } from "@bitwarden/components";
 
-interface ChangeAvatarDialogData {
+type ChangeAvatarDialogData = {
   profile: ProfileResponse;
-}
-
-enum ChangeAvatarDialogResult {
-  ColorChange = "changeColor",
-  Saved = "saved",
-}
+};
 
 @Component({
-  selector: "app-change-avatar",
-  templateUrl: "change-avatar.component.html",
+  templateUrl: "change-avatar-dialog.component.html",
   encapsulation: ViewEncapsulation.None,
 })
-export class ChangeAvatarComponent implements OnInit, OnDestroy {
+export class ChangeAvatarDialogComponent implements OnInit, OnDestroy {
   profile: ProfileResponse;
 
   @ViewChild("colorPicker") colorPickerElement: ElementRef<HTMLElement>;
@@ -99,7 +93,7 @@ export class ChangeAvatarComponent implements OnInit, OnDestroy {
   submit = async () => {
     if (Utils.validateHexColor(this.currentSelection) || this.currentSelection == null) {
       await this.avatarService.setAvatarColor(this.currentSelection);
-      this.dialogRef.close(ChangeAvatarDialogResult.ColorChange);
+      this.dialogRef.close();
       this.platformUtilsService.showToast("success", null, this.i18nService.t("avatarUpdated"));
     } else {
       this.platformUtilsService.showToast("error", null, this.i18nService.t("errorOccurred"));
@@ -135,11 +129,8 @@ export class ChangeAvatarComponent implements OnInit, OnDestroy {
     }
   }
 
-  static openChangeAvatarDialog(
-    dialogService: DialogService,
-    config: DialogConfig<ChangeAvatarDialogData>,
-  ) {
-    return dialogService.open<ChangeAvatarDialogResult>(ChangeAvatarComponent, config);
+  static open(dialogService: DialogService, config: DialogConfig<ChangeAvatarDialogData>) {
+    return dialogService.open(ChangeAvatarDialogComponent, config);
   }
 }
 
