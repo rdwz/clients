@@ -10,10 +10,10 @@ import { AutofillSettingsServiceAbstraction } from "@bitwarden/common/autofill/s
 import { BroadcasterService } from "@bitwarden/common/platform/abstractions/broadcaster.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
-import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { SyncService } from "@bitwarden/common/vault/abstractions/sync/sync.service.abstraction";
+import { VaultSettingsService } from "@bitwarden/common/vault/abstractions/vault-settings/vault-settings.service";
 import { CipherType } from "@bitwarden/common/vault/enums";
 import { CipherRepromptType } from "@bitwarden/common/vault/enums/cipher-reprompt-type";
 import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
@@ -65,11 +65,11 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
     private changeDetectorRef: ChangeDetectorRef,
     private syncService: SyncService,
     private searchService: SearchService,
-    private stateService: StateService,
     private autofillSettingsService: AutofillSettingsServiceAbstraction,
     private passwordRepromptService: PasswordRepromptService,
     private organizationService: OrganizationService,
     private vaultFilterService: VaultFilterService,
+    private vaultSettingsService: VaultSettingsService,
   ) {}
 
   async ngOnInit() {
@@ -262,18 +262,12 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
 
     this.hostname = Utils.getHostname(this.url);
     this.pageDetails = [];
-    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    BrowserApi.tabSendMessage(this.tab, {
-      command: "collectPageDetails",
-      tab: this.tab,
-      sender: BroadcasterSubscriptionId,
-    });
-
     const otherTypes: CipherType[] = [];
-    const dontShowCards = await this.stateService.getDontShowCardsCurrentTab();
-    const dontShowIdentities = await this.stateService.getDontShowIdentitiesCurrentTab();
-    this.showOrganizations = this.organizationService.hasOrganizations();
+    const dontShowCards = !(await firstValueFrom(this.vaultSettingsService.showCardsCurrentTab$));
+    const dontShowIdentities = !(await firstValueFrom(
+      this.vaultSettingsService.showIdentitiesCurrentTab$,
+    ));
+    this.showOrganizations = await this.organizationService.hasOrganizations();
     if (!dontShowCards) {
       otherTypes.push(CipherType.Card);
     }
@@ -308,9 +302,18 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.loginCiphers = this.loginCiphers.sort((a, b) =>
-      this.cipherService.sortCiphersByLastUsedThenName(a, b),
-    );
+    if (this.loginCiphers.length) {
+      void BrowserApi.tabSendMessage(this.tab, {
+        command: "collectPageDetails",
+        tab: this.tab,
+        sender: BroadcasterSubscriptionId,
+      });
+
+      this.loginCiphers = this.loginCiphers.sort((a, b) =>
+        this.cipherService.sortCiphersByLastUsedThenName(a, b),
+      );
+    }
+
     this.isLoading = this.loaded = true;
   }
 
