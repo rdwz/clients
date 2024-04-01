@@ -120,38 +120,48 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
   }
 
   async getVaultTimeoutAction(userId?: UserId): Promise<VaultTimeoutAction> {
-    const availableActions = await this.getAvailableVaultTimeoutActions();
-    if (availableActions.length === 1) {
-      return availableActions[0];
+    const availableVaultTimeoutActions = await this.getAvailableVaultTimeoutActions();
+    if (availableVaultTimeoutActions.length === 1) {
+      return availableVaultTimeoutActions[0];
     }
 
-    const vaultTimeoutAction = await this.stateService.getVaultTimeoutAction({ userId: userId });
-    const policies = await firstValueFrom(
+    const currentVaultTimeoutAction = await this.stateService.getVaultTimeoutAction({
+      userId: userId,
+    });
+    const maxTimeoutPolicies = await firstValueFrom(
       this.policyService.getAll$(PolicyType.MaximumVaultTimeout, userId),
     );
 
-    if (policies?.length) {
-      const action = policies[0].data.action;
+    if (maxTimeoutPolicies?.length) {
+      const policyDefinedVaultTimeoutAction = maxTimeoutPolicies[0].data.action;
       // We really shouldn't need to set the value here, but multiple services relies on this value being correct.
-      if (action && vaultTimeoutAction !== action) {
-        await this.stateService.setVaultTimeoutAction(action, { userId: userId });
+      if (
+        policyDefinedVaultTimeoutAction &&
+        currentVaultTimeoutAction !== policyDefinedVaultTimeoutAction
+      ) {
+        await this.stateService.setVaultTimeoutAction(policyDefinedVaultTimeoutAction, {
+          userId: userId,
+        });
       }
-      if (action && availableActions.includes(action)) {
-        return action;
+      if (
+        policyDefinedVaultTimeoutAction &&
+        availableVaultTimeoutActions.includes(policyDefinedVaultTimeoutAction)
+      ) {
+        return policyDefinedVaultTimeoutAction;
       }
     }
 
-    if (vaultTimeoutAction == null) {
+    if (currentVaultTimeoutAction == null) {
       // Depends on whether or not the user has a master password
-      const defaultValue = (await this.userHasMasterPassword(userId))
+      const defaultVaultTimeoutAction = (await this.userHasMasterPassword(userId))
         ? VaultTimeoutAction.Lock
         : VaultTimeoutAction.LogOut;
       // We really shouldn't need to set the value here, but multiple services relies on this value being correct.
-      await this.stateService.setVaultTimeoutAction(defaultValue, { userId: userId });
-      return defaultValue;
+      await this.stateService.setVaultTimeoutAction(defaultVaultTimeoutAction, { userId: userId });
+      return defaultVaultTimeoutAction;
     }
 
-    return vaultTimeoutAction === VaultTimeoutAction.LogOut
+    return currentVaultTimeoutAction === VaultTimeoutAction.LogOut
       ? VaultTimeoutAction.LogOut
       : VaultTimeoutAction.Lock;
   }
