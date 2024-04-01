@@ -994,7 +994,7 @@ export default class MainBackground {
     this.containerService.attachToGlobal(self);
 
     // Only the "true" background should run migrations
-    await this.stateService.init({ runMigrations: !this.popupOnlyContext });
+    await this.stateService.init({ runMigrations: !this.isPrivateMode });
 
     await this.vaultTimeoutService.init(true);
     await (this.i18nService as I18nService).init();
