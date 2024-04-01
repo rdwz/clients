@@ -1,4 +1,5 @@
 import { MockProxy, mock } from "jest-mock-extended";
+import { firstValueFrom } from "rxjs";
 
 import { FakeSingleUserStateProvider, FakeGlobalStateProvider } from "../../../spec";
 import { VaultTimeoutAction } from "../../enums/vault-timeout-action.enum";
@@ -103,6 +104,61 @@ describe("TokenService", () => {
   describe("Access Token methods", () => {
     const accessTokenKeyPartialSecureStorageKey = `_accessTokenKey`;
     const accessTokenKeySecureStorageKey = `${userIdFromAccessToken}${accessTokenKeyPartialSecureStorageKey}`;
+
+    describe("hasAccessToken$", () => {
+      it("returns true when an access token exists in memory", async () => {
+        // Arrange
+        singleUserStateProvider
+          .getFake(userIdFromAccessToken, ACCESS_TOKEN_MEMORY)
+          .stateSubject.next([userIdFromAccessToken, accessTokenJwt]);
+
+        // Act
+        const result = await firstValueFrom(tokenService.hasAccessToken$(userIdFromAccessToken));
+
+        // Assert
+        expect(result).toEqual(true);
+      });
+
+      it("returns true when an access token exists in disk", async () => {
+        // Arrange
+        singleUserStateProvider
+          .getFake(userIdFromAccessToken, ACCESS_TOKEN_MEMORY)
+          .stateSubject.next([userIdFromAccessToken, undefined]);
+
+        singleUserStateProvider
+          .getFake(userIdFromAccessToken, ACCESS_TOKEN_DISK)
+          .stateSubject.next([userIdFromAccessToken, accessTokenJwt]);
+
+        // Act
+        const result = await firstValueFrom(tokenService.hasAccessToken$(userIdFromAccessToken));
+
+        // Assert
+        expect(result).toEqual(true);
+      });
+
+      it("returns true when an access token exists in secure storage", async () => {
+        // Arrange
+        singleUserStateProvider
+          .getFake(userIdFromAccessToken, ACCESS_TOKEN_DISK)
+          .stateSubject.next([userIdFromAccessToken, "encryptedAccessToken"]);
+
+        secureStorageService.get.mockResolvedValue(accessTokenKeyB64);
+
+        // Act
+        const result = await firstValueFrom(tokenService.hasAccessToken$(userIdFromAccessToken));
+
+        // Assert
+        expect(result).toEqual(true);
+      });
+
+      it("should return false if no access token exists in memory, disk, or secure storage", async () => {
+        // Act
+        const result = await firstValueFrom(tokenService.hasAccessToken$(userIdFromAccessToken));
+
+        // Assert
+        expect(result).toEqual(false);
+      });
+    });
 
     describe("setAccessToken", () => {
       it("should throw an error if the access token is null", async () => {
@@ -991,6 +1047,7 @@ describe("TokenService", () => {
           refreshToken,
           VaultTimeoutAction.Lock,
           null,
+          null,
         );
         // Assert
         await expect(result).rejects.toThrow("User id not found. Cannot save refresh token.");
@@ -1854,7 +1911,7 @@ describe("TokenService", () => {
 
       // Act
       // Note: passing a valid access token so that a valid user id can be determined from the access token
-      await tokenService.setTokens(accessTokenJwt, refreshToken, vaultTimeoutAction, vaultTimeout, [
+      await tokenService.setTokens(accessTokenJwt, vaultTimeoutAction, vaultTimeout, refreshToken, [
         clientId,
         clientSecret,
       ]);
@@ -1901,7 +1958,7 @@ describe("TokenService", () => {
       tokenService.setClientSecret = jest.fn();
 
       // Act
-      await tokenService.setTokens(accessTokenJwt, refreshToken, vaultTimeoutAction, vaultTimeout);
+      await tokenService.setTokens(accessTokenJwt, vaultTimeoutAction, vaultTimeout, refreshToken);
 
       // Assert
       expect((tokenService as any)._setAccessToken).toHaveBeenCalledWith(
@@ -1933,9 +1990,9 @@ describe("TokenService", () => {
       // Act
       const result = tokenService.setTokens(
         accessToken,
-        refreshToken,
         vaultTimeoutAction,
         vaultTimeout,
+        refreshToken,
       );
 
       // Assert
@@ -1952,32 +2009,27 @@ describe("TokenService", () => {
       // Act
       const result = tokenService.setTokens(
         accessToken,
-        refreshToken,
         vaultTimeoutAction,
         vaultTimeout,
+        refreshToken,
       );
 
       // Assert
-      await expect(result).rejects.toThrow("Access token and refresh token are required.");
+      await expect(result).rejects.toThrow("Access token is required.");
     });
 
-    it("should throw an error if the refresh token is missing", async () => {
+    it("should not throw an error if the refresh token is missing and it should just not set it", async () => {
       // Arrange
-      const accessToken = "accessToken";
       const refreshToken: string = null;
       const vaultTimeoutAction = VaultTimeoutAction.Lock;
       const vaultTimeout = 30;
+      (tokenService as any).setRefreshToken = jest.fn();
 
       // Act
-      const result = tokenService.setTokens(
-        accessToken,
-        refreshToken,
-        vaultTimeoutAction,
-        vaultTimeout,
-      );
+      await tokenService.setTokens(accessTokenJwt, vaultTimeoutAction, vaultTimeout, refreshToken);
 
       // Assert
-      await expect(result).rejects.toThrow("Access token and refresh token are required.");
+      expect((tokenService as any).setRefreshToken).not.toHaveBeenCalled();
     });
   });
 

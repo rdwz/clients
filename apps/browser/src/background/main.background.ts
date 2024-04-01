@@ -9,6 +9,7 @@ import {
   UserDecryptionOptionsService,
   AuthRequestServiceAbstraction,
   AuthRequestService,
+  LoginEmailServiceAbstraction,
 } from "@bitwarden/auth/common";
 import { ApiService as ApiServiceAbstraction } from "@bitwarden/common/abstractions/api.service";
 import { AuditService as AuditServiceAbstraction } from "@bitwarden/common/abstractions/audit.service";
@@ -258,6 +259,7 @@ export default class MainBackground {
   auditService: AuditServiceAbstraction;
   authService: AuthServiceAbstraction;
   loginStrategyService: LoginStrategyServiceAbstraction;
+  loginEmailService: LoginEmailServiceAbstraction;
   importApiService: ImportApiServiceAbstraction;
   importService: ImportServiceAbstraction;
   exportService: VaultExportServiceAbstraction;
@@ -514,7 +516,6 @@ export default class MainBackground {
     this.badgeSettingsService = new BadgeSettingsService(this.stateProvider);
     this.policyApiService = new PolicyApiService(this.policyService, this.apiService);
     this.keyConnectorService = new KeyConnectorService(
-      this.stateService,
       this.cryptoService,
       this.apiService,
       this.tokenService,
@@ -522,6 +523,7 @@ export default class MainBackground {
       this.organizationService,
       this.keyGenerationService,
       logoutCallback,
+      this.stateProvider,
     );
 
     this.passwordStrengthService = new PasswordStrengthService();
@@ -554,11 +556,12 @@ export default class MainBackground {
       this.cryptoFunctionService,
       this.cryptoService,
       this.encryptService,
-      this.stateService,
       this.appIdService,
       this.devicesApiService,
       this.i18nService,
       this.platformUtilsService,
+      this.stateProvider,
+      this.secureStorageService,
       this.userDecryptionOptionsService,
     );
 
@@ -577,6 +580,7 @@ export default class MainBackground {
       this.cryptoService,
       this.apiService,
       this.stateService,
+      this.tokenService,
     );
 
     this.billingAccountProfileStateService = new DefaultBillingAccountProfileStateService(
@@ -992,7 +996,7 @@ export default class MainBackground {
   }
 
   async bootstrap() {
-    this.containerService.attachToGlobal(window);
+    this.containerService.attachToGlobal(self);
 
     await this.stateService.init();
 
@@ -1081,7 +1085,9 @@ export default class MainBackground {
       await this.stateService.setActiveUser(userId);
 
       if (userId == null) {
-        await this.stateService.setRememberedEmail(null);
+        this.loginEmailService.setRememberEmail(false);
+        await this.loginEmailService.saveEmailSettings();
+
         await this.refreshBadge();
         await this.refreshMenu();
         await this.overlayBackground.updateOverlayCiphers();
@@ -1126,7 +1132,6 @@ export default class MainBackground {
       this.policyService.clear(userId),
       this.passwordGenerationService.clear(userId),
       this.vaultTimeoutSettingsService.clear(userId),
-      this.keyConnectorService.clear(),
       this.vaultFilterService.clear(),
       this.biometricStateService.logout(userId),
       this.providerService.save(null, userId),
