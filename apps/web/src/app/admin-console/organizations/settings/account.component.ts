@@ -248,7 +248,7 @@ export class AccountComponent {
   }
 
   async viewApiKey() {
-    ApiKeyComponent.open(this.dialogService, {
+    await ApiKeyComponent.open(this.dialogService, {
       data: {
         keyType: "organization",
         entityId: this.organizationId,
@@ -263,16 +263,17 @@ export class AccountComponent {
   }
 
   async rotateApiKey() {
-    ApiKeyComponent.open(this.dialogService, {
+    await ApiKeyComponent.open(this.dialogService, {
       data: {
         keyType: "organization",
+        isRotation: true,
         entityId: this.organizationId,
-        postKey: this.organizationApiService.getOrCreateApiKey.bind(this.organizationApiService),
+        postKey: this.organizationApiService.rotateApiKey.bind(this.organizationApiService),
         scope: "api.organization",
         grantType: "client_credentials",
         apiKeyTitle: "apiKey",
         apiKeyWarning: "apiKeyWarning",
-        apiKeyDescription: "apiKeyDesc",
+        apiKeyDescription: "apiKeyRotateDesc",
       },
     });
   }
