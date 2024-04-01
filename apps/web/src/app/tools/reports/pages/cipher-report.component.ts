@@ -16,6 +16,7 @@ import { AddEditComponent as OrgAddEditComponent } from "../../../vault/org-vaul
 export class CipherReportComponent implements OnDestroy {
   @ViewChild("cipherAddEdit", { read: ViewContainerRef, static: true })
   cipherAddEditModalRef: ViewContainerRef;
+  insideAdminConsole = false;
 
   loading = false;
   hasLoaded = false;
@@ -23,7 +24,7 @@ export class CipherReportComponent implements OnDestroy {
   organization: Organization;
   organizations$: Observable<Organization[]>;
 
-  filterStatus: any = [0, 1];
+  filterStatus: any = [0];
   showFilterToggle: boolean = false;
   filterOrgStatus = 0;
   private destroyed$: Subject<void> = new Subject();

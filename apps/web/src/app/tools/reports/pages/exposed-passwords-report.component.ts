@@ -58,16 +58,17 @@ export class ExposedPasswordsReportComponent
       ciph.orgFilterStatus = ciph.organizationId;
 
       const promise = this.auditService.passwordLeaked(login.password).then((exposedCount) => {
+        if (this.filterStatus.indexOf(ciph.organizationId) === -1 && ciph.organizationId != null) {
+          this.filterStatus.push(ciph.organizationId);
+          this.showFilterToggle = true;
+        } else if (this.filterStatus.indexOf(1) === -1 && ciph.organizationId === null) {
+          this.filterStatus.splice(1, 0, 1);
+          this.showFilterToggle = true;
+        }
+
         if (exposedCount > 0) {
           exposedPasswordCiphers.push(ciph);
           this.exposedPasswordMap.set(id, exposedCount);
-          if (
-            this.filterStatus.indexOf(ciph.organizationId) === -1 &&
-            ciph.organizationId != null
-          ) {
-            this.filterStatus.push(ciph.organizationId);
-            this.showFilterToggle = true;
-          }
         }
       });
       promises.push(promise);

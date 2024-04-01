@@ -42,6 +42,9 @@ export class UnsecuredWebsitesReportComponent extends CipherReportComponent impl
       if (this.filterStatus.indexOf(c.organizationId) === -1 && c.organizationId != null) {
         this.filterStatus.push(c.organizationId);
         this.showFilterToggle = true;
+      } else if (this.filterStatus.indexOf(1) === -1 && c.organizationId === null) {
+        this.filterStatus.splice(1, 0, 1);
+        this.showFilterToggle = true;
       }
       return c.login.uris.some((u: any) => u.uri != null && u.uri.indexOf("http://") === 0);
     });

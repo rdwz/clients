@@ -41,6 +41,7 @@ export class ExposedPasswordsReportComponent extends BaseExposedPasswordsReportC
   }
 
   async ngOnInit() {
+    this.insideAdminConsole = true;
     // eslint-disable-next-line rxjs-angular/prefer-takeuntil, rxjs/no-async-subscribe
     this.route.parent.parent.params.subscribe(async (params) => {
       this.organization = await this.organizationService.get(params.organizationId);
