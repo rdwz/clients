@@ -37,11 +37,10 @@ import { OrganizationService } from "@bitwarden/common/admin-console/abstraction
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
 import { TokenService } from "@bitwarden/common/auth/abstractions/token.service";
 import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
+import { BillingAccountProfileStateService } from "@bitwarden/common/billing/abstractions/account/billing-account-profile-state.service";
 import { EventType } from "@bitwarden/common/enums";
-import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { BroadcasterService } from "@bitwarden/common/platform/abstractions/broadcaster.service";
-import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
-import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
+import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
@@ -145,10 +144,6 @@ export class VaultComponent implements OnInit, OnDestroy {
   protected selectedCollection: TreeNode<CollectionView> | undefined;
   protected canCreateCollections = false;
   protected currentSearchText$: Observable<string>;
-  protected showBulkCollectionAccess$ = this.configService.getFeatureFlag$(
-    FeatureFlag.BulkCollectionAccess,
-    false,
-  );
 
   private searchText$ = new Subject<string>();
   private refresh$ = new BehaviorSubject<void>(null);
@@ -163,7 +158,6 @@ export class VaultComponent implements OnInit, OnDestroy {
     private modalService: ModalService,
     private dialogService: DialogService,
     private tokenService: TokenService,
-    private cryptoService: CryptoService,
     private messagingService: MessagingService,
     private platformUtilsService: PlatformUtilsService,
     private broadcasterService: BroadcasterService,
@@ -181,9 +175,10 @@ export class VaultComponent implements OnInit, OnDestroy {
     private eventCollectionService: EventCollectionService,
     private searchService: SearchService,
     private searchPipe: SearchPipe,
-    private configService: ConfigServiceAbstraction,
+    private configService: ConfigService,
     private apiService: ApiService,
     private userVerificationService: UserVerificationService,
+    private billingAccountProfileStateService: BillingAccountProfileStateService,
   ) {}
 
   async ngOnInit() {
@@ -203,7 +198,9 @@ export class VaultComponent implements OnInit, OnDestroy {
           : false;
         await this.syncService.fullSync(false);
 
-        const canAccessPremium = await this.stateService.getCanAccessPremium();
+        const canAccessPremium = await firstValueFrom(
+          this.billingAccountProfileStateService.hasPremiumFromAnySource$,
+        );
         this.showPremiumCallout =
           !this.showVerifyEmail && !canAccessPremium && !this.platformUtilsService.isSelfHost();
 
@@ -244,10 +241,7 @@ export class VaultComponent implements OnInit, OnDestroy {
       });
 
     const filter$ = this.routedVaultFilterService.filter$;
-    const canAccessPremium$ = Utils.asyncToObservable(() =>
-      this.stateService.getCanAccessPremium(),
-    ).pipe(shareReplay({ refCount: true, bufferSize: 1 }));
-    const allCollections$ = Utils.asyncToObservable(() => this.collectionService.getAllDecrypted());
+    const allCollections$ = this.collectionService.decryptedCollections$;
     const nestedCollections$ = allCollections$.pipe(
       map((collections) => getNestedCollectionTree(collections)),
     );
@@ -370,7 +364,7 @@ export class VaultComponent implements OnInit, OnDestroy {
         switchMap(() =>
           combineLatest([
             filter$,
-            canAccessPremium$,
+            this.billingAccountProfileStateService.hasPremiumFromAnySource$,
             allCollections$,
             this.organizationService.organizations$,
             ciphers$,
@@ -406,10 +400,6 @@ export class VaultComponent implements OnInit, OnDestroy {
             filter.type !== "trash" &&
             (filter.organizationId === undefined || filter.organizationId === Unassigned);
           this.isEmpty = collections?.length === 0 && ciphers?.length === 0;
-
-          // This is a temporary fix to avoid double fetching collections.
-          // TODO: Remove when implementing new VVR menu
-          this.vaultFilterService.reloadCollections(allCollections);
 
           this.performingInitialLoad = false;
           this.refreshing = false;
@@ -515,12 +505,11 @@ export class VaultComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const canAccessPremium = await this.stateService.getCanAccessPremium();
-    if (cipher.organizationId == null && !canAccessPremium) {
+    if (cipher.organizationId == null && !this.canAccessPremium) {
       this.messagingService.send("premiumRequired");
       return;
     } else if (cipher.organizationId != null) {
-      const org = this.organizationService.get(cipher.organizationId);
+      const org = await this.organizationService.get(cipher.organizationId);
       if (org != null && (org.maxStorageGb == null || org.maxStorageGb === 0)) {
         this.messagingService.send("upgradeOrganization", {
           organizationId: cipher.organizationId,
@@ -699,7 +688,7 @@ export class VaultComponent implements OnInit, OnDestroy {
   }
 
   async deleteCollection(collection: CollectionView): Promise<void> {
-    const organization = this.organizationService.get(collection.organizationId);
+    const organization = await this.organizationService.get(collection.organizationId);
     if (!collection.canDelete(organization)) {
       this.platformUtilsService.showToast(
         "error",
