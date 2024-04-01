@@ -48,7 +48,7 @@ export class InactiveTwoFactorReportComponent extends CipherReportComponent impl
       const inactive2faCiphers: CipherView[] = [];
       const docs = new Map<string, string>();
 
-      allCiphers.forEach((ciph) => {
+      allCiphers.forEach((ciph: any) => {
         const { type, login, isDeleted, edit, id, viewPassword } = ciph;
         if (
           type !== CipherType.Login ||
@@ -59,6 +59,12 @@ export class InactiveTwoFactorReportComponent extends CipherReportComponent impl
           !viewPassword
         ) {
           return;
+        }
+        ciph.orgFilterStatus = ciph.organizationId;
+
+        if (this.filterStatus.indexOf(ciph.organizationId) === -1 && ciph.organizationId != null) {
+          this.filterStatus.push(ciph.organizationId);
+          this.showFilterToggle = true;
         }
         for (let i = 0; i < login.uris.length; i++) {
           const u = login.uris[i];

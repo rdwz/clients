@@ -33,11 +33,17 @@ export class UnsecuredWebsitesReportComponent extends CipherReportComponent impl
 
   async setCiphers() {
     const allCiphers = await this.getAllCiphers();
-    const unsecuredCiphers = allCiphers.filter((c) => {
+    const unsecuredCiphers = allCiphers.filter((c: any) => {
       if (c.type !== CipherType.Login || !c.login.hasUris || c.isDeleted) {
         return false;
       }
-      return c.login.uris.some((u) => u.uri != null && u.uri.indexOf("http://") === 0);
+      c.orgFilterStatus = c.organizationId;
+
+      if (this.filterStatus.indexOf(c.organizationId) === -1 && c.organizationId != null) {
+        this.filterStatus.push(c.organizationId);
+        this.showFilterToggle = true;
+      }
+      return c.login.uris.some((u: any) => u.uri != null && u.uri.indexOf("http://") === 0);
     });
     this.ciphers = unsecuredCiphers.filter(
       (c) => (!this.organization && c.edit) || (this.organization && !c.edit),

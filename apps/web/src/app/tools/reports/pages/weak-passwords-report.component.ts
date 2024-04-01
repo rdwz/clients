@@ -40,7 +40,9 @@ export class WeakPasswordsReportComponent extends CipherReportComponent implemen
   }
 
   async setCiphers() {
-    const allCiphers = await this.getAllCiphers();
+    const allCiphers: any = await this.getAllCiphers();
+    this.passwordStrengthCache = new Map<string, number>();
+    this.weakPasswordCiphers = [];
     this.findWeakPasswords(allCiphers);
   }
 
@@ -57,6 +59,14 @@ export class WeakPasswordsReportComponent extends CipherReportComponent implemen
       ) {
         return;
       }
+
+      ciph.orgFilterStatus = ciph.organizationId;
+
+      if (this.filterStatus.indexOf(ciph.organizationId) === -1 && ciph.organizationId != null) {
+        this.filterStatus.push(ciph.organizationId);
+        this.showFilterToggle = true;
+      }
+
       const hasUserName = this.isUserNameNotEmpty(ciph);
       const cacheKey = this.getCacheKey(ciph);
       if (!this.passwordStrengthCache.has(cacheKey)) {
@@ -89,6 +99,7 @@ export class WeakPasswordsReportComponent extends CipherReportComponent implemen
         this.passwordStrengthCache.set(cacheKey, result.score);
       }
       const score = this.passwordStrengthCache.get(cacheKey);
+
       if (score != null && score <= 2) {
         this.passwordStrengthMap.set(id, this.scoreKey(score));
         this.weakPasswordCiphers.push(ciph);
