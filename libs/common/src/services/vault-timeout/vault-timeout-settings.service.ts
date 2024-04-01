@@ -10,6 +10,7 @@ import { VaultTimeoutAction } from "../../enums/vault-timeout-action.enum";
 import { CryptoService } from "../../platform/abstractions/crypto.service";
 import { StateService } from "../../platform/abstractions/state.service";
 import { BiometricStateService } from "../../platform/biometrics/biometric-state.service";
+import { StateProvider } from "../../platform/state";
 import { UserId } from "../../types/guid";
 
 /**
@@ -27,6 +28,7 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
     private policyService: PolicyService,
     private stateService: StateService,
     private biometricStateService: BiometricStateService,
+    private stateProvider: StateProvider,
   ) {}
 
   async setVaultTimeoutOptions(timeout: number, action: VaultTimeoutAction): Promise<void> {

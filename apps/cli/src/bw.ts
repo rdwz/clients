@@ -549,6 +549,7 @@ export class Main {
       this.policyService,
       this.stateService,
       this.biometricStateService,
+      this.stateProvider,
     );
 
     this.pinCryptoService = new PinCryptoService(
