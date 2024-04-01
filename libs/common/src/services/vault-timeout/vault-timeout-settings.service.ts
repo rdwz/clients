@@ -91,30 +91,32 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
   }
 
   async getVaultTimeout(userId?: UserId): Promise<number> {
-    const vaultTimeout = await this.stateService.getVaultTimeout({ userId });
-    const policies = await firstValueFrom(
+    const currentVaultTimeout = await this.stateService.getVaultTimeout({ userId });
+    const maxVaultTimeoutPolicies = await firstValueFrom(
       this.policyService.getAll$(PolicyType.MaximumVaultTimeout, userId),
     );
 
-    if (policies?.length) {
-      // Remove negative values, and ensure it's smaller than maximum allowed value according to policy
-      let timeout = Math.min(vaultTimeout, policies[0].data.minutes);
+    if (maxVaultTimeoutPolicies?.length) {
+      const maxVaultTimeoutPolicy = maxVaultTimeoutPolicies[0].data;
 
-      if (vaultTimeout == null || timeout < 0) {
-        timeout = policies[0].data.minutes;
+      // Remove negative values, and ensure it's smaller than maximum allowed value according to policy
+      let policyCompliantTimeout = Math.min(currentVaultTimeout, maxVaultTimeoutPolicy.minutes);
+
+      if (currentVaultTimeout == null || policyCompliantTimeout < 0) {
+        policyCompliantTimeout = maxVaultTimeoutPolicy.minutes;
       }
 
       // TODO @jlf0dev: Can we move this somwhere else? Maybe add it to the initialization process?
       // ( Apparently I'm the one that reviewed the original PR that added this :) )
       // We really shouldn't need to set the value here, but multiple services relies on this value being correct.
-      if (vaultTimeout !== timeout) {
-        await this.stateService.setVaultTimeout(timeout, { userId });
+      if (currentVaultTimeout !== policyCompliantTimeout) {
+        await this.stateService.setVaultTimeout(policyCompliantTimeout, { userId });
       }
 
-      return timeout;
+      return policyCompliantTimeout;
     }
 
-    return vaultTimeout;
+    return currentVaultTimeout;
   }
 
   vaultTimeoutAction$(userId?: UserId) {
