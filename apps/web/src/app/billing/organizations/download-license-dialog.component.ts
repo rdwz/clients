@@ -16,15 +16,14 @@ type DownloadLicenseDialogData = {
 };
 
 @Component({
-  selector: "app-download-license",
-  templateUrl: "download-license.component.html",
+  templateUrl: "download-license-dialog.component.html",
 })
-export class DownloadLicenseComponent {
+export class DownloadLicenceDialogComponent {
   licenseForm = this.formBuilder.group({
     installationId: ["", [Validators.required]],
   });
   constructor(
-    @Inject(DIALOG_DATA) protected params: any,
+    @Inject(DIALOG_DATA) protected data: DownloadLicenseDialogData,
     private dialogRef: DialogRef,
     private fileDownloadService: FileDownloadService,
     private organizationApiService: OrganizationApiServiceAbstraction,
@@ -33,15 +32,13 @@ export class DownloadLicenseComponent {
 
   submit = async () => {
     this.licenseForm.markAllAsTouched();
-    if (
-      this.licenseForm.value.installationId == null ||
-      this.licenseForm.value.installationId === ""
-    ) {
+    const installationId = this.licenseForm.get("installationId").value;
+    if (installationId == null || installationId === "") {
       return;
     }
     const license = await this.organizationApiService.getLicense(
-      this.params.organizationId,
-      this.licenseForm.get("installationId").value,
+      this.data.organizationId,
+      installationId,
     );
     const licenseString = JSON.stringify(license, null, 2);
     this.fileDownloadService.download({
@@ -51,12 +48,12 @@ export class DownloadLicenseComponent {
     this.dialogRef.close(DownloadLicenseDialogResult.Downloaded);
   };
   /**
-   * Strongly typed helper to open a DownloadLicenseComponent
+   * Strongly typed helper to open a DownloadLicenceDialogComponent
    * @param dialogService Instance of the dialog service that will be used to open the dialog
    * @param config Configuration for the dialog
    */
   static open(dialogService: DialogService, config: DialogConfig<DownloadLicenseDialogData>) {
-    return dialogService.open<DownloadLicenseDialogResult>(DownloadLicenseComponent, config);
+    return dialogService.open<DownloadLicenseDialogResult>(DownloadLicenceDialogComponent, config);
   }
   cancel = () => {
     this.dialogRef.close(DownloadLicenseDialogResult.Cancelled);

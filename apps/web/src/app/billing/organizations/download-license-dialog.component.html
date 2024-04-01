@@ -18,7 +18,7 @@
                 <i class="bwi bwi-question-circle" aria-hidden="true"></i>
               </a>
             </bit-label>
-            <input bitInput formControlName="installationId" />
+            <input type="text" bitInput formControlName="installationId" />
           </bit-form-field>
         </div>
       </div>
@@ -29,7 +29,8 @@
       </button>
       <button
         bitButton
-        [bitDialogClose]="cancel"
+        bitDialogClose
+        [bitAction]="cancel"
         bitFormButton
         buttonType="secondary"
         type="button"
