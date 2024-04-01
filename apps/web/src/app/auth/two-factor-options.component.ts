@@ -4,6 +4,7 @@ import { Router } from "@angular/router";
 
 import { TwoFactorOptionsComponent as BaseTwoFactorOptionsComponent } from "@bitwarden/angular/auth/components/two-factor-options.component";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
+import { TwoFactorProviderType } from "@bitwarden/common/auth/enums/two-factor-provider-type";
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
@@ -13,6 +14,11 @@ export enum TwoFactorOptionsDialogResult {
   Provider = "Provider selected",
   Recover = "Recover selected",
 }
+
+export type TwoFactorOptionsDialogResultType = {
+  result: TwoFactorOptionsDialogResult;
+  type: TwoFactorProviderType;
+};
 
 @Component({
   selector: "app-two-factor-options",
@@ -40,7 +46,7 @@ export class TwoFactorOptionsComponent extends BaseTwoFactorOptionsComponent {
     this.dialogRef.close({ result: TwoFactorOptionsDialogResult.Recover });
   }
 
-  static openTwoFactorOptionsDialog(dialogService: DialogService) {
-    return dialogService.open(TwoFactorOptionsComponent);
+  static open(dialogService: DialogService) {
+    return dialogService.open<TwoFactorOptionsDialogResultType>(TwoFactorOptionsComponent);
   }
 }

@@ -26,6 +26,7 @@ import { DialogService } from "@bitwarden/components";
 import {
   TwoFactorOptionsDialogResult,
   TwoFactorOptionsComponent,
+  TwoFactorOptionsDialogResultType,
 } from "./two-factor-options.component";
 
 @Component({
@@ -79,8 +80,8 @@ export class TwoFactorComponent extends BaseTwoFactorComponent implements OnDest
   }
 
   async anotherMethod() {
-    const dialogRef = TwoFactorOptionsComponent.openTwoFactorOptionsDialog(this.dialogService);
-    const response: any = await lastValueFrom(dialogRef.closed);
+    const dialogRef = TwoFactorOptionsComponent.open(this.dialogService);
+    const response: TwoFactorOptionsDialogResultType = await lastValueFrom(dialogRef.closed);
     if (response.result === TwoFactorOptionsDialogResult.Provider) {
       this.selectedProviderType = response.type;
       await this.init();
