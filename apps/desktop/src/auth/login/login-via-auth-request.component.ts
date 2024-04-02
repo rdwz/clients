@@ -7,12 +7,13 @@ import { ModalService } from "@bitwarden/angular/services/modal.service";
 import {
   AuthRequestServiceAbstraction,
   LoginStrategyServiceAbstraction,
+  LoginEmailServiceAbstraction,
 } from "@bitwarden/auth/common";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { AnonymousHubService } from "@bitwarden/common/auth/abstractions/anonymous-hub.service";
 import { AuthService } from "@bitwarden/common/auth/abstractions/auth.service";
 import { DeviceTrustCryptoServiceAbstraction } from "@bitwarden/common/auth/abstractions/device-trust-crypto.service.abstraction";
-import { LoginService } from "@bitwarden/common/auth/abstractions/login.service";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { CryptoFunctionService } from "@bitwarden/common/platform/abstractions/crypto-function.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
@@ -53,10 +54,11 @@ export class LoginViaAuthRequestComponent extends BaseLoginWithDeviceComponent {
     private modalService: ModalService,
     syncService: SyncService,
     stateService: StateService,
-    loginService: LoginService,
+    loginEmailService: LoginEmailServiceAbstraction,
     deviceTrustCryptoService: DeviceTrustCryptoServiceAbstraction,
     authRequestService: AuthRequestServiceAbstraction,
     loginStrategyService: LoginStrategyServiceAbstraction,
+    accountService: AccountService,
     private location: Location,
   ) {
     super(
@@ -74,10 +76,11 @@ export class LoginViaAuthRequestComponent extends BaseLoginWithDeviceComponent {
       anonymousHubService,
       validationService,
       stateService,
-      loginService,
+      loginEmailService,
       deviceTrustCryptoService,
       authRequestService,
       loginStrategyService,
+      accountService,
     );
 
     super.onSuccessfulLogin = () => {

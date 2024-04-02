@@ -5,6 +5,7 @@ import { EncryptService } from "@bitwarden/common/platform/abstractions/encrypt.
 import { KeyGenerationService } from "@bitwarden/common/platform/abstractions/key-generation.service";
 import {
   AbstractMemoryStorageService,
+  AbstractStorageService,
   ObservableStorageService,
   StorageUpdate,
 } from "@bitwarden/common/platform/abstractions/storage.service";
@@ -12,25 +13,16 @@ import { EncString } from "@bitwarden/common/platform/models/domain/enc-string";
 import { MemoryStorageOptions } from "@bitwarden/common/platform/models/domain/storage-options";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
 
-// import { BrowserApi } from "../browser/browser-api";
 import { fromChromeEvent } from "../browser/from-chrome-event";
 import { devFlag } from "../decorators/dev-flag.decorator";
 import { devFlagEnabled } from "../flags";
-// import { MemoryStoragePortMessage } from "../storage/port-messages";
-// import { portName } from "../storage/port-name";
-
-import BrowserLocalStorageService from "./browser-local-storage.service";
-import BrowserMemoryStorageService from "./browser-memory-storage.service";
 
 export class LocalBackedSessionStorageService
   extends AbstractMemoryStorageService
   implements ObservableStorageService
 {
   private cache = new Map<string, unknown>();
-  private localStorage = new BrowserLocalStorageService();
-  private sessionStorage = new BrowserMemoryStorageService();
   private updatesSubject = new Subject<StorageUpdate>();
-  // private _ports: chrome.runtime.Port[] = [];
 
   private commandName = `localBackedSessionStorage_${this.name}`;
   private encKey = `localEncryptionKey_${this.name}`;
@@ -41,6 +33,8 @@ export class LocalBackedSessionStorageService
   constructor(
     private encryptService: EncryptService,
     private keyGenerationService: KeyGenerationService,
+    private localStorage: AbstractStorageService,
+    private sessionStorage: AbstractStorageService,
     private name: string,
   ) {
     super();
@@ -99,29 +93,22 @@ export class LocalBackedSessionStorageService
       return await this.remove(key);
     }
 
-    // console.log("save", key, obj);
     this.cache.set(key, obj);
     await this.updateLocalSessionValue(key, obj);
-    this.updatesSubject.next({ key, updateType: "save" });
-    void chrome.runtime.sendMessage({
-      command: this.commandName,
-      update: {
-        key,
-        updateType: "save",
-      },
-    });
+    this.sendUpdate({ key, updateType: "save" });
   }
 
   async remove(key: string): Promise<void> {
-    this.cache.delete(key);
+    this.cache.set(key, null);
     await this.updateLocalSessionValue(key, null);
-    this.updatesSubject.next({ key, updateType: "remove" });
+    this.sendUpdate({ key, updateType: "remove" });
+  }
+
+  sendUpdate(storageUpdate: StorageUpdate) {
+    this.updatesSubject.next(storageUpdate);
     void chrome.runtime.sendMessage({
       command: this.commandName,
-      update: {
-        key,
-        updateType: "remove",
-      },
+      update: storageUpdate,
     });
   }
 
@@ -205,83 +192,4 @@ export class LocalBackedSessionStorageService
       await this.sessionStorage.save(this.encKey, input);
     }
   }
-
-  // private setupPortListener() {
-  //   BrowserApi.addListener(chrome.runtime.onConnect, this.handlePortOnConnect);
-  //   this.updates$.subscribe((update) => {
-  //     this.broadcastMessage({
-  //       action: "subject_update",
-  //       data: update,
-  //     });
-  //   });
-  // }
-
-  // private handlePortOnConnect = (port: chrome.runtime.Port) => {
-  //   if (port.name !== portName(chrome.storage.session)) {
-  //     return;
-  //   }
-  //
-  //   this._ports.push(port);
-  //
-  //   port.onDisconnect.addListener(this.handlePortOnDisconnect);
-  //   port.onMessage.addListener(this.onMessageFromForeground);
-  //   // Initialize the new memory storage service with existing data
-  //   this.sendMessageTo(port, {
-  //     action: "initialization",
-  //     data: Array.from(this.cache.keys()),
-  //   });
-  // };
-
-  // private handlePortOnDisconnect = (port: chrome.runtime.Port) => {
-  //   this._ports.splice(this._ports.indexOf(port), 1);
-  //   port.onMessage.removeListener(this.onMessageFromForeground);
-  // };
-
-  // private onMessageFromForeground = async (
-  //   message: MemoryStoragePortMessage,
-  //   port: chrome.runtime.Port,
-  // ) => {
-  //   if (message.originator === "background") {
-  //     return;
-  //   }
-  //
-  //   let result: unknown = null;
-  //
-  //   switch (message.action) {
-  //     case "get":
-  //     case "getBypassCache":
-  //     case "has": {
-  //       result = await this[message.action](message.key);
-  //       break;
-  //     }
-  //     case "save":
-  //       await this.save(message.key, JSON.parse((message.data as string) ?? null) as unknown);
-  //       break;
-  //     case "remove":
-  //       await this.remove(message.key);
-  //       break;
-  //   }
-  //
-  //   this.sendMessageTo(port, {
-  //     id: message.id,
-  //     key: message.key,
-  //     data: JSON.stringify(result),
-  //   });
-  // };
-
-  // private broadcastMessage(data: Omit<MemoryStoragePortMessage, "originator">) {
-  //   this._ports.forEach((port) => {
-  //     this.sendMessageTo(port, data);
-  //   });
-  // }
-
-  // private sendMessageTo(
-  //   port: chrome.runtime.Port,
-  //   data: Omit<MemoryStoragePortMessage, "originator">,
-  // ) {
-  //   port.postMessage({
-  //     ...data,
-  //     originator: "background",
-  //   });
-  // }
 }

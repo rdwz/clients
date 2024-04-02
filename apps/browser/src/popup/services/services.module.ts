@@ -30,13 +30,11 @@ import { AuthService as AuthServiceAbstraction } from "@bitwarden/common/auth/ab
 import { DeviceTrustCryptoServiceAbstraction } from "@bitwarden/common/auth/abstractions/device-trust-crypto.service.abstraction";
 import { DevicesServiceAbstraction } from "@bitwarden/common/auth/abstractions/devices/devices.service.abstraction";
 import { KeyConnectorService } from "@bitwarden/common/auth/abstractions/key-connector.service";
-import { LoginService as LoginServiceAbstraction } from "@bitwarden/common/auth/abstractions/login.service";
 import { SsoLoginServiceAbstraction } from "@bitwarden/common/auth/abstractions/sso-login.service.abstraction";
 import { TokenService } from "@bitwarden/common/auth/abstractions/token.service";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
 import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
 import { AuthService } from "@bitwarden/common/auth/services/auth.service";
-import { LoginService } from "@bitwarden/common/auth/services/login.service";
 import {
   AutofillSettingsService,
   AutofillSettingsServiceAbstraction,
@@ -105,6 +103,7 @@ import I18nService from "../../platform/services/i18n.service";
 import { ForegroundPlatformUtilsService } from "../../platform/services/platform-utils/foreground-platform-utils.service";
 import { ForegroundDerivedStateProvider } from "../../platform/state/foreground-derived-state.provider";
 import { FilePopoutUtilsService } from "../../tools/popup/services/file-popout-utils.service";
+import { VaultBrowserStateService } from "../../vault/services/vault-browser-state.service";
 import { VaultFilterService } from "../../vault/services/vault-filter.service";
 
 import { DebounceNavigationService } from "./debounce-navigation.service";
@@ -389,6 +388,13 @@ const safeProviders: SafeProvider[] = [
     useExisting: AbstractStorageService,
   }),
   safeProvider({
+    provide: VaultBrowserStateService,
+    useFactory: (stateProvider: StateProvider) => {
+      return new VaultBrowserStateService(stateProvider);
+    },
+    deps: [StateProvider],
+  }),
+  safeProvider({
     provide: StateServiceAbstraction,
     useFactory: (
       storageService: AbstractStorageService,
@@ -437,11 +443,6 @@ const safeProviders: SafeProvider[] = [
     provide: FileDownloadService,
     useClass: BrowserFileDownloadService,
     deps: [],
-  }),
-  safeProvider({
-    provide: LoginServiceAbstraction,
-    useClass: LoginService,
-    deps: [StateServiceAbstraction],
   }),
   safeProvider({
     provide: SYSTEM_THEME_OBSERVABLE,

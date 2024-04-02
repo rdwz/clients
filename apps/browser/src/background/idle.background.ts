@@ -11,7 +11,7 @@ const IdleInterval = 60 * 5; // 5 minutes
 
 export default class IdleBackground {
   private idle: typeof chrome.idle | typeof browser.idle | null;
-  private idleTimer: NodeJS.Timeout = null;
+  private idleTimer: number | NodeJS.Timeout = null;
   private idleState = "active";
 
   constructor(
