@@ -9,9 +9,9 @@ import { ActiveUserState, SingleUserState } from "./user-state";
 /** A provider for getting an implementation of state scoped to a given key and userId */
 export abstract class SingleUserStateProvider {
   /**
-   * Gets a {@link SingleUserState} scoped to the given {@link KeyDefinition} and {@link UserId}
+   * @deprecated Use {@link SingleUserStateProvider.get} for `UserKeyDefinition` instead
    *
-   * **NOTE** Consider converting your {@link KeyDefinition} to a {@link UserKeyDefinition} for additional features.
+   * Gets a {@link SingleUserState} scoped to the given {@link KeyDefinition} and {@link UserId}
    *
    * @param userId - The {@link UserId} for which you want the user state for.
    * @param keyDefinition - The {@link KeyDefinition} for which you want the user state for.
