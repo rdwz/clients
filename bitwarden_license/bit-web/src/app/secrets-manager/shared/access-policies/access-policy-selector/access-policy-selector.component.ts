@@ -47,7 +47,7 @@ export class AccessPolicySelectorComponent implements ControlValueAccessor, OnIn
     item: ApItemViewType,
   ) => {
     // Disable entire row form group if readOnly
-    if (item.readOnly) {
+    if (item.readOnly || this.disabled) {
       controlRow.disable();
     } else {
       controlRow.enable();
@@ -174,10 +174,10 @@ export class AccessPolicySelectorComponent implements ControlValueAccessor, OnIn
     } else {
       this.formGroup.enable();
       this.multiSelectFormGroup.enable();
+      // The enable() above automatically enables all the row controls,
+      // so we need to disable the readonly ones again
+      this.updateAllRowControlDisableStates();
     }
-    // The enable() above automatically enables all the row controls,
-    // so we need to disable the readonly ones again
-    this.updateAllRowControlDisableStates();
   }
 
   /** Required for NG_VALUE_ACCESSOR */
