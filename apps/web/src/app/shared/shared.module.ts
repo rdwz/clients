@@ -7,6 +7,7 @@ import { InfiniteScrollModule } from "ngx-infinite-scroll";
 import { ToastrModule } from "ngx-toastr";
 
 import { JslibModule } from "@bitwarden/angular/jslib.module";
+import { AnonLayoutComponent } from "@bitwarden/auth/angular";
 import {
   AsyncActionsModule,
   AvatarModule,
@@ -36,7 +37,6 @@ import {
 
 // Register the locales for the application
 import "./locales";
-import { AnonLayoutComponent } from "../../../../../libs/auth/src/angular/anon-layout/anon-layout.component";
 
 /**
  * This NgModule should contain the most basic shared directives, pipes, and components. They

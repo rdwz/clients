@@ -189,21 +189,25 @@ const routes: Routes = [
       },
     ],
   },
+
+  // TODO: remove this example
   {
     path: "",
     component: AnonymousLayoutComponent,
     children: [
       {
         path: "sample-route",
-        component: LoginComponent, // replace
+        component: LoginComponent, // replace with your component
       },
       {
         path: "",
-        component: HintComponent, // replace (or remove this secondary outlet if not needed)
+        component: HintComponent, // just an example that shows secondary content. Replace with your component (or remove this secondary outlet entirely if not needed)
         outlet: "secondary",
       },
     ],
   },
+  // TODO: remove this example
+
   {
     path: "",
     component: UserLayoutComponent,
