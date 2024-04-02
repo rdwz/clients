@@ -110,9 +110,10 @@ export class WeakPasswordsReportComponent extends CipherReportComponent implemen
 
       if (this.filterStatus.indexOf(ciph.organizationId) === -1 && ciph.organizationId != null) {
         this.filterStatus.push(ciph.organizationId);
-        this.showFilterToggle = true;
       } else if (this.filterStatus.indexOf(1) === -1 && ciph.organizationId == null) {
         this.filterStatus.splice(1, 0, 1);
+      }
+      if (this.filterStatus.length > 2) {
         this.showFilterToggle = true;
       }
       return ciph;
