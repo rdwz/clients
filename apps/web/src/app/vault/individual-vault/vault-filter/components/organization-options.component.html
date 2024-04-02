@@ -3,7 +3,7 @@
     type="button"
     [bitMenuTriggerFor]="optionsMenu"
     class="filter-options-icon"
-    aria-label="Toggle Organization Menu"
+    [attr.aria-label]="'organizationOptionsMenu' | i18n"
   >
     <i class="bwi bwi-ellipsis-v" aria-hidden="true"></i>
   </button>
@@ -26,20 +26,20 @@
         *ngIf="allowEnrollmentChanges(organization) && !organization.resetPasswordEnrolled"
         bitMenuItem
         (click)="toggleResetPasswordEnrollment(organization)"
-        aria-label="Enroll in Account Recovery"
+        aria-labelledby="enrollAccountRecovery"
       >
         <i class="bwi bwi-fw bwi-key" aria-hidden="true"></i>
-        {{ "enrollAccountRecovery" | i18n }}
+        <span id="enrollAccountRecovery">{{ "enrollAccountRecovery" | i18n }}</span>
       </button>
       <button
         type="button"
         *ngIf="allowEnrollmentChanges(organization) && organization.resetPasswordEnrolled"
         bitMenuItem
         (click)="toggleResetPasswordEnrollment(organization)"
-        aria-label="Withdraw Account Recovery"
+        aria-labelledBy="withdrawAccountRecovery"
       >
         <i class="bwi bwi-fw bwi-undo" aria-hidden="true"></i>
-        {{ "withdrawAccountRecovery" | i18n }}
+        <span id="withdrawAccountRecovery">{{ "withdrawAccountRecovery" | i18n }}</span>
       </button>
       <ng-container *ngIf="showSsoOptions(organization)">
         <button
@@ -47,14 +47,21 @@
           *ngIf="organization.ssoBound; else linkSso"
           bitMenuItem
           (click)="unlinkSso(organization)"
+          aria-labelledby="unlinkSso"
         >
           <i class="bwi bwi-fw bwi-chain-broken" aria-hidden="true"></i>
-          {{ "unlinkSso" | i18n }}
+          <span id="unlinkSso">{{ "unlinkSso" | i18n }}</span>
         </button>
         <ng-template #linkSso>
-          <a href="#" bitMenuItem app-link-sso [organization]="organization" aria-label="Link SSO">
+          <a
+            href="#"
+            bitMenuItem
+            app-link-sso
+            [organization]="organization"
+            aria-labelledby="linkSSO"
+          >
             <i class="bwi bwi-fw bwi-link" aria-hidden="true"></i>
-            {{ "linkSso" | i18n }}
+            <span id="linkSSO">{{ "linkSso" | i18n }}</span>
           </a>
         </ng-template>
       </ng-container>
@@ -63,10 +70,10 @@
         type="button"
         bitMenuItem
         (click)="leave(organization)"
-        aria-label="Leave Organization"
+        aria-labelledby="leaveOrganization"
       >
         <i class="bwi bwi-fw bwi-sign-out tw-text-danger" aria-hidden="true"></i>
-        <span class="tw-text-danger">{{ "leave" | i18n }}</span>
+        <span id="leaveOrganization" class="tw-text-danger">{{ "leave" | i18n }}</span>
       </button>
     </div>
   </bit-menu>

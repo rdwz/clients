@@ -7642,5 +7642,8 @@
   },
   "items": {
     "message": "Items"
+  },
+  "organizationOptionsMenu": {
+    "message": "Toggle Organization Menu"
   }
 }
