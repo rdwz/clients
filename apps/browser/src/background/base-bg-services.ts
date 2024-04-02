@@ -374,29 +374,6 @@ export class BaseBgServices {
       this.logService,
       this.stateProvider,
     );
-    this.loginStrategyService = new LoginStrategyService(
-      this.cryptoService,
-      this.apiService,
-      this.tokenService,
-      this.appIdService,
-      this.platformUtilsService,
-      this.backgroundMessagingService,
-      this.logService,
-      this.keyConnectorService,
-      this.environmentService,
-      this.stateService,
-      this.twoFactorService,
-      this.i18nService,
-      this.encryptService,
-      this.passwordStrengthService,
-      this.policyService,
-      this.deviceTrustCryptoService,
-      this.authRequestService,
-      this.userDecryptionOptionsService,
-      this.globalStateProvider,
-      this.billingAccountProfileStateService,
-      this.taskSchedulerService,
-    );
     this.ssoLoginService = new SsoLoginService(this.stateProvider);
     this.searchService = new SearchService(this.logService, this.i18nService);
     this.fileUploadService = new FileUploadService(this.logService);
@@ -494,28 +471,6 @@ export class BaseBgServices {
     );
     this.avatarService = new AvatarService(this.apiService, this.stateProvider);
     this.providerService = new ProviderService(this.stateProvider);
-    this.syncService = new SyncService(
-      this.apiService,
-      this.domainSettingsService,
-      this.folderService,
-      this.cipherService,
-      this.cryptoService,
-      this.collectionService,
-      this.messagingService,
-      this.policyService,
-      this.sendService,
-      this.logService,
-      this.keyConnectorService,
-      this.stateService,
-      this.providerService,
-      this.folderApiService,
-      this.organizationService,
-      this.sendApiService,
-      this.userDecryptionOptionsService,
-      this.avatarService,
-      this.logoutCallback,
-      this.billingAccountProfileStateService,
-    );
     this.eventUploadService = new EventUploadService(
       this.apiService,
       this.stateProvider,
@@ -529,17 +484,6 @@ export class BaseBgServices {
       this.organizationService,
       this.eventUploadService,
       this.accountService,
-    );
-    this.autofillService = new AutofillService(
-      this.cipherService,
-      this.stateService,
-      this.autofillSettingsService,
-      this.totpService,
-      this.eventCollectionService,
-      this.logService,
-      this.domainSettingsService,
-      this.userVerificationService,
-      this.billingAccountProfileStateService,
     );
     this.individualVaultExportService = new IndividualVaultExportService(
       this.folderService,
@@ -570,7 +514,60 @@ export class BaseBgServices {
       this.logoutCallback,
       this.stateProvider,
     );
+    this.syncService = new SyncService(
+      this.apiService,
+      this.domainSettingsService,
+      this.folderService,
+      this.cipherService,
+      this.cryptoService,
+      this.collectionService,
+      this.messagingService,
+      this.policyService,
+      this.sendService,
+      this.logService,
+      this.keyConnectorService,
+      this.stateService,
+      this.providerService,
+      this.folderApiService,
+      this.organizationService,
+      this.sendApiService,
+      this.userDecryptionOptionsService,
+      this.avatarService,
+      this.logoutCallback,
+      this.billingAccountProfileStateService,
+    );
+    this.loginStrategyService = new LoginStrategyService(
+      this.cryptoService,
+      this.apiService,
+      this.tokenService,
+      this.appIdService,
+      this.platformUtilsService,
+      this.backgroundMessagingService,
+      this.logService,
+      this.keyConnectorService,
+      this.environmentService,
+      this.stateService,
+      this.twoFactorService,
+      this.i18nService,
+      this.encryptService,
+      this.passwordStrengthService,
+      this.policyService,
+      this.deviceTrustCryptoService,
+      this.authRequestService,
+      this.userDecryptionOptionsService,
+      this.globalStateProvider,
+      this.billingAccountProfileStateService,
+      this.taskSchedulerService,
+    );
     this.userVerificationApiService = new UserVerificationApiService(this.apiService);
+    this.vaultTimeoutSettingsService = new VaultTimeoutSettingsService(
+      this.userDecryptionOptionsService,
+      this.cryptoService,
+      this.tokenService,
+      this.policyService,
+      this.stateService,
+      this.biometricStateService,
+    );
     this.pinCryptoService = new PinCryptoService(
       this.stateService,
       this.cryptoService,
@@ -588,13 +585,16 @@ export class BaseBgServices {
       this.vaultTimeoutSettingsService,
       this.platformUtilsService,
     );
-    this.vaultTimeoutSettingsService = new VaultTimeoutSettingsService(
-      this.userDecryptionOptionsService,
-      this.cryptoService,
-      this.tokenService,
-      this.policyService,
+    this.autofillService = new AutofillService(
+      this.cipherService,
       this.stateService,
-      this.biometricStateService,
+      this.autofillSettingsService,
+      this.totpService,
+      this.eventCollectionService,
+      this.logService,
+      this.domainSettingsService,
+      this.userVerificationService,
+      this.billingAccountProfileStateService,
     );
     this.stateEventRunnerService = new StateEventRunnerService(
       this.globalStateProvider,
