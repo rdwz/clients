@@ -29,7 +29,7 @@ export class InactiveTwoFactorReportComponent extends CipherReportComponent impl
     passwordRepromptService: PasswordRepromptService,
     i18nService: I18nService,
   ) {
-    super(modalService, passwordRepromptService, organizationService, i18nService);
+    super(cipherService, modalService, passwordRepromptService, organizationService, i18nService);
   }
 
   async ngOnInit() {
@@ -94,10 +94,6 @@ export class InactiveTwoFactorReportComponent extends CipherReportComponent impl
       });
       this.cipherDocs = docs;
     }
-  }
-
-  protected getAllCiphers(): Promise<CipherView[]> {
-    return this.cipherService.getAllDecrypted();
   }
 
   private async load2fa() {

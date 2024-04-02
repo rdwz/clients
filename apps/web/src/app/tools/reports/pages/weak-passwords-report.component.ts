@@ -32,7 +32,7 @@ export class WeakPasswordsReportComponent extends CipherReportComponent implemen
     passwordRepromptService: PasswordRepromptService,
     i18nService: I18nService,
   ) {
-    super(modalService, passwordRepromptService, organizationService, i18nService);
+    super(cipherService, modalService, passwordRepromptService, organizationService, i18nService);
   }
 
   async ngOnInit() {
@@ -117,10 +117,6 @@ export class WeakPasswordsReportComponent extends CipherReportComponent implemen
       }
       return ciph;
     });
-  }
-
-  protected getAllCiphers(): Promise<CipherView[]> {
-    return this.cipherService.getAllDecrypted();
   }
 
   protected canManageCipher(c: CipherView): boolean {

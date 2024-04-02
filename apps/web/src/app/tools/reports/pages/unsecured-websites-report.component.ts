@@ -5,7 +5,6 @@ import { OrganizationService } from "@bitwarden/common/admin-console/abstraction
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { CipherType } from "@bitwarden/common/vault/enums";
-import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { PasswordRepromptService } from "@bitwarden/vault";
 
 import { CipherReportComponent } from "./cipher-report.component";
@@ -24,7 +23,7 @@ export class UnsecuredWebsitesReportComponent extends CipherReportComponent impl
     passwordRepromptService: PasswordRepromptService,
     i18nService: I18nService,
   ) {
-    super(modalService, passwordRepromptService, organizationService, i18nService);
+    super(cipherService, modalService, passwordRepromptService, organizationService, i18nService);
   }
 
   async ngOnInit() {
@@ -56,9 +55,5 @@ export class UnsecuredWebsitesReportComponent extends CipherReportComponent impl
         return c;
       }
     });
-  }
-
-  protected getAllCiphers(): Promise<CipherView[]> {
-    return this.cipherService.getAllDecrypted();
   }
 }

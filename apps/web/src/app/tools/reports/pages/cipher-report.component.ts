@@ -11,6 +11,7 @@ import { PasswordRepromptService } from "@bitwarden/vault";
 
 import { AddEditComponent } from "../../../vault/individual-vault/add-edit.component";
 import { AddEditComponent as OrgAddEditComponent } from "../../../vault/org-vault/add-edit.component";
+import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 
 @Directive()
 export class CipherReportComponent implements OnDestroy {
@@ -30,6 +31,7 @@ export class CipherReportComponent implements OnDestroy {
   private destroyed$: Subject<void> = new Subject();
 
   constructor(
+    protected cipherService: CipherService,
     private modalService: ModalService,
     protected passwordRepromptService: PasswordRepromptService,
     protected organizationService: OrganizationService,
@@ -127,5 +129,9 @@ export class CipherReportComponent implements OnDestroy {
       c.reprompt === CipherRepromptType.None ||
       (await this.passwordRepromptService.showPasswordPrompt())
     );
+  }
+
+  protected async getAllCiphers(): Promise<CipherView[]> {
+    return await this.cipherService.getAllDecrypted();
   }
 }
