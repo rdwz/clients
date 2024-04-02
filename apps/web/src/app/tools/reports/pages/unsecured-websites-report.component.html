@@ -20,7 +20,7 @@
       </app-callout>
 
       <bit-toggle-group
-        *ngIf="showFilterToggle && !insideAdminConsole"
+        *ngIf="showFilterToggle && !isAdminConsoleActive"
         [selected]="filterOrgStatus"
         (selectedChange)="filterOrgToggle($event)"
         [attr.aria-label]="'addAccessFilter' | i18n"
@@ -34,7 +34,7 @@
       <table class="table table-hover table-list table-ciphers">
         <thead
           class="tw-border-0 tw-border-b-2 tw-border-solid tw-border-secondary-300 tw-font-bold tw-text-muted"
-          *ngIf="!insideAdminConsole"
+          *ngIf="!isAdminConsoleActive"
         >
           <tr>
             <th></th>

@@ -16,7 +16,7 @@ import { AddEditComponent as OrgAddEditComponent } from "../../../vault/org-vaul
 export class CipherReportComponent implements OnDestroy {
   @ViewChild("cipherAddEdit", { read: ViewContainerRef, static: true })
   cipherAddEditModalRef: ViewContainerRef;
-  insideAdminConsole = false;
+  isAdminConsoleActive = false;
 
   loading = false;
   hasLoaded = false;
