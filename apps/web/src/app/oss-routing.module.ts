@@ -39,6 +39,7 @@ import { UpdateTempPasswordComponent } from "./auth/update-temp-password.compone
 import { VerifyEmailTokenComponent } from "./auth/verify-email-token.component";
 import { VerifyRecoverDeleteComponent } from "./auth/verify-recover-delete.component";
 import { FrontendLayoutComponent } from "./layouts/frontend-layout.component";
+import { AnonymousLayoutComponent } from "./layouts/anonymous-layout.component";
 import { UserLayoutComponent } from "./layouts/user-layout.component";
 import { DomainRulesComponent } from "./settings/domain-rules.component";
 import { PreferencesComponent } from "./settings/preferences.component";
@@ -51,143 +52,158 @@ import { VaultModule } from "./vault/individual-vault/vault.module";
 const routes: Routes = [
   {
     path: "",
-    component: FrontendLayoutComponent,
-    data: { doNotSaveUrl: true },
+    component: AnonymousLayoutComponent,
     children: [
       {
         path: "",
-        pathMatch: "full",
-        children: [], // Children lets us have an empty component.
-        canActivate: [redirectGuard()], // Redirects either to vault, login, or lock page.
-      },
-      { path: "login", component: LoginComponent, canActivate: [UnauthGuard] },
-      {
-        path: "login-with-device",
-        component: LoginViaAuthRequestComponent,
-        data: { titleId: "loginWithDevice" },
+        component: LoginComponent,
       },
       {
-        path: "login-with-passkey",
-        component: LoginViaWebAuthnComponent,
-        data: { titleId: "loginWithPasskey" },
-      },
-      {
-        path: "admin-approval-requested",
-        component: LoginViaAuthRequestComponent,
-        data: { titleId: "adminApprovalRequested" },
-      },
-      { path: "2fa", component: TwoFactorComponent, canActivate: [UnauthGuard] },
-      {
-        path: "login-initiated",
-        component: LoginDecryptionOptionsComponent,
-        canActivate: [tdeDecryptionRequiredGuard()],
-      },
-      {
-        path: "register",
-        component: TrialInitiationComponent,
-        canActivate: [UnauthGuard],
-        data: { titleId: "createAccount" },
-      },
-      {
-        path: "trial",
-        redirectTo: "register",
-        pathMatch: "full",
-      },
-      {
-        path: "sso",
+        path: "",
         component: SsoComponent,
-        canActivate: [UnauthGuard],
-        data: { titleId: "enterpriseSingleSignOn" },
-      },
-      {
-        path: "set-password",
-        component: SetPasswordComponent,
-        data: { titleId: "setMasterPassword" },
-      },
-      {
-        path: "hint",
-        component: HintComponent,
-        canActivate: [UnauthGuard],
-        data: { titleId: "passwordHint" },
-      },
-      {
-        path: "lock",
-        component: LockComponent,
-        canActivate: [deepLinkGuard(), lockGuard()],
-      },
-      { path: "verify-email", component: VerifyEmailTokenComponent },
-      {
-        path: "accept-organization",
-        component: AcceptOrganizationComponent,
-        canActivate: [deepLinkGuard()],
-        data: { titleId: "joinOrganization", doNotSaveUrl: false },
-      },
-      {
-        path: "accept-emergency",
-        canActivate: [deepLinkGuard()],
-        data: { titleId: "acceptEmergency", doNotSaveUrl: false },
-        loadComponent: () =>
-          import("./auth/emergency-access/accept/accept-emergency.component").then(
-            (mod) => mod.AcceptEmergencyComponent,
-          ),
-      },
-      {
-        path: "accept-families-for-enterprise",
-        component: AcceptFamilySponsorshipComponent,
-        canActivate: [deepLinkGuard()],
-        data: { titleId: "acceptFamilySponsorship", doNotSaveUrl: false },
-      },
-      { path: "recover", pathMatch: "full", redirectTo: "recover-2fa" },
-      {
-        path: "recover-2fa",
-        component: RecoverTwoFactorComponent,
-        canActivate: [UnauthGuard],
-        data: { titleId: "recoverAccountTwoStep" },
-      },
-      {
-        path: "recover-delete",
-        component: RecoverDeleteComponent,
-        canActivate: [UnauthGuard],
-        data: { titleId: "deleteAccount" },
-      },
-      {
-        path: "verify-recover-delete",
-        component: VerifyRecoverDeleteComponent,
-        canActivate: [UnauthGuard],
-        data: { titleId: "deleteAccount" },
-      },
-      {
-        path: "send/:sendId/:key",
-        component: AccessComponent,
-        data: { title: "Bitwarden Send" },
-      },
-      {
-        path: "update-temp-password",
-        component: UpdateTempPasswordComponent,
-        canActivate: [AuthGuard],
-        data: { titleId: "updateTempPassword" },
-      },
-      {
-        path: "update-password",
-        component: UpdatePasswordComponent,
-        canActivate: [AuthGuard],
-        data: { titleId: "updatePassword" },
-      },
-      {
-        path: "remove-password",
-        component: RemovePasswordComponent,
-        canActivate: [AuthGuard],
-        data: { titleId: "removeMasterPassword" },
-      },
-      {
-        path: "migrate-legacy-encryption",
-        loadComponent: () =>
-          import("./auth/migrate-encryption/migrate-legacy-encryption.component").then(
-            (mod) => mod.MigrateFromLegacyEncryptionComponent,
-          ),
+        outlet: "secondary",
       },
     ],
   },
+  // {
+  //   path: "",
+  //   component: FrontendLayoutComponent,
+  //   data: { doNotSaveUrl: true },
+  //   children: [
+  //     {
+  //       path: "",
+  //       pathMatch: "full",
+  //       children: [], // Children lets us have an empty component.
+  //       canActivate: [redirectGuard()], // Redirects either to vault, login, or lock page.
+  //     },
+  //     { path: "login", component: LoginComponent, canActivate: [UnauthGuard] },
+  //     {
+  //       path: "login-with-device",
+  //       component: LoginViaAuthRequestComponent,
+  //       data: { titleId: "loginWithDevice" },
+  //     },
+  //     {
+  //       path: "login-with-passkey",
+  //       component: LoginViaWebAuthnComponent,
+  //       data: { titleId: "loginWithPasskey" },
+  //     },
+  //     {
+  //       path: "admin-approval-requested",
+  //       component: LoginViaAuthRequestComponent,
+  //       data: { titleId: "adminApprovalRequested" },
+  //     },
+  //     { path: "2fa", component: TwoFactorComponent, canActivate: [UnauthGuard] },
+  //     {
+  //       path: "login-initiated",
+  //       component: LoginDecryptionOptionsComponent,
+  //       canActivate: [tdeDecryptionRequiredGuard()],
+  //     },
+  //     {
+  //       path: "register",
+  //       component: TrialInitiationComponent,
+  //       canActivate: [UnauthGuard],
+  //       data: { titleId: "createAccount" },
+  //     },
+  //     {
+  //       path: "trial",
+  //       redirectTo: "register",
+  //       pathMatch: "full",
+  //     },
+  //     {
+  //       path: "sso",
+  //       component: SsoComponent,
+  //       canActivate: [UnauthGuard],
+  //       data: { titleId: "enterpriseSingleSignOn" },
+  //     },
+  //     {
+  //       path: "set-password",
+  //       component: SetPasswordComponent,
+  //       data: { titleId: "setMasterPassword" },
+  //     },
+  //     {
+  //       path: "hint",
+  //       component: HintComponent,
+  //       canActivate: [UnauthGuard],
+  //       data: { titleId: "passwordHint" },
+  //     },
+  //     {
+  //       path: "lock",
+  //       component: LockComponent,
+  //       canActivate: [deepLinkGuard(), lockGuard()],
+  //     },
+  //     { path: "verify-email", component: VerifyEmailTokenComponent },
+  //     {
+  //       path: "accept-organization",
+  //       component: AcceptOrganizationComponent,
+  //       canActivate: [deepLinkGuard()],
+  //       data: { titleId: "joinOrganization", doNotSaveUrl: false },
+  //     },
+  //     {
+  //       path: "accept-emergency",
+  //       canActivate: [deepLinkGuard()],
+  //       data: { titleId: "acceptEmergency", doNotSaveUrl: false },
+  //       loadComponent: () =>
+  //         import("./auth/emergency-access/accept/accept-emergency.component").then(
+  //           (mod) => mod.AcceptEmergencyComponent,
+  //         ),
+  //     },
+  //     {
+  //       path: "accept-families-for-enterprise",
+  //       component: AcceptFamilySponsorshipComponent,
+  //       canActivate: [deepLinkGuard()],
+  //       data: { titleId: "acceptFamilySponsorship", doNotSaveUrl: false },
+  //     },
+  //     { path: "recover", pathMatch: "full", redirectTo: "recover-2fa" },
+  //     {
+  //       path: "recover-2fa",
+  //       component: RecoverTwoFactorComponent,
+  //       canActivate: [UnauthGuard],
+  //       data: { titleId: "recoverAccountTwoStep" },
+  //     },
+  //     {
+  //       path: "recover-delete",
+  //       component: RecoverDeleteComponent,
+  //       canActivate: [UnauthGuard],
+  //       data: { titleId: "deleteAccount" },
+  //     },
+  //     {
+  //       path: "verify-recover-delete",
+  //       component: VerifyRecoverDeleteComponent,
+  //       canActivate: [UnauthGuard],
+  //       data: { titleId: "deleteAccount" },
+  //     },
+  //     {
+  //       path: "send/:sendId/:key",
+  //       component: AccessComponent,
+  //       data: { title: "Bitwarden Send" },
+  //     },
+  //     {
+  //       path: "update-temp-password",
+  //       component: UpdateTempPasswordComponent,
+  //       canActivate: [AuthGuard],
+  //       data: { titleId: "updateTempPassword" },
+  //     },
+  //     {
+  //       path: "update-password",
+  //       component: UpdatePasswordComponent,
+  //       canActivate: [AuthGuard],
+  //       data: { titleId: "updatePassword" },
+  //     },
+  //     {
+  //       path: "remove-password",
+  //       component: RemovePasswordComponent,
+  //       canActivate: [AuthGuard],
+  //       data: { titleId: "removeMasterPassword" },
+  //     },
+  //     {
+  //       path: "migrate-legacy-encryption",
+  //       loadComponent: () =>
+  //         import("./auth/migrate-encryption/migrate-legacy-encryption.component").then(
+  //           (mod) => mod.MigrateFromLegacyEncryptionComponent,
+  //         ),
+  //     },
+  //   ],
+  // },
   {
     path: "",
     component: UserLayoutComponent,
