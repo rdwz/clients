@@ -12,7 +12,6 @@ import { ApiService } from "../../abstractions/api.service";
 import { CryptoService } from "../../platform/abstractions/crypto.service";
 import { MessagingService } from "../../platform/abstractions/messaging.service";
 import { StateService } from "../../platform/abstractions/state.service";
-import { KeySuffixOptions } from "../../platform/enums";
 import { UserId } from "../../types/guid";
 import { AccountService } from "../abstractions/account.service";
 import { AuthService as AuthServiceAbstraction } from "../abstractions/auth.service";
@@ -70,31 +69,10 @@ export class AuthService implements AuthServiceAbstraction {
       return AuthenticationStatus.LoggedOut;
     }
 
-    // If we don't have a user key in memory, we're locked
-    if (!(await this.cryptoService.hasUserKeyInMemory(userId))) {
-      // Check if the user has vault timeout set to never and verify that
-      // they've never unlocked their vault
-      const neverLock =
-        (await this.cryptoService.hasUserKeyStored(KeySuffixOptions.Auto, userId)) &&
-        !(await this.stateService.getEverBeenUnlocked({ userId: userId }));
+    // This checks if we have a user key in memory OR if we have the auto user key in secure storage for never lock scenarios
+    const hasUserKey = await this.cryptoService.hasUserKey(userId as UserId);
 
-      if (neverLock) {
-        // Attempt to get the key from storage and set it in memory
-        const userKey = await this.cryptoService.getUserKeyFromStorage(
-          KeySuffixOptions.Auto,
-          userId,
-        );
-        await this.cryptoService.setUserKey(userKey, userId);
-      }
-    }
-
-    // We do another check here in case setting the auto key failed
-    const hasKeyInMemory = await this.cryptoService.hasUserKeyInMemory(userId);
-    if (!hasKeyInMemory) {
-      return AuthenticationStatus.Locked;
-    }
-
-    return AuthenticationStatus.Unlocked;
+    return hasUserKey ? AuthenticationStatus.Unlocked : AuthenticationStatus.Locked;
   }
 
   logOut(callback: () => void) {
