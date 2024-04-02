@@ -132,6 +132,13 @@ const permissions = {
   }),
 };
 
+const webNavigation = {
+  onCommitted: {
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+  },
+};
+
 // set chrome
 global.chrome = {
   i18n,
@@ -146,4 +153,5 @@ global.chrome = {
   extension,
   offscreen,
   permissions,
+  webNavigation,
 } as any;

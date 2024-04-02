@@ -576,7 +576,7 @@ describe("BrowserApi", () => {
       await BrowserApi.registerContentScriptsMv2(details);
 
       expect(BrowserApi.addListener).toHaveBeenCalledWith(
-        chrome.tabs.onUpdated,
+        chrome.webNavigation.onCommitted,
         expect.any(Function),
       );
     });

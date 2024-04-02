@@ -10,7 +10,8 @@ import { VaultSettingsService } from "@bitwarden/common/vault/abstractions/vault
 
 import { BrowserApi } from "../../../platform/browser/browser-api";
 import { AbortManager } from "../../background/abort-manager";
-import { Fido2Port } from "../enums/fido2-port.enum";
+import { Fido2ContentScript, Fido2ContentScriptId } from "../enums/fido2-content-script.enum";
+import { Fido2PortName } from "../enums/fido2-port-name.enum";
 
 import {
   Fido2Background as Fido2BackgroundInterface,
@@ -96,17 +97,25 @@ export default class Fido2Background implements Fido2BackgroundInterface {
     }
   }
 
+  /**
+   * Updates the registration status of static FIDO2 content
+   * scripts based on the enablePasskeys setting.
+   */
   private async updateContentScriptRegistration() {
     if (BrowserApi.isManifestVersion(2)) {
-      await this.registerManifestV2ContentScripts();
+      await this.updateMv2ContentScriptsRegistration();
 
       return;
     }
 
-    await this.registerManifestV3ContentScripts();
+    await this.updateMv3ContentScriptsRegistration();
   }
 
-  private async registerManifestV2ContentScripts() {
+  /**
+   * Updates the registration status of static FIDO2 content
+   * scripts based on the enablePasskeys setting for manifest v2.
+   */
+  private async updateMv2ContentScriptsRegistration() {
     if (!this.currentEnablePasskeysSetting) {
       await this.registeredContentScripts?.unregister();
 
@@ -115,25 +124,29 @@ export default class Fido2Background implements Fido2BackgroundInterface {
 
     this.registeredContentScripts = await BrowserApi.registerContentScriptsMv2({
       js: [
-        { file: "content/fido2/page-script-append-mv2.js" },
-        { file: "content/fido2/content-script.js" },
+        { file: Fido2ContentScript.PageScriptAppend },
+        { file: Fido2ContentScript.ContentScript },
       ],
       ...this.sharedRegistrationOptions,
     });
   }
 
-  private async registerManifestV3ContentScripts() {
+  /**
+   * Updates the registration status of static FIDO2 content
+   * scripts based on the enablePasskeys setting for manifest v3.
+   */
+  private async updateMv3ContentScriptsRegistration() {
     if (this.currentEnablePasskeysSetting) {
       void BrowserApi.registerContentScriptsMv3([
         {
-          id: "fido2-page-script",
-          js: ["content/fido2/page-script.js"],
+          id: Fido2ContentScriptId.PageScript,
+          js: [Fido2ContentScript.PageScript],
           world: "MAIN",
           ...this.sharedRegistrationOptions,
         },
         {
-          id: "fido2-content-script",
-          js: ["content/fido2/content-script.js"],
+          id: Fido2ContentScriptId.ContentScript,
+          js: [Fido2ContentScript.ContentScript],
           ...this.sharedRegistrationOptions,
         },
       ]);
@@ -142,7 +155,7 @@ export default class Fido2Background implements Fido2BackgroundInterface {
     }
 
     void BrowserApi.unregisterContentScriptsMv3({
-      ids: ["fido2-page-script", "fido2-content-script"],
+      ids: [Fido2ContentScriptId.PageScript, Fido2ContentScriptId.ContentScript],
     });
   }
 
@@ -154,7 +167,7 @@ export default class Fido2Background implements Fido2BackgroundInterface {
   private async injectFido2ContentScripts(tab: chrome.tabs.Tab): Promise<void> {
     this.injectFido2PageScript(tab);
     void BrowserApi.executeScriptInTab(tab.id, {
-      file: "content/fido2/content-script.js",
+      file: Fido2ContentScript.ContentScript,
       ...this.sharedInjectionDetails,
     });
   }
@@ -168,14 +181,14 @@ export default class Fido2Background implements Fido2BackgroundInterface {
     if (BrowserApi.isManifestVersion(3)) {
       void BrowserApi.executeScriptInTab(
         tab.id,
-        { file: "content/fido2/page-script.js", ...this.sharedInjectionDetails },
+        { file: Fido2ContentScript.PageScript, ...this.sharedInjectionDetails },
         { world: "MAIN" },
       );
       return;
     }
 
     void BrowserApi.executeScriptInTab(tab.id, {
-      file: "content/fido2/page-script-append-mv2.js",
+      file: Fido2ContentScript.PageScriptAppend,
       ...this.sharedInjectionDetails,
     });
   }
@@ -304,7 +317,7 @@ export default class Fido2Background implements Fido2BackgroundInterface {
    * @param port - The port which is connecting
    */
   private handleInjectedScriptPortConnection = async (port: chrome.runtime.Port) => {
-    if (port.name !== Fido2Port.InjectedScript || !port.sender?.url) {
+    if (port.name !== Fido2PortName.InjectedScript || !port.sender?.url) {
       return;
     }
 
@@ -330,7 +343,7 @@ export default class Fido2Background implements Fido2BackgroundInterface {
    * @param port - The port which is disconnecting
    */
   private handleInjectScriptPortOnDisconnect = (port: chrome.runtime.Port) => {
-    if (port.name !== Fido2Port.InjectedScript) {
+    if (port.name !== Fido2PortName.InjectedScript) {
       return;
     }
 
