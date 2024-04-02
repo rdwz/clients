@@ -38,6 +38,11 @@ export class CipherReportComponent implements OnDestroy {
     this.organizations$ = this.organizationService.organizations$;
   }
 
+  ngOnDestroy(): void {
+    this.destroyed$.next();
+    this.destroyed$.complete();
+  }
+
   getOrgName(filterId: string | number) {
     let orgName;
     if (filterId === 0) {
@@ -57,20 +62,15 @@ export class CipherReportComponent implements OnDestroy {
     return orgName;
   }
 
-  async filterOrgToggle(e: any) {
+  async filterOrgToggle(status: any) {
     await this.setCiphers();
-    if (e === 0) {
+    if (status === 0) {
       return;
-    } else if (e === 1) {
+    } else if (status === 1) {
       this.ciphers = this.ciphers.filter((c: any) => c.orgFilterStatus == null);
     } else {
-      this.ciphers = this.ciphers.filter((c: any) => c.orgFilterStatus === e);
+      this.ciphers = this.ciphers.filter((c: any) => c.orgFilterStatus === status);
     }
-  }
-
-  ngOnDestroy(): void {
-    this.destroyed$.next();
-    this.destroyed$.complete();
   }
 
   async load() {

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
 
 import { ModalService } from "@bitwarden/angular/services/modal.service";
 import { AuditService } from "@bitwarden/common/abstractions/audit.service";
@@ -15,10 +15,7 @@ import { CipherReportComponent } from "./cipher-report.component";
   selector: "app-exposed-passwords-report",
   templateUrl: "exposed-passwords-report.component.html",
 })
-export class ExposedPasswordsReportComponent
-  extends CipherReportComponent
-  implements OnInit, OnDestroy
-{
+export class ExposedPasswordsReportComponent extends CipherReportComponent implements OnInit {
   exposedPasswordMap = new Map<string, number>();
   disabled = true;
 
@@ -61,7 +58,7 @@ export class ExposedPasswordsReportComponent
         if (this.filterStatus.indexOf(ciph.organizationId) === -1 && ciph.organizationId != null) {
           this.filterStatus.push(ciph.organizationId);
           this.showFilterToggle = true;
-        } else if (this.filterStatus.indexOf(1) === -1 && ciph.organizationId === null) {
+        } else if (this.filterStatus.indexOf(1) === -1 && ciph.organizationId == null) {
           this.filterStatus.splice(1, 0, 1);
           this.showFilterToggle = true;
         }

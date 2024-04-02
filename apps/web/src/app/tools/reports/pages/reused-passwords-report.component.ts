@@ -54,7 +54,7 @@ export class ReusedPasswordsReportComponent extends CipherReportComponent implem
       if (this.filterStatus.indexOf(ciph.organizationId) === -1 && ciph.organizationId != null) {
         this.filterStatus.push(ciph.organizationId);
         this.showFilterToggle = true;
-      } else if (this.filterStatus.indexOf(1) === -1 && ciph.organizationId === null) {
+      } else if (this.filterStatus.indexOf(1) === -1 && ciph.organizationId == null) {
         this.filterStatus.splice(1, 0, 1);
         this.showFilterToggle = true;
       }
