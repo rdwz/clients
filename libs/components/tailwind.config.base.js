@@ -72,7 +72,11 @@ module.exports = {
       alt2: rgba("--color-text-alt2"),
       code: rgba("--color-text-code"),
       success: rgba("--color-success-500"),
-      danger: rgba("--color-danger-500"),
+      danger: {
+        DEFAULT: rgba("--color-danger-500"),
+        500: rgba("--color-danger-500"),
+        700: rgba("--color-danger-700"),
+      },
       warning: rgba("--color-warning-500"),
       info: rgba("--color-info-500"),
       primary: {
