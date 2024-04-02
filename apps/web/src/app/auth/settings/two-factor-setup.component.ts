@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, Type, ViewChild, ViewContainerRef } from "@angular/core";
-import { firstValueFrom, Observable, Subject, takeUntil } from "rxjs";
+import { firstValueFrom, lastValueFrom, Observable, Subject, takeUntil } from "rxjs";
 
 import { ModalRef } from "@bitwarden/angular/components/modal/modal.ref";
 import { ModalService } from "@bitwarden/angular/services/modal.service";
@@ -12,11 +12,13 @@ import { TwoFactorProviders } from "@bitwarden/common/auth/services/two-factor.s
 import { BillingAccountProfileStateService } from "@bitwarden/common/billing/abstractions/account/billing-account-profile-state.service";
 import { ProductType } from "@bitwarden/common/enums";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
+import { DialogService } from "@bitwarden/components";
 
 import { TwoFactorAuthenticatorComponent } from "./two-factor-authenticator.component";
 import { TwoFactorDuoComponent } from "./two-factor-duo.component";
 import { TwoFactorEmailComponent } from "./two-factor-email.component";
 import { TwoFactorRecoveryComponent } from "./two-factor-recovery.component";
+import { TwoFactorVerifyComponent } from "./two-factor-verify.component";
 import { TwoFactorWebAuthnComponent } from "./two-factor-webauthn.component";
 import { TwoFactorYubiKeyComponent } from "./two-factor-yubikey.component";
 
@@ -52,6 +54,7 @@ export class TwoFactorSetupComponent implements OnInit, OnDestroy {
   private twoFactorAuthPolicyAppliesToActiveUser: boolean;
 
   constructor(
+    protected dialogService: DialogService,
     protected apiService: ApiService,
     protected modalService: ModalService,
     protected messagingService: MessagingService,
@@ -114,63 +117,82 @@ export class TwoFactorSetupComponent implements OnInit, OnDestroy {
     this.loading = false;
   }
 
+  async callTwoFactorVerifyDialog(type?: TwoFactorProviderType) {
+    const twoFactorVerifyDialogRef = TwoFactorVerifyComponent.open(this.dialogService, {
+      data: { type: type, organizationId: this.organizationId },
+    });
+    return await lastValueFrom(twoFactorVerifyDialogRef.closed);
+  }
+
   async manage(type: TwoFactorProviderType) {
-    switch (type) {
-      case TwoFactorProviderType.Authenticator: {
-        const authComp = await this.openModal(
-          this.authenticatorModalRef,
-          TwoFactorAuthenticatorComponent,
-        );
-        // eslint-disable-next-line rxjs-angular/prefer-takeuntil
-        authComp.onUpdated.subscribe((enabled: boolean) => {
-          this.updateStatus(enabled, TwoFactorProviderType.Authenticator);
-        });
-        break;
+    const result: any = await this.callTwoFactorVerifyDialog(type);
+    if (result) {
+      switch (type) {
+        case TwoFactorProviderType.Authenticator: {
+          const authComp = await this.openModal(
+            this.authenticatorModalRef,
+            TwoFactorAuthenticatorComponent,
+          );
+          await authComp.auth(result);
+          // eslint-disable-next-line rxjs-angular/prefer-takeuntil
+          authComp.onUpdated.pipe(takeUntil(this.destroy$)).subscribe((enabled: boolean) => {
+            this.updateStatus(enabled, TwoFactorProviderType.Authenticator);
+          });
+          break;
+        }
+        case TwoFactorProviderType.Yubikey: {
+          const yubiComp = await this.openModal(this.yubikeyModalRef, TwoFactorYubiKeyComponent);
+          // eslint-disable-next-line rxjs-angular/prefer-takeuntil
+          yubiComp.auth(result);
+          yubiComp.onUpdated.pipe(takeUntil(this.destroy$)).subscribe((enabled: boolean) => {
+            this.updateStatus(enabled, TwoFactorProviderType.Yubikey);
+          });
+          break;
+        }
+        case TwoFactorProviderType.Duo: {
+          const duoComp = await this.openModal(this.duoModalRef, TwoFactorDuoComponent);
+          // eslint-disable-next-line rxjs-angular/prefer-takeuntil
+          duoComp.auth(result);
+          duoComp.onUpdated.pipe(takeUntil(this.destroy$)).subscribe((enabled: boolean) => {
+            this.updateStatus(enabled, TwoFactorProviderType.Duo);
+          });
+          break;
+        }
+        case TwoFactorProviderType.Email: {
+          const emailComp = await this.openModal(this.emailModalRef, TwoFactorEmailComponent);
+          // eslint-disable-next-line rxjs-angular/prefer-takeuntil
+          await emailComp.auth(result);
+          emailComp.onUpdated.pipe(takeUntil(this.destroy$)).subscribe((enabled: boolean) => {
+            this.updateStatus(enabled, TwoFactorProviderType.Email);
+          });
+          break;
+        }
+        case TwoFactorProviderType.WebAuthn: {
+          const webAuthnComp = await this.openModal(
+            this.webAuthnModalRef,
+            TwoFactorWebAuthnComponent,
+          );
+          // eslint-disable-next-line rxjs-angular/prefer-takeuntil
+          webAuthnComp.auth(result);
+          webAuthnComp.onUpdated.pipe(takeUntil(this.destroy$)).subscribe((enabled: boolean) => {
+            this.updateStatus(enabled, TwoFactorProviderType.WebAuthn);
+          });
+          break;
+        }
+        default:
+          break;
       }
-      case TwoFactorProviderType.Yubikey: {
-        const yubiComp = await this.openModal(this.yubikeyModalRef, TwoFactorYubiKeyComponent);
-        // eslint-disable-next-line rxjs-angular/prefer-takeuntil
-        yubiComp.onUpdated.subscribe((enabled: boolean) => {
-          this.updateStatus(enabled, TwoFactorProviderType.Yubikey);
-        });
-        break;
-      }
-      case TwoFactorProviderType.Duo: {
-        const duoComp = await this.openModal(this.duoModalRef, TwoFactorDuoComponent);
-        // eslint-disable-next-line rxjs-angular/prefer-takeuntil
-        duoComp.onUpdated.subscribe((enabled: boolean) => {
-          this.updateStatus(enabled, TwoFactorProviderType.Duo);
-        });
-        break;
-      }
-      case TwoFactorProviderType.Email: {
-        const emailComp = await this.openModal(this.emailModalRef, TwoFactorEmailComponent);
-        // eslint-disable-next-line rxjs-angular/prefer-takeuntil
-        emailComp.onUpdated.subscribe((enabled: boolean) => {
-          this.updateStatus(enabled, TwoFactorProviderType.Email);
-        });
-        break;
-      }
-      case TwoFactorProviderType.WebAuthn: {
-        const webAuthnComp = await this.openModal(
-          this.webAuthnModalRef,
-          TwoFactorWebAuthnComponent,
-        );
-        // eslint-disable-next-line rxjs-angular/prefer-takeuntil
-        webAuthnComp.onUpdated.subscribe((enabled: boolean) => {
-          this.updateStatus(enabled, TwoFactorProviderType.WebAuthn);
-        });
-        break;
-      }
-      default:
-        break;
     }
   }
 
-  recoveryCode() {
+  async recoveryCode() {
     // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.openModal(this.recoveryModalRef, TwoFactorRecoveryComponent);
+    const result: any = await this.callTwoFactorVerifyDialog(-1 as TwoFactorProviderType);
+    if (result) {
+      const recoverComp = await this.openModal(this.recoveryModalRef, TwoFactorRecoveryComponent);
+      recoverComp.auth(result);
+    }
   }
 
   async premiumRequired() {
