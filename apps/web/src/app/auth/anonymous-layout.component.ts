@@ -8,11 +8,11 @@ import { SharedModule } from "../shared";
   templateUrl: "anonymous-layout.component.html",
   imports: [SharedModule],
 })
-export class AnonymousLayoutComponent {
-  // async ngOnInit() {
-  //   document.body.classList.add("layout_frontend");
-  // }
-  // ngOnDestroy() {
-  //   document.body.classList.remove("layout_frontend");
-  // }
+export class AnonymousLayoutComponent implements OnInit, OnDestroy {
+  async ngOnInit() {
+    document.body.classList.add("layout_frontend");
+  }
+  ngOnDestroy() {
+    document.body.classList.remove("layout_frontend");
+  }
 }
