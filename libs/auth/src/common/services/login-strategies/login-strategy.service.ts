@@ -1,6 +1,7 @@
 import {
   combineLatestWith,
   distinctUntilChanged,
+  filter,
   firstValueFrom,
   map,
   Observable,
@@ -22,6 +23,7 @@ import { AuthRequestResponse } from "@bitwarden/common/auth/models/response/auth
 import { BillingAccountProfileStateService } from "@bitwarden/common/billing/abstractions/account/billing-account-profile-state.service";
 import { PreloginRequest } from "@bitwarden/common/models/request/prelogin.request";
 import { ErrorResponse } from "@bitwarden/common/models/response/error.response";
+import { AuthRequestPushNotification } from "@bitwarden/common/models/response/notification.response";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { EncryptService } from "@bitwarden/common/platform/abstractions/encrypt.service";
@@ -38,7 +40,6 @@ import { PasswordStrengthServiceAbstraction } from "@bitwarden/common/tools/pass
 import { MasterKey } from "@bitwarden/common/types/key";
 
 import { AuthRequestServiceAbstraction, LoginStrategyServiceAbstraction } from "../../abstractions";
-import { InternalUserDecryptionOptionsServiceAbstraction } from "../../abstractions/user-decryption-options.service.abstraction";
 import { AuthRequestLoginStrategy } from "../../login-strategies/auth-request-login.strategy";
 import { PasswordLoginStrategy } from "../../login-strategies/password-login.strategy";
 import { SsoLoginStrategy } from "../../login-strategies/sso-login.strategy";
@@ -79,6 +80,8 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
   >;
 
   currentAuthType$: Observable<AuthenticationType | null>;
+  // TODO: move to auth request service
+  authRequestPushNotification$: Observable<string>;
 
   constructor(
     protected cryptoService: CryptoService,
@@ -98,7 +101,6 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
     protected policyService: PolicyService,
     protected deviceTrustCryptoService: DeviceTrustCryptoServiceAbstraction,
     protected authRequestService: AuthRequestServiceAbstraction,
-    protected userDecryptionOptionsService: InternalUserDecryptionOptionsServiceAbstraction,
     protected stateProvider: GlobalStateProvider,
     protected billingAccountProfileStateService: BillingAccountProfileStateService,
   ) {
@@ -110,6 +112,9 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
     );
 
     this.currentAuthType$ = this.currentAuthnTypeState.state$;
+    this.authRequestPushNotification$ = this.authRequestPushNotificationState.state$.pipe(
+      filter((id) => id != null),
+    );
     this.loginStrategy$ = this.currentAuthnTypeState.state$.pipe(
       distinctUntilChanged(),
       combineLatestWith(this.loginStrategyCacheState.state$),
@@ -130,8 +135,8 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
   async getMasterPasswordHash(): Promise<string | null> {
     const strategy = await firstValueFrom(this.loginStrategy$);
 
-    if ("serverMasterKeyHash$" in strategy) {
-      return await firstValueFrom(strategy.serverMasterKeyHash$);
+    if ("masterKeyHash$" in strategy) {
+      return await firstValueFrom(strategy.masterKeyHash$);
     }
     return null;
   }
@@ -249,6 +254,13 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
     return await this.cryptoService.makeMasterKey(masterPassword, email, kdf, kdfConfig);
   }
 
+  // TODO move to auth request service
+  async sendAuthRequestPushNotification(notification: AuthRequestPushNotification): Promise<void> {
+    if (notification.id != null) {
+      await this.authRequestPushNotificationState.update((_) => notification.id);
+    }
+  }
+
   // TODO: move to auth request service
   async passwordlessLogin(
     id: string,
@@ -342,7 +354,6 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
               this.logService,
               this.stateService,
               this.twoFactorService,
-              this.userDecryptionOptionsService,
               this.passwordStrengthService,
               this.policyService,
               this,
@@ -360,7 +371,6 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
               this.logService,
               this.stateService,
               this.twoFactorService,
-              this.userDecryptionOptionsService,
               this.keyConnectorService,
               this.deviceTrustCryptoService,
               this.authRequestService,
@@ -379,7 +389,6 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
               this.logService,
               this.stateService,
               this.twoFactorService,
-              this.userDecryptionOptionsService,
               this.environmentService,
               this.keyConnectorService,
               this.billingAccountProfileStateService,
@@ -396,7 +405,6 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
               this.logService,
               this.stateService,
               this.twoFactorService,
-              this.userDecryptionOptionsService,
               this.deviceTrustCryptoService,
               this.billingAccountProfileStateService,
             );
@@ -412,7 +420,6 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
               this.logService,
               this.stateService,
               this.twoFactorService,
-              this.userDecryptionOptionsService,
               this.billingAccountProfileStateService,
             );
         }

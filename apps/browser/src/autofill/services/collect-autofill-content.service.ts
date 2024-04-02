@@ -38,10 +38,8 @@ class CollectAutofillContentService implements CollectAutofillContentServiceInte
   private autofillFormElements: AutofillFormElements = new Map();
   private autofillFieldElements: AutofillFieldElements = new Map();
   private currentLocationHref = "";
-  private intersectionObserver: IntersectionObserver;
-  private elementInitializingIntersectionObserver: Set<Element> = new Set();
   private mutationObserver: MutationObserver;
-  private updateAutofillElementsAfterMutationTimeout: number | NodeJS.Timeout;
+  private updateAutofillElementsAfterMutationTimeout: NodeJS.Timeout;
   private readonly updateAfterMutationTimeoutDelay = 1000;
   private readonly ignoredInputTypes = new Set([
     "hidden",
@@ -70,10 +68,6 @@ class CollectAutofillContentService implements CollectAutofillContentServiceInte
   async getPageDetails(): Promise<AutofillPageDetails> {
     if (!this.mutationObserver) {
       this.setupMutationObserver();
-    }
-
-    if (!this.intersectionObserver) {
-      this.setupIntersectionObserver();
     }
 
     if (!this.domRecentlyMutated && this.noFieldsFound) {
@@ -186,7 +180,7 @@ class CollectAutofillContentService implements CollectAutofillContentServiceInte
   ): AutofillPageDetails {
     return {
       title: document.title,
-      url: (document.defaultView || globalThis).location.href,
+      url: (document.defaultView || window).location.href,
       documentUrl: document.location.href,
       forms: autofillFormsData,
       fields: autofillFieldsData,
@@ -246,7 +240,7 @@ class CollectAutofillContentService implements CollectAutofillContentServiceInte
    * @private
    */
   private getFormActionAttribute(element: ElementWithOpId<HTMLFormElement>): string {
-    return new URL(this.getPropertyOrAttribute(element, "action"), globalThis.location.href).href;
+    return new URL(this.getPropertyOrAttribute(element, "action"), window.location.href).href;
   }
 
   /**
@@ -366,14 +360,11 @@ class CollectAutofillContentService implements CollectAutofillContentServiceInte
       tagName: this.getAttributeLowerCase(element, "tagName"),
     };
 
-    if (!autofillFieldBase.viewable) {
-      this.elementInitializingIntersectionObserver.add(element);
-      this.intersectionObserver.observe(element);
-    }
-
     if (elementIsSpanElement(element)) {
       this.cacheAutofillFieldElement(index, element, autofillFieldBase);
-      void this.autofillOverlayContentService?.setupAutofillOverlayListenerOnField(
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.autofillOverlayContentService?.setupAutofillOverlayListenerOnField(
         element,
         autofillFieldBase,
       );
@@ -416,10 +407,9 @@ class CollectAutofillContentService implements CollectAutofillContentServiceInte
     };
 
     this.cacheAutofillFieldElement(index, element, autofillField);
-    void this.autofillOverlayContentService?.setupAutofillOverlayListenerOnField(
-      element,
-      autofillField,
-    );
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.autofillOverlayContentService?.setupAutofillOverlayListenerOnField(element, autofillField);
     return autofillField;
   };
 
@@ -1199,6 +1189,8 @@ class CollectAutofillContentService implements CollectAutofillContentServiceInte
       return;
     }
 
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.updateAutofillFieldElementData(
       attributeName,
       targetElement as ElementWithOpId<FormFieldElement>,
@@ -1240,12 +1232,13 @@ class CollectAutofillContentService implements CollectAutofillContentServiceInte
 
   /**
    * Updates the autofill field element data based on the passed attribute name.
-   *
    * @param {string} attributeName
    * @param {ElementWithOpId<FormFieldElement>} element
    * @param {AutofillField} dataTarget
+   * @returns {Promise<void>}
+   * @private
    */
-  private updateAutofillFieldElementData(
+  private async updateAutofillFieldElementData(
     attributeName: string,
     element: ElementWithOpId<FormFieldElement>,
     dataTarget: AutofillField,
@@ -1312,52 +1305,6 @@ class CollectAutofillContentService implements CollectAutofillContentServiceInte
   }
 
   /**
-   * Sets up an IntersectionObserver to observe found form
-   * field elements that are not viewable in the viewport.
-   */
-  private setupIntersectionObserver() {
-    this.intersectionObserver = new IntersectionObserver(this.handleFormElementIntersection, {
-      root: null,
-      rootMargin: "0px",
-      threshold: 1.0,
-    });
-  }
-
-  /**
-   * Handles observed form field elements that are not viewable in the viewport.
-   * Will re-evaluate the visibility of the element and set up the autofill
-   * overlay listeners on the field if it is viewable.
-   *
-   * @param entries - The entries observed by the IntersectionObserver
-   */
-  private handleFormElementIntersection = async (entries: IntersectionObserverEntry[]) => {
-    for (let entryIndex = 0; entryIndex < entries.length; entryIndex++) {
-      const entry = entries[entryIndex];
-      const formFieldElement = entry.target as ElementWithOpId<FormFieldElement>;
-      if (this.elementInitializingIntersectionObserver.has(formFieldElement)) {
-        this.elementInitializingIntersectionObserver.delete(formFieldElement);
-        continue;
-      }
-
-      const isViewable =
-        await this.domElementVisibilityService.isFormFieldViewable(formFieldElement);
-      if (!isViewable) {
-        continue;
-      }
-
-      const cachedAutofillFieldElement = this.autofillFieldElements.get(formFieldElement);
-      cachedAutofillFieldElement.viewable = true;
-
-      void this.autofillOverlayContentService?.setupAutofillOverlayListenerOnField(
-        formFieldElement,
-        cachedAutofillFieldElement,
-      );
-
-      this.intersectionObserver.unobserve(entry.target);
-    }
-  };
-
-  /**
    * Destroys the CollectAutofillContentService. Clears all
    * timeouts and disconnects the mutation observer.
    */
@@ -1366,7 +1313,6 @@ class CollectAutofillContentService implements CollectAutofillContentServiceInte
       clearTimeout(this.updateAutofillElementsAfterMutationTimeout);
     }
     this.mutationObserver?.disconnect();
-    this.intersectionObserver?.disconnect();
   }
 }
 

@@ -1,5 +1,4 @@
 import { mock, MockProxy } from "jest-mock-extended";
-import { BehaviorSubject } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { KeyConnectorService } from "@bitwarden/common/auth/abstractions/key-connector.service";
@@ -9,10 +8,7 @@ import { BillingAccountProfileStateService } from "@bitwarden/common/billing/abs
 import { VaultTimeoutAction } from "@bitwarden/common/enums/vault-timeout-action.enum";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
-import {
-  Environment,
-  EnvironmentService,
-} from "@bitwarden/common/platform/abstractions/environment.service";
+import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
@@ -22,7 +18,6 @@ import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/sym
 import { CsprngArray } from "@bitwarden/common/types/csprng";
 import { UserKey, MasterKey } from "@bitwarden/common/types/key";
 
-import { InternalUserDecryptionOptionsServiceAbstraction } from "../abstractions/user-decryption-options.service.abstraction";
 import { UserApiLoginCredentials } from "../models/domain/login-credentials";
 
 import { identityTokenResponseFactory } from "./login.strategy.spec";
@@ -40,7 +35,6 @@ describe("UserApiLoginStrategy", () => {
   let logService: MockProxy<LogService>;
   let stateService: MockProxy<StateService>;
   let twoFactorService: MockProxy<TwoFactorService>;
-  let userDecryptionOptionsService: MockProxy<InternalUserDecryptionOptionsServiceAbstraction>;
   let keyConnectorService: MockProxy<KeyConnectorService>;
   let environmentService: MockProxy<EnvironmentService>;
   let billingAccountProfileStateService: MockProxy<BillingAccountProfileStateService>;
@@ -63,7 +57,6 @@ describe("UserApiLoginStrategy", () => {
     logService = mock<LogService>();
     stateService = mock<StateService>();
     twoFactorService = mock<TwoFactorService>();
-    userDecryptionOptionsService = mock<InternalUserDecryptionOptionsServiceAbstraction>();
     keyConnectorService = mock<KeyConnectorService>();
     environmentService = mock<EnvironmentService>();
     billingAccountProfileStateService = mock<BillingAccountProfileStateService>();
@@ -83,7 +76,6 @@ describe("UserApiLoginStrategy", () => {
       logService,
       stateService,
       twoFactorService,
-      userDecryptionOptionsService,
       environmentService,
       keyConnectorService,
       billingAccountProfileStateService,
@@ -149,11 +141,8 @@ describe("UserApiLoginStrategy", () => {
     const tokenResponse = identityTokenResponseFactory();
     tokenResponse.apiUseKeyConnector = true;
 
-    const env = mock<Environment>();
-    env.getKeyConnectorUrl.mockReturnValue(keyConnectorUrl);
-    environmentService.environment$ = new BehaviorSubject(env);
-
     apiService.postIdentityToken.mockResolvedValue(tokenResponse);
+    environmentService.getKeyConnectorUrl.mockReturnValue(keyConnectorUrl);
 
     await apiLogInStrategy.logIn(credentials);
 
@@ -167,11 +156,8 @@ describe("UserApiLoginStrategy", () => {
     const tokenResponse = identityTokenResponseFactory();
     tokenResponse.apiUseKeyConnector = true;
 
-    const env = mock<Environment>();
-    env.getKeyConnectorUrl.mockReturnValue(keyConnectorUrl);
-    environmentService.environment$ = new BehaviorSubject(env);
-
     apiService.postIdentityToken.mockResolvedValue(tokenResponse);
+    environmentService.getKeyConnectorUrl.mockReturnValue(keyConnectorUrl);
     cryptoService.getMasterKey.mockResolvedValue(masterKey);
     cryptoService.decryptUserKeyWithMasterKey.mockResolvedValue(userKey);
 

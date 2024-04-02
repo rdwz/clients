@@ -690,8 +690,6 @@ export class LoginCommand {
     codeChallenge: string,
     state: string,
   ): Promise<{ ssoCode: string; orgIdentifier: string }> {
-    const env = await firstValueFrom(this.environmentService.environment$);
-
     return new Promise((resolve, reject) => {
       const callbackServer = http.createServer((req, res) => {
         const urlString = "http://localhost" + req.url;
@@ -726,7 +724,7 @@ export class LoginCommand {
         }
       });
       let foundPort = false;
-      const webUrl = env.getWebVaultUrl();
+      const webUrl = this.environmentService.getWebVaultUrl();
       for (let port = 8065; port <= 8070; port++) {
         try {
           this.ssoRedirectUri = "http://localhost:" + port;

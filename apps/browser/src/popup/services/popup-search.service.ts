@@ -1,14 +1,14 @@
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
-import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
+import { ConsoleLogService } from "@bitwarden/common/platform/services/console-log.service";
 import { SearchService } from "@bitwarden/common/services/search.service";
 
 export class PopupSearchService extends SearchService {
   constructor(
     private mainSearchService: SearchService,
-    logService: LogService,
+    consoleLogService: ConsoleLogService,
     i18nService: I18nService,
   ) {
-    super(logService, i18nService);
+    super(consoleLogService, i18nService);
   }
 
   clearIndex() {

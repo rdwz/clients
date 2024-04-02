@@ -1,14 +1,13 @@
 import { mock } from "jest-mock-extended";
-import { BehaviorSubject, firstValueFrom } from "rxjs";
+import { firstValueFrom } from "rxjs";
 
 import { PolicyService } from "@bitwarden/common/admin-console/services/policy/policy.service";
 import { AuthenticationStatus } from "@bitwarden/common/auth/enums/authentication-status";
 import { AuthService } from "@bitwarden/common/auth/services/auth.service";
 import { DomainSettingsService } from "@bitwarden/common/autofill/services/domain-settings.service";
 import { UserNotificationSettingsService } from "@bitwarden/common/autofill/services/user-notification-settings.service";
-import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
-import { SelfHostedEnvironment } from "@bitwarden/common/platform/services/default-environment.service";
+import { EnvironmentService } from "@bitwarden/common/platform/services/environment.service";
 import { ThemeStateService } from "@bitwarden/common/platform/theming/theme-state.service";
 import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { FolderView } from "@bitwarden/common/vault/models/view/folder.view";
@@ -1349,21 +1348,16 @@ describe("NotificationBackground", () => {
         const message: NotificationBackgroundExtensionMessage = {
           command: "getWebVaultUrlForNotification",
         };
-        const env = new SelfHostedEnvironment({ webVault: "https://example.com" });
-
-        Object.defineProperty(environmentService, "environment$", {
-          configurable: true,
-          get: () => null,
-        });
-
+        const webVaultUrl = "https://example.com";
         const environmentServiceSpy = jest
-          .spyOn(environmentService as any, "environment$", "get")
-          .mockReturnValue(new BehaviorSubject(env).asObservable());
+          .spyOn(environmentService, "getWebVaultUrl")
+          .mockReturnValueOnce(webVaultUrl);
 
         sendExtensionRuntimeMessage(message);
         await flushPromises();
 
         expect(environmentServiceSpy).toHaveBeenCalled();
+        expect(environmentServiceSpy).toHaveReturnedWith(webVaultUrl);
       });
     });
   });

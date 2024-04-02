@@ -1,7 +1,7 @@
 import { Directive, Input, OnInit, TemplateRef, ViewContainerRef } from "@angular/core";
 
 import { FeatureFlag, FeatureFlagValue } from "@bitwarden/common/enums/feature-flag.enum";
-import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
+import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 
 /**
@@ -30,7 +30,7 @@ export class IfFeatureDirective implements OnInit {
   constructor(
     private templateRef: TemplateRef<any>,
     private viewContainer: ViewContainerRef,
-    private configService: ConfigService,
+    private configService: ConfigServiceAbstraction,
     private logService: LogService,
   ) {}
 

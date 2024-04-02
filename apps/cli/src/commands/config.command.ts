@@ -1,10 +1,6 @@
 import { OptionValues } from "commander";
-import { firstValueFrom } from "rxjs";
 
-import {
-  EnvironmentService,
-  Region,
-} from "@bitwarden/common/platform/abstractions/environment.service";
+import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 
 import { Response } from "../models/response";
 import { MessageResponse } from "../models/response/message.response";
@@ -33,15 +29,16 @@ export class ConfigCommand {
       !options.notifications &&
       !options.events
     ) {
-      const env = await firstValueFrom(this.environmentService.environment$);
       const stringRes = new StringResponse(
-        env.hasBaseUrl() ? env.getUrls().base : "https://bitwarden.com",
+        this.environmentService.hasBaseUrl()
+          ? this.environmentService.getUrls().base
+          : "https://bitwarden.com",
       );
       return Response.success(stringRes);
     }
 
     url = url === "null" || url === "bitwarden.com" || url === "https://bitwarden.com" ? null : url;
-    await this.environmentService.setEnvironment(Region.SelfHosted, {
+    await this.environmentService.setUrls({
       base: url,
       webVault: options.webVault || null,
       api: options.api || null,

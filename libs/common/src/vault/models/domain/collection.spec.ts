@@ -68,7 +68,6 @@ describe("Collection", () => {
       organizationId: "orgId",
       readOnly: false,
       manage: true,
-      assigned: true,
     });
   });
 });

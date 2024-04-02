@@ -1,15 +1,12 @@
 import { Directive, ElementRef, NgZone, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { FormBuilder, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
-import { Subject, firstValueFrom } from "rxjs";
+import { Subject } from "rxjs";
 import { take, takeUntil } from "rxjs/operators";
 
-import {
-  LoginStrategyServiceAbstraction,
-  LoginEmailServiceAbstraction,
-  PasswordLoginCredentials,
-} from "@bitwarden/auth/common";
+import { LoginStrategyServiceAbstraction, PasswordLoginCredentials } from "@bitwarden/auth/common";
 import { DevicesApiServiceAbstraction } from "@bitwarden/common/auth/abstractions/devices-api.service.abstraction";
+import { LoginService } from "@bitwarden/common/auth/abstractions/login.service";
 import { SsoLoginServiceAbstraction } from "@bitwarden/common/auth/abstractions/sso-login.service.abstraction";
 import { WebAuthnLoginServiceAbstraction } from "@bitwarden/common/auth/abstractions/webauthn/webauthn-login.service.abstraction";
 import { AuthResult } from "@bitwarden/common/auth/models/domain/auth-result";
@@ -80,11 +77,15 @@ export class LoginComponent extends CaptchaProtectedComponent implements OnInit,
     protected formBuilder: FormBuilder,
     protected formValidationErrorService: FormValidationErrorsService,
     protected route: ActivatedRoute,
-    protected loginEmailService: LoginEmailServiceAbstraction,
+    protected loginService: LoginService,
     protected ssoLoginService: SsoLoginServiceAbstraction,
     protected webAuthnLoginService: WebAuthnLoginServiceAbstraction,
   ) {
     super(environmentService, i18nService, platformUtilsService);
+  }
+
+  get selfHostedDomain() {
+    return this.environmentService.hasBaseUrl() ? this.environmentService.getWebVaultUrl() : null;
   }
 
   async ngOnInit() {
@@ -96,23 +97,25 @@ export class LoginComponent extends CaptchaProtectedComponent implements OnInit,
       const queryParamsEmail = params.email;
 
       if (queryParamsEmail != null && queryParamsEmail.indexOf("@") > -1) {
-        this.formGroup.controls.email.setValue(queryParamsEmail);
+        this.formGroup.get("email").setValue(queryParamsEmail);
+        this.loginService.setEmail(queryParamsEmail);
         this.paramEmailSet = true;
       }
     });
+    let email = this.loginService.getEmail();
+
+    if (email == null || email === "") {
+      email = await this.stateService.getRememberedEmail();
+    }
 
     if (!this.paramEmailSet) {
-      const storedEmail = await firstValueFrom(this.loginEmailService.storedEmail$);
-      this.formGroup.controls.email.setValue(storedEmail ?? "");
+      this.formGroup.get("email")?.setValue(email ?? "");
     }
-
-    let rememberEmail = this.loginEmailService.getRememberEmail();
-
+    let rememberEmail = this.loginService.getRememberEmail();
     if (rememberEmail == null) {
-      rememberEmail = (await firstValueFrom(this.loginEmailService.storedEmail$)) != null;
+      rememberEmail = (await this.stateService.getRememberedEmail()) != null;
     }
-
-    this.formGroup.controls.rememberEmail.setValue(rememberEmail);
+    this.formGroup.get("rememberEmail")?.setValue(rememberEmail);
   }
 
   ngOnDestroy() {
@@ -149,10 +152,8 @@ export class LoginComponent extends CaptchaProtectedComponent implements OnInit,
 
       this.formPromise = this.loginStrategyService.logIn(credentials);
       const response = await this.formPromise;
-
-      this.setLoginEmailValues();
-      await this.loginEmailService.saveEmailSettings();
-
+      this.setFormValues();
+      await this.loginService.saveEmailSettings();
       if (this.handleCaptchaRequired(response)) {
         return;
       } else if (this.handleMigrateEncryptionKey(response)) {
@@ -217,7 +218,7 @@ export class LoginComponent extends CaptchaProtectedComponent implements OnInit,
       return;
     }
 
-    this.setLoginEmailValues();
+    this.setFormValues();
     // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.router.navigate(["/login-with-device"]);
@@ -244,8 +245,7 @@ export class LoginComponent extends CaptchaProtectedComponent implements OnInit,
     await this.ssoLoginService.setCodeVerifier(ssoCodeVerifier);
 
     // Build URI
-    const env = await firstValueFrom(this.environmentService.environment$);
-    const webUrl = env.getWebVaultUrl();
+    const webUrl = this.environmentService.getWebVaultUrl();
 
     // Launch browser
     this.platformUtilsService.launchUri(
@@ -295,14 +295,14 @@ export class LoginComponent extends CaptchaProtectedComponent implements OnInit,
     }
   }
 
-  setLoginEmailValues() {
-    this.loginEmailService.setEmail(this.formGroup.value.email);
-    this.loginEmailService.setRememberEmail(this.formGroup.value.rememberEmail);
+  setFormValues() {
+    this.loginService.setEmail(this.formGroup.value.email);
+    this.loginService.setRememberEmail(this.formGroup.value.rememberEmail);
   }
 
   async saveEmailSettings() {
-    this.setLoginEmailValues();
-    await this.loginEmailService.saveEmailSettings();
+    this.setFormValues();
+    await this.loginService.saveEmailSettings();
 
     // Save off email for SSO
     await this.ssoLoginService.setSsoEmail(this.formGroup.value.email);

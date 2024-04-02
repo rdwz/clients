@@ -39,7 +39,7 @@ export abstract class ActiveUserStateProvider {
   /**
    * Convenience re-emission of active user ID from {@link AccountService.activeAccount$}
    */
-  abstract activeUserId$: Observable<UserId | undefined>;
+  activeUserId$: Observable<UserId | undefined>;
 
   /**
    * Gets a {@link ActiveUserState} scoped to the given {@link KeyDefinition}, but updates when active user changes such

@@ -82,7 +82,6 @@ describe("MigrationBuilderService", () => {
       startingStateVersion,
       new FakeStorageService(startingState),
       mock(),
-      "general",
     );
 
     await sut.build().migrate(helper);

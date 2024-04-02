@@ -262,6 +262,14 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
 
     this.hostname = Utils.getHostname(this.url);
     this.pageDetails = [];
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    BrowserApi.tabSendMessage(this.tab, {
+      command: "collectPageDetails",
+      tab: this.tab,
+      sender: BroadcasterSubscriptionId,
+    });
+
     const otherTypes: CipherType[] = [];
     const dontShowCards = !(await firstValueFrom(this.vaultSettingsService.showCardsCurrentTab$));
     const dontShowIdentities = !(await firstValueFrom(
@@ -302,18 +310,9 @@ export class CurrentTabComponent implements OnInit, OnDestroy {
       }
     });
 
-    if (this.loginCiphers.length) {
-      void BrowserApi.tabSendMessage(this.tab, {
-        command: "collectPageDetails",
-        tab: this.tab,
-        sender: BroadcasterSubscriptionId,
-      });
-
-      this.loginCiphers = this.loginCiphers.sort((a, b) =>
-        this.cipherService.sortCiphersByLastUsedThenName(a, b),
-      );
-    }
-
+    this.loginCiphers = this.loginCiphers.sort((a, b) =>
+      this.cipherService.sortCiphersByLastUsedThenName(a, b),
+    );
     this.isLoading = this.loaded = true;
   }
 

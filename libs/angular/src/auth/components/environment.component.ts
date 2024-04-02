@@ -1,5 +1,4 @@
 import { Directive, EventEmitter, Output } from "@angular/core";
-import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 import {
   EnvironmentService,
@@ -28,29 +27,21 @@ export class EnvironmentComponent {
     protected i18nService: I18nService,
     private modalService: ModalService,
   ) {
-    this.environmentService.environment$.pipe(takeUntilDestroyed()).subscribe((env) => {
-      if (env.getRegion() !== Region.SelfHosted) {
-        this.baseUrl = "";
-        this.webVaultUrl = "";
-        this.apiUrl = "";
-        this.identityUrl = "";
-        this.iconsUrl = "";
-        this.notificationsUrl = "";
-        return;
-      }
+    const urls = this.environmentService.getUrls();
+    if (this.environmentService.selectedRegion != Region.SelfHosted) {
+      return;
+    }
 
-      const urls = env.getUrls();
-      this.baseUrl = urls.base || "";
-      this.webVaultUrl = urls.webVault || "";
-      this.apiUrl = urls.api || "";
-      this.identityUrl = urls.identity || "";
-      this.iconsUrl = urls.icons || "";
-      this.notificationsUrl = urls.notifications || "";
-    });
+    this.baseUrl = urls.base || "";
+    this.webVaultUrl = urls.webVault || "";
+    this.apiUrl = urls.api || "";
+    this.identityUrl = urls.identity || "";
+    this.iconsUrl = urls.icons || "";
+    this.notificationsUrl = urls.notifications || "";
   }
 
   async submit() {
-    await this.environmentService.setEnvironment(Region.SelfHosted, {
+    const resUrls = await this.environmentService.setUrls({
       base: this.baseUrl,
       api: this.apiUrl,
       identity: this.identityUrl,
@@ -58,6 +49,14 @@ export class EnvironmentComponent {
       icons: this.iconsUrl,
       notifications: this.notificationsUrl,
     });
+
+    // re-set urls since service can change them, ex: prefixing https://
+    this.baseUrl = resUrls.base;
+    this.apiUrl = resUrls.api;
+    this.identityUrl = resUrls.identity;
+    this.webVaultUrl = resUrls.webVault;
+    this.iconsUrl = resUrls.icons;
+    this.notificationsUrl = resUrls.notifications;
 
     this.platformUtilsService.showToast("success", null, this.i18nService.t("environmentSaved"));
     this.saved();

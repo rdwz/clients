@@ -171,7 +171,6 @@ const plugins = [
     PAYPAL_CONFIG: envConfig["paypal"] ?? {},
     FLAGS: envConfig["flags"] ?? {},
     DEV_FLAGS: NODE_ENV === "development" ? envConfig["devFlags"] : {},
-    ADDITIONAL_REGIONS: envConfig["additionalRegions"] ?? [],
   }),
   new AngularWebpackPlugin({
     tsConfigPath: "tsconfig.json",
@@ -194,44 +193,39 @@ const devServer =
           },
         },
         // host: '192.168.1.9',
-        proxy: [
-          {
-            context: ["/api"],
+        proxy: {
+          "/api": {
             target: envConfig.dev?.proxyApi,
             pathRewrite: { "^/api": "" },
             secure: false,
             changeOrigin: true,
           },
-          {
-            context: ["/identity"],
+          "/identity": {
             target: envConfig.dev?.proxyIdentity,
             pathRewrite: { "^/identity": "" },
             secure: false,
             changeOrigin: true,
           },
-          {
-            context: ["/events"],
+          "/events": {
             target: envConfig.dev?.proxyEvents,
             pathRewrite: { "^/events": "" },
             secure: false,
             changeOrigin: true,
           },
-          {
-            context: ["/notifications"],
+          "/notifications": {
             target: envConfig.dev?.proxyNotifications,
             pathRewrite: { "^/notifications": "" },
             secure: false,
             changeOrigin: true,
             ws: true,
           },
-          {
-            context: ["/icons"],
+          "/icons": {
             target: envConfig.dev?.proxyIcons,
             pathRewrite: { "^/icons": "" },
             secure: false,
             changeOrigin: true,
           },
-        ],
+        },
         headers: (req) => {
           if (!req.originalUrl.includes("connector.html")) {
             return {

@@ -1,13 +1,14 @@
 import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { FormBuilder, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
-import { Subject, firstValueFrom, takeUntil } from "rxjs";
+import { Subject, takeUntil } from "rxjs";
 
 import { EnvironmentSelectorComponent } from "@bitwarden/angular/auth/components/environment-selector.component";
-import { LoginEmailServiceAbstraction } from "@bitwarden/auth/common";
+import { LoginService } from "@bitwarden/common/auth/abstractions/login.service";
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
+import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
 
 import { AccountSwitcherService } from "./account-switching/services/account-switcher.service";
 
@@ -28,32 +29,38 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   constructor(
     protected platformUtilsService: PlatformUtilsService,
+    private stateService: StateService,
     private formBuilder: FormBuilder,
     private router: Router,
     private i18nService: I18nService,
     private environmentService: EnvironmentService,
-    private loginEmailService: LoginEmailServiceAbstraction,
+    private loginService: LoginService,
     private accountSwitcherService: AccountSwitcherService,
   ) {}
 
   async ngOnInit(): Promise<void> {
-    const email = this.loginEmailService.getEmail();
-    const rememberEmail = this.loginEmailService.getRememberEmail();
+    let savedEmail = this.loginService.getEmail();
+    const rememberEmail = this.loginService.getRememberEmail();
 
-    if (email != null) {
-      this.formGroup.patchValue({ email, rememberEmail });
+    if (savedEmail != null) {
+      this.formGroup.patchValue({
+        email: savedEmail,
+        rememberEmail: rememberEmail,
+      });
     } else {
-      const storedEmail = await firstValueFrom(this.loginEmailService.storedEmail$);
-
-      if (storedEmail != null) {
-        this.formGroup.patchValue({ email: storedEmail, rememberEmail: true });
+      savedEmail = await this.stateService.getRememberedEmail();
+      if (savedEmail != null) {
+        this.formGroup.patchValue({
+          email: savedEmail,
+          rememberEmail: true,
+        });
       }
     }
 
     this.environmentSelector.onOpenSelfHostedSettings
       .pipe(takeUntil(this.destroyed$))
       .subscribe(() => {
-        this.setLoginEmailValues();
+        this.setFormValues();
         // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.router.navigate(["environment"]);
@@ -69,9 +76,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     return this.accountSwitcherService.availableAccounts$;
   }
 
-  async submit() {
+  submit() {
     this.formGroup.markAllAsTouched();
-
     if (this.formGroup.invalid) {
       this.platformUtilsService.showToast(
         "error",
@@ -81,12 +87,19 @@ export class HomeComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.setLoginEmailValues();
-    await this.router.navigate(["login"], { queryParams: { email: this.formGroup.value.email } });
+    this.loginService.setEmail(this.formGroup.value.email);
+    this.loginService.setRememberEmail(this.formGroup.value.rememberEmail);
+    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.router.navigate(["login"], { queryParams: { email: this.formGroup.value.email } });
   }
 
-  setLoginEmailValues() {
-    this.loginEmailService.setEmail(this.formGroup.value.email);
-    this.loginEmailService.setRememberEmail(this.formGroup.value.rememberEmail);
+  get selfHostedDomain() {
+    return this.environmentService.hasBaseUrl() ? this.environmentService.getWebVaultUrl() : null;
+  }
+
+  setFormValues() {
+    this.loginService.setEmail(this.formGroup.value.email);
+    this.loginService.setRememberEmail(this.formGroup.value.rememberEmail);
   }
 }

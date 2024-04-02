@@ -1,11 +1,9 @@
 import * as path from "path";
 
 import { app, BrowserWindow, Menu, MenuItemConstructorOptions, nativeImage, Tray } from "electron";
-import { firstValueFrom } from "rxjs";
 
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
-
-import { DesktopSettingsService } from "../platform/services/desktop-settings.service";
+import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
 
 import { WindowMain } from "./window.main";
 
@@ -20,7 +18,7 @@ export class TrayMain {
   constructor(
     private windowMain: WindowMain,
     private i18nService: I18nService,
-    private desktopSettingsService: DesktopSettingsService,
+    private stateService: StateService,
   ) {
     if (process.platform === "win32") {
       this.icon = path.join(__dirname, "/images/icon.ico");
@@ -56,14 +54,14 @@ export class TrayMain {
     }
 
     this.contextMenu = Menu.buildFromTemplate(menuItemOptions);
-    if (await firstValueFrom(this.desktopSettingsService.trayEnabled$)) {
+    if (await this.stateService.getEnableTray()) {
       this.showTray();
     }
   }
 
   setupWindowListeners(win: BrowserWindow) {
     win.on("minimize", async (e: Event) => {
-      if (await firstValueFrom(this.desktopSettingsService.minimizeToTray$)) {
+      if (await this.stateService.getEnableMinimizeToTray()) {
         e.preventDefault();
         // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -72,7 +70,7 @@ export class TrayMain {
     });
 
     win.on("close", async (e: Event) => {
-      if (await firstValueFrom(this.desktopSettingsService.closeToTray$)) {
+      if (await this.stateService.getEnableCloseToTray()) {
         if (!this.windowMain.isQuitting) {
           e.preventDefault();
           // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
@@ -83,7 +81,7 @@ export class TrayMain {
     });
 
     win.on("show", async () => {
-      const enableTray = await firstValueFrom(this.desktopSettingsService.trayEnabled$);
+      const enableTray = await this.stateService.getEnableTray();
       if (!enableTray) {
         setTimeout(() => this.removeTray(false), 100);
       }
@@ -108,7 +106,7 @@ export class TrayMain {
     if (this.windowMain.win != null) {
       this.windowMain.win.hide();
     }
-    if (this.isDarwin() && !(await firstValueFrom(this.desktopSettingsService.alwaysShowDock$))) {
+    if (this.isDarwin() && !(await this.stateService.getAlwaysShowDock())) {
       this.hideDock();
     }
   }
@@ -178,7 +176,7 @@ export class TrayMain {
     }
     if (this.windowMain.win.isVisible()) {
       this.windowMain.win.hide();
-      if (this.isDarwin() && !(await firstValueFrom(this.desktopSettingsService.alwaysShowDock$))) {
+      if (this.isDarwin() && !(await this.stateService.getAlwaysShowDock())) {
         this.hideDock();
       }
     } else {

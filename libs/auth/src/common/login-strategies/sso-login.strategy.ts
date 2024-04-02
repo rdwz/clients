@@ -20,12 +20,8 @@ import { LogService } from "@bitwarden/common/platform/abstractions/log.service"
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
-import { UserId } from "@bitwarden/common/types/guid";
 
-import {
-  InternalUserDecryptionOptionsServiceAbstraction,
-  AuthRequestServiceAbstraction,
-} from "../abstractions";
+import { AuthRequestServiceAbstraction } from "../abstractions";
 import { SsoLoginCredentials } from "../models/domain/login-credentials";
 import { CacheData } from "../services/login-strategies/login-strategy.state";
 
@@ -88,7 +84,6 @@ export class SsoLoginStrategy extends LoginStrategy {
     logService: LogService,
     stateService: StateService,
     twoFactorService: TwoFactorService,
-    userDecryptionOptionsService: InternalUserDecryptionOptionsServiceAbstraction,
     private keyConnectorService: KeyConnectorService,
     private deviceTrustCryptoService: DeviceTrustCryptoServiceAbstraction,
     private authRequestService: AuthRequestServiceAbstraction,
@@ -105,7 +100,6 @@ export class SsoLoginStrategy extends LoginStrategy {
       logService,
       stateService,
       twoFactorService,
-      userDecryptionOptionsService,
       billingAccountProfileStateService,
     );
 
@@ -285,8 +279,7 @@ export class SsoLoginStrategy extends LoginStrategy {
       if (await this.cryptoService.hasUserKey()) {
         // Now that we have a decrypted user key in memory, we can check if we
         // need to establish trust on the current device
-        const userId = (await this.stateService.getUserId()) as UserId;
-        await this.deviceTrustCryptoService.trustDeviceIfRequired(userId);
+        await this.deviceTrustCryptoService.trustDeviceIfRequired();
 
         // if we successfully decrypted the user key, we can delete the admin auth request out of state
         // TODO: eventually we post and clean up DB as well once consumed on client
@@ -300,9 +293,7 @@ export class SsoLoginStrategy extends LoginStrategy {
   private async trySetUserKeyWithDeviceKey(tokenResponse: IdentityTokenResponse): Promise<void> {
     const trustedDeviceOption = tokenResponse.userDecryptionOptions?.trustedDeviceOption;
 
-    const userId = (await this.stateService.getUserId()) as UserId;
-
-    const deviceKey = await this.deviceTrustCryptoService.getDeviceKey(userId);
+    const deviceKey = await this.deviceTrustCryptoService.getDeviceKey();
     const encDevicePrivateKey = trustedDeviceOption?.encryptedPrivateKey;
     const encUserKey = trustedDeviceOption?.encryptedUserKey;
 
@@ -311,7 +302,6 @@ export class SsoLoginStrategy extends LoginStrategy {
     }
 
     const userKey = await this.deviceTrustCryptoService.decryptUserKeyWithDeviceKey(
-      userId,
       encDevicePrivateKey,
       encUserKey,
       deviceKey,

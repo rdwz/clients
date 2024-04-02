@@ -1,6 +1,5 @@
-import { map, pipe } from "rxjs";
-
 import { PolicyType } from "../../../admin-console/enums";
+import { Policy } from "../../../admin-console/models/domain/policy";
 import { StateProvider } from "../../../platform/state";
 import { UserId } from "../../../types/guid";
 import { GeneratorStrategy } from "../abstractions";
@@ -42,9 +41,18 @@ export class CatchallGeneratorStrategy
     return ONE_MINUTE;
   }
 
-  /** {@link GeneratorStrategy.toEvaluator} */
-  toEvaluator() {
-    return pipe(map((_) => new DefaultPolicyEvaluator<CatchallGenerationOptions>()));
+  /** {@link GeneratorStrategy.evaluator} */
+  evaluator(policy: Policy) {
+    if (!policy) {
+      return new DefaultPolicyEvaluator<CatchallGenerationOptions>();
+    }
+
+    if (policy.type !== this.policy) {
+      const details = `Expected: ${this.policy}. Received: ${policy.type}`;
+      throw Error("Mismatched policy type. " + details);
+    }
+
+    return new DefaultPolicyEvaluator<CatchallGenerationOptions>();
   }
 
   /** {@link GeneratorStrategy.generate} */

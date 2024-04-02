@@ -1,9 +1,6 @@
-import { Observable, Subject } from "rxjs";
-
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { PasswordlessAuthRequest } from "@bitwarden/common/auth/models/request/passwordless-auth.request";
 import { AuthRequestResponse } from "@bitwarden/common/auth/models/response/auth-request.response";
-import { AuthRequestPushNotification } from "@bitwarden/common/models/response/notification.response";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
@@ -14,17 +11,12 @@ import { MasterKey, UserKey } from "@bitwarden/common/types/key";
 import { AuthRequestServiceAbstraction } from "../../abstractions/auth-request.service.abstraction";
 
 export class AuthRequestService implements AuthRequestServiceAbstraction {
-  private authRequestPushNotificationSubject = new Subject<string>();
-  authRequestPushNotification$: Observable<string>;
-
   constructor(
     private appIdService: AppIdService,
     private cryptoService: CryptoService,
     private apiService: ApiService,
     private stateService: StateService,
-  ) {
-    this.authRequestPushNotification$ = this.authRequestPushNotificationSubject.asObservable();
-  }
+  ) {}
 
   async approveOrDenyAuthRequest(
     approve: boolean,
@@ -133,11 +125,5 @@ export class AuthRequestService implements AuthRequestServiceAbstraction {
       masterKey,
       masterKeyHash,
     };
-  }
-
-  sendAuthRequestPushNotification(notification: AuthRequestPushNotification): void {
-    if (notification.id != null) {
-      this.authRequestPushNotificationSubject.next(notification.id);
-    }
   }
 }

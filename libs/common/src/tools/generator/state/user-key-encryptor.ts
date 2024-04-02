@@ -6,44 +6,59 @@ import { EncString } from "../../../platform/models/domain/enc-string";
 import { UserId } from "../../../types/guid";
 
 import { DataPacker } from "./data-packer.abstraction";
+import { SecretClassifier } from "./secret-classifier";
 import { UserEncryptor } from "./user-encryptor.abstraction";
 
 /** A classification strategy that protects a type's secrets by encrypting them
  *  with a `UserKey`
  */
-export class UserKeyEncryptor extends UserEncryptor {
+export class UserKeyEncryptor<State extends object, Disclosed, Secret> extends UserEncryptor<
+  State,
+  Disclosed
+> {
   /** Instantiates the encryptor
    *  @param encryptService protects properties of `Secret`.
    *  @param keyService looks up the user key when protecting data.
+   *  @param classifier partitions secrets and disclosed information.
    *  @param dataPacker packs and unpacks data classified as secrets.
    */
   constructor(
     private readonly encryptService: EncryptService,
     private readonly keyService: CryptoService,
+    private readonly classifier: SecretClassifier<State, Disclosed, Secret>,
     private readonly dataPacker: DataPacker,
   ) {
     super();
   }
 
   /** {@link UserEncryptor.encrypt} */
-  async encrypt<Secret>(secret: Jsonify<Secret>, userId: UserId): Promise<EncString> {
-    this.assertHasValue("secret", secret);
+  async encrypt(
+    value: State,
+    userId: UserId,
+  ): Promise<{ secret: EncString; disclosed: Disclosed }> {
+    this.assertHasValue("value", value);
     this.assertHasValue("userId", userId);
 
-    let packed = this.dataPacker.pack(secret);
+    const classified = this.classifier.classify(value);
+    let packed = this.dataPacker.pack(classified.secret);
 
     // encrypt the data and drop the key
     let key = await this.keyService.getUserKey(userId);
-    const encrypted = await this.encryptService.encrypt(packed, key);
+    const secret = await this.encryptService.encrypt(packed, key);
     packed = null;
     key = null;
 
-    return encrypted;
+    return { ...classified, secret };
   }
 
   /** {@link UserEncryptor.decrypt} */
-  async decrypt<Secret>(secret: EncString, userId: UserId): Promise<Jsonify<Secret>> {
+  async decrypt(
+    secret: EncString,
+    disclosed: Jsonify<Disclosed>,
+    userId: UserId,
+  ): Promise<Jsonify<State>> {
     this.assertHasValue("secret", secret);
+    this.assertHasValue("disclosed", disclosed);
     this.assertHasValue("userId", userId);
 
     // decrypt the data and drop the key
@@ -55,7 +70,9 @@ export class UserKeyEncryptor extends UserEncryptor {
     const unpacked = this.dataPacker.unpack<Secret>(decrypted);
     decrypted = null;
 
-    return unpacked;
+    const jsonValue = this.classifier.declassify(disclosed, unpacked);
+
+    return jsonValue;
   }
 
   private assertHasValue(name: string, value: any) {

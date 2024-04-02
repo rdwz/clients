@@ -1,22 +1,19 @@
 import { Component, Inject } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
-import { Subject, Subscription, firstValueFrom } from "rxjs";
+import { Subject, Subscription } from "rxjs";
 import { filter, first, takeUntil } from "rxjs/operators";
 
 import { TwoFactorComponent as BaseTwoFactorComponent } from "@bitwarden/angular/auth/components/two-factor.component";
 import { WINDOW } from "@bitwarden/angular/services/injection-tokens";
-import {
-  LoginStrategyServiceAbstraction,
-  LoginEmailServiceAbstraction,
-  UserDecryptionOptionsServiceAbstraction,
-} from "@bitwarden/auth/common";
+import { LoginStrategyServiceAbstraction } from "@bitwarden/auth/common";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
+import { LoginService } from "@bitwarden/common/auth/abstractions/login.service";
 import { SsoLoginServiceAbstraction } from "@bitwarden/common/auth/abstractions/sso-login.service.abstraction";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
 import { TwoFactorProviderType } from "@bitwarden/common/auth/enums/two-factor-provider-type";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { BroadcasterService } from "@bitwarden/common/platform/abstractions/broadcaster.service";
-import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
+import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
@@ -57,9 +54,8 @@ export class TwoFactorComponent extends BaseTwoFactorComponent {
     logService: LogService,
     twoFactorService: TwoFactorService,
     appIdService: AppIdService,
-    loginEmailService: LoginEmailServiceAbstraction,
-    userDecryptionOptionsService: UserDecryptionOptionsServiceAbstraction,
-    configService: ConfigService,
+    loginService: LoginService,
+    configService: ConfigServiceAbstraction,
     ssoLoginService: SsoLoginServiceAbstraction,
     private dialogService: DialogService,
     @Inject(WINDOW) protected win: Window,
@@ -78,8 +74,7 @@ export class TwoFactorComponent extends BaseTwoFactorComponent {
       logService,
       twoFactorService,
       appIdService,
-      loginEmailService,
-      userDecryptionOptionsService,
+      loginService,
       ssoLoginService,
       configService,
     );
@@ -225,7 +220,7 @@ export class TwoFactorComponent extends BaseTwoFactorComponent {
     }
   }
 
-  override async launchDuoFrameless() {
+  override launchDuoFrameless() {
     const duoHandOffMessage = {
       title: this.i18nService.t("youSuccessfullyLoggedIn"),
       message: this.i18nService.t("youMayCloseThisWindow"),
@@ -234,9 +229,8 @@ export class TwoFactorComponent extends BaseTwoFactorComponent {
 
     // we're using the connector here as a way to set a cookie with translations
     // before continuing to the duo frameless url
-    const env = await firstValueFrom(this.environmentService.environment$);
     const launchUrl =
-      env.getWebVaultUrl() +
+      this.environmentService.getWebVaultUrl() +
       "/duo-redirect-connector.html" +
       "?duoFramelessUrl=" +
       encodeURIComponent(this.duoFramelessUrl) +

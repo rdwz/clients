@@ -9,5 +9,5 @@ export interface FormGroupControls {
 }
 
 export abstract class FormValidationErrorsService {
-  abstract getFormValidationErrors(controls: FormGroupControls): AllValidationErrors[];
+  getFormValidationErrors: (controls: FormGroupControls) => AllValidationErrors[];
 }

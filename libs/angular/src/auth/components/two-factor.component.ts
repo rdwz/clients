@@ -6,31 +6,28 @@ import { first } from "rxjs/operators";
 
 // eslint-disable-next-line no-restricted-imports
 import { WINDOW } from "@bitwarden/angular/services/injection-tokens";
-import {
-  LoginStrategyServiceAbstraction,
-  LoginEmailServiceAbstraction,
-  TrustedDeviceUserDecryptionOption,
-  UserDecryptionOptions,
-  UserDecryptionOptionsServiceAbstraction,
-} from "@bitwarden/auth/common";
+import { LoginStrategyServiceAbstraction } from "@bitwarden/auth/common";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
+import { LoginService } from "@bitwarden/common/auth/abstractions/login.service";
 import { SsoLoginServiceAbstraction } from "@bitwarden/common/auth/abstractions/sso-login.service.abstraction";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
 import { AuthenticationType } from "@bitwarden/common/auth/enums/authentication-type";
 import { TwoFactorProviderType } from "@bitwarden/common/auth/enums/two-factor-provider-type";
 import { AuthResult } from "@bitwarden/common/auth/models/domain/auth-result";
 import { ForceSetPasswordReason } from "@bitwarden/common/auth/models/domain/force-set-password-reason";
+import { TrustedDeviceUserDecryptionOption } from "@bitwarden/common/auth/models/domain/user-decryption-options/trusted-device-user-decryption-option";
 import { TokenTwoFactorRequest } from "@bitwarden/common/auth/models/request/identity-token/token-two-factor.request";
 import { TwoFactorEmailRequest } from "@bitwarden/common/auth/models/request/two-factor-email.request";
 import { TwoFactorProviders } from "@bitwarden/common/auth/services/two-factor.service";
 import { WebAuthnIFrame } from "@bitwarden/common/auth/webauthn-iframe";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
-import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
+import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
+import { AccountDecryptionOptions } from "@bitwarden/common/platform/models/domain/account";
 
 import { CaptchaProtectedComponent } from "./captcha-protected.component";
 
@@ -88,10 +85,9 @@ export class TwoFactorComponent extends CaptchaProtectedComponent implements OnI
     protected logService: LogService,
     protected twoFactorService: TwoFactorService,
     protected appIdService: AppIdService,
-    protected loginEmailService: LoginEmailServiceAbstraction,
-    protected userDecryptionOptionsService: UserDecryptionOptionsServiceAbstraction,
+    protected loginService: LoginService,
     protected ssoLoginService: SsoLoginServiceAbstraction,
-    protected configService: ConfigService,
+    protected configService: ConfigServiceAbstraction,
   ) {
     super(environmentService, i18nService, platformUtilsService);
     this.webAuthnSupported = this.platformUtilsService.supportsWebAuthn(win);
@@ -116,8 +112,7 @@ export class TwoFactorComponent extends CaptchaProtectedComponent implements OnI
     }
 
     if (this.win != null && this.webAuthnSupported) {
-      const env = await firstValueFrom(this.environmentService.environment$);
-      const webVaultUrl = env.getWebVaultUrl();
+      const webVaultUrl = this.environmentService.getWebVaultUrl();
       this.webAuthn = new WebAuthnIFrame(
         this.win,
         webVaultUrl,
@@ -288,30 +283,29 @@ export class TwoFactorComponent extends CaptchaProtectedComponent implements OnI
     // - TDE login decryption options component
     // - Browser SSO on extension open
     await this.ssoLoginService.setActiveUserOrganizationSsoIdentifier(this.orgIdentifier);
-    this.loginEmailService.clearValues();
+    this.loginService.clearValues();
 
     // note: this flow affects both TDE & standard users
     if (this.isForcePasswordResetRequired(authResult)) {
       return await this.handleForcePasswordReset(this.orgIdentifier);
     }
 
-    const userDecryptionOpts = await firstValueFrom(
-      this.userDecryptionOptionsService.userDecryptionOptions$,
-    );
+    const acctDecryptionOpts: AccountDecryptionOptions =
+      await this.stateService.getAccountDecryptionOptions();
 
-    const tdeEnabled = await this.isTrustedDeviceEncEnabled(userDecryptionOpts.trustedDeviceOption);
+    const tdeEnabled = await this.isTrustedDeviceEncEnabled(acctDecryptionOpts.trustedDeviceOption);
 
     if (tdeEnabled) {
       return await this.handleTrustedDeviceEncryptionEnabled(
         authResult,
         this.orgIdentifier,
-        userDecryptionOpts,
+        acctDecryptionOpts,
       );
     }
 
     // User must set password if they don't have one and they aren't using either TDE or key connector.
     const requireSetPassword =
-      !userDecryptionOpts.hasMasterPassword && userDecryptionOpts.keyConnectorOption === undefined;
+      !acctDecryptionOpts.hasMasterPassword && acctDecryptionOpts.keyConnectorOption === undefined;
 
     if (requireSetPassword || authResult.resetMasterPassword) {
       // Change implies going no password -> password in this case
@@ -332,12 +326,12 @@ export class TwoFactorComponent extends CaptchaProtectedComponent implements OnI
   private async handleTrustedDeviceEncryptionEnabled(
     authResult: AuthResult,
     orgIdentifier: string,
-    userDecryptionOpts: UserDecryptionOptions,
+    acctDecryptionOpts: AccountDecryptionOptions,
   ): Promise<void> {
     // If user doesn't have a MP, but has reset password permission, they must set a MP
     if (
-      !userDecryptionOpts.hasMasterPassword &&
-      userDecryptionOpts.trustedDeviceOption.hasManageResetPasswordPermission
+      !acctDecryptionOpts.hasMasterPassword &&
+      acctDecryptionOpts.trustedDeviceOption.hasManageResetPasswordPermission
     ) {
       // Set flag so that auth guard can redirect to set password screen after decryption (trusted or untrusted device)
       // Note: we cannot directly navigate to the set password screen in this scenario as we are in a pre-decryption state, and
@@ -495,5 +489,5 @@ export class TwoFactorComponent extends CaptchaProtectedComponent implements OnI
   }
 
   // implemented in clients
-  async launchDuoFrameless() {}
+  launchDuoFrameless() {}
 }

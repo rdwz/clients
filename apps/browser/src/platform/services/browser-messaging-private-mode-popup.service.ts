@@ -3,6 +3,6 @@ import { MessagingService } from "@bitwarden/common/platform/abstractions/messag
 export default class BrowserMessagingPrivateModePopupService implements MessagingService {
   send(subscriber: string, arg: any = {}) {
     const message = Object.assign({}, { command: subscriber }, arg);
-    (self as any).bitwardenBackgroundMessageListener(message);
+    (window as any).bitwardenBackgroundMessageListener(message);
   }
 }

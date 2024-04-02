@@ -29,14 +29,14 @@ class OffscreenDocument implements OffscreenDocumentInterface {
    * @param message - The extension message containing the text to copy
    */
   private async handleOffscreenCopyToClipboard(message: OffscreenDocumentExtensionMessage) {
-    await BrowserClipboardService.copy(self, message.text);
+    await BrowserClipboardService.copy(window, message.text);
   }
 
   /**
    * Reads the user's clipboard and returns the text.
    */
   private async handleOffscreenReadFromClipboard() {
-    return await BrowserClipboardService.read(self);
+    return await BrowserClipboardService.read(window);
   }
 
   /**

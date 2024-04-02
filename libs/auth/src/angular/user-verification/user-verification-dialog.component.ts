@@ -12,7 +12,6 @@ import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/pl
 import {
   AsyncActionsModule,
   ButtonModule,
-  CalloutModule,
   DialogModule,
   DialogService,
 } from "@bitwarden/components";
@@ -35,7 +34,6 @@ import { UserVerificationFormInputComponent } from "./user-verification-form-inp
     DialogModule,
     AsyncActionsModule,
     UserVerificationFormInputComponent,
-    CalloutModule,
   ],
 })
 export class UserVerificationDialogComponent {

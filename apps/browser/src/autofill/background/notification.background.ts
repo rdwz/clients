@@ -165,7 +165,6 @@ export default class NotificationBackground {
     notificationQueueMessage: NotificationQueueMessageItem,
   ) {
     const notificationType = notificationQueueMessage.type;
-
     const typeData: Record<string, any> = {
       isVaultLocked: notificationQueueMessage.wasVaultLocked,
       theme: await firstValueFrom(this.themeStateService.selectedTheme$),
@@ -656,9 +655,8 @@ export default class NotificationBackground {
     return await firstValueFrom(this.folderService.folderViews$);
   }
 
-  private async getWebVaultUrl(): Promise<string> {
-    const env = await firstValueFrom(this.environmentService.environment$);
-    return env.getWebVaultUrl();
+  private getWebVaultUrl(): string {
+    return this.environmentService.getWebVaultUrl();
   }
 
   private async removeIndividualVault(): Promise<boolean> {

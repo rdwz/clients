@@ -1,7 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { UntypedFormBuilder, FormControl } from "@angular/forms";
 import { ActivatedRoute } from "@angular/router";
-import { firstValueFrom } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { OrganizationApiServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/organization/organization-api.service.abstraction";
@@ -77,13 +76,13 @@ export class ScimComponent implements OnInit {
       apiKeyRequest,
     );
     this.formData.setValue({
-      endpointUrl: await this.getScimEndpointUrl(),
+      endpointUrl: this.getScimEndpointUrl(),
       clientSecret: apiKeyResponse.apiKey,
     });
   }
 
   async copyScimUrl() {
-    this.platformUtilsService.copyToClipboard(await this.getScimEndpointUrl());
+    this.platformUtilsService.copyToClipboard(this.getScimEndpointUrl());
   }
 
   async rotateScimKey() {
@@ -107,7 +106,7 @@ export class ScimComponent implements OnInit {
     try {
       const response = await this.rotatePromise;
       this.formData.setValue({
-        endpointUrl: await this.getScimEndpointUrl(),
+        endpointUrl: this.getScimEndpointUrl(),
         clientSecret: response.apiKey,
       });
       this.platformUtilsService.showToast("success", null, this.i18nService.t("scimApiKeyRotated"));
@@ -149,9 +148,8 @@ export class ScimComponent implements OnInit {
     this.formPromise = null;
   }
 
-  async getScimEndpointUrl() {
-    const env = await firstValueFrom(this.environmentService.environment$);
-    return env.getScimUrl() + "/" + this.organizationId;
+  getScimEndpointUrl() {
+    return this.environmentService.getScimUrl() + "/" + this.organizationId;
   }
 
   toggleScimKey() {
@@ -165,7 +163,7 @@ export class ScimComponent implements OnInit {
       this.showScimSettings = true;
       this.enabled.setValue(true);
       this.formData.setValue({
-        endpointUrl: await this.getScimEndpointUrl(),
+        endpointUrl: this.getScimEndpointUrl(),
         clientSecret: "",
       });
       await this.loadApiKey();

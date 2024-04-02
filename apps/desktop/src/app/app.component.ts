@@ -31,7 +31,7 @@ import { AuthenticationStatus } from "@bitwarden/common/auth/enums/authenticatio
 import { ForceSetPasswordReason } from "@bitwarden/common/auth/models/domain/force-set-password-reason";
 import { VaultTimeoutAction } from "@bitwarden/common/enums/vault-timeout-action.enum";
 import { BroadcasterService } from "@bitwarden/common/platform/abstractions/broadcaster.service";
-import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
+import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
@@ -147,7 +147,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private modalService: ModalService,
     private keyConnectorService: KeyConnectorService,
     private userVerificationService: UserVerificationService,
-    private configService: ConfigService,
+    private configService: ConfigServiceAbstraction,
     private dialogService: DialogService,
     private biometricStateService: BiometricStateService,
     private stateEventRunnerService: StateEventRunnerService,
@@ -265,7 +265,7 @@ export class AppComponent implements OnInit, OnDestroy {
               // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
               // eslint-disable-next-line @typescript-eslint/no-floating-promises
               this.updateAppMenu();
-              await this.configService.ensureConfigFetched();
+              this.configService.triggerServerConfigFetch();
             }
             break;
           case "openSettings":
@@ -584,6 +584,7 @@ export class AppComponent implements OnInit, OnDestroy {
       await this.passwordGenerationService.clear(userBeingLoggedOut);
       await this.vaultTimeoutSettingsService.clear(userBeingLoggedOut);
       await this.policyService.clear(userBeingLoggedOut);
+      await this.keyConnectorService.clear();
       await this.biometricStateService.logout(userBeingLoggedOut as UserId);
       await this.providerService.save(null, userBeingLoggedOut as UserId);
 

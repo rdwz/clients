@@ -13,5 +13,3 @@ Currently in use by the Bitwarden Web Vault, CLI, desktop app and browser extens
 ## vault-export-ui
 
 Package name: `@bitwarden/vault-export-ui`
-
-Contains all UI components used for the vault-export

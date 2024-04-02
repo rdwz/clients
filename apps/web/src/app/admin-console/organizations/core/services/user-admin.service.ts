@@ -6,7 +6,7 @@ import {
   OrganizationUserUpdateRequest,
 } from "@bitwarden/common/admin-console/abstractions/organization-user/requests";
 import { OrganizationUserDetailsResponse } from "@bitwarden/common/admin-console/abstractions/organization-user/responses";
-import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
+import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
 
 import { CoreOrganizationModule } from "../core-organization.module";
 import { OrganizationUserAdminView } from "../views/organization-user-admin-view";
@@ -14,7 +14,7 @@ import { OrganizationUserAdminView } from "../views/organization-user-admin-view
 @Injectable({ providedIn: CoreOrganizationModule })
 export class UserAdminService {
   constructor(
-    private configService: ConfigService,
+    private configService: ConfigServiceAbstraction,
     private organizationUserService: OrganizationUserService,
   ) {}
 

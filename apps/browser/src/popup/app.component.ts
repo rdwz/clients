@@ -13,7 +13,6 @@ import { BrowserApi } from "../platform/browser/browser-api";
 import { ZonedMessageListenerService } from "../platform/browser/zoned-message-listener.service";
 import { BrowserStateService } from "../platform/services/abstractions/browser-state.service";
 import { ForegroundPlatformUtilsService } from "../platform/services/platform-utils/foreground-platform-utils.service";
-import { VaultBrowserStateService } from "../vault/services/vault-browser-state.service";
 
 import { routerTransition } from "./app-routing.animations";
 import { DesktopSyncVerificationDialogComponent } from "./components/desktop-sync-verification-dialog.component";
@@ -39,7 +38,6 @@ export class AppComponent implements OnInit, OnDestroy {
     private i18nService: I18nService,
     private router: Router,
     private stateService: BrowserStateService,
-    private vaultBrowserStateService: VaultBrowserStateService,
     private cipherService: CipherService,
     private changeDetectorRef: ChangeDetectorRef,
     private ngZone: NgZone,
@@ -144,7 +142,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     };
 
-    (self as any).bitwardenPopupMainMessageListener = bitwardenPopupMainMessageListener;
+    (window as any).bitwardenPopupMainMessageListener = bitwardenPopupMainMessageListener;
     this.browserMessagingApi.messageListener("app.component", bitwardenPopupMainMessageListener);
 
     // eslint-disable-next-line rxjs/no-async-subscribe
@@ -231,8 +229,8 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     await Promise.all([
-      this.vaultBrowserStateService.setBrowserGroupingsComponentState(null),
-      this.vaultBrowserStateService.setBrowserVaultItemsComponentState(null),
+      this.stateService.setBrowserGroupingComponentState(null),
+      this.stateService.setBrowserVaultItemsComponentState(null),
       this.stateService.setBrowserSendComponentState(null),
       this.stateService.setBrowserSendTypeComponentState(null),
     ]);

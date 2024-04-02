@@ -1,6 +1,6 @@
 <form
   #form
-  (ngSubmit)="submit(false)"
+  (ngSubmit)="submit()"
   [appApiAction]="formPromise"
   class="tw-container tw-mx-auto"
   [formGroup]="formGroup"
@@ -91,7 +91,7 @@
               class="-tw-mt-2"
               routerLink="/hint"
               (mousedown)="goToHint()"
-              (click)="setLoginEmailValues()"
+              (click)="setFormValues()"
               >{{ "getMasterPasswordHint" | i18n }}</a
             >
           </div>

@@ -2,7 +2,6 @@ import { mock } from "jest-mock-extended";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { AuthRequestResponse } from "@bitwarden/common/auth/models/response/auth-request.response";
-import { AuthRequestPushNotification } from "@bitwarden/common/models/response/notification.response";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
@@ -29,22 +28,6 @@ describe("AuthRequestService", () => {
     sut = new AuthRequestService(appIdService, cryptoService, apiService, stateService);
 
     mockPrivateKey = new Uint8Array(64);
-  });
-
-  describe("authRequestPushNotification$", () => {
-    it("should emit when sendAuthRequestPushNotification is called", () => {
-      const notification = {
-        id: "PUSH_NOTIFICATION",
-        userId: "USER_ID",
-      } as AuthRequestPushNotification;
-
-      const spy = jest.fn();
-      sut.authRequestPushNotification$.subscribe(spy);
-
-      sut.sendAuthRequestPushNotification(notification);
-
-      expect(spy).toHaveBeenCalledWith("PUSH_NOTIFICATION");
-    });
   });
 
   describe("approveOrDenyAuthRequest", () => {

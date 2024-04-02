@@ -15,5 +15,4 @@ export type VaultItemEvent =
   | { type: "delete"; items: VaultItem[] }
   | { type: "copyField"; item: CipherView; field: "username" | "password" | "totp" }
   | { type: "moveToFolder"; items: CipherView[] }
-  | { type: "moveToOrganization"; items: CipherView[] }
-  | { type: "assignToCollections"; items: CipherView[] };
+  | { type: "moveToOrganization"; items: CipherView[] };

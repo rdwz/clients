@@ -1,3 +1,3 @@
 export abstract class ValidationService {
-  abstract showError(data: any): string[];
+  showError: (data: any) => string[];
 }

@@ -9,7 +9,7 @@
   <span class="tw-sr-only">{{ "loading" | i18n }}</span>
 </ng-container>
 
-<form [formGroup]="ssoConfigForm" [bitSubmit]="submit" *ngIf="!loading" class="tw-w-2/3">
+<form [formGroup]="ssoConfigForm" [bitSubmit]="submit" *ngIf="!loading">
   <p>
     {{ "ssoPolicyHelpStart" | i18n }}
     <a routerLink="../policies">{{ "ssoPolicyHelpAnchor" | i18n }}</a>

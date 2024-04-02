@@ -1,6 +1,6 @@
 import { Component } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
-import { concatMap } from "rxjs";
+import { map } from "rxjs";
 
 import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
@@ -14,9 +14,7 @@ export class NavigationComponent {
   protected readonly logo = SecretsManagerLogo;
   protected orgFilter = (org: Organization) => org.canAccessSecretsManager;
   protected isAdmin$ = this.route.params.pipe(
-    concatMap(
-      async (params) => (await this.organizationService.get(params.organizationId))?.isAdmin,
-    ),
+    map(async (params) => (await this.organizationService.get(params.organizationId))?.isAdmin),
   );
 
   constructor(

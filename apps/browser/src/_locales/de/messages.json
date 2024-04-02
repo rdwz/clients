@@ -327,7 +327,7 @@
     "message": "Passwort"
   },
   "totp": {
-    "message": "Authentifikator-Geheimnis"
+    "message": "Authenticator secret"
   },
   "passphrase": {
     "message": "Passphrase"
@@ -522,16 +522,16 @@
     "message": "Die Felder dieser Seite konnten nicht automatisch ausgefüllt werden. Bitte Nutzernamen und/oder Passwort manuell kopieren."
   },
   "totpCaptureError": {
-    "message": "QR-Code kann nicht von der aktuellen Webseite gescannt werden"
+    "message": "Unable to scan QR code from the current webpage"
   },
   "totpCaptureSuccess": {
-    "message": "Authentifizierungsschlüssel hinzugefügt"
+    "message": "Authenticator key added"
   },
   "totpCapture": {
-    "message": "Den Authentifizierungs-QR-Code von der aktuellen Webseite scannen"
+    "message": "Scan authenticator QR code from current webpage"
   },
   "copyTOTP": {
-    "message": "Authentifizierungsschlüssel kopieren (TOTP)"
+    "message": "Copy Authenticator key (TOTP)"
   },
   "loggedOut": {
     "message": "Ausgeloggt"
@@ -2385,6 +2385,12 @@
   "eu": {
     "message": "EU",
     "description": "European Union"
+  },
+  "usDomain": {
+    "message": "bitwarden.com"
+  },
+  "euDomain": {
+    "message": "bitwarden.eu"
   },
   "accessDenied": {
     "message": "Zugriff verweigert. Du hast keine Berechtigung, diese Seite anzuzeigen."

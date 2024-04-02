@@ -47,16 +47,13 @@ class OverlayBackground implements OverlayBackgroundInterface {
   private readonly openViewVaultItemPopout = openViewVaultItemPopout;
   private readonly openAddEditVaultItemPopout = openAddEditVaultItemPopout;
   private overlayLoginCiphers: Map<string, CipherView> = new Map();
-  private pageDetailsForTab: Record<
-    chrome.runtime.MessageSender["tab"]["id"],
-    Map<chrome.runtime.MessageSender["frameId"], PageDetail>
-  > = {};
+  private pageDetailsForTab: Record<number, PageDetail[]> = {};
   private userAuthStatus: AuthenticationStatus = AuthenticationStatus.LoggedOut;
   private overlayButtonPort: chrome.runtime.Port;
   private overlayListPort: chrome.runtime.Port;
   private focusedFieldData: FocusedFieldData;
   private overlayPageTranslations: Record<string, string>;
-  private iconsServerUrl: string;
+  private readonly iconsServerUrl: string;
   private readonly extensionMessageHandlers: OverlayBackgroundExtensionMessageHandlers = {
     openAutofillOverlay: () => this.openOverlay(false),
     autofillOverlayElementClosed: ({ message }) => this.overlayElementClosed(message),
@@ -101,7 +98,9 @@ class OverlayBackground implements OverlayBackgroundInterface {
     private i18nService: I18nService,
     private platformUtilsService: PlatformUtilsService,
     private themeStateService: ThemeStateService,
-  ) {}
+  ) {
+    this.iconsServerUrl = this.environmentService.getIconsUrl();
+  }
 
   /**
    * Removes cached page details for a tab
@@ -110,11 +109,6 @@ class OverlayBackground implements OverlayBackgroundInterface {
    * @param tabId - Used to reference the page details of a specific tab
    */
   removePageDetails(tabId: number) {
-    if (!this.pageDetailsForTab[tabId]) {
-      return;
-    }
-
-    this.pageDetailsForTab[tabId].clear();
     delete this.pageDetailsForTab[tabId];
   }
 
@@ -124,8 +118,6 @@ class OverlayBackground implements OverlayBackgroundInterface {
    */
   async init() {
     this.setupExtensionMessageListeners();
-    const env = await firstValueFrom(this.environmentService.environment$);
-    this.iconsServerUrl = env.getIconsUrl();
     await this.getOverlayVisibility();
     await this.getAuthStatus();
   }
@@ -211,13 +203,12 @@ class OverlayBackground implements OverlayBackgroundInterface {
       details: message.details,
     };
 
-    const pageDetailsMap = this.pageDetailsForTab[sender.tab.id];
-    if (!pageDetailsMap) {
-      this.pageDetailsForTab[sender.tab.id] = new Map([[sender.frameId, pageDetails]]);
+    if (this.pageDetailsForTab[sender.tab.id]?.length) {
+      this.pageDetailsForTab[sender.tab.id].push(pageDetails);
       return;
     }
 
-    pageDetailsMap.set(sender.frameId, pageDetails);
+    this.pageDetailsForTab[sender.tab.id] = [pageDetails];
   }
 
   /**
@@ -231,8 +222,7 @@ class OverlayBackground implements OverlayBackgroundInterface {
     { overlayCipherId }: OverlayPortMessage,
     { sender }: chrome.runtime.Port,
   ) {
-    const pageDetails = this.pageDetailsForTab[sender.tab.id];
-    if (!overlayCipherId || !pageDetails?.size) {
+    if (!overlayCipherId) {
       return;
     }
 
@@ -244,7 +234,7 @@ class OverlayBackground implements OverlayBackgroundInterface {
     const totpCode = await this.autofillService.doAutoFill({
       tab: sender.tab,
       cipher: cipher,
-      pageDetails: Array.from(pageDetails.values()),
+      pageDetails: this.pageDetailsForTab[sender.tab.id],
       fillNewPassword: true,
       allowTotpAutofill: true,
     });

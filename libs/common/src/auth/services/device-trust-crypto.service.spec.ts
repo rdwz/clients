@@ -1,12 +1,6 @@
 import { matches, mock } from "jest-mock-extended";
-import { BehaviorSubject, of } from "rxjs";
+import { of } from "rxjs";
 
-import { UserDecryptionOptionsServiceAbstraction } from "@bitwarden/auth/common";
-
-import { UserDecryptionOptions } from "../../../../auth/src/common/models/domain/user-decryption-options";
-import { FakeAccountService, mockAccountServiceWith } from "../../../spec/fake-account-service";
-import { FakeActiveUserState } from "../../../spec/fake-state";
-import { FakeStateProvider } from "../../../spec/fake-state-provider";
 import { DeviceType } from "../../enums";
 import { AppIdService } from "../../platform/abstractions/app-id.service";
 import { CryptoFunctionService } from "../../platform/abstractions/crypto-function.service";
@@ -15,26 +9,18 @@ import { EncryptService } from "../../platform/abstractions/encrypt.service";
 import { I18nService } from "../../platform/abstractions/i18n.service";
 import { KeyGenerationService } from "../../platform/abstractions/key-generation.service";
 import { PlatformUtilsService } from "../../platform/abstractions/platform-utils.service";
-import { AbstractStorageService } from "../../platform/abstractions/storage.service";
-import { StorageLocation } from "../../platform/enums";
+import { StateService } from "../../platform/abstractions/state.service";
 import { EncryptionType } from "../../platform/enums/encryption-type.enum";
-import { Utils } from "../../platform/misc/utils";
 import { EncString } from "../../platform/models/domain/enc-string";
-import { StorageOptions } from "../../platform/models/domain/storage-options";
 import { SymmetricCryptoKey } from "../../platform/models/domain/symmetric-crypto-key";
 import { CsprngArray } from "../../types/csprng";
-import { UserId } from "../../types/guid";
 import { DeviceKey, UserKey } from "../../types/key";
 import { DeviceResponse } from "../abstractions/devices/responses/device.response";
 import { DevicesApiServiceAbstraction } from "../abstractions/devices-api.service.abstraction";
 import { UpdateDevicesTrustRequest } from "../models/request/update-devices-trust.request";
 import { ProtectedDeviceResponse } from "../models/response/protected-device.response";
 
-import {
-  SHOULD_TRUST_DEVICE,
-  DEVICE_KEY,
-  DeviceTrustCryptoService,
-} from "./device-trust-crypto.service.implementation";
+import { DeviceTrustCryptoService } from "./device-trust-crypto.service.implementation";
 
 describe("deviceTrustCryptoService", () => {
   let deviceTrustCryptoService: DeviceTrustCryptoService;
@@ -43,34 +29,26 @@ describe("deviceTrustCryptoService", () => {
   const cryptoFunctionService = mock<CryptoFunctionService>();
   const cryptoService = mock<CryptoService>();
   const encryptService = mock<EncryptService>();
+  const stateService = mock<StateService>();
   const appIdService = mock<AppIdService>();
   const devicesApiService = mock<DevicesApiServiceAbstraction>();
   const i18nService = mock<I18nService>();
   const platformUtilsService = mock<PlatformUtilsService>();
-  const secureStorageService = mock<AbstractStorageService>();
-
-  const userDecryptionOptionsService = mock<UserDecryptionOptionsServiceAbstraction>();
-  const decryptionOptions = new BehaviorSubject<UserDecryptionOptions>(null);
-
-  let stateProvider: FakeStateProvider;
-
-  const mockUserId = Utils.newGuid() as UserId;
-  let accountService: FakeAccountService;
-
-  const deviceKeyPartialSecureStorageKey = "_deviceKey";
-  const deviceKeySecureStorageKey = `${mockUserId}${deviceKeyPartialSecureStorageKey}`;
-
-  const secureStorageOptions: StorageOptions = {
-    storageLocation: StorageLocation.Disk,
-    useSecureStorage: true,
-    userId: mockUserId,
-  };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    const supportsSecureStorage = false; // default to false; tests will override as needed
-    // By default all the tests will have a mocked active user in state provider.
-    deviceTrustCryptoService = createDeviceTrustCryptoService(mockUserId, supportsSecureStorage);
+
+    deviceTrustCryptoService = new DeviceTrustCryptoService(
+      keyGenerationService,
+      cryptoFunctionService,
+      cryptoService,
+      encryptService,
+      stateService,
+      appIdService,
+      devicesApiService,
+      i18nService,
+      platformUtilsService,
+    );
   });
 
   it("instantiates", () => {
@@ -79,26 +57,27 @@ describe("deviceTrustCryptoService", () => {
 
   describe("User Trust Device Choice For Decryption", () => {
     describe("getShouldTrustDevice", () => {
-      it("gets the user trust device choice for decryption", async () => {
-        const newValue = true;
+      it("gets the user trust device choice for decryption from the state service", async () => {
+        const stateSvcGetShouldTrustDeviceSpy = jest.spyOn(stateService, "getShouldTrustDevice");
 
-        await stateProvider.setUserState(SHOULD_TRUST_DEVICE, newValue, mockUserId);
+        const expectedValue = true;
+        stateSvcGetShouldTrustDeviceSpy.mockResolvedValue(expectedValue);
+        const result = await deviceTrustCryptoService.getShouldTrustDevice();
 
-        const result = await deviceTrustCryptoService.getShouldTrustDevice(mockUserId);
-
-        expect(result).toEqual(newValue);
+        expect(stateSvcGetShouldTrustDeviceSpy).toHaveBeenCalledTimes(1);
+        expect(result).toEqual(expectedValue);
       });
     });
 
     describe("setShouldTrustDevice", () => {
-      it("sets the user trust device choice for decryption ", async () => {
-        await stateProvider.setUserState(SHOULD_TRUST_DEVICE, false, mockUserId);
+      it("sets the user trust device choice for decryption in the state service", async () => {
+        const stateSvcSetShouldTrustDeviceSpy = jest.spyOn(stateService, "setShouldTrustDevice");
 
         const newValue = true;
-        await deviceTrustCryptoService.setShouldTrustDevice(mockUserId, newValue);
+        await deviceTrustCryptoService.setShouldTrustDevice(newValue);
 
-        const result = await deviceTrustCryptoService.getShouldTrustDevice(mockUserId);
-        expect(result).toEqual(newValue);
+        expect(stateSvcSetShouldTrustDeviceSpy).toHaveBeenCalledTimes(1);
+        expect(stateSvcSetShouldTrustDeviceSpy).toHaveBeenCalledWith(newValue);
       });
     });
   });
@@ -109,11 +88,11 @@ describe("deviceTrustCryptoService", () => {
       jest.spyOn(deviceTrustCryptoService, "trustDevice").mockResolvedValue({} as DeviceResponse);
       jest.spyOn(deviceTrustCryptoService, "setShouldTrustDevice").mockResolvedValue();
 
-      await deviceTrustCryptoService.trustDeviceIfRequired(mockUserId);
+      await deviceTrustCryptoService.trustDeviceIfRequired();
 
       expect(deviceTrustCryptoService.getShouldTrustDevice).toHaveBeenCalledTimes(1);
       expect(deviceTrustCryptoService.trustDevice).toHaveBeenCalledTimes(1);
-      expect(deviceTrustCryptoService.setShouldTrustDevice).toHaveBeenCalledWith(mockUserId, false);
+      expect(deviceTrustCryptoService.setShouldTrustDevice).toHaveBeenCalledWith(false);
     });
 
     it("should not trust device nor reset when getShouldTrustDevice returns false", async () => {
@@ -123,7 +102,7 @@ describe("deviceTrustCryptoService", () => {
       const trustDeviceSpy = jest.spyOn(deviceTrustCryptoService, "trustDevice");
       const setShouldTrustDeviceSpy = jest.spyOn(deviceTrustCryptoService, "setShouldTrustDevice");
 
-      await deviceTrustCryptoService.trustDeviceIfRequired(mockUserId);
+      await deviceTrustCryptoService.trustDeviceIfRequired();
 
       expect(getShouldTrustDeviceSpy).toHaveBeenCalledTimes(1);
       expect(trustDeviceSpy).not.toHaveBeenCalled();
@@ -137,140 +116,53 @@ describe("deviceTrustCryptoService", () => {
 
     describe("getDeviceKey", () => {
       let existingDeviceKey: DeviceKey;
-      let existingDeviceKeyB64: { keyB64: string };
+      let stateSvcGetDeviceKeySpy: jest.SpyInstance;
 
       beforeEach(() => {
         existingDeviceKey = new SymmetricCryptoKey(
           new Uint8Array(deviceKeyBytesLength) as CsprngArray,
         ) as DeviceKey;
 
-        existingDeviceKeyB64 = existingDeviceKey.toJSON();
+        stateSvcGetDeviceKeySpy = jest.spyOn(stateService, "getDeviceKey");
       });
 
-      describe("Secure Storage not supported", () => {
-        it("returns null when there is not an existing device key", async () => {
-          await stateProvider.setUserState(DEVICE_KEY, null, mockUserId);
+      it("returns null when there is not an existing device key", async () => {
+        stateSvcGetDeviceKeySpy.mockResolvedValue(null);
 
-          const deviceKey = await deviceTrustCryptoService.getDeviceKey(mockUserId);
+        const deviceKey = await deviceTrustCryptoService.getDeviceKey();
 
-          expect(deviceKey).toBeNull();
-          expect(secureStorageService.get).not.toHaveBeenCalled();
-        });
+        expect(stateSvcGetDeviceKeySpy).toHaveBeenCalledTimes(1);
 
-        it("returns the device key when there is an existing device key", async () => {
-          await stateProvider.setUserState(DEVICE_KEY, existingDeviceKey, mockUserId);
-
-          const deviceKey = await deviceTrustCryptoService.getDeviceKey(mockUserId);
-
-          expect(deviceKey).not.toBeNull();
-          expect(deviceKey).toBeInstanceOf(SymmetricCryptoKey);
-          expect(deviceKey).toEqual(existingDeviceKey);
-          expect(secureStorageService.get).not.toHaveBeenCalled();
-        });
+        expect(deviceKey).toBeNull();
       });
 
-      describe("Secure Storage supported", () => {
-        beforeEach(() => {
-          const supportsSecureStorage = true;
-          deviceTrustCryptoService = createDeviceTrustCryptoService(
-            mockUserId,
-            supportsSecureStorage,
-          );
-        });
+      it("returns the device key when there is an existing device key", async () => {
+        stateSvcGetDeviceKeySpy.mockResolvedValue(existingDeviceKey);
 
-        it("returns null when there is not an existing device key for the passed in user id", async () => {
-          secureStorageService.get.mockResolvedValue(null);
+        const deviceKey = await deviceTrustCryptoService.getDeviceKey();
 
-          // Act
-          const deviceKey = await deviceTrustCryptoService.getDeviceKey(mockUserId);
+        expect(stateSvcGetDeviceKeySpy).toHaveBeenCalledTimes(1);
 
-          // Assert
-          expect(deviceKey).toBeNull();
-        });
-
-        it("returns the device key when there is an existing device key for the passed in user id", async () => {
-          // Arrange
-          secureStorageService.get.mockResolvedValue(existingDeviceKeyB64);
-
-          // Act
-          const deviceKey = await deviceTrustCryptoService.getDeviceKey(mockUserId);
-
-          // Assert
-          expect(deviceKey).not.toBeNull();
-          expect(deviceKey).toBeInstanceOf(SymmetricCryptoKey);
-          expect(deviceKey).toEqual(existingDeviceKey);
-        });
-      });
-
-      it("throws an error when no user id is passed in", async () => {
-        await expect(deviceTrustCryptoService.getDeviceKey(null)).rejects.toThrow(
-          "UserId is required. Cannot get device key.",
-        );
+        expect(deviceKey).not.toBeNull();
+        expect(deviceKey).toBeInstanceOf(SymmetricCryptoKey);
+        expect(deviceKey).toEqual(existingDeviceKey);
       });
     });
 
     describe("setDeviceKey", () => {
-      describe("Secure Storage not supported", () => {
-        it("successfully sets the device key in state provider", async () => {
-          await stateProvider.setUserState(DEVICE_KEY, null, mockUserId);
+      it("sets the device key in the state service", async () => {
+        const stateSvcSetDeviceKeySpy = jest.spyOn(stateService, "setDeviceKey");
 
-          const newDeviceKey = new SymmetricCryptoKey(
-            new Uint8Array(deviceKeyBytesLength) as CsprngArray,
-          ) as DeviceKey;
-
-          // TypeScript will allow calling private methods if the object is of type 'any'
-          // This is a hacky workaround, but it allows for cleaner tests
-          await (deviceTrustCryptoService as any).setDeviceKey(mockUserId, newDeviceKey);
-
-          expect(stateProvider.mock.setUserState).toHaveBeenLastCalledWith(
-            DEVICE_KEY,
-            newDeviceKey.toJSON(),
-            mockUserId,
-          );
-        });
-      });
-      describe("Secure Storage supported", () => {
-        beforeEach(() => {
-          const supportsSecureStorage = true;
-          deviceTrustCryptoService = createDeviceTrustCryptoService(
-            mockUserId,
-            supportsSecureStorage,
-          );
-        });
-
-        it("successfully sets the device key in secure storage", async () => {
-          // Arrange
-          await stateProvider.setUserState(DEVICE_KEY, null, mockUserId);
-
-          secureStorageService.get.mockResolvedValue(null);
-
-          const newDeviceKey = new SymmetricCryptoKey(
-            new Uint8Array(deviceKeyBytesLength) as CsprngArray,
-          ) as DeviceKey;
-
-          // Act
-          // TypeScript will allow calling private methods if the object is of type 'any'
-          // This is a hacky workaround, but it allows for cleaner tests
-          await (deviceTrustCryptoService as any).setDeviceKey(mockUserId, newDeviceKey);
-
-          // Assert
-          expect(stateProvider.mock.setUserState).not.toHaveBeenCalledTimes(2);
-          expect(secureStorageService.save).toHaveBeenCalledWith(
-            deviceKeySecureStorageKey,
-            newDeviceKey,
-            secureStorageOptions,
-          );
-        });
-      });
-
-      it("throws an error when a null user id is passed in", async () => {
-        const newDeviceKey = new SymmetricCryptoKey(
+        const deviceKey = new SymmetricCryptoKey(
           new Uint8Array(deviceKeyBytesLength) as CsprngArray,
         ) as DeviceKey;
 
-        await expect(
-          (deviceTrustCryptoService as any).setDeviceKey(null, newDeviceKey),
-        ).rejects.toThrow("UserId is required. Cannot set device key.");
+        // TypeScript will allow calling private methods if the object is of type 'any'
+        // This is a hacky workaround, but it allows for cleaner tests
+        await (deviceTrustCryptoService as any).setDeviceKey(deviceKey);
+
+        expect(stateSvcSetDeviceKeySpy).toHaveBeenCalledTimes(1);
+        expect(stateSvcSetDeviceKeySpy).toHaveBeenCalledWith(deviceKey);
       });
     });
 
@@ -398,7 +290,7 @@ describe("deviceTrustCryptoService", () => {
       });
 
       it("calls the required methods with the correct arguments and returns a DeviceResponse", async () => {
-        const response = await deviceTrustCryptoService.trustDevice(mockUserId);
+        const response = await deviceTrustCryptoService.trustDevice();
 
         expect(makeDeviceKeySpy).toHaveBeenCalledTimes(1);
         expect(rsaGenerateKeyPairSpy).toHaveBeenCalledTimes(1);
@@ -429,7 +321,7 @@ describe("deviceTrustCryptoService", () => {
         // setup the spy to return null
         cryptoSvcGetUserKeySpy.mockResolvedValue(null);
         // check if the expected error is thrown
-        await expect(deviceTrustCryptoService.trustDevice(mockUserId)).rejects.toThrow(
+        await expect(deviceTrustCryptoService.trustDevice()).rejects.toThrow(
           "User symmetric key not found",
         );
 
@@ -439,7 +331,7 @@ describe("deviceTrustCryptoService", () => {
         // setup the spy to return undefined
         cryptoSvcGetUserKeySpy.mockResolvedValue(undefined);
         // check if the expected error is thrown
-        await expect(deviceTrustCryptoService.trustDevice(mockUserId)).rejects.toThrow(
+        await expect(deviceTrustCryptoService.trustDevice()).rejects.toThrow(
           "User symmetric key not found",
         );
       });
@@ -479,9 +371,7 @@ describe("deviceTrustCryptoService", () => {
           it(`throws an error if ${method} fails`, async () => {
             const methodSpy = spy();
             methodSpy.mockRejectedValue(new Error(errorText));
-            await expect(deviceTrustCryptoService.trustDevice(mockUserId)).rejects.toThrow(
-              errorText,
-            );
+            await expect(deviceTrustCryptoService.trustDevice()).rejects.toThrow(errorText);
           });
 
           test.each([null, undefined])(
@@ -489,17 +379,11 @@ describe("deviceTrustCryptoService", () => {
             async (invalidValue) => {
               const methodSpy = spy();
               methodSpy.mockResolvedValue(invalidValue);
-              await expect(deviceTrustCryptoService.trustDevice(mockUserId)).rejects.toThrow();
+              await expect(deviceTrustCryptoService.trustDevice()).rejects.toThrow();
             },
           );
         },
       );
-
-      it("throws an error when a null user id is passed in", async () => {
-        await expect(deviceTrustCryptoService.trustDevice(null)).rejects.toThrow(
-          "UserId is required. Cannot trust device.",
-        );
-      });
     });
 
     describe("decryptUserKeyWithDeviceKey", () => {
@@ -528,26 +412,19 @@ describe("deviceTrustCryptoService", () => {
         jest.clearAllMocks();
       });
 
-      it("throws an error when a null user id is passed in", async () => {
-        await expect(
-          deviceTrustCryptoService.decryptUserKeyWithDeviceKey(
-            null,
-            mockEncryptedDevicePrivateKey,
-            mockEncryptedUserKey,
-            mockDeviceKey,
-          ),
-        ).rejects.toThrow("UserId is required. Cannot decrypt user key with device key.");
-      });
+      it("returns null when device key isn't provided and isn't in state", async () => {
+        const getDeviceKeySpy = jest
+          .spyOn(deviceTrustCryptoService, "getDeviceKey")
+          .mockResolvedValue(null);
 
-      it("returns null when device key isn't provided", async () => {
         const result = await deviceTrustCryptoService.decryptUserKeyWithDeviceKey(
-          mockUserId,
           mockEncryptedDevicePrivateKey,
           mockEncryptedUserKey,
-          mockDeviceKey,
         );
 
         expect(result).toBeNull();
+
+        expect(getDeviceKeySpy).toHaveBeenCalledTimes(1);
       });
 
       it("successfully returns the user key when provided keys (including device key) can decrypt it", async () => {
@@ -559,11 +436,35 @@ describe("deviceTrustCryptoService", () => {
           .mockResolvedValue(new Uint8Array(userKeyBytesLength));
 
         const result = await deviceTrustCryptoService.decryptUserKeyWithDeviceKey(
-          mockUserId,
           mockEncryptedDevicePrivateKey,
           mockEncryptedUserKey,
           mockDeviceKey,
         );
+
+        expect(result).toEqual(mockUserKey);
+        expect(decryptToBytesSpy).toHaveBeenCalledTimes(1);
+        expect(rsaDecryptSpy).toHaveBeenCalledTimes(1);
+      });
+
+      it("successfully returns the user key when a device key is not provided (retrieves device key from state)", async () => {
+        const getDeviceKeySpy = jest
+          .spyOn(deviceTrustCryptoService, "getDeviceKey")
+          .mockResolvedValue(mockDeviceKey);
+
+        const decryptToBytesSpy = jest
+          .spyOn(encryptService, "decryptToBytes")
+          .mockResolvedValue(new Uint8Array(userKeyBytesLength));
+        const rsaDecryptSpy = jest
+          .spyOn(cryptoService, "rsaDecrypt")
+          .mockResolvedValue(new Uint8Array(userKeyBytesLength));
+
+        // Call without providing a device key
+        const result = await deviceTrustCryptoService.decryptUserKeyWithDeviceKey(
+          mockEncryptedDevicePrivateKey,
+          mockEncryptedUserKey,
+        );
+
+        expect(getDeviceKeySpy).toHaveBeenCalledTimes(1);
 
         expect(result).toEqual(mockUserKey);
         expect(decryptToBytesSpy).toHaveBeenCalledTimes(1);
@@ -577,7 +478,6 @@ describe("deviceTrustCryptoService", () => {
         const setDeviceKeySpy = jest.spyOn(deviceTrustCryptoService as any, "setDeviceKey");
 
         const result = await deviceTrustCryptoService.decryptUserKeyWithDeviceKey(
-          mockUserId,
           mockEncryptedDevicePrivateKey,
           mockEncryptedUserKey,
           mockDeviceKey,
@@ -586,7 +486,7 @@ describe("deviceTrustCryptoService", () => {
         expect(result).toBeNull();
         expect(decryptToBytesSpy).toHaveBeenCalledTimes(1);
         expect(setDeviceKeySpy).toHaveBeenCalledTimes(1);
-        expect(setDeviceKeySpy).toHaveBeenCalledWith(mockUserId, null);
+        expect(setDeviceKeySpy).toHaveBeenCalledWith(null);
       });
     });
 
@@ -604,28 +504,19 @@ describe("deviceTrustCryptoService", () => {
         cryptoService.activeUserKey$ = of(fakeNewUserKey);
       });
 
-      it("throws an error when a null user id is passed in", async () => {
-        await expect(
-          deviceTrustCryptoService.rotateDevicesTrust(null, fakeNewUserKey, ""),
-        ).rejects.toThrow("UserId is required. Cannot rotate device's trust.");
-      });
-
       it("does an early exit when the current device is not a trusted device", async () => {
-        const deviceKeyState: FakeActiveUserState<DeviceKey> =
-          stateProvider.activeUser.getFake(DEVICE_KEY);
-        deviceKeyState.nextState(null);
+        stateService.getDeviceKey.mockResolvedValue(null);
 
-        await deviceTrustCryptoService.rotateDevicesTrust(mockUserId, fakeNewUserKey, "");
+        await deviceTrustCryptoService.rotateDevicesTrust(fakeNewUserKey, "");
 
         expect(devicesApiService.updateTrust).not.toHaveBeenCalled();
       });
 
       describe("is on a trusted device", () => {
-        beforeEach(async () => {
-          const mockDeviceKey = new SymmetricCryptoKey(
-            new Uint8Array(deviceKeyBytesLength),
-          ) as DeviceKey;
-          await stateProvider.setUserState(DEVICE_KEY, mockDeviceKey, mockUserId);
+        beforeEach(() => {
+          stateService.getDeviceKey.mockResolvedValue(
+            new SymmetricCryptoKey(new Uint8Array(deviceKeyBytesLength)) as DeviceKey,
+          );
         });
 
         it("rotates current device keys and calls api service when the current device is trusted", async () => {
@@ -691,11 +582,7 @@ describe("deviceTrustCryptoService", () => {
             );
           });
 
-          await deviceTrustCryptoService.rotateDevicesTrust(
-            mockUserId,
-            fakeNewUserKey,
-            "my_password_hash",
-          );
+          await deviceTrustCryptoService.rotateDevicesTrust(fakeNewUserKey, "my_password_hash");
 
           expect(devicesApiService.updateTrust).toHaveBeenCalledWith(
             matches((updateTrustModel: UpdateDevicesTrustRequest) => {
@@ -711,32 +598,4 @@ describe("deviceTrustCryptoService", () => {
       });
     });
   });
-
-  // Helpers
-  function createDeviceTrustCryptoService(
-    mockUserId: UserId | null,
-    supportsSecureStorage: boolean,
-  ) {
-    accountService = mockAccountServiceWith(mockUserId);
-    stateProvider = new FakeStateProvider(accountService);
-
-    platformUtilsService.supportsSecureStorage.mockReturnValue(supportsSecureStorage);
-
-    decryptionOptions.next({} as any);
-    userDecryptionOptionsService.userDecryptionOptions$ = decryptionOptions;
-
-    return new DeviceTrustCryptoService(
-      keyGenerationService,
-      cryptoFunctionService,
-      cryptoService,
-      encryptService,
-      appIdService,
-      devicesApiService,
-      i18nService,
-      platformUtilsService,
-      stateProvider,
-      secureStorageService,
-      userDecryptionOptionsService,
-    );
-  }
 });

@@ -1,6 +1,5 @@
 import { OptionValues } from "commander";
 import * as inquirer from "inquirer";
-import { firstValueFrom } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { ErrorResponse } from "@bitwarden/common/models/response/error.response";
@@ -47,7 +46,7 @@ export class SendReceiveCommand extends DownloadCommand {
       return Response.badRequest("Failed to parse the provided Send url");
     }
 
-    const apiUrl = await this.getApiUrl(urlObject);
+    const apiUrl = this.getApiUrl(urlObject);
     const [id, key] = this.getIdAndKey(urlObject);
 
     if (Utils.isNullOrWhitespace(id) || Utils.isNullOrWhitespace(key)) {
@@ -109,9 +108,8 @@ export class SendReceiveCommand extends DownloadCommand {
     return [result[0], result[1]];
   }
 
-  private async getApiUrl(url: URL) {
-    const env = await firstValueFrom(this.environmentService.environment$);
-    const urls = env.getUrls();
+  private getApiUrl(url: URL) {
+    const urls = this.environmentService.getUrls();
     if (url.origin === "https://send.bitwarden.com") {
       return "https://api.bitwarden.com";
     } else if (url.origin === urls.api) {

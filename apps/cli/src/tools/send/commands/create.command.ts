@@ -127,8 +127,7 @@ export class SendCreateCommand {
       await this.sendApiService.save([encSend, fileData]);
       const newSend = await this.sendService.getFromState(encSend.id);
       const decSend = await newSend.decrypt();
-      const env = await firstValueFrom(this.environmentService.environment$);
-      const res = new SendResponse(decSend, env.getWebVaultUrl());
+      const res = new SendResponse(decSend, this.environmentService.getWebVaultUrl());
       return Response.success(res);
     } catch (e) {
       return Response.error(e);

@@ -1,7 +1,5 @@
 import { defer, firstValueFrom } from "rxjs";
 
-import { UserDecryptionOptionsServiceAbstraction } from "@bitwarden/auth/common";
-
 import { VaultTimeoutSettingsService as VaultTimeoutSettingsServiceAbstraction } from "../../abstractions/vault-timeout/vault-timeout-settings.service";
 import { PolicyService } from "../../admin-console/abstractions/policy/policy.service.abstraction";
 import { PolicyType } from "../../admin-console/enums";
@@ -21,7 +19,6 @@ export type PinLockType = "DISABLED" | "PERSISTANT" | "TRANSIENT";
 
 export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceAbstraction {
   constructor(
-    private userDecryptionOptionsService: UserDecryptionOptionsServiceAbstraction,
     private cryptoService: CryptoService,
     private tokenService: TokenService,
     private policyService: PolicyService,
@@ -52,7 +49,7 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
 
     await this.stateService.setVaultTimeoutAction(action);
 
-    await this.tokenService.setTokens(accessToken, action, timeout, refreshToken, [
+    await this.tokenService.setTokens(accessToken, refreshToken, action, timeout, [
       clientId,
       clientSecret,
     ]);
@@ -177,15 +174,12 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
   }
 
   private async userHasMasterPassword(userId: string): Promise<boolean> {
-    if (userId) {
-      const decryptionOptions = await firstValueFrom(
-        this.userDecryptionOptionsService.userDecryptionOptionsById$(userId),
-      );
+    const acctDecryptionOpts = await this.stateService.getAccountDecryptionOptions({
+      userId: userId,
+    });
 
-      if (decryptionOptions?.hasMasterPassword != undefined) {
-        return decryptionOptions.hasMasterPassword;
-      }
+    if (acctDecryptionOpts?.hasMasterPassword != undefined) {
+      return acctDecryptionOpts.hasMasterPassword;
     }
-    return await firstValueFrom(this.userDecryptionOptionsService.hasMasterPassword$);
   }
 }

@@ -27,7 +27,6 @@ describe("CollectAutofillContentService", () => {
   const domElementVisibilityService = new DomElementVisibilityService();
   const autofillOverlayContentService = new AutofillOverlayContentService();
   let collectAutofillContentService: CollectAutofillContentService;
-  const mockIntersectionObserver = mock<IntersectionObserver>();
 
   beforeEach(() => {
     document.body.innerHTML = mockLoginForm;
@@ -35,7 +34,6 @@ describe("CollectAutofillContentService", () => {
       domElementVisibilityService,
       autofillOverlayContentService,
     );
-    window.IntersectionObserver = jest.fn(() => mockIntersectionObserver);
   });
 
   afterEach(() => {
@@ -2529,10 +2527,10 @@ describe("CollectAutofillContentService", () => {
     });
 
     updatedAttributes.forEach((attribute) => {
-      it(`will update the ${attribute} value for the field element`, () => {
+      it(`will update the ${attribute} value for the field element`, async () => {
         jest.spyOn(collectAutofillContentService["autofillFieldElements"], "set");
 
-        collectAutofillContentService["updateAutofillFieldElementData"](
+        await collectAutofillContentService["updateAutofillFieldElementData"](
           attribute,
           fieldElement,
           autofillField,
@@ -2545,79 +2543,16 @@ describe("CollectAutofillContentService", () => {
       });
     });
 
-    it("will not update an attribute value if it is not present in the updateActions object", () => {
+    it("will not update an attribute value if it is not present in the updateActions object", async () => {
       jest.spyOn(collectAutofillContentService["autofillFieldElements"], "set");
 
-      collectAutofillContentService["updateAutofillFieldElementData"](
+      await collectAutofillContentService["updateAutofillFieldElementData"](
         "random-attribute",
         fieldElement,
         autofillField,
       );
 
       expect(collectAutofillContentService["autofillFieldElements"].set).not.toBeCalled();
-    });
-  });
-
-  describe("handleFormElementIntersection", () => {
-    let isFormFieldViewableSpy: jest.SpyInstance;
-    let setupAutofillOverlayListenerOnFieldSpy: jest.SpyInstance;
-
-    beforeEach(() => {
-      isFormFieldViewableSpy = jest.spyOn(
-        collectAutofillContentService["domElementVisibilityService"],
-        "isFormFieldViewable",
-      );
-      setupAutofillOverlayListenerOnFieldSpy = jest.spyOn(
-        collectAutofillContentService["autofillOverlayContentService"],
-        "setupAutofillOverlayListenerOnField",
-      );
-    });
-
-    it("skips the initial intersection event for an observed element", async () => {
-      const formFieldElement = document.createElement("input") as ElementWithOpId<FormFieldElement>;
-      collectAutofillContentService["elementInitializingIntersectionObserver"].add(
-        formFieldElement,
-      );
-      const entries = [
-        { target: formFieldElement, isIntersecting: true },
-      ] as unknown as IntersectionObserverEntry[];
-
-      await collectAutofillContentService["handleFormElementIntersection"](entries);
-
-      expect(isFormFieldViewableSpy).not.toHaveBeenCalled();
-      expect(setupAutofillOverlayListenerOnFieldSpy).not.toHaveBeenCalled();
-    });
-
-    it("skips setting up the overlay listeners on a field that is not viewable", async () => {
-      const formFieldElement = document.createElement("input") as ElementWithOpId<FormFieldElement>;
-      const entries = [
-        { target: formFieldElement, isIntersecting: true },
-      ] as unknown as IntersectionObserverEntry[];
-      isFormFieldViewableSpy.mockReturnValueOnce(false);
-
-      await collectAutofillContentService["handleFormElementIntersection"](entries);
-
-      expect(isFormFieldViewableSpy).toHaveBeenCalledWith(formFieldElement);
-      expect(setupAutofillOverlayListenerOnFieldSpy).not.toHaveBeenCalled();
-    });
-
-    it("sets up the overlay listeners on a viewable field", async () => {
-      const formFieldElement = document.createElement("input") as ElementWithOpId<FormFieldElement>;
-      const autofillField = mock<AutofillField>();
-      const entries = [
-        { target: formFieldElement, isIntersecting: true },
-      ] as unknown as IntersectionObserverEntry[];
-      isFormFieldViewableSpy.mockReturnValueOnce(true);
-      collectAutofillContentService["autofillFieldElements"].set(formFieldElement, autofillField);
-      collectAutofillContentService["intersectionObserver"] = mockIntersectionObserver;
-
-      await collectAutofillContentService["handleFormElementIntersection"](entries);
-
-      expect(isFormFieldViewableSpy).toHaveBeenCalledWith(formFieldElement);
-      expect(setupAutofillOverlayListenerOnFieldSpy).toHaveBeenCalledWith(
-        formFieldElement,
-        autofillField,
-      );
     });
   });
 });

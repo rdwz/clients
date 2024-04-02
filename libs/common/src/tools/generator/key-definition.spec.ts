@@ -1,4 +1,5 @@
 import {
+  ENCRYPTED_HISTORY,
   EFF_USERNAME_SETTINGS,
   CATCHALL_SETTINGS,
   SUBADDRESS_SETTINGS,
@@ -97,6 +98,14 @@ describe("Key definitions", () => {
     it("should pass through deserialization", () => {
       const value: any = {};
       const result = SIMPLE_LOGIN_FORWARDER.deserializer(value);
+      expect(result).toBe(value);
+    });
+  });
+
+  describe("ENCRYPTED_HISTORY", () => {
+    it("should pass through deserialization", () => {
+      const value = {};
+      const result = ENCRYPTED_HISTORY.deserializer(value as any);
       expect(result).toBe(value);
     });
   });

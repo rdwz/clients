@@ -23,10 +23,7 @@ import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/sym
 import { CsprngArray } from "@bitwarden/common/types/csprng";
 import { DeviceKey, UserKey, MasterKey } from "@bitwarden/common/types/key";
 
-import {
-  AuthRequestServiceAbstraction,
-  InternalUserDecryptionOptionsServiceAbstraction,
-} from "../abstractions";
+import { AuthRequestServiceAbstraction } from "../abstractions";
 import { SsoLoginCredentials } from "../models/domain/login-credentials";
 
 import { identityTokenResponseFactory } from "./login.strategy.spec";
@@ -42,7 +39,6 @@ describe("SsoLoginStrategy", () => {
   let logService: MockProxy<LogService>;
   let stateService: MockProxy<StateService>;
   let twoFactorService: MockProxy<TwoFactorService>;
-  let userDecryptionOptionsService: MockProxy<InternalUserDecryptionOptionsServiceAbstraction>;
   let keyConnectorService: MockProxy<KeyConnectorService>;
   let deviceTrustCryptoService: MockProxy<DeviceTrustCryptoServiceAbstraction>;
   let authRequestService: MockProxy<AuthRequestServiceAbstraction>;
@@ -70,7 +66,6 @@ describe("SsoLoginStrategy", () => {
     logService = mock<LogService>();
     stateService = mock<StateService>();
     twoFactorService = mock<TwoFactorService>();
-    userDecryptionOptionsService = mock<InternalUserDecryptionOptionsServiceAbstraction>();
     keyConnectorService = mock<KeyConnectorService>();
     deviceTrustCryptoService = mock<DeviceTrustCryptoServiceAbstraction>();
     authRequestService = mock<AuthRequestServiceAbstraction>();
@@ -92,7 +87,6 @@ describe("SsoLoginStrategy", () => {
       logService,
       stateService,
       twoFactorService,
-      userDecryptionOptionsService,
       keyConnectorService,
       deviceTrustCryptoService,
       authRequestService,

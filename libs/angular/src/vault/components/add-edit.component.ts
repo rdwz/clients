@@ -14,7 +14,7 @@ import { Organization } from "@bitwarden/common/admin-console/models/domain/orga
 import { EventType } from "@bitwarden/common/enums";
 import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { UriMatchStrategy } from "@bitwarden/common/models/domain/domain-service";
-import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
+import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
@@ -119,7 +119,7 @@ export class AddEditComponent implements OnInit, OnDestroy {
     protected dialogService: DialogService,
     protected win: Window,
     protected datePipe: DatePipe,
-    protected configService: ConfigService,
+    protected configService: ConfigServiceAbstraction,
   ) {
     this.typeOptions = [
       { name: i18nService.t("typeLogin"), value: CipherType.Login },
@@ -402,14 +402,6 @@ export class AddEditComponent implements OnInit, OnDestroy {
     }
   }
 
-  removePasskey() {
-    if (this.cipher.type !== CipherType.Login || this.cipher.login.fido2Credentials == null) {
-      return;
-    }
-
-    this.cipher.login.fido2Credentials = null;
-  }
-
   onCardNumberChange(): void {
     this.cipher.card.brand = CardView.getCardBrandByPatterns(this.cipher.card.number);
   }
@@ -658,11 +650,11 @@ export class AddEditComponent implements OnInit, OnDestroy {
 
   protected saveCipher(cipher: Cipher) {
     const isNotClone = this.editMode && !this.cloneMode;
-    let orgAdmin = this.organization?.canEditAllCiphers(this.flexibleCollectionsV1Enabled);
+    let orgAdmin = this.organization?.isAdmin;
 
-    // if a cipher is unassigned we want to check if they are an admin or have permission to edit any collection
-    if (!cipher.collectionIds) {
-      orgAdmin = this.organization?.canEditAnyCollection;
+    if (this.flexibleCollectionsV1Enabled) {
+      // Flexible Collections V1 restricts admins, check the organization setting via canEditAllCiphers
+      orgAdmin = this.organization?.canEditAllCiphers(true);
     }
 
     return this.cipher.id == null

@@ -7,13 +7,13 @@ export abstract class ThemeStateService {
   /**
    * The users selected theme.
    */
-  abstract selectedTheme$: Observable<ThemeType>;
+  selectedTheme$: Observable<ThemeType>;
 
   /**
    * A method for updating the current users configured theme.
    * @param theme The chosen user theme.
    */
-  abstract setSelectedTheme(theme: ThemeType): Promise<void>;
+  setSelectedTheme: (theme: ThemeType) => Promise<void>;
 }
 
 const THEME_SELECTION = new KeyDefinition<ThemeType>(THEMING_DISK, "selection", {

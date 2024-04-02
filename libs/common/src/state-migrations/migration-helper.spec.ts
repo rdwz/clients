@@ -9,7 +9,7 @@ import { AbstractStorageService } from "../platform/abstractions/storage.service
 // eslint-disable-next-line import/no-restricted-paths -- Needed to generate unique strings for injection
 import { Utils } from "../platform/misc/utils";
 
-import { MigrationHelper, MigrationHelperType } from "./migration-helper";
+import { MigrationHelper } from "./migration-helper";
 import { Migrator } from "./migrator";
 
 const exampleJSON = {
@@ -37,7 +37,7 @@ describe("RemoveLegacyEtmKeyMigrator", () => {
     storage = mock();
     storage.get.mockImplementation((key) => (exampleJSON as any)[key]);
 
-    sut = new MigrationHelper(0, storage, logService, "general");
+    sut = new MigrationHelper(0, storage, logService);
   });
 
   describe("get", () => {
@@ -150,7 +150,6 @@ describe("RemoveLegacyEtmKeyMigrator", () => {
 export function mockMigrationHelper(
   storageJson: any,
   stateVersion = 0,
-  type: MigrationHelperType = "general",
 ): MockProxy<MigrationHelper> {
   const logService: MockProxy<LogService> = mock();
   const storage: MockProxy<AbstractStorageService> = mock();
@@ -158,7 +157,7 @@ export function mockMigrationHelper(
   storage.save.mockImplementation(async (key, value) => {
     (storageJson as any)[key] = value;
   });
-  const helper = new MigrationHelper(stateVersion, storage, logService, type);
+  const helper = new MigrationHelper(stateVersion, storage, logService);
 
   const mockHelper = mock<MigrationHelper>();
   mockHelper.get.mockImplementation((key) => helper.get(key));
@@ -176,15 +175,15 @@ export function mockMigrationHelper(
     helper.setToUser(userId, keyDefinition, value),
   );
   mockHelper.getAccounts.mockImplementation(() => helper.getAccounts());
-
-  mockHelper.type = helper.type;
-
   return mockHelper;
 }
 
+// TODO: Use const generic for TUsers in TypeScript 5.0 so consumers don't have to `as const` themselves
 export type InitialDataHint<TUsers extends readonly string[]> = {
   /**
    * A string array of the users id who are authenticated
+   *
+   * NOTE: It's recommended to as const this string array so you get type help defining the users data
    */
   authenticatedAccounts?: TUsers;
   /**
@@ -283,9 +282,10 @@ function expectInjectedData(
  * @param initalData The data to start with
  * @returns State after your migration has ran.
  */
+// TODO: Use const generic for TUsers in TypeScript 5.0 so consumers don't have to `as const` themselves
 export async function runMigrator<
   TMigrator extends Migrator<number, number>,
-  const TUsers extends readonly string[],
+  TUsers extends readonly string[] = string[],
 >(
   migrator: TMigrator,
   initalData?: InitialDataHint<TUsers>,
@@ -295,7 +295,7 @@ export async function runMigrator<
   const allInjectedData = injectData(initalData, []);
 
   const fakeStorageService = new FakeStorageService(initalData);
-  const helper = new MigrationHelper(migrator.fromVersion, fakeStorageService, mock(), "general");
+  const helper = new MigrationHelper(migrator.fromVersion, fakeStorageService, mock());
 
   // Run their migrations
   if (direction === "rollback") {

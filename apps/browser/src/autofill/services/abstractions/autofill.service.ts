@@ -15,7 +15,7 @@ export interface PageDetail {
 export interface AutoFillOptions {
   cipher: CipherView;
   pageDetails: PageDetail[];
-  doc?: typeof self.document;
+  doc?: typeof window.document;
   tab: chrome.tabs.Tab;
   skipUsernameOnlyFill?: boolean;
   onlyEmptyFields?: boolean;

@@ -2,9 +2,9 @@
   <div class="content">
     <div class="inner-content" *ngIf="cipher">
       <div class="box">
-        <bit-callout type="info" *ngIf="allowOwnershipOptions() && !allowPersonal">
+        <app-callout type="info" *ngIf="allowOwnershipOptions() && !allowPersonal">
           {{ "personalOwnershipPolicyInEffect" | i18n }}
-        </bit-callout>
+        </app-callout>
         <h2 class="box-header">
           {{ title }}
         </h2>
@@ -116,25 +116,14 @@
             </div>
             <!--Passkey-->
             <div
-              class="box-content-row box-content-row-multi text-muted"
+              class="box-content-row text-muted"
               *ngIf="cipher.login.hasFido2Credentials && !cloneMode"
               appBoxRow
               tabindex="0"
               attr.aria-label="{{ 'typePasskey' | i18n }} {{ fido2CredentialCreationDateValue }}"
             >
-              <button
-                type="button"
-                appStopClick
-                (click)="removePasskey()"
-                appA11yTitle="{{ 'removePasskey' | i18n }}"
-                [disabled]="!cipher.edit && editMode"
-              >
-                <i class="bwi bwi-fw bwi-minus-circle bwi-lg" aria-hidden="true"></i>
-              </button>
-              <div class="row-main">
-                <span class="row-label">{{ "typePasskey" | i18n }}</span>
-                {{ fido2CredentialCreationDateValue }}
-              </div>
+              <span class="row-label">{{ "typePasskey" | i18n }}</span>
+              {{ fido2CredentialCreationDateValue }}
             </div>
 
             <div class="box-content-row" appBoxRow>

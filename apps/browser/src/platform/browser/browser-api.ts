@@ -351,11 +351,11 @@ export class BrowserApi {
   private static setupUnloadListeners() {
     // The MDN recommend using 'visibilitychange' but that event is fired any time the popup window is obscured as well
     // 'pagehide' works just like 'unload' but is compatible with the back/forward cache, so we prefer using that one
-    self.addEventListener("pagehide", () => {
+    window.onpagehide = () => {
       for (const [event, callback] of BrowserApi.trackedChromeEventListeners) {
         event.removeListener(callback);
       }
-    });
+    };
   }
 
   static sendMessage(subscriber: string, arg: any = {}) {
@@ -423,7 +423,7 @@ export class BrowserApi {
       return;
     }
 
-    const currentHref = self.location.href;
+    const currentHref = window.location.href;
     views
       .filter((w) => w.location.href != null && !w.location.href.includes("background.html"))
       .filter((w) => !exemptCurrentHref || w.location.href !== currentHref)

@@ -13,7 +13,6 @@ const routes: Routes = [
   },
   {
     path: "sm",
-    canActivate: [deepLinkGuard()],
     loadChildren: async () =>
       (await import("./secrets-manager/secrets-manager.module")).SecretsManagerModule,
   },

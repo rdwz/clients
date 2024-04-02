@@ -25,13 +25,7 @@
       *ngIf="subscriptionMarkedForCancel"
     >
       <p>{{ "subscriptionPendingCanceled" | i18n }}</p>
-      <button
-        *ngIf="userOrg.canEditSubscription"
-        bitButton
-        buttonType="secondary"
-        [bitAction]="reinstate"
-        type="button"
-      >
+      <button bitButton buttonType="secondary" [bitAction]="reinstate" type="button">
         {{ "reinstateSubscription" | i18n }}
       </button>
     </bit-callout>
@@ -238,9 +232,28 @@
         <button
           bitButton
           buttonType="danger"
-          (click)="cancelSubscription()"
+          [bitAction]="cancelWithWarning"
           type="button"
-          *ngIf="subscription && !subscription.cancelled && !subscriptionMarkedForCancel"
+          *ngIf="
+            subscription &&
+            !subscription.cancelled &&
+            !subscriptionMarkedForCancel &&
+            !(presentUserWithOffboardingSurvey$ | async)
+          "
+        >
+          {{ "cancelSubscription" | i18n }}
+        </button>
+        <button
+          bitButton
+          buttonType="danger"
+          (click)="cancelWithOffboardingSurvey()"
+          type="button"
+          *ngIf="
+            subscription &&
+            !subscription.cancelled &&
+            !subscriptionMarkedForCancel &&
+            (presentUserWithOffboardingSurvey$ | async)
+          "
         >
           {{ "cancelSubscription" | i18n }}
         </button>

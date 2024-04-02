@@ -579,7 +579,7 @@
     "message": "Toegang"
   },
   "accessLevel": {
-    "message": "Toegangsniveau"
+    "message": "Access level"
   },
   "loggedOut": {
     "message": "Uitgelogd"
@@ -660,13 +660,13 @@
     "message": "Geef je passkey een naam om deze later te herkennen."
   },
   "useForVaultEncryption": {
-    "message": "Gebruik voor kluis versleuteling"
+    "message": "Use for vault encryption"
   },
   "useForVaultEncryptionInfo": {
-    "message": "Meld aan en ontgrendel op ondersteunde apparaten zonder uw hoofdwachtwoord. Volg de aanwijzingen in uw browser om dit te activeren."
+    "message": "Log in and unlock on supported devices without your master password. Follow the prompts from your browser to finalize setup."
   },
   "useForVaultEncryptionErrorReadingPasskey": {
-    "message": "Fout bij lezen van passkey. Probeer het opnieuw of selecteer een andere optie."
+    "message": "Error reading passkey. Try again or uncheck this option."
   },
   "encryptionNotSupported": {
     "message": "Encryptie niet ondersteund"
@@ -2036,7 +2036,7 @@
     "message": "1 GB versleutelde opslag voor bijlagen."
   },
   "premiumSignUpTwoStepOptions": {
-    "message": "Gepatenteerde 2 stap login opties zoals YubiKey en Duo."
+    "message": "Proprietary two-step login options such as YubiKey and Duo."
   },
   "premiumSignUpEmergency": {
     "message": "Noodtoegang"
@@ -3621,7 +3621,7 @@
     "message": "Encryptiesleutel bijwerken"
   },
   "updateEncryptionSchemeDesc": {
-    "message": "Wij hebben de versleutelings- methode aangepast om betere beveiliging te kunnen leveren. Voer uw hoofdwachtwoord in om dit door te voeren."
+    "message": "We've changed the encryption scheme to provide better security. Update your encryption key now by entering your master password below."
   },
   "updateEncryptionKeyWarning": {
     "message": "Na het bijwerken van je encryptiesleutel moet je je afmelden en weer aanmelden bij alle Bitwarden-applicaties die je gebruikt (zoals de mobiele app of browserextensies). Als je niet opnieuw inlogt (wat je nieuwe encryptiesleutel downloadt), kan dit gegevensbeschadiging tot gevolg hebben. We proberen je automatisch uit te loggen, maar het kan zijn dat dit met enige vertraging gebeurt."
@@ -3781,7 +3781,7 @@
     "message": "Dit item heeft oude bestandsbijlagen die aangepast moeten worden."
   },
   "attachmentFixDescription": {
-    "message": "Deze bijlage maakt gebruik van verouderde versleuteling. Selecteer \"oplossen\" om het bestand te downloaden, opnieuw te versleutelen en vervolgens opnieuw te uploaden."
+    "message": "This attachment uses outdated encryption. Select 'Fix' to download, re-encrypt, and re-upload the attachment."
   },
   "fix": {
     "message": "Oplossen",
@@ -4044,10 +4044,10 @@
     "message": "Je kunt dit tabblad nu sluiten en doorgaan in de extensie."
   },
   "youSuccessfullyLoggedIn": {
-    "message": "U bent succesvol ingelogd"
+    "message": "You successfully logged in"
   },
   "thisWindowWillCloseIn5Seconds": {
-    "message": "Dit scherm sluit automatisch over 5 seconden"
+    "message": "This window will automatically close in 5 seconds"
   },
   "includeAllTeamsFeatures": {
     "message": "Alle functionaliteit van Teams plus:"
@@ -4776,13 +4776,13 @@
     "message": "Accountherstel-administratie"
   },
   "accountRecoveryPolicyDesc": {
-    "message": "Gebaseerd op de huidige versleutelings- methode, herstel accounts wanneer hoofdwachtwoorden of vertrouwde apparaten vergeten of vermist zijn."
+    "message": "Based on the encryption method, recover accounts when master passwords or trusted devices are forgotten or lost."
   },
   "accountRecoveryPolicyWarning": {
-    "message": "Bestaande accounts met hoofdwachtwoorden vereisen gebruikers om zelf in te schrijven voordat administratoren hun accounts kunnen herstellen. Automatische inschrijving zal automatisch account herstel inschakelen voor nieuwe gebruikers."
+    "message": "Existing accounts with master passwords will require members to self-enroll before administrators can recover their accounts. Automatic enrollment will turn on account recovery for new members."
   },
   "accountRecoverySingleOrgRequirementDesc": {
-    "message": "Het enkele organisatie beleid moet aangezet zijn voordat dit beleid geactiveerd kan worden."
+    "message": "The single organization Enterprise policy must be turned on before activating this policy."
   },
   "resetPasswordPolicyAutoEnroll": {
     "message": "Automatische inschrijving"
@@ -5114,7 +5114,7 @@
     "message": "Automatisch invullen activeren"
   },
   "activateAutofillPolicyDesc": {
-    "message": "Activeer de automatisch invullen wanneer de pagina geladen is instelling in de browser extensie voor bestaande en nieuwe gebruikers."
+    "message": "Activate the auto-fill on page load setting on the browser extension for all existing and new members."
   },
   "experimentalFeature": {
     "message": "Gehackte of onbetrouwbare websites kunnen automatisch invullen bij laden van pagina misbruiken."
@@ -5412,7 +5412,7 @@
     "description": "This will be used as part of a larger sentence, broken up to include links. The full sentence will read 'Use the require single-sign-on authentication policy to require all members to log in with SSO.'"
   },
   "ssoPolicyHelpAnchor": {
-    "message": "vereis single sign-on authenticatie beleid",
+    "message": "require single sign-on authentication policy",
     "description": "This will be used as part of a larger sentence, broken up to include links. The full sentence will read 'Use the require single-sign-on authentication policy to require all members to log in with SSO.'"
   },
   "ssoPolicyHelpEnd": {
@@ -5429,15 +5429,15 @@
     "message": "Key Connector"
   },
   "memberDecryptionKeyConnectorDescStart": {
-    "message": "Verbind inloggen met SSO naar je zelf beheerde Decoderingsserver. Door deze optie te gebruiken hoeven gebruikers niet hun hoofdwachtwoord te gebruiken om kluis data te decoderen. Het",
+    "message": "Connect login with SSO to your self-hosted decryption key server. Using this option, members won’t need to use their master passwords to decrypt vault data. The",
     "description": "This will be used as part of a larger sentence, broken up to include links. The full sentence will read 'Connect login with SSO to your self-hosted decryption key server. Using this option, members won’t need to use their master passwords to decrypt vault data. The require SSO authentication and single organization policies are required to set up Key Connector decryption. Contact Bitwarden Support for set up assistance.'"
   },
   "memberDecryptionKeyConnectorDescLink": {
-    "message": "vereis het SSO authenticatie beleid en het enkele organisatie beleid",
+    "message": "require SSO authentication and single organization policies",
     "description": "This will be used as part of a larger sentence, broken up to include links. The full sentence will read 'Connect login with SSO to your self-hosted decryption key server. Using this option, members won’t need to use their master passwords to decrypt vault data. The require SSO authentication and single organization policies are required to set up Key Connector decryption. Contact Bitwarden Support for set up assistance.'"
   },
   "memberDecryptionKeyConnectorDescEnd": {
-    "message": "is vereist om Key Connector decryptie in te stellen. Contacteer Bitwarden support voor assistentie.",
+    "message": "are required to set up Key Connector decryption. Contact Bitwarden Support for set up assistance.",
     "description": "This will be used as part of a larger sentence, broken up to include links. The full sentence will read 'Connect login with SSO to your self-hosted decryption key server. Using this option, members won’t need to use their master passwords to decrypt vault data. The require SSO authentication and single organization policies are required to set up Key Connector decryption. Contact Bitwarden Support for set up assistance.'"
   },
   "keyConnectorPolicyRestriction": {
@@ -6197,7 +6197,7 @@
     }
   },
   "deleteServiceAccountToast": {
-    "message": "Service account verwijderd"
+    "message": "Service account deleted"
   },
   "deleteServiceAccountsToast": {
     "message": "Serviceaccounts verwijderd"
@@ -6734,7 +6734,7 @@
     }
   },
   "teamsStarterPlanInvLimitReachedManageBilling": {
-    "message": "Gratis organisaties beschikken maximaal over $SEATCOUNT$ leden. Upgrade je abonnement om meer leden uit te kunnen nodigen.",
+    "message": "Teams Starter plans may have up to $SEATCOUNT$ members. Upgrade to your plan to invite more members.",
     "placeholders": {
       "seatcount": {
         "content": "$1",
@@ -6881,7 +6881,7 @@
     "message": "Werk je versleutelingsinstellingen bij om aan de nieuwe beveiligingsaanbevelingen te voldoen en de bescherming van je account te verbeteren."
   },
   "changeKdfLoggedOutWarning": {
-    "message": "Als u doorgaat zullen al uw actieve sessies word uitgelogd. U zult zich opnieuw aan moeten melden en 2 stappen verificatie moeten instellen. Wij raden u aan om uw gegevens eerst te exporteren voordat u uw encryptie instellingen aanpast om data verlies te voorkomen."
+    "message": "Proceeding will log you out of all active sessions. You will need to log back in and complete two-step login setup. We recommend exporting your vault before changing your encryption settings to prevent data loss."
   },
   "secretsManager": {
     "message": "Secrets Manager"
@@ -7020,10 +7020,10 @@
     "message": "Gelekt hoofdwachtwoord"
   },
   "exposedMasterPasswordDesc": {
-    "message": "Dit wachtwoord is gevonden in een datalek. Gebruik een uniek wachtwoord om je account te beveiligen. Weet je zeker dat je een gelekt wachtwoord wil gebruiken?"
+    "message": "Password found in a data breach. Use a unique password to protect your account. Are you sure you want to use an exposed password?"
   },
   "weakAndExposedMasterPassword": {
-    "message": "Zwak en gelekt hoofdwachtwoord"
+    "message": "Weak and Exposed Master Password"
   },
   "weakAndBreachedMasterPasswordDesc": {
     "message": "Zwak wachtwoord geïdentificeerd en gevonden in een datalek. Gebruik een sterk en uniek wachtwoord om je account te beschermen. Weet je zeker dat je dit wachtwoord wilt gebruiken?"
@@ -7062,6 +7062,12 @@
   },
   "enforceOnLoginDesc": {
     "message": "Verplicht bestaande leden hun wachtwoord te wijzigen"
+  },
+  "usDomain": {
+    "message": "bitwarden.com"
+  },
+  "euDomain": {
+    "message": "bitwarden.eu"
   },
   "smProjectDeleteAccessRestricted": {
     "message": "Je hebt geen rechten om dit project te verwijderen",
@@ -7271,7 +7277,7 @@
     "message": "Volgende"
   },
   "ssoLoginIsRequired": {
-    "message": "SSO login is vereist"
+    "message": "SSO login is required"
   },
   "selectedRegionFlag": {
     "message": "Geselecteerde regionale vlag"
@@ -7423,7 +7429,7 @@
     "message": "Service account limiet (optioneel)"
   },
   "maxServiceAccountCost": {
-    "message": "Maximale potentiële service account kosten"
+    "message": "Max potential service account cost"
   },
   "loggedInExclamation": {
     "message": "Ingelogd!"
@@ -7444,7 +7450,7 @@
     "message": "Aliasdomein"
   },
   "alreadyHaveAccount": {
-    "message": "Heb je al een account?"
+    "message": "Already have an account?"
   },
   "skipToContent": {
     "message": "Ga naar de inhoud"
@@ -7471,7 +7477,7 @@
     }
   },
   "seeDetailedInstructions": {
-    "message": "Zie gedetailleerde instructies op onze hulp pagina hier",
+    "message": "See detailed instructions on our help site at",
     "description": "This is followed a by a hyperlink to the help website."
   },
   "installBrowserExtension": {
@@ -7487,13 +7493,13 @@
     "message": "Er is een onverwachte fout opgetreden tijdens het laden van deze Send. Probeer het later opnieuw."
   },
   "seatLimitReached": {
-    "message": "Gebruikers limiet is bereikt"
+    "message": "Seat limit has been reached"
   },
   "contactYourProvider": {
-    "message": "Contacteer uw provider om aanvullende licenties aan te schaffen."
+    "message": "Contact your provider to purchase additional seats."
   },
   "seatLimitReachedContactYourProvider": {
-    "message": "De limiet voor het aantal gebruikers is bereikt. Contacteer je provider om aanvullende licenties aan te schaffen."
+    "message": "Seat limit has been reached. Contact your provider to purchase additional seats."
   },
   "collectionAccessRestricted": {
     "message": "Collectietoegang is beperkt"
@@ -7511,7 +7517,7 @@
     "message": "Toegang tot serviceaccount bijgewerkt"
   },
   "commonImportFormats": {
-    "message": "Gangbare formaten",
+    "message": "Common formats",
     "description": "Label indicating the most common import formats"
   },
   "maintainYourSubscription": {
@@ -7601,46 +7607,9 @@
     "message": "Providerportaal"
   },
   "restrictedGroupAccess": {
-    "message": "Het is niet mogelijk om jezelf toe te voegen aan groepen."
+    "message": "You cannot add yourself to groups."
   },
   "restrictedCollectionAccess": {
-    "message": "Het is niet mogelijk om jezelf toe te voegen aan collecties."
-  },
-  "assign": {
-    "message": "Toewijzen"
-  },
-  "assignToCollections": {
-    "message": "Toewijzen aan collecties"
-  },
-  "assignToTheseCollections": {
-    "message": "Aan deze collecties toewijzen"
-  },
-  "bulkCollectionAssignmentDialogDescription": {
-    "message": "Selecteer de collecies om de items mee te delen. Zodra een item in een collectie is bijgewerkt, werkt dat door in alle collecties. Alleen organisatieleden met toegang tot deze collecties kunnen de items zien."
-  },
-  "selectCollectionsToAssign": {
-    "message": "Collecties voor toewijzen selecteren"
-  },
-  "noCollectionsAssigned": {
-    "message": "Er zijn geen collecties toegewezen"
-  },
-  "successfullyAssignedCollections": {
-    "message": "Succesvol toegewezen collecties"
-  },
-  "bulkCollectionAssignmentWarning": {
-    "message": "Je hebt $TOTAL_COUNT$ items geselecteerd. Je kunt $READONLY_COUNT$ items niet bijwerken omdat je geen bewerkrechten hebt.",
-    "placeholders": {
-      "total_count": {
-        "content": "$1",
-        "example": "10"
-      },
-      "readonly_count": {
-        "content": "$2",
-        "example": "3"
-      }
-    }
-  },
-  "items": {
-    "message": "Items"
+    "message": "You cannot add yourself to collections."
   }
 }

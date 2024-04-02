@@ -1,5 +1,5 @@
 import { Location } from "@angular/common";
-import { Component, ViewChild, ViewContainerRef } from "@angular/core";
+import { Component, OnDestroy, OnInit, ViewChild, ViewContainerRef } from "@angular/core";
 import { Router } from "@angular/router";
 
 import { LoginViaAuthRequestComponent as BaseLoginWithDeviceComponent } from "@bitwarden/angular/auth/components/login-via-auth-request.component";
@@ -7,13 +7,12 @@ import { ModalService } from "@bitwarden/angular/services/modal.service";
 import {
   AuthRequestServiceAbstraction,
   LoginStrategyServiceAbstraction,
-  LoginEmailServiceAbstraction,
 } from "@bitwarden/auth/common";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
-import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { AnonymousHubService } from "@bitwarden/common/auth/abstractions/anonymous-hub.service";
 import { AuthService } from "@bitwarden/common/auth/abstractions/auth.service";
 import { DeviceTrustCryptoServiceAbstraction } from "@bitwarden/common/auth/abstractions/device-trust-crypto.service.abstraction";
+import { LoginService } from "@bitwarden/common/auth/abstractions/login.service";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { CryptoFunctionService } from "@bitwarden/common/platform/abstractions/crypto-function.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
@@ -32,7 +31,10 @@ import { EnvironmentComponent } from "../environment.component";
   selector: "app-login-via-auth-request",
   templateUrl: "login-via-auth-request.component.html",
 })
-export class LoginViaAuthRequestComponent extends BaseLoginWithDeviceComponent {
+export class LoginViaAuthRequestComponent
+  extends BaseLoginWithDeviceComponent
+  implements OnInit, OnDestroy
+{
   @ViewChild("environment", { read: ViewContainerRef, static: true })
   environmentModal: ViewContainerRef;
   showingModal = false;
@@ -54,11 +56,10 @@ export class LoginViaAuthRequestComponent extends BaseLoginWithDeviceComponent {
     private modalService: ModalService,
     syncService: SyncService,
     stateService: StateService,
-    loginEmailService: LoginEmailServiceAbstraction,
+    loginService: LoginService,
     deviceTrustCryptoService: DeviceTrustCryptoServiceAbstraction,
     authRequestService: AuthRequestServiceAbstraction,
     loginStrategyService: LoginStrategyServiceAbstraction,
-    accountService: AccountService,
     private location: Location,
   ) {
     super(
@@ -76,11 +77,10 @@ export class LoginViaAuthRequestComponent extends BaseLoginWithDeviceComponent {
       anonymousHubService,
       validationService,
       stateService,
-      loginEmailService,
+      loginService,
       deviceTrustCryptoService,
       authRequestService,
       loginStrategyService,
-      accountService,
     );
 
     super.onSuccessfulLogin = () => {
@@ -107,6 +107,10 @@ export class LoginViaAuthRequestComponent extends BaseLoginWithDeviceComponent {
     childComponent.onSaved.subscribe(() => {
       modal.close();
     });
+  }
+
+  ngOnDestroy(): void {
+    super.ngOnDestroy();
   }
 
   back() {

@@ -1,6 +1,5 @@
 import * as signalR from "@microsoft/signalr";
 import * as signalRMsgPack from "@microsoft/signalr-protocol-msgpack";
-import { firstValueFrom } from "rxjs";
 
 import { ApiService } from "../abstractions/api.service";
 import { NotificationsService as NotificationsServiceAbstraction } from "../abstractions/notifications.service";
@@ -39,7 +38,7 @@ export class NotificationsService implements NotificationsServiceAbstraction {
     private authService: AuthService,
     private messagingService: MessagingService,
   ) {
-    this.environmentService.environment$.subscribe(() => {
+    this.environmentService.urls.subscribe(() => {
       if (!this.inited) {
         return;
       }
@@ -52,7 +51,7 @@ export class NotificationsService implements NotificationsServiceAbstraction {
 
   async init(): Promise<void> {
     this.inited = false;
-    this.url = (await firstValueFrom(this.environmentService.environment$)).getNotificationsUrl();
+    this.url = this.environmentService.getNotificationsUrl();
 
     // Set notifications server URL to `https://-` to effectively disable communication
     // with the notifications server from the client app

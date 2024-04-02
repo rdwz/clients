@@ -1,7 +1,3 @@
-import { firstValueFrom } from "rxjs";
-
-import { UserDecryptionOptionsServiceAbstraction } from "@bitwarden/auth/common";
-
 import { ApiService } from "../../../abstractions/api.service";
 import { InternalOrganizationServiceAbstraction } from "../../../admin-console/abstractions/organization/organization.service.abstraction";
 import { InternalPolicyService } from "../../../admin-console/abstractions/policy/policy.service.abstraction";
@@ -28,11 +24,11 @@ import { LogService } from "../../../platform/abstractions/log.service";
 import { MessagingService } from "../../../platform/abstractions/messaging.service";
 import { StateService } from "../../../platform/abstractions/state.service";
 import { sequentialize } from "../../../platform/misc/sequentialize";
+import { AccountDecryptionOptions } from "../../../platform/models/domain/account";
 import { SendData } from "../../../tools/send/models/data/send.data";
 import { SendResponse } from "../../../tools/send/models/response/send.response";
 import { SendApiService } from "../../../tools/send/services/send-api.service.abstraction";
 import { InternalSendService } from "../../../tools/send/services/send.service.abstraction";
-import { UserId } from "../../../types/guid";
 import { CipherService } from "../../../vault/abstractions/cipher.service";
 import { FolderApiServiceAbstraction } from "../../../vault/abstractions/folder/folder-api.service.abstraction";
 import { InternalFolderService } from "../../../vault/abstractions/folder/folder.service.abstraction";
@@ -65,7 +61,6 @@ export class SyncService implements SyncServiceAbstraction {
     private folderApiService: FolderApiServiceAbstraction,
     private organizationService: InternalOrganizationServiceAbstraction,
     private sendApiService: SendApiService,
-    private userDecryptionOptionsService: UserDecryptionOptionsServiceAbstraction,
     private avatarService: AvatarService,
     private logoutCallback: (expired: boolean) => Promise<void>,
     private billingAccountProfileStateService: BillingAccountProfileStateService,
@@ -318,7 +313,7 @@ export class SyncService implements SyncServiceAbstraction {
     await this.cryptoService.setPrivateKey(response.privateKey);
     await this.cryptoService.setProviderKeys(response.providers);
     await this.cryptoService.setOrgKeys(response.organizations, response.providerOrganizations);
-    await this.avatarService.setSyncAvatarColor(response.id as UserId, response.avatarColor);
+    await this.avatarService.setAvatarColor(response.avatarColor);
     await this.stateService.setSecurityStamp(response.securityStamp);
     await this.stateService.setEmailVerified(response.emailVerified);
 
@@ -357,12 +352,19 @@ export class SyncService implements SyncServiceAbstraction {
       );
     }
 
-    const userDecryptionOptions = await firstValueFrom(
-      this.userDecryptionOptionsService.userDecryptionOptions$,
-    );
+    const acctDecryptionOpts: AccountDecryptionOptions =
+      await this.stateService.getAccountDecryptionOptions();
 
-    if (userDecryptionOptions === null || userDecryptionOptions === undefined) {
+    // Account decryption options should never be null or undefined b/c it is always initialized
+    // during the processing of the ID token response, but there might be a state issue
+    // where it is being overwritten with undefined affecting browser extension + FireFox users.
+    // TODO: Consider removing this once we figure out the root cause of the state issue or after the state provider refactor.
+    if (acctDecryptionOpts === null || acctDecryptionOpts === undefined) {
       this.logService.error("Sync: Account decryption options are null or undefined.");
+      // Early return as a bandaid to allow the rest of the sync to continue so users can access
+      // their data that they might have added from another device.
+      // Otherwise, trying to access properties on undefined below will throw an error.
+      return;
     }
 
     // Even though TDE users should only be in a single org (per single org policy), check
@@ -381,8 +383,8 @@ export class SyncService implements SyncServiceAbstraction {
     }
 
     if (
-      userDecryptionOptions.trustedDeviceOption !== undefined &&
-      !userDecryptionOptions.hasMasterPassword &&
+      acctDecryptionOpts.trustedDeviceOption !== undefined &&
+      !acctDecryptionOpts.hasMasterPassword &&
       hasManageResetPasswordPermission
     ) {
       // TDE user w/out MP went from having no password reset permission to having it.

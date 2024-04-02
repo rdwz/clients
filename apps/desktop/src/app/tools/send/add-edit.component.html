@@ -2,12 +2,12 @@
   <div class="content">
     <div class="inner-content" *ngIf="send">
       <div class="box">
-        <bit-callout *ngIf="disableSend">
+        <app-callout *ngIf="disableSend">
           <span>{{ "sendDisabledWarning" | i18n }}</span>
-        </bit-callout>
-        <bit-callout type="info" *ngIf="disableHideEmail && !disableSend">
+        </app-callout>
+        <app-callout type="info" *ngIf="disableHideEmail && !disableSend">
           {{ "sendOptionsPolicyInEffect" | i18n }}
-        </bit-callout>
+        </app-callout>
       </div>
       <div class="box">
         <h2 class="box-header">

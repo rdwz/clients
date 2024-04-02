@@ -173,10 +173,12 @@ describe("AutofillOverlayContentService", () => {
         autofillFieldData = mock<AutofillField>();
       });
 
-      it("ignores fields that are readonly", async () => {
+      it("ignores fields that are readonly", () => {
         autofillFieldData.readonly = true;
 
-        await autofillOverlayContentService.setupAutofillOverlayListenerOnField(
+        // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        autofillOverlayContentService.setupAutofillOverlayListenerOnField(
           autofillFieldElement,
           autofillFieldData,
         );
@@ -184,10 +186,12 @@ describe("AutofillOverlayContentService", () => {
         expect(autofillFieldElement.addEventListener).not.toHaveBeenCalled();
       });
 
-      it("ignores fields that contain a disabled attribute", async () => {
+      it("ignores fields that contain a disabled attribute", () => {
         autofillFieldData.disabled = true;
 
-        await autofillOverlayContentService.setupAutofillOverlayListenerOnField(
+        // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        autofillOverlayContentService.setupAutofillOverlayListenerOnField(
           autofillFieldElement,
           autofillFieldData,
         );
@@ -195,10 +199,12 @@ describe("AutofillOverlayContentService", () => {
         expect(autofillFieldElement.addEventListener).not.toHaveBeenCalled();
       });
 
-      it("ignores fields that are not viewable", async () => {
+      it("ignores fields that are not viewable", () => {
         autofillFieldData.viewable = false;
 
-        await autofillOverlayContentService.setupAutofillOverlayListenerOnField(
+        // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        autofillOverlayContentService.setupAutofillOverlayListenerOnField(
           autofillFieldElement,
           autofillFieldData,
         );
@@ -207,10 +213,12 @@ describe("AutofillOverlayContentService", () => {
       });
 
       it("ignores fields that are part of the ExcludedOverlayTypes", () => {
-        AutoFillConstants.ExcludedOverlayTypes.forEach(async (excludedType) => {
+        AutoFillConstants.ExcludedOverlayTypes.forEach((excludedType) => {
           autofillFieldData.type = excludedType;
 
-          await autofillOverlayContentService.setupAutofillOverlayListenerOnField(
+          // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          autofillOverlayContentService.setupAutofillOverlayListenerOnField(
             autofillFieldElement,
             autofillFieldData,
           );
@@ -219,10 +227,12 @@ describe("AutofillOverlayContentService", () => {
         });
       });
 
-      it("ignores fields that contain the keyword `search`", async () => {
+      it("ignores fields that contain the keyword `search`", () => {
         autofillFieldData.placeholder = "search";
 
-        await autofillOverlayContentService.setupAutofillOverlayListenerOnField(
+        // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        autofillOverlayContentService.setupAutofillOverlayListenerOnField(
           autofillFieldElement,
           autofillFieldData,
         );
@@ -230,10 +240,12 @@ describe("AutofillOverlayContentService", () => {
         expect(autofillFieldElement.addEventListener).not.toHaveBeenCalled();
       });
 
-      it("ignores fields that contain the keyword `captcha` ", async () => {
+      it("ignores fields that contain the keyword `captcha` ", () => {
         autofillFieldData.placeholder = "captcha";
 
-        await autofillOverlayContentService.setupAutofillOverlayListenerOnField(
+        // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        autofillOverlayContentService.setupAutofillOverlayListenerOnField(
           autofillFieldElement,
           autofillFieldData,
         );
@@ -241,27 +253,18 @@ describe("AutofillOverlayContentService", () => {
         expect(autofillFieldElement.addEventListener).not.toHaveBeenCalled();
       });
 
-      it("ignores fields that do not appear as a login field", async () => {
+      it("ignores fields that do not appear as a login field", () => {
         autofillFieldData.placeholder = "not-a-login-field";
 
-        await autofillOverlayContentService.setupAutofillOverlayListenerOnField(
+        // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        autofillOverlayContentService.setupAutofillOverlayListenerOnField(
           autofillFieldElement,
           autofillFieldData,
         );
 
         expect(autofillFieldElement.addEventListener).not.toHaveBeenCalled();
       });
-    });
-
-    it("skips setup on fields that have been previously set up", async () => {
-      autofillOverlayContentService["formFieldElements"].add(autofillFieldElement);
-
-      await autofillOverlayContentService.setupAutofillOverlayListenerOnField(
-        autofillFieldElement,
-        autofillFieldData,
-      );
-
-      expect(autofillFieldElement.addEventListener).not.toHaveBeenCalled();
     });
 
     describe("identifies the overlay visibility setting", () => {

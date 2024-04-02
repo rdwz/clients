@@ -5,15 +5,14 @@ import {
   IHubProtocol,
 } from "@microsoft/signalr";
 import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack";
-import { firstValueFrom } from "rxjs";
 
-import { AuthRequestServiceAbstraction } from "../../../../auth/src/common/abstractions";
-import { NotificationType } from "../../enums";
+import { LoginStrategyServiceAbstraction } from "../../../../auth/src/common/abstractions/login-strategy.service";
 import {
   AuthRequestPushNotification,
   NotificationResponse,
 } from "../../models/response/notification.response";
 import { EnvironmentService } from "../../platform/abstractions/environment.service";
+import { LogService } from "../../platform/abstractions/log.service";
 import { AnonymousHubService as AnonymousHubServiceAbstraction } from "../abstractions/anonymous-hub.service";
 
 export class AnonymousHubService implements AnonymousHubServiceAbstraction {
@@ -22,11 +21,12 @@ export class AnonymousHubService implements AnonymousHubServiceAbstraction {
 
   constructor(
     private environmentService: EnvironmentService,
-    private authRequestService: AuthRequestServiceAbstraction,
+    private loginStrategyService: LoginStrategyServiceAbstraction,
+    private logService: LogService,
   ) {}
 
   async createHubConnection(token: string) {
-    this.url = (await firstValueFrom(this.environmentService.environment$)).getNotificationsUrl();
+    this.url = this.environmentService.getNotificationsUrl();
 
     this.anonHubConnection = new HubConnectionBuilder()
       .withUrl(this.url + "/anonymous-hub?Token=" + token, {
@@ -36,25 +36,26 @@ export class AnonymousHubService implements AnonymousHubServiceAbstraction {
       .withHubProtocol(new MessagePackHubProtocol() as IHubProtocol)
       .build();
 
-    await this.anonHubConnection.start();
+    this.anonHubConnection.start().catch((error) => this.logService.error(error));
 
     this.anonHubConnection.on("AuthRequestResponseRecieved", (data: any) => {
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.ProcessNotification(new NotificationResponse(data));
     });
   }
 
-  async stopHubConnection() {
+  stopHubConnection() {
     if (this.anonHubConnection) {
-      await this.anonHubConnection.stop();
+      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.anonHubConnection.stop();
     }
   }
 
-  private ProcessNotification(notification: NotificationResponse) {
-    switch (notification.type) {
-      case NotificationType.AuthRequestResponse:
-        this.authRequestService.sendAuthRequestPushNotification(
-          notification.payload as AuthRequestPushNotification,
-        );
-    }
+  private async ProcessNotification(notification: NotificationResponse) {
+    await this.loginStrategyService.sendAuthRequestPushNotification(
+      notification.payload as AuthRequestPushNotification,
+    );
   }
 }

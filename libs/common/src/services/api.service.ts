@@ -1,5 +1,3 @@
-import { firstValueFrom } from "rxjs";
-
 import { ApiService as ApiServiceAbstraction } from "../abstractions/api.service";
 import { OrganizationConnectionType } from "../admin-console/enums";
 import { OrganizationSponsorshipCreateRequest } from "../admin-console/models/request/organization/organization-sponsorship-create.request";
@@ -206,12 +204,10 @@ export class ApiService implements ApiServiceAbstraction {
         ? request.toIdentityToken()
         : request.toIdentityToken(this.platformUtilsService.getClientType());
 
-    const env = await firstValueFrom(this.environmentService.environment$);
-
     const response = await this.fetch(
-      new Request(env.getIdentityUrl() + "/connect/token", {
+      new Request(this.environmentService.getIdentityUrl() + "/connect/token", {
         body: this.qsStringify(identityToken),
-        credentials: await this.getCredentials(),
+        credentials: this.getCredentials(),
         cache: "no-store",
         headers: headers,
         method: "POST",
@@ -327,14 +323,13 @@ export class ApiService implements ApiServiceAbstraction {
   }
 
   async postPrelogin(request: PreloginRequest): Promise<PreloginResponse> {
-    const env = await firstValueFrom(this.environmentService.environment$);
     const r = await this.send(
       "POST",
       "/accounts/prelogin",
       request,
       false,
       true,
-      env.getIdentityUrl(),
+      this.environmentService.getIdentityUrl(),
     );
     return new PreloginResponse(r);
   }
@@ -373,14 +368,13 @@ export class ApiService implements ApiServiceAbstraction {
   }
 
   async postRegister(request: RegisterRequest): Promise<RegisterResponse> {
-    const env = await firstValueFrom(this.environmentService.environment$);
     const r = await this.send(
       "POST",
       "/accounts/register",
       request,
       false,
       true,
-      env.getIdentityUrl(),
+      this.environmentService.getIdentityUrl(),
     );
     return new RegisterResponse(r);
   }
@@ -392,6 +386,10 @@ export class ApiService implements ApiServiceAbstraction {
 
   postReinstatePremium(): Promise<any> {
     return this.send("POST", "/accounts/reinstate-premium", null, true, false);
+  }
+
+  postCancelPremium(): Promise<any> {
+    return this.send("POST", "/accounts/cancel-premium", null, true, false);
   }
 
   async postAccountStorage(request: StorageRequest): Promise<PaymentResponse> {
@@ -1459,11 +1457,10 @@ export class ApiService implements ApiServiceAbstraction {
     if (this.customUserAgent != null) {
       headers.set("User-Agent", this.customUserAgent);
     }
-    const env = await firstValueFrom(this.environmentService.environment$);
     const response = await this.fetch(
-      new Request(env.getEventsUrl() + "/collect", {
+      new Request(this.environmentService.getEventsUrl() + "/collect", {
         cache: "no-store",
-        credentials: await this.getCredentials(),
+        credentials: this.getCredentials(),
         method: "POST",
         body: JSON.stringify(request),
         headers: headers,
@@ -1620,12 +1617,11 @@ export class ApiService implements ApiServiceAbstraction {
       headers.set("User-Agent", this.customUserAgent);
     }
 
-    const env = await firstValueFrom(this.environmentService.environment$);
     const path = `/sso/prevalidate?domainHint=${encodeURIComponent(identifier)}`;
     const response = await this.fetch(
-      new Request(env.getIdentityUrl() + path, {
+      new Request(this.environmentService.getIdentityUrl() + path, {
         cache: "no-store",
-        credentials: await this.getCredentials(),
+        credentials: this.getCredentials(),
         headers: headers,
         method: "GET",
       }),
@@ -1755,17 +1751,16 @@ export class ApiService implements ApiServiceAbstraction {
       headers.set("User-Agent", this.customUserAgent);
     }
 
-    const env = await firstValueFrom(this.environmentService.environment$);
     const decodedToken = await this.tokenService.decodeAccessToken();
     const response = await this.fetch(
-      new Request(env.getIdentityUrl() + "/connect/token", {
+      new Request(this.environmentService.getIdentityUrl() + "/connect/token", {
         body: this.qsStringify({
           grant_type: "refresh_token",
           client_id: decodedToken.client_id,
           refresh_token: refreshToken,
         }),
         cache: "no-store",
-        credentials: await this.getCredentials(),
+        credentials: this.getCredentials(),
         headers: headers,
         method: "POST",
       }),
@@ -1780,9 +1775,9 @@ export class ApiService implements ApiServiceAbstraction {
 
       await this.tokenService.setTokens(
         tokenResponse.accessToken,
+        tokenResponse.refreshToken,
         vaultTimeoutAction as VaultTimeoutAction,
         vaultTimeout,
-        tokenResponse.refreshToken,
       );
     } else {
       const error = await this.handleError(response, true, true);
@@ -1827,8 +1822,7 @@ export class ApiService implements ApiServiceAbstraction {
     apiUrl?: string,
     alterHeaders?: (headers: Headers) => void,
   ): Promise<any> {
-    const env = await firstValueFrom(this.environmentService.environment$);
-    apiUrl = Utils.isNullOrWhitespace(apiUrl) ? env.getApiUrl() : apiUrl;
+    apiUrl = Utils.isNullOrWhitespace(apiUrl) ? this.environmentService.getApiUrl() : apiUrl;
 
     // Prevent directory traversal from malicious paths
     const pathParts = path.split("?");
@@ -1844,7 +1838,7 @@ export class ApiService implements ApiServiceAbstraction {
 
     const requestInit: RequestInit = {
       cache: "no-store",
-      credentials: await this.getCredentials(),
+      credentials: this.getCredentials(),
       method: method,
     };
 
@@ -1923,9 +1917,8 @@ export class ApiService implements ApiServiceAbstraction {
       .join("&");
   }
 
-  private async getCredentials(): Promise<RequestCredentials> {
-    const env = await firstValueFrom(this.environmentService.environment$);
-    if (!this.isWebClient || env.hasBaseUrl()) {
+  private getCredentials(): RequestCredentials {
+    if (!this.isWebClient || this.environmentService.hasBaseUrl()) {
       return "include";
     }
     return undefined;

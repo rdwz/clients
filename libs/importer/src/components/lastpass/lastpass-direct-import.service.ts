@@ -121,7 +121,7 @@ export class LastPassDirectImportService {
     this.oidcClient = new OidcClient({
       authority: this.vault.userType.openIDConnectAuthorityBase,
       client_id: this.vault.userType.openIDConnectClientId,
-      redirect_uri: await this.getOidcRedirectUrl(),
+      redirect_uri: this.getOidcRedirectUrl(),
       response_type: "code",
       scope: this.vault.userType.oidcScope,
       response_mode: "query",
@@ -151,13 +151,12 @@ export class LastPassDirectImportService {
     return redirectUri + "&" + params;
   }
 
-  private async getOidcRedirectUrl() {
+  private getOidcRedirectUrl() {
     const clientType = this.platformUtilsService.getClientType();
     if (clientType === ClientType.Desktop) {
       return "bitwarden://import-callback-lp";
     }
-    const env = await firstValueFrom(this.environmentService.environment$);
-    const webUrl = env.getWebVaultUrl();
+    const webUrl = this.environmentService.getWebVaultUrl();
     return webUrl + "/sso-connector.html?lp=1";
   }
 
