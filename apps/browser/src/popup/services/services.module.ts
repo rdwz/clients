@@ -89,6 +89,7 @@ import { VaultExportServiceAbstraction } from "@bitwarden/vault-export-core";
 
 import { UnauthGuardService } from "../../auth/popup/services";
 import { AutofillService } from "../../autofill/services/abstractions/autofill.service";
+import { BaseBgServices } from "../../background/base-bg-services";
 import MainBackground from "../../background/main.background";
 import { Account } from "../../models/account";
 import { BrowserApi } from "../../platform/browser/browser-api";
@@ -114,16 +115,15 @@ import { PopupCloseWarningService } from "./popup-close-warning.service";
 import { PopupSearchService } from "./popup-search.service";
 
 const needsBackgroundInit = BrowserPopupUtils.backgroundInitializationRequired();
-const isPrivateMode = BrowserPopupUtils.inPrivateMode();
 const mainBackground: MainBackground = needsBackgroundInit
   ? createLocalBgService()
   : BrowserApi.getBackgroundPage().bitwardenMain;
 
 function createLocalBgService() {
-  const localBgService = new MainBackground(isPrivateMode, true);
+  const localBgService = new BaseBgServices();
   // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  localBgService.bootstrap();
+  localBgService.bootstrapBaseServices();
   return localBgService;
 }
 
