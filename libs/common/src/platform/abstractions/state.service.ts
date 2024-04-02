@@ -4,17 +4,15 @@ import { AdminAuthRequestStorable } from "../../auth/models/domain/admin-auth-re
 import { ForceSetPasswordReason } from "../../auth/models/domain/force-set-password-reason";
 import { KdfConfig } from "../../auth/models/domain/kdf-config";
 import { BiometricKey } from "../../auth/types/biometric-key";
-import { WindowState } from "../../models/domain/window-state";
 import { GeneratorOptions } from "../../tools/generator/generator-options";
 import { GeneratedPasswordHistory, PasswordGeneratorOptions } from "../../tools/generator/password";
 import { UsernameGeneratorOptions } from "../../tools/generator/username";
 import { SendData } from "../../tools/send/models/data/send.data";
 import { SendView } from "../../tools/send/models/view/send.view";
 import { UserId } from "../../types/guid";
-import { DeviceKey, MasterKey } from "../../types/key";
+import { MasterKey } from "../../types/key";
 import { KdfType } from "../enums";
-import { ServerConfigData } from "../models/data/server-config.data";
-import { Account, AccountDecryptionOptions } from "../models/domain/account";
+import { Account } from "../models/domain/account";
 import { EncString } from "../models/domain/enc-string";
 import { StorageOptions } from "../models/domain/storage-options";
 import { SymmetricCryptoKey } from "../models/domain/symmetric-crypto-key";
@@ -46,12 +44,6 @@ export abstract class StateService<T extends Account = Account> {
   clean: (options?: StorageOptions) => Promise<UserId>;
   init: (initOptions?: InitOptions) => Promise<void>;
 
-  getAlwaysShowDock: (options?: StorageOptions) => Promise<boolean>;
-  setAlwaysShowDock: (value: boolean, options?: StorageOptions) => Promise<void>;
-  getBiometricFingerprintValidated: (options?: StorageOptions) => Promise<boolean>;
-  setBiometricFingerprintValidated: (value: boolean, options?: StorageOptions) => Promise<void>;
-  getConvertAccountToKeyConnector: (options?: StorageOptions) => Promise<boolean>;
-  setConvertAccountToKeyConnector: (value: boolean, options?: StorageOptions) => Promise<void>;
   /**
    * Gets the user's master key
    */
@@ -159,32 +151,17 @@ export abstract class StateService<T extends Account = Account> {
    * @deprecated Do not call this directly, use SendService
    */
   setDecryptedSends: (value: SendView[], options?: StorageOptions) => Promise<void>;
-  getDisableGa: (options?: StorageOptions) => Promise<boolean>;
-  setDisableGa: (value: boolean, options?: StorageOptions) => Promise<void>;
   getDuckDuckGoSharedKey: (options?: StorageOptions) => Promise<string>;
   setDuckDuckGoSharedKey: (value: string, options?: StorageOptions) => Promise<void>;
-  getDeviceKey: (options?: StorageOptions) => Promise<DeviceKey | null>;
-  setDeviceKey: (value: DeviceKey | null, options?: StorageOptions) => Promise<void>;
   getAdminAuthRequest: (options?: StorageOptions) => Promise<AdminAuthRequestStorable | null>;
   setAdminAuthRequest: (
     adminAuthRequest: AdminAuthRequestStorable,
-    options?: StorageOptions,
-  ) => Promise<void>;
-  getShouldTrustDevice: (options?: StorageOptions) => Promise<boolean | null>;
-  setShouldTrustDevice: (value: boolean, options?: StorageOptions) => Promise<void>;
-  getAccountDecryptionOptions: (
-    options?: StorageOptions,
-  ) => Promise<AccountDecryptionOptions | null>;
-  setAccountDecryptionOptions: (
-    value: AccountDecryptionOptions,
     options?: StorageOptions,
   ) => Promise<void>;
   getEmail: (options?: StorageOptions) => Promise<string>;
   setEmail: (value: string, options?: StorageOptions) => Promise<void>;
   getEmailVerified: (options?: StorageOptions) => Promise<boolean>;
   setEmailVerified: (value: boolean, options?: StorageOptions) => Promise<void>;
-  getEnableAlwaysOnTop: (options?: StorageOptions) => Promise<boolean>;
-  setEnableAlwaysOnTop: (value: boolean, options?: StorageOptions) => Promise<void>;
   getEnableBrowserIntegration: (options?: StorageOptions) => Promise<boolean>;
   setEnableBrowserIntegration: (value: boolean, options?: StorageOptions) => Promise<void>;
   getEnableBrowserIntegrationFingerprint: (options?: StorageOptions) => Promise<boolean>;
@@ -192,19 +169,6 @@ export abstract class StateService<T extends Account = Account> {
     value: boolean,
     options?: StorageOptions,
   ) => Promise<void>;
-  getEnableCloseToTray: (options?: StorageOptions) => Promise<boolean>;
-  setEnableCloseToTray: (value: boolean, options?: StorageOptions) => Promise<void>;
-  getEnableDuckDuckGoBrowserIntegration: (options?: StorageOptions) => Promise<boolean>;
-  setEnableDuckDuckGoBrowserIntegration: (
-    value: boolean,
-    options?: StorageOptions,
-  ) => Promise<void>;
-  getEnableMinimizeToTray: (options?: StorageOptions) => Promise<boolean>;
-  setEnableMinimizeToTray: (value: boolean, options?: StorageOptions) => Promise<void>;
-  getEnableStartToTray: (options?: StorageOptions) => Promise<boolean>;
-  setEnableStartToTray: (value: boolean, options?: StorageOptions) => Promise<void>;
-  getEnableTray: (options?: StorageOptions) => Promise<boolean>;
-  setEnableTray: (value: boolean, options?: StorageOptions) => Promise<void>;
   getEncryptedPasswordGenerationHistory: (
     options?: StorageOptions,
   ) => Promise<GeneratedPasswordHistory[]>;
@@ -235,8 +199,6 @@ export abstract class StateService<T extends Account = Account> {
     value: ForceSetPasswordReason,
     options?: StorageOptions,
   ) => Promise<void>;
-  getInstalledVersion: (options?: StorageOptions) => Promise<string>;
-  setInstalledVersion: (value: string, options?: StorageOptions) => Promise<void>;
   getIsAuthenticated: (options?: StorageOptions) => Promise<boolean>;
   getKdfConfig: (options?: StorageOptions) => Promise<KdfConfig>;
   setKdfConfig: (kdfConfig: KdfConfig, options?: StorageOptions) => Promise<void>;
@@ -248,14 +210,8 @@ export abstract class StateService<T extends Account = Account> {
   setLastActive: (value: number, options?: StorageOptions) => Promise<void>;
   getLastSync: (options?: StorageOptions) => Promise<string>;
   setLastSync: (value: string, options?: StorageOptions) => Promise<void>;
-  getLocale: (options?: StorageOptions) => Promise<string>;
-  setLocale: (value: string, options?: StorageOptions) => Promise<void>;
-  getMainWindowSize: (options?: StorageOptions) => Promise<number>;
-  setMainWindowSize: (value: number, options?: StorageOptions) => Promise<void>;
   getMinimizeOnCopyToClipboard: (options?: StorageOptions) => Promise<boolean>;
   setMinimizeOnCopyToClipboard: (value: boolean, options?: StorageOptions) => Promise<void>;
-  getOpenAtLogin: (options?: StorageOptions) => Promise<boolean>;
-  setOpenAtLogin: (value: boolean, options?: StorageOptions) => Promise<void>;
   getOrganizationInvitation: (options?: StorageOptions) => Promise<any>;
   setOrganizationInvitation: (value: any, options?: StorageOptions) => Promise<void>;
   getPasswordGenerationOptions: (options?: StorageOptions) => Promise<PasswordGeneratorOptions>;
@@ -278,29 +234,15 @@ export abstract class StateService<T extends Account = Account> {
    * Sets the user's Pin, encrypted by the user key
    */
   setProtectedPin: (value: string, options?: StorageOptions) => Promise<void>;
-  getRememberedEmail: (options?: StorageOptions) => Promise<string>;
-  setRememberedEmail: (value: string, options?: StorageOptions) => Promise<void>;
   getSecurityStamp: (options?: StorageOptions) => Promise<string>;
   setSecurityStamp: (value: string, options?: StorageOptions) => Promise<void>;
   getUserId: (options?: StorageOptions) => Promise<string>;
-  getUsesKeyConnector: (options?: StorageOptions) => Promise<boolean>;
-  setUsesKeyConnector: (value: boolean, options?: StorageOptions) => Promise<void>;
   getVaultTimeout: (options?: StorageOptions) => Promise<number>;
   setVaultTimeout: (value: number, options?: StorageOptions) => Promise<void>;
   getVaultTimeoutAction: (options?: StorageOptions) => Promise<string>;
   setVaultTimeoutAction: (value: string, options?: StorageOptions) => Promise<void>;
   getApproveLoginRequests: (options?: StorageOptions) => Promise<boolean>;
   setApproveLoginRequests: (value: boolean, options?: StorageOptions) => Promise<void>;
-  getWindow: () => Promise<WindowState>;
-  setWindow: (value: WindowState) => Promise<void>;
-  /**
-   * @deprecated Do not call this directly, use ConfigService
-   */
-  getServerConfig: (options?: StorageOptions) => Promise<ServerConfigData>;
-  /**
-   * @deprecated Do not call this directly, use ConfigService
-   */
-  setServerConfig: (value: ServerConfigData, options?: StorageOptions) => Promise<void>;
   /**
    * fetches string value of URL user tried to navigate to while unauthenticated.
    * @param options Defines the storage options for the URL; Defaults to session Storage.

@@ -16,7 +16,9 @@ import { LogService } from "@bitwarden/common/platform/abstractions/log.service"
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
+import { UserId } from "@bitwarden/common/types/guid";
 
+import { InternalUserDecryptionOptionsServiceAbstraction } from "../abstractions/user-decryption-options.service.abstraction";
 import { AuthRequestLoginCredentials } from "../models/domain/login-credentials";
 import { CacheData } from "../services/login-strategies/login-strategy.state";
 
@@ -54,6 +56,7 @@ export class AuthRequestLoginStrategy extends LoginStrategy {
     logService: LogService,
     stateService: StateService,
     twoFactorService: TwoFactorService,
+    userDecryptionOptionsService: InternalUserDecryptionOptionsServiceAbstraction,
     private deviceTrustCryptoService: DeviceTrustCryptoServiceAbstraction,
     billingAccountProfileStateService: BillingAccountProfileStateService,
   ) {
@@ -67,6 +70,7 @@ export class AuthRequestLoginStrategy extends LoginStrategy {
       logService,
       stateService,
       twoFactorService,
+      userDecryptionOptionsService,
       billingAccountProfileStateService,
     );
 
@@ -125,8 +129,10 @@ export class AuthRequestLoginStrategy extends LoginStrategy {
       await this.cryptoService.setUserKey(authRequestCredentials.decryptedUserKey);
     } else {
       await this.trySetUserKeyWithMasterKey();
+
+      const userId = (await this.stateService.getUserId()) as UserId;
       // Establish trust if required after setting user key
-      await this.deviceTrustCryptoService.trustDeviceIfRequired();
+      await this.deviceTrustCryptoService.trustDeviceIfRequired(userId);
     }
   }
 
