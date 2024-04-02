@@ -91,6 +91,7 @@ import {
   BiometricStateService,
   DefaultBiometricStateService,
 } from "@bitwarden/common/platform/biometrics/biometric-state.service";
+import { ScheduledTaskNames } from "@bitwarden/common/platform/enums/scheduled-task-name.enum";
 import { StateFactory } from "@bitwarden/common/platform/factories/state-factory";
 import { GlobalState } from "@bitwarden/common/platform/models/domain/global-state";
 import { AppIdService } from "@bitwarden/common/platform/services/app-id.service";
@@ -212,6 +213,7 @@ import BrowserMemoryStorageService from "../platform/services/browser-memory-sto
 // import BrowserMessagingPrivateModeBackgroundService from "../platform/services/browser-messaging-private-mode-background.service";
 import BrowserMessagingService from "../platform/services/browser-messaging.service";
 import { BrowserStateService } from "../platform/services/browser-state.service";
+import { BrowserTaskSchedulerService } from "../platform/services/browser-task-scheduler.service";
 import I18nService from "../platform/services/i18n.service";
 import { LocalBackedSessionStorageService } from "../platform/services/local-backed-session-storage.service";
 import { BackgroundPlatformUtilsService } from "../platform/services/platform-utils/background-platform-utils.service";
@@ -312,6 +314,7 @@ export default class MainBackground {
   activeUserStateProvider: ActiveUserStateProvider;
   derivedStateProvider: DerivedStateProvider;
   stateProvider: StateProvider;
+  taskSchedulerService: BrowserTaskSchedulerService;
   fido2Background: Fido2BackgroundAbstraction;
   individualVaultExportService: IndividualVaultExportServiceAbstraction;
   organizationVaultExportService: OrganizationVaultExportServiceAbstraction;
@@ -418,6 +421,10 @@ export default class MainBackground {
       this.singleUserStateProvider,
       this.globalStateProvider,
       this.derivedStateProvider,
+    );
+    this.taskSchedulerService = new BrowserTaskSchedulerService(
+      this.logService,
+      this.stateProvider,
     );
     this.environmentService = new BrowserEnvironmentService(
       this.logService,
@@ -603,6 +610,7 @@ export default class MainBackground {
       this.userDecryptionOptionsService,
       this.globalStateProvider,
       this.billingAccountProfileStateService,
+      this.taskSchedulerService,
     );
 
     this.ssoLoginService = new SsoLoginService(this.stateProvider);
@@ -741,6 +749,7 @@ export default class MainBackground {
       this.stateProvider,
       this.logService,
       this.accountService,
+      this.taskSchedulerService,
     );
     this.eventCollectionService = new EventCollectionService(
       this.cipherService,
@@ -807,6 +816,7 @@ export default class MainBackground {
       this.stateService,
       this.authService,
       this.messagingService,
+      this.taskSchedulerService,
     );
 
     this.fido2UserInterfaceService = new BrowserFido2UserInterfaceService(this.authService);
@@ -822,6 +832,7 @@ export default class MainBackground {
       this.authService,
       this.vaultSettingsService,
       this.domainSettingsService,
+      this.taskSchedulerService,
       this.logService,
     );
 
@@ -842,6 +853,7 @@ export default class MainBackground {
       this.autofillSettingsService,
       this.vaultTimeoutSettingsService,
       this.biometricStateService,
+      this.taskSchedulerService,
     );
 
     this.usernameGenerationService = new UsernameGenerationService(
@@ -1054,9 +1066,13 @@ export default class MainBackground {
         if (!this.isPrivateMode) {
           await this.refreshBadge();
         }
-        // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.fullSync(true);
+
+        await this.fullSync(true);
+        await this.taskSchedulerService.setInterval(
+          () => this.fullSync(),
+          5 * 60 * 1000, // check every 5 minutes
+          ScheduledTaskNames.scheduleNextSyncInterval,
+        );
         setTimeout(() => this.notificationsService.init(), 2500);
         resolve();
       }, 500);
@@ -1134,6 +1150,7 @@ export default class MainBackground {
     userId ??= (await firstValueFrom(this.accountService.activeAccount$))?.id;
 
     await this.eventUploadService.uploadEvents(userId as UserId);
+    await this.taskSchedulerService.clearAllScheduledTasks();
 
     await Promise.all([
       this.syncService.setLastSync(new Date(0), userId),
@@ -1289,17 +1306,6 @@ export default class MainBackground {
 
     if (override || lastSyncAgo >= syncInternal) {
       await this.syncService.fullSync(override);
-      this.scheduleNextSync();
-    } else {
-      this.scheduleNextSync();
     }
-  }
-
-  private scheduleNextSync() {
-    if (this.syncTimeout) {
-      clearTimeout(this.syncTimeout);
-    }
-
-    this.syncTimeout = setTimeout(async () => await this.fullSync(), 5 * 60 * 1000); // check every 5 minutes
   }
 }

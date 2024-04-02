@@ -147,6 +147,7 @@ import { MigrationRunner } from "@bitwarden/common/platform/services/migration-r
 import { NoopNotificationsService } from "@bitwarden/common/platform/services/noop-notifications.service";
 import { StateService } from "@bitwarden/common/platform/services/state.service";
 import { StorageServiceProvider } from "@bitwarden/common/platform/services/storage-service.provider";
+import { TaskSchedulerService } from "@bitwarden/common/platform/services/task-scheduler.service";
 import { ValidationService } from "@bitwarden/common/platform/services/validation.service";
 import { WebCryptoFunctionService } from "@bitwarden/common/platform/services/web-crypto-function.service";
 import {
@@ -379,6 +380,7 @@ const safeProviders: SafeProvider[] = [
       InternalUserDecryptionOptionsServiceAbstraction,
       GlobalStateProvider,
       BillingAccountProfileStateService,
+      TaskSchedulerService,
     ],
   }),
   safeProvider({
@@ -729,6 +731,7 @@ const safeProviders: SafeProvider[] = [
       StateServiceAbstraction,
       AuthServiceAbstraction,
       MessagingServiceAbstraction,
+      TaskSchedulerService,
     ],
   }),
   safeProvider({
@@ -744,7 +747,13 @@ const safeProviders: SafeProvider[] = [
   safeProvider({
     provide: EventUploadServiceAbstraction,
     useClass: EventUploadService,
-    deps: [ApiServiceAbstraction, StateProvider, LogService, AccountServiceAbstraction],
+    deps: [
+      ApiServiceAbstraction,
+      StateProvider,
+      LogService,
+      AccountServiceAbstraction,
+      TaskSchedulerService,
+    ],
   }),
   safeProvider({
     provide: EventCollectionServiceAbstraction,
@@ -1083,6 +1092,10 @@ const safeProviders: SafeProvider[] = [
   safeProvider({
     provide: ErrorHandler,
     useClass: LoggingErrorHandler,
+    deps: [],
+  }),
+  safeProvider({
+    provide: TaskSchedulerService,
     deps: [],
   }),
 ];

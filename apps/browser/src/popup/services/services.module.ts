@@ -31,7 +31,7 @@ import { DeviceTrustCryptoServiceAbstraction } from "@bitwarden/common/auth/abst
 import { DevicesServiceAbstraction } from "@bitwarden/common/auth/abstractions/devices/devices.service.abstraction";
 import { KeyConnectorService } from "@bitwarden/common/auth/abstractions/key-connector.service";
 import { SsoLoginServiceAbstraction } from "@bitwarden/common/auth/abstractions/sso-login.service.abstraction";
-import { TokenService } from "@bitwarden/common/auth/abstractions/token.service";
+import { TokenService as TokenServiceAbstraction } from "@bitwarden/common/auth/abstractions/token.service";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
 import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
 import { AuthService } from "@bitwarden/common/auth/services/auth.service";
@@ -68,6 +68,7 @@ import { ConsoleLogService } from "@bitwarden/common/platform/services/console-l
 import { ContainerService } from "@bitwarden/common/platform/services/container.service";
 import { MemoryStorageService } from "@bitwarden/common/platform/services/memory-storage.service";
 import { MigrationRunner } from "@bitwarden/common/platform/services/migration-runner";
+import { TaskSchedulerService } from "@bitwarden/common/platform/services/task-scheduler.service";
 import { WebCryptoFunctionService } from "@bitwarden/common/platform/services/web-crypto-function.service";
 import {
   DerivedStateProvider,
@@ -99,6 +100,7 @@ import BrowserLocalStorageService from "../../platform/services/browser-local-st
 // import BrowserMessagingPrivateModePopupService from "../../platform/services/browser-messaging-private-mode-popup.service";
 import BrowserMessagingService from "../../platform/services/browser-messaging.service";
 import { BrowserStateService } from "../../platform/services/browser-state.service";
+import { BrowserTaskSchedulerService } from "../../platform/services/browser-task-scheduler.service";
 import I18nService from "../../platform/services/i18n.service";
 import { ForegroundPlatformUtilsService } from "../../platform/services/platform-utils/foreground-platform-utils.service";
 import { ForegroundDerivedStateProvider } from "../../platform/state/foreground-derived-state.provider";
@@ -403,7 +405,7 @@ const safeProviders: SafeProvider[] = [
       logService: LogService,
       accountService: AccountServiceAbstraction,
       environmentService: EnvironmentService,
-      tokenService: TokenService,
+      tokenService: TokenServiceAbstraction,
       migrationRunner: MigrationRunner,
     ) => {
       return new BrowserStateService(
@@ -425,7 +427,7 @@ const safeProviders: SafeProvider[] = [
       LogService,
       AccountServiceAbstraction,
       EnvironmentService,
-      TokenService,
+      TokenServiceAbstraction,
       MigrationRunner,
     ],
   }),
@@ -480,6 +482,14 @@ const safeProviders: SafeProvider[] = [
     provide: UserNotificationSettingsServiceAbstraction,
     useClass: UserNotificationSettingsService,
     deps: [StateProvider],
+  }),
+  safeProvider({
+    provide: TaskSchedulerService,
+    useExisting: BrowserTaskSchedulerService,
+  }),
+  safeProvider({
+    provide: BrowserTaskSchedulerService,
+    deps: [LogService, StateProvider],
   }),
 ];
 

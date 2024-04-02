@@ -38,6 +38,7 @@ import { eventCollectionServiceFactory } from "../../background/service-factorie
 import { Account } from "../../models/account";
 import { CachedServices } from "../../platform/background/service-factories/factory-options";
 import { stateServiceFactory } from "../../platform/background/service-factories/state-service.factory";
+import { taskSchedulerServiceFactory } from "../../platform/background/service-factories/task-scheduler-service.factory";
 import { BrowserApi } from "../../platform/browser/browser-api";
 import { passwordGenerationServiceFactory } from "../../tools/background/service_factories/password-generation-service.factory";
 import {
@@ -116,6 +117,7 @@ export class ContextMenuClickedHandler {
     const generatePasswordToClipboardCommand = new GeneratePasswordToClipboardCommand(
       await passwordGenerationServiceFactory(cachedServices, serviceOptions),
       await autofillSettingsServiceFactory(cachedServices, serviceOptions),
+      await taskSchedulerServiceFactory(cachedServices, serviceOptions),
     );
 
     const autofillCommand = new AutofillTabCommand(
