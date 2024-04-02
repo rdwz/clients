@@ -9,8 +9,6 @@ import {
   UserDecryptionOptionsService,
 } from "@bitwarden/auth/common";
 import { ApiService as ApiServiceAbstraction } from "@bitwarden/common/abstractions/api.service";
-import { EventCollectionService as EventCollectionServiceAbstraction } from "@bitwarden/common/abstractions/event/event-collection.service";
-import { EventUploadService as EventUploadServiceAbstraction } from "@bitwarden/common/abstractions/event/event-upload.service";
 import { NotificationsService as NotificationsServiceAbstraction } from "@bitwarden/common/abstractions/notifications.service";
 import { SearchService as SearchServiceAbstraction } from "@bitwarden/common/abstractions/search.service";
 import { VaultTimeoutSettingsService as VaultTimeoutSettingsServiceAbstraction } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
@@ -106,8 +104,6 @@ import { DefaultStateProvider } from "@bitwarden/common/platform/state/implement
 import { StateEventRegistrarService } from "@bitwarden/common/platform/state/state-event-registrar.service";
 /* eslint-enable import/no-restricted-paths */
 import { ApiService } from "@bitwarden/common/services/api.service";
-import { EventCollectionService } from "@bitwarden/common/services/event/event-collection.service";
-import { EventUploadService } from "@bitwarden/common/services/event/event-upload.service";
 import { NotificationsService } from "@bitwarden/common/services/notifications.service";
 import { SearchService } from "@bitwarden/common/services/search.service";
 import { VaultTimeoutSettingsService } from "@bitwarden/common/services/vault-timeout/vault-timeout-settings.service";
@@ -151,8 +147,6 @@ import {
   VaultExportServiceAbstraction,
 } from "@bitwarden/vault-export-core";
 
-import { AutofillService as AutofillServiceAbstraction } from "../autofill/services/abstractions/autofill.service";
-import AutofillService from "../autofill/services/autofill.service";
 import { Account } from "../models/account";
 import { BrowserApi } from "../platform/browser/browser-api";
 import { flagEnabled } from "../platform/flags";
@@ -171,7 +165,7 @@ import { BackgroundDerivedStateProvider } from "../platform/state/background-der
 import { BackgroundMemoryStorageService } from "../platform/storage/background-memory-storage.service";
 import VaultTimeoutService from "../services/vault-timeout/vault-timeout.service";
 
-export class BaseBgServices {
+export class BgServicesContainer {
   // main getBgServices dependencies
   readonly twoFactorService: TwoFactorServiceAbstraction;
   readonly authService: AuthServiceAbstraction;
@@ -188,7 +182,6 @@ export class BaseBgServices {
   readonly devicesService: DevicesServiceAbstraction;
   readonly passwordGenerationService: PasswordGenerationServiceAbstraction;
   readonly syncService: SyncServiceAbstraction;
-  readonly autofillService: AutofillServiceAbstraction;
   readonly exportService: VaultExportServiceAbstraction;
   readonly keyConnectorService: KeyConnectorServiceAbstraction;
   readonly userVerificationService: UserVerificationServiceAbstraction;
@@ -244,8 +237,6 @@ export class BaseBgServices {
   private readonly folderApiService: FolderApiServiceAbstraction;
   private readonly sendApiService: SendApiServiceAbstraction;
   private readonly avatarService: AvatarServiceAbstraction;
-  private readonly eventUploadService: EventUploadServiceAbstraction;
-  private readonly eventCollectionService: EventCollectionServiceAbstraction;
   private readonly individualVaultExportService: IndividualVaultExportServiceAbstraction;
   private readonly organizationVaultExportService: OrganizationVaultExportServiceAbstraction;
   private readonly userVerificationApiService: UserVerificationApiServiceAbstraction;
@@ -471,20 +462,6 @@ export class BaseBgServices {
     );
     this.avatarService = new AvatarService(this.apiService, this.stateProvider);
     this.providerService = new ProviderService(this.stateProvider);
-    this.eventUploadService = new EventUploadService(
-      this.apiService,
-      this.stateProvider,
-      this.logService,
-      this.accountService,
-      this.taskSchedulerService,
-    );
-    this.eventCollectionService = new EventCollectionService(
-      this.cipherService,
-      this.stateProvider,
-      this.organizationService,
-      this.eventUploadService,
-      this.accountService,
-    );
     this.individualVaultExportService = new IndividualVaultExportService(
       this.folderService,
       this.cipherService,
@@ -585,17 +562,6 @@ export class BaseBgServices {
       this.vaultTimeoutSettingsService,
       this.platformUtilsService,
     );
-    this.autofillService = new AutofillService(
-      this.cipherService,
-      this.stateService,
-      this.autofillSettingsService,
-      this.totpService,
-      this.eventCollectionService,
-      this.logService,
-      this.domainSettingsService,
-      this.userVerificationService,
-      this.billingAccountProfileStateService,
-    );
     this.stateEventRunnerService = new StateEventRunnerService(
       this.globalStateProvider,
       this.storageServiceProvider,
@@ -637,7 +603,6 @@ export class BaseBgServices {
   async bootstrapBaseServices() {
     await this.stateService.init({ runMigrations: false });
     await (this.i18nService as I18nService).init();
-    await (this.eventUploadService as EventUploadService).init(true);
     this.twoFactorService.init();
   }
 
@@ -690,7 +655,8 @@ export class BaseBgServices {
   };
 
   private getEncryptService = () => {
-    return flagEnabled("multithreadDecryption")
+    // eslint-disable-next-line no-restricted-globals
+    return flagEnabled("multithreadDecryption") && typeof window !== "undefined"
       ? new MultithreadEncryptServiceImplementation(
           this.cryptoFunctionService,
           this.logService,

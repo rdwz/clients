@@ -19,6 +19,7 @@ import {
   AuthRequestServiceAbstraction,
   LoginStrategyServiceAbstraction,
 } from "@bitwarden/auth/common";
+import { EventCollectionService as EventCollectionServiceAbstraction } from "@bitwarden/common/abstractions/event/event-collection.service";
 import { NotificationsService } from "@bitwarden/common/abstractions/notifications.service";
 import { SearchService as SearchServiceAbstraction } from "@bitwarden/common/abstractions/search.service";
 import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
@@ -47,6 +48,7 @@ import {
   UserNotificationSettingsService,
   UserNotificationSettingsServiceAbstraction,
 } from "@bitwarden/common/autofill/services/user-notification-settings.service";
+import { BillingAccountProfileStateService } from "@bitwarden/common/billing/abstractions/account/billing-account-profile-state.service";
 import { CryptoFunctionService } from "@bitwarden/common/platform/abstractions/crypto-function.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { EncryptService } from "@bitwarden/common/platform/abstractions/encrypt.service";
@@ -88,8 +90,9 @@ import { DialogService } from "@bitwarden/components";
 import { VaultExportServiceAbstraction } from "@bitwarden/vault-export-core";
 
 import { UnauthGuardService } from "../../auth/popup/services";
-import { AutofillService } from "../../autofill/services/abstractions/autofill.service";
-import { BaseBgServices } from "../../background/base-bg-services";
+import { AutofillService as AutofillServiceAbstraction } from "../../autofill/services/abstractions/autofill.service";
+import AutofillService from "../../autofill/services/autofill.service";
+import { BgServicesContainer } from "../../background/bg-services-container";
 import MainBackground from "../../background/main.background";
 import { Account } from "../../models/account";
 import { BrowserApi } from "../../platform/browser/browser-api";
@@ -120,7 +123,7 @@ const mainBackground: MainBackground = needsBackgroundInit
   : BrowserApi.getBackgroundPage().bitwardenMain;
 
 function createLocalBgService() {
-  const localBgService = new BaseBgServices();
+  const localBgService = new BgServicesContainer();
   void localBgService.bootstrapBaseServices();
   return localBgService;
 }
@@ -315,9 +318,22 @@ const safeProviders: SafeProvider[] = [
     deps: [],
   }),
   safeProvider({
+    provide: AutofillServiceAbstraction,
+    useExisting: AutofillService,
+  }),
+  safeProvider({
     provide: AutofillService,
-    useFactory: getBgService<AutofillService>("autofillService"),
-    deps: [],
+    deps: [
+      CipherService,
+      StateServiceAbstraction,
+      AutofillSettingsServiceAbstraction,
+      TotpService,
+      EventCollectionServiceAbstraction,
+      LogService,
+      DomainSettingsService,
+      UserVerificationService,
+      BillingAccountProfileStateService,
+    ],
   }),
   safeProvider({
     provide: VaultExportServiceAbstraction,
