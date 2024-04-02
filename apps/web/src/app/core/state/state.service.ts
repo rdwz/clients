@@ -18,7 +18,6 @@ import { StateFactory } from "@bitwarden/common/platform/factories/state-factory
 import { StorageOptions } from "@bitwarden/common/platform/models/domain/storage-options";
 import { MigrationRunner } from "@bitwarden/common/platform/services/migration-runner";
 import { StateService as BaseStateService } from "@bitwarden/common/platform/services/state.service";
-import { SendData } from "@bitwarden/common/tools/send/models/data/send.data";
 
 import { Account } from "./account";
 import { GlobalState } from "./global-state";
@@ -55,19 +54,6 @@ export class StateService extends BaseStateService<GlobalState, Account> {
     // Apply web overrides to default account values
     account = new Account(account);
     await super.addAccount(account);
-  }
-
-  async getEncryptedSends(options?: StorageOptions): Promise<{ [id: string]: SendData }> {
-    options = this.reconcileOptions(options, await this.defaultInMemoryOptions());
-    return await super.getEncryptedSends(options);
-  }
-
-  async setEncryptedSends(
-    value: { [id: string]: SendData },
-    options?: StorageOptions,
-  ): Promise<void> {
-    options = this.reconcileOptions(options, await this.defaultInMemoryOptions());
-    return await super.setEncryptedSends(value, options);
   }
 
   override async getLastSync(options?: StorageOptions): Promise<string> {
