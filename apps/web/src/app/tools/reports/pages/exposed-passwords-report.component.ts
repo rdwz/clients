@@ -38,6 +38,7 @@ export class ExposedPasswordsReportComponent extends CipherReportComponent imple
     const allCiphers = await this.getAllCiphers();
     const exposedPasswordCiphers: CipherView[] = [];
     const promises: Promise<void>[] = [];
+    this.filterStatus = [0];
 
     allCiphers.forEach((ciph: any) => {
       const { type, login, isDeleted, edit, viewPassword, id } = ciph;
@@ -52,17 +53,7 @@ export class ExposedPasswordsReportComponent extends CipherReportComponent imple
         return;
       }
 
-      ciph.orgFilterStatus = ciph.organizationId;
-
       const promise = this.auditService.passwordLeaked(login.password).then((exposedCount) => {
-        if (this.filterStatus.indexOf(ciph.organizationId) === -1 && ciph.organizationId != null) {
-          this.filterStatus.push(ciph.organizationId);
-          this.showFilterToggle = true;
-        } else if (this.filterStatus.indexOf(1) === -1 && ciph.organizationId == null) {
-          this.filterStatus.splice(1, 0, 1);
-          this.showFilterToggle = true;
-        }
-
         if (exposedCount > 0) {
           exposedPasswordCiphers.push(ciph);
           this.exposedPasswordMap.set(id, exposedCount);
@@ -71,7 +62,19 @@ export class ExposedPasswordsReportComponent extends CipherReportComponent imple
       promises.push(promise);
     });
     await Promise.all(promises);
-    this.ciphers = [...exposedPasswordCiphers];
+
+    this.ciphers = exposedPasswordCiphers.map((ciph: any) => {
+      ciph.orgFilterStatus = ciph.organizationId;
+
+      if (this.filterStatus.indexOf(ciph.organizationId) === -1 && ciph.organizationId != null) {
+        this.filterStatus.push(ciph.organizationId);
+        this.showFilterToggle = true;
+      } else if (this.filterStatus.indexOf(1) === -1 && ciph.organizationId == null) {
+        this.filterStatus.splice(1, 0, 1);
+        this.showFilterToggle = true;
+      }
+      return ciph;
+    });
   }
 
   protected getAllCiphers(): Promise<CipherView[]> {

@@ -36,7 +36,9 @@ export class ReusedPasswordsReportComponent extends CipherReportComponent implem
     const allCiphers = await this.getAllCiphers();
     const ciphersWithPasswords: CipherView[] = [];
     this.passwordUseMap = new Map<string, number>();
-    allCiphers.forEach((ciph: any) => {
+    this.filterStatus = [0];
+
+    allCiphers.forEach((ciph) => {
       const { type, login, isDeleted, edit, viewPassword } = ciph;
       if (
         type !== CipherType.Login ||
@@ -47,16 +49,6 @@ export class ReusedPasswordsReportComponent extends CipherReportComponent implem
         !viewPassword
       ) {
         return;
-      }
-
-      ciph.orgFilterStatus = ciph.organizationId;
-
-      if (this.filterStatus.indexOf(ciph.organizationId) === -1 && ciph.organizationId != null) {
-        this.filterStatus.push(ciph.organizationId);
-        this.showFilterToggle = true;
-      } else if (this.filterStatus.indexOf(1) === -1 && ciph.organizationId == null) {
-        this.filterStatus.splice(1, 0, 1);
-        this.showFilterToggle = true;
       }
 
       ciphersWithPasswords.push(ciph);
@@ -70,7 +62,19 @@ export class ReusedPasswordsReportComponent extends CipherReportComponent implem
       (c) =>
         this.passwordUseMap.has(c.login.password) && this.passwordUseMap.get(c.login.password) > 1,
     );
-    this.ciphers = reusedPasswordCiphers;
+
+    this.ciphers = reusedPasswordCiphers.map((ciph: any) => {
+      ciph.orgFilterStatus = ciph.organizationId;
+
+      if (this.filterStatus.indexOf(ciph.organizationId) === -1 && ciph.organizationId != null) {
+        this.filterStatus.push(ciph.organizationId);
+        this.showFilterToggle = true;
+      } else if (this.filterStatus.indexOf(1) === -1 && ciph.organizationId == null) {
+        this.filterStatus.splice(1, 0, 1);
+        this.showFilterToggle = true;
+      }
+      return ciph;
+    });
   }
 
   protected getAllCiphers(): Promise<CipherView[]> {

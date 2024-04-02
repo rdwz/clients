@@ -43,6 +43,7 @@ export class WeakPasswordsReportComponent extends CipherReportComponent implemen
     const allCiphers: any = await this.getAllCiphers();
     this.passwordStrengthCache = new Map<string, number>();
     this.weakPasswordCiphers = [];
+    this.filterStatus = [0];
     this.findWeakPasswords(allCiphers);
   }
 
@@ -58,16 +59,6 @@ export class WeakPasswordsReportComponent extends CipherReportComponent implemen
         !viewPassword
       ) {
         return;
-      }
-
-      ciph.orgFilterStatus = ciph.organizationId;
-
-      if (this.filterStatus.indexOf(ciph.organizationId) === -1 && ciph.organizationId != null) {
-        this.filterStatus.push(ciph.organizationId);
-        this.showFilterToggle = true;
-      } else if (this.filterStatus.indexOf(1) === -1 && ciph.organizationId == null) {
-        this.filterStatus.splice(1, 0, 1);
-        this.showFilterToggle = true;
       }
 
       const hasUserName = this.isUserNameNotEmpty(ciph);
@@ -114,7 +105,18 @@ export class WeakPasswordsReportComponent extends CipherReportComponent implemen
         this.passwordStrengthCache.get(this.getCacheKey(b))
       );
     });
-    this.ciphers = [...this.weakPasswordCiphers];
+    this.ciphers = this.weakPasswordCiphers.map((ciph: any) => {
+      ciph.orgFilterStatus = ciph.organizationId;
+
+      if (this.filterStatus.indexOf(ciph.organizationId) === -1 && ciph.organizationId != null) {
+        this.filterStatus.push(ciph.organizationId);
+        this.showFilterToggle = true;
+      } else if (this.filterStatus.indexOf(1) === -1 && ciph.organizationId == null) {
+        this.filterStatus.splice(1, 0, 1);
+        this.showFilterToggle = true;
+      }
+      return ciph;
+    });
   }
 
   protected getAllCiphers(): Promise<CipherView[]> {
