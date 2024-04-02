@@ -16,7 +16,7 @@ import { FamiliesForEnterpriseSetupComponent } from "./admin-console/organizatio
 import { CreateOrganizationComponent } from "./admin-console/settings/create-organization.component";
 import { SponsoredFamiliesComponent } from "./admin-console/settings/sponsored-families.component";
 import { AcceptOrganizationComponent } from "./auth/accept-organization.component";
-import { AnonymousLayoutComponent } from "./auth/anonymous-layout.component";
+import { AnonLayoutWrapperComponent } from "./auth/anon-layout-wrapper.component";
 import { deepLinkGuard } from "./auth/guards/deep-link.guard";
 import { HintComponent } from "./auth/hint.component";
 import { LockComponent } from "./auth/lock.component";
@@ -193,7 +193,7 @@ const routes: Routes = [
   // TODO: remove this example
   {
     path: "",
-    component: AnonymousLayoutComponent,
+    component: AnonLayoutWrapperComponent,
     children: [
       {
         path: "sample-route",

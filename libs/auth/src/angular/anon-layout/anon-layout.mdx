@@ -13,18 +13,18 @@ The AnonLayoutComponent is not to be implemented by every component that uses it
 template directly. Instead the AnonLayoutComponent is implemented via routable composition, which
 gives us the advantages of nested routes in Angular.
 
-To implement via routable composition, Web has an AnonymousLayoutComponent which acts as a wrapper
-and embeds the AnonLayoutComponent. For clarity:
+To allow for routable composition, Web has an AnonLayoutWrapperComponent which acts as a wrapper and
+embeds the AnonLayoutComponent. For clarity:
 
 - AnonLayoutComponent = CL component
-- AnonymousLayoutComponent = Web component (which wraps the CL component) - found in
-  apps/web/src/app/auth/anonymous-layout.component.ts
+- AnonLayoutWrapperComponent = Web component (which wraps the CL component) - in
+  apps/web/src/app/auth/anon-layout-wrapper.component.ts
 
-The contents of the AnonymousLayoutComponent are the AnonLayoutComponent (CL) along with the router
-outlets:
+The contents of the AnonLayoutWrapperComponent (Web) are the AnonLayoutComponent (CL) along with the
+router outlets:
 
 ```html
-<!-- anonymous-layout.component.html -->
+<!-- anon-layout-wrapper.component.html -->
 
 <auth-anon-layout>
   <router-outlet></router-outlet>
@@ -32,13 +32,13 @@ outlets:
 </auth-anon-layout>
 ```
 
-The developer uses the AnonymousLayoutComponent (Web) in oss-routing.module.ts and constructs the
+The developer uses the AnonLayoutWrapperComponent (Web) in oss-routing.module.ts and constructs the
 page via routable composition:
 
 ```javascript
 {
     path: "",
-    component: AnonymousLayoutComponent, // Web component (not the CL component)
+    component: AnonLayoutWrapperComponent, // Web component (not the CL component)
     children: [
       {
         path: "sample-route", // replace with your route

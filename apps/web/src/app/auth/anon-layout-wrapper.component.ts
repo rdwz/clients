@@ -4,11 +4,11 @@ import { SharedModule } from "../shared";
 
 @Component({
   standalone: true,
-  selector: "app-anonymous-layout",
-  templateUrl: "anonymous-layout.component.html",
+  selector: "app-anon-layout-wrapper",
+  templateUrl: "anon-layout-wrapper.component.html",
   imports: [SharedModule],
 })
-export class AnonymousLayoutComponent implements OnInit, OnDestroy {
+export class AnonLayoutWrapperComponent implements OnInit, OnDestroy {
   async ngOnInit() {
     document.body.classList.add("layout_frontend");
   }
