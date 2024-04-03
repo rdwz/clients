@@ -322,7 +322,7 @@ export class VaultComponent implements OnInit, OnDestroy {
           }
         } else {
           // Pre-flexible collections logic, to be removed after flexible collections is fully released
-          if (organization.canEditAnyCollection(this.flexibleCollectionsV1Enabled)) {
+          if (organization.canEditAllCiphers(this.flexibleCollectionsV1Enabled)) {
             ciphers = await this.cipherService.getAllFromApiForOrganization(organization.id);
           } else {
             ciphers = (await this.cipherService.getAllDecrypted()).filter(

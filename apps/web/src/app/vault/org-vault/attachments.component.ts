@@ -74,7 +74,7 @@ export class AttachmentsComponent extends BaseAttachmentsComponent implements On
   }
 
   protected async loadCipher() {
-    if (!this.organization.canEditAnyCollection(this.flexibleCollectionsV1Enabled)) {
+    if (!this.organization.canEditAllCiphers(this.flexibleCollectionsV1Enabled)) {
       return await super.loadCipher();
     }
     const response = await this.apiService.getCipherAdmin(this.cipherId);
@@ -85,12 +85,12 @@ export class AttachmentsComponent extends BaseAttachmentsComponent implements On
     return this.cipherService.saveAttachmentWithServer(
       this.cipherDomain,
       file,
-      this.organization.canEditAnyCollection(this.flexibleCollectionsV1Enabled),
+      this.organization.canEditAllCiphers(this.flexibleCollectionsV1Enabled),
     );
   }
 
   protected deleteCipherAttachment(attachmentId: string) {
-    if (!this.organization.canEditAnyCollection(this.flexibleCollectionsV1Enabled)) {
+    if (!this.organization.canEditAllCiphers(this.flexibleCollectionsV1Enabled)) {
       return super.deleteCipherAttachment(attachmentId);
     }
     return this.apiService.deleteCipherAttachmentAdmin(this.cipherId, attachmentId);
@@ -99,7 +99,7 @@ export class AttachmentsComponent extends BaseAttachmentsComponent implements On
   protected showFixOldAttachments(attachment: AttachmentView) {
     return (
       attachment.key == null &&
-      this.organization.canEditAnyCollection(this.flexibleCollectionsV1Enabled)
+      this.organization.canEditAllCiphers(this.flexibleCollectionsV1Enabled)
     );
   }
 }
