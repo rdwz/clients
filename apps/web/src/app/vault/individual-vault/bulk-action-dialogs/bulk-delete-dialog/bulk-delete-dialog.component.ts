@@ -85,7 +85,7 @@ export class BulkDeleteDialogComponent {
 
       if (
         !this.organization ||
-        !this.organization.canEditAnyCollection(flexibleCollectionsV1Enabled)
+        !this.organization.canEditAllCiphers(flexibleCollectionsV1Enabled)
       ) {
         deletePromises.push(this.deleteCiphers());
       } else {
@@ -119,7 +119,7 @@ export class BulkDeleteDialogComponent {
 
   private async deleteCiphers(): Promise<any> {
     const flexibleCollectionsV1Enabled = await firstValueFrom(this.flexibleCollectionsV1Enabled$);
-    const asAdmin = this.organization?.canEditAnyCollection(flexibleCollectionsV1Enabled);
+    const asAdmin = this.organization?.canEditAllCiphers(flexibleCollectionsV1Enabled);
     if (this.permanent) {
       await this.cipherService.deleteManyWithServer(this.cipherIds, asAdmin);
     } else {

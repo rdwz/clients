@@ -66,7 +66,7 @@ export class AttachmentsComponent extends BaseAttachmentsComponent implements On
 
   protected async reupload(attachment: AttachmentView) {
     if (
-      this.organization.canEditAnyCollection(this.flexibleCollectionsV1Enabled) &&
+      this.organization.canEditAllCiphers(this.flexibleCollectionsV1Enabled) &&
       this.showFixOldAttachments(attachment)
     ) {
       await super.reuploadCipherAttachment(attachment, true);
