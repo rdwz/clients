@@ -1,14 +1,11 @@
 import { DOCUMENT } from "@angular/common";
 import { Inject, Injectable } from "@angular/core";
-import { firstValueFrom } from "rxjs";
 
 import { AbstractThemingService } from "@bitwarden/angular/platform/services/theming/theming.service.abstraction";
-import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
-import { CryptoService as CryptoServiceAbstraction } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService as LogServiceAbstraction } from "@bitwarden/common/platform/abstractions/log.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
-import { KeySuffixOptions } from "@bitwarden/common/platform/enums";
+import { UserKeyInitService } from "@bitwarden/common/platform/services/user-key-init.service";
 
 import { BrowserApi } from "../../platform/browser/browser-api";
 import BrowserPopupUtils from "../../platform/popup/browser-popup-utils";
@@ -21,15 +18,14 @@ export class InitService {
     private stateService: StateServiceAbstraction,
     private logService: LogServiceAbstraction,
     private themingService: AbstractThemingService,
-    private cryptoService: CryptoServiceAbstraction,
-    private accountService: AccountService,
+    private userKeyInitService: UserKeyInitService,
     @Inject(DOCUMENT) private document: Document,
   ) {}
 
   init() {
     return async () => {
       await this.stateService.init();
-      await this.setUserKeyInMemoryIfAutoUserKeySet();
+      this.userKeyInitService.listenForActiveUserChangesToSetUserKey();
       await this.i18nService.init();
 
       if (!BrowserPopupUtils.inPopup(window)) {
@@ -79,20 +75,5 @@ export class InitService {
     };
 
     BrowserApi.messageListener("vaultPopupHeartbeat", respondToHeartbeat);
-  }
-
-  private async setUserKeyInMemoryIfAutoUserKeySet() {
-    const activeAccount = await firstValueFrom(this.accountService.activeAccount$);
-    const userId = activeAccount?.id;
-    if (userId == null) {
-      return;
-    }
-
-    const userKey = await this.cryptoService.getUserKeyFromStorage(KeySuffixOptions.Auto, userId);
-    if (userKey == null) {
-      return;
-    }
-
-    await this.cryptoService.setUserKey(userKey, userId);
   }
 }
