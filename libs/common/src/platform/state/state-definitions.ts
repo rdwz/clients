@@ -124,4 +124,7 @@ export const VAULT_SETTINGS_DISK = new StateDefinition("vaultSettings", "disk", 
   web: "disk-local",
 });
 export const VAULT_BROWSER_MEMORY = new StateDefinition("vaultBrowser", "memory");
-export const CIPHERS_DISK = new StateDefinition("localData", "disk", { web: "disk-local" });
+export const CIPHERS_DISK_LOCAL = new StateDefinition("cipherDataInfo", "disk", {
+  web: "disk-local",
+});
+export const CIPHERS_DISK = new StateDefinition("ciphers", "disk", { web: "memory" });

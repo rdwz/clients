@@ -51,7 +51,7 @@ import { RememberedEmailMigrator } from "./migrations/51-move-remembered-email-t
 import { DeleteInstalledVersion } from "./migrations/52-delete-installed-version";
 import { DeviceTrustCryptoServiceStateProviderMigrator } from "./migrations/53-migrate-device-trust-crypto-svc-to-state-providers";
 import { SendMigrator } from "./migrations/54-move-encrypted-sends";
-import { LocalDataMigrator } from "./migrations/55-move-local-data-to-state-provider";
+import { CipherServiceMigrator } from "./migrations/55-move-cipher-service-to-state-provider";
 import { RemoveLegacyEtmKeyMigrator } from "./migrations/6-remove-legacy-etm-key";
 import { MoveBiometricAutoPromptToAccount } from "./migrations/7-move-biometric-auto-prompt-to-account";
 import { MoveStateVersionMigrator } from "./migrations/8-move-state-version";
@@ -116,7 +116,7 @@ export function createMigrationBuilder() {
     .with(DeleteInstalledVersion, 51, 52)
     .with(DeviceTrustCryptoServiceStateProviderMigrator, 52, 53)
     .with(SendMigrator, 53, 54)
-    .with(LocalDataMigrator, 54, CURRENT_VERSION);
+    .with(CipherServiceMigrator, 54, CURRENT_VERSION);
 }
 
 export async function currentVersion(

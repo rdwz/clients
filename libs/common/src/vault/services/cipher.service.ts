@@ -1,4 +1,4 @@
-import { Observable, firstValueFrom } from "rxjs";
+import { Observable, firstValueFrom, map } from "rxjs";
 import { SemVer } from "semver";
 import { Jsonify } from "type-fest";
 
@@ -22,13 +22,7 @@ import Domain from "../../platform/models/domain/domain-base";
 import { EncArrayBuffer } from "../../platform/models/domain/enc-array-buffer";
 import { EncString } from "../../platform/models/domain/enc-string";
 import { SymmetricCryptoKey } from "../../platform/models/domain/symmetric-crypto-key";
-import {
-  ActiveUserState,
-  KeyDefinition,
-  CIPHERS_DISK,
-  StateProvider,
-  DerivedState,
-} from "../../platform/state";
+import { ActiveUserState, StateProvider, DerivedState } from "../../platform/state";
 import { CipherId, CollectionId, OrganizationId } from "../../types/guid";
 import { UserKey, OrgKey } from "../../types/key";
 import { CipherService as CipherServiceAbstraction } from "../abstractions/cipher.service";
@@ -65,19 +59,14 @@ import { FieldView } from "../models/view/field.view";
 import { PasswordHistoryView } from "../models/view/password-history.view";
 import { AddEditCipherInfo } from "../types/add-edit-cipher-info";
 
-import { DECRYPTED_CIPHERS, ENCRYPTED_CIPHERS } from "./key-state/ciphers.state";
+import {
+  DECRYPTED_CIPHERS,
+  ENCRYPTED_CIPHERS,
+  LOCAL_DATA_KEY,
+  ADD_EDIT_CIPHER_INFO_KEY,
+} from "./key-state/ciphers.state";
 
 const CIPHER_KEY_ENC_MIN_SERVER_VER = new SemVer("2024.2.0");
-
-const CIPHERS_DISK_KEY = new KeyDefinition<Record<CipherId, LocalData>>(CIPHERS_DISK, "localData", {
-  deserializer: (obj) => obj,
-});
-
-const ADD_EDIT_CIPHER_INFO_KEY = new KeyDefinition<AddEditCipherInfo>(
-  CIPHERS_DISK,
-  "addEditCipherInfo",
-  { deserializer: (obj) => obj },
-);
 
 export class CipherService implements CipherServiceAbstraction {
   private sortedCiphersCache: SortedCiphersCache = new SortedCiphersCache(
@@ -107,7 +96,7 @@ export class CipherService implements CipherServiceAbstraction {
     private configService: ConfigService,
     private stateProvider: StateProvider,
   ) {
-    this.localDataState = this.stateProvider.getActive(CIPHERS_DISK_KEY);
+    this.localDataState = this.stateProvider.getActive(LOCAL_DATA_KEY);
     this.encryptedCiphersState = this.stateProvider.getActive(ENCRYPTED_CIPHERS);
     this.decryptedCiphersState = this.stateProvider.getDerived(
       this.encryptedCiphersState.state$,
@@ -119,7 +108,19 @@ export class CipherService implements CipherServiceAbstraction {
     this.localData$ = this.localDataState.state$;
     this.ciphers$ = this.encryptedCiphersState.state$;
     this.cipherViews$ = this.decryptedCiphersState.state$;
-    this.addEditCipherInfo$ = this.addEditCipherInfoState.state$;
+    this.addEditCipherInfo$ = this.addEditCipherInfoState.state$.pipe(
+      map((info) => {
+        return info == null
+          ? null
+          : {
+              cipher:
+                info?.cipher.toJSON != null
+                  ? info.cipher
+                  : CipherView.fromJSON(info?.cipher as Jsonify<CipherView>),
+              collectionIds: info?.collectionIds,
+            };
+      }),
+    );
   }
 
   async getDecryptedCipherCache(): Promise<CipherView[]> {
@@ -771,7 +772,7 @@ export class CipherService implements CipherServiceAbstraction {
     await this.apiService.send("POST", "/ciphers/bulk-collections", request, true, false);
 
     // Update the local state
-    const ciphers = await this.stateService.getEncryptedCiphers();
+    let ciphers = await firstValueFrom(this.ciphers$);
 
     for (const id of cipherIds) {
       const cipher = ciphers[id];
@@ -788,7 +789,12 @@ export class CipherService implements CipherServiceAbstraction {
     }
 
     await this.clearCache();
-    await this.stateService.setEncryptedCiphers(ciphers);
+    await this.encryptedCiphersState.update(() => {
+      if (ciphers == null) {
+        ciphers = {};
+      }
+      return ciphers;
+    });
   }
 
   async upsert(cipher: CipherData | CipherData[]): Promise<any> {
@@ -1115,20 +1121,6 @@ export class CipherService implements CipherServiceAbstraction {
       (await this.cryptoService.getOrgKey(cipher.organizationId)) ||
       ((await this.cryptoService.getUserKeyWithLegacySupport()) as UserKey)
     );
-  }
-
-  async getAddEditCipherInfo(): Promise<AddEditCipherInfo> {
-    const info = await firstValueFrom(this.addEditCipherInfo$);
-    // ensure prototype on cipher
-    return info == null
-      ? null
-      : {
-          cipher:
-            info?.cipher.toJSON != null
-              ? info.cipher
-              : CipherView.fromJSON(info?.cipher as Jsonify<CipherView>),
-          collectionIds: info?.collectionIds,
-        };
   }
 
   async setAddEditCipherInfo(value: AddEditCipherInfo) {

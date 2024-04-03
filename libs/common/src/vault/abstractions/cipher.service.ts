@@ -1,3 +1,5 @@
+import { Observable } from "rxjs";
+
 import { UriMatchStrategySetting } from "../../models/domain/domain-service";
 import { SymmetricCryptoKey } from "../../platform/models/domain/symmetric-crypto-key";
 import { CipherId, CollectionId, OrganizationId } from "../../types/guid";
@@ -10,6 +12,7 @@ import { FieldView } from "../models/view/field.view";
 import { AddEditCipherInfo } from "../types/add-edit-cipher-info";
 
 export abstract class CipherService {
+  addEditCipherInfo$: Observable<AddEditCipherInfo>;
   clearCache: (userId?: string) => Promise<void>;
   encrypt: (
     model: CipherView,
@@ -104,6 +107,5 @@ export abstract class CipherService {
   ) => Promise<void>;
   getKeyForCipherKeyDecryption: (cipher: Cipher) => Promise<any>;
   decryptCiphers: (ciphers: Cipher[]) => Promise<CipherView[]>;
-  getAddEditCipherInfo: () => Promise<AddEditCipherInfo>;
   setAddEditCipherInfo: (value: AddEditCipherInfo) => Promise<void>;
 }
