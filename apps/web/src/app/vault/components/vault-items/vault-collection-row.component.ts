@@ -53,7 +53,7 @@ export class VaultCollectionRowComponent {
 
   get permissionText() {
     if (!(this.collection as CollectionAdminView).assigned) {
-      return "-";
+      return this.i18nService.t("noAccess");
     } else {
       const permissionList = getPermissionList(this.organization?.flexibleCollections);
       return this.i18nService.t(

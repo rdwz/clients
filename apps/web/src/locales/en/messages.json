@@ -7730,5 +7730,8 @@
   "cancellationDate": {
     "message": "Cancellation date",
     "description": "The date header used when a subscription is cancelled."
+  },
+  "noAccess": {
+    "message": "No access"
   }
 }
