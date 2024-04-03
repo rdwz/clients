@@ -1,4 +1,4 @@
-import { firstValueFrom } from "rxjs";
+import { Observable, combineLatest, firstValueFrom, map } from "rxjs";
 import { Opaque } from "type-fest";
 
 import { decodeJwtTokenToJson } from "@bitwarden/auth/common";
@@ -135,6 +135,15 @@ export class TokenService implements TokenServiceAbstraction {
     this.initializeState();
   }
 
+  hasAccessToken$(userId: UserId): Observable<boolean> {
+    // FIXME Once once vault timeout action is observable, we can use it to determine storage location
+    // and avoid the need to check both disk and memory.
+    return combineLatest([
+      this.singleUserStateProvider.get(userId, ACCESS_TOKEN_DISK).state$,
+      this.singleUserStateProvider.get(userId, ACCESS_TOKEN_MEMORY).state$,
+    ]).pipe(map(([disk, memory]) => Boolean(disk || memory)));
+  }
+
   // pivoting to an approach where we create a symmetric key we store in secure storage
   // which is used to protect the data before persisting to disk.
   // We will also use the same symmetric key to decrypt the data when reading from disk.
@@ -149,13 +158,13 @@ export class TokenService implements TokenServiceAbstraction {
 
   async setTokens(
     accessToken: string,
-    refreshToken: string,
     vaultTimeoutAction: VaultTimeoutAction,
     vaultTimeout: number | null,
+    refreshToken?: string,
     clientIdClientSecret?: [string, string],
   ): Promise<void> {
-    if (!accessToken || !refreshToken) {
-      throw new Error("Access token and refresh token are required.");
+    if (!accessToken) {
+      throw new Error("Access token is required.");
     }
 
     // get user id the access token
@@ -166,7 +175,11 @@ export class TokenService implements TokenServiceAbstraction {
     }
 
     await this._setAccessToken(accessToken, vaultTimeoutAction, vaultTimeout, userId);
-    await this.setRefreshToken(refreshToken, vaultTimeoutAction, vaultTimeout, userId);
+
+    if (refreshToken) {
+      await this.setRefreshToken(refreshToken, vaultTimeoutAction, vaultTimeout, userId);
+    }
+
     if (clientIdClientSecret != null) {
       await this.setClientId(clientIdClientSecret[0], vaultTimeoutAction, vaultTimeout, userId);
       await this.setClientSecret(clientIdClientSecret[1], vaultTimeoutAction, vaultTimeout, userId);
