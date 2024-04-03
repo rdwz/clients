@@ -16,7 +16,7 @@ type DownloadLicenseDialogData = {
 };
 
 @Component({
-  templateUrl: "download-license-dialog.component.html",
+  templateUrl: "download-license.component.html",
 })
 export class DownloadLicenceDialogComponent {
   licenseForm = this.formBuilder.group({

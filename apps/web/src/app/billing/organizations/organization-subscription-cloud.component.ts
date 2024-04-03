@@ -24,7 +24,7 @@ import {
 } from "../shared/offboarding-survey.component";
 
 import { BillingSyncApiKeyComponent } from "./billing-sync-api-key.component";
-import { DownloadLicenceDialogComponent } from "./download-license-dialog.component";
+import { DownloadLicenceDialogComponent } from "./download-license.component";
 import { SecretsManagerSubscriptionOptions } from "./sm-adjust-subscription.component";
 
 @Component({
