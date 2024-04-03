@@ -1,17 +1,18 @@
 import { Directive, OnDestroy, OnInit } from "@angular/core";
 import { IsActiveMatchOptions, Router } from "@angular/router";
-import { Subject, takeUntil } from "rxjs";
+import { Subject, firstValueFrom, takeUntil } from "rxjs";
 
 import {
   AuthRequestLoginCredentials,
   AuthRequestServiceAbstraction,
   LoginStrategyServiceAbstraction,
+  LoginEmailServiceAbstraction,
 } from "@bitwarden/auth/common";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { AnonymousHubService } from "@bitwarden/common/auth/abstractions/anonymous-hub.service";
 import { AuthService } from "@bitwarden/common/auth/abstractions/auth.service";
 import { DeviceTrustCryptoServiceAbstraction } from "@bitwarden/common/auth/abstractions/device-trust-crypto.service.abstraction";
-import { LoginService } from "@bitwarden/common/auth/abstractions/login.service";
 import { AuthRequestType } from "@bitwarden/common/auth/enums/auth-request-type";
 import { AuthenticationStatus } from "@bitwarden/common/auth/enums/authentication-status";
 import { AdminAuthRequestStorable } from "@bitwarden/common/auth/models/domain/admin-auth-req-storable";
@@ -83,10 +84,11 @@ export class LoginViaAuthRequestComponent
     private anonymousHubService: AnonymousHubService,
     private validationService: ValidationService,
     private stateService: StateService,
-    private loginService: LoginService,
+    private loginEmailService: LoginEmailServiceAbstraction,
     private deviceTrustCryptoService: DeviceTrustCryptoServiceAbstraction,
     private authRequestService: AuthRequestServiceAbstraction,
     private loginStrategyService: LoginStrategyServiceAbstraction,
+    private accountService: AccountService,
   ) {
     super(environmentService, i18nService, platformUtilsService);
 
@@ -94,7 +96,7 @@ export class LoginViaAuthRequestComponent
     // Why would the existence of the email depend on the navigation?
     const navigation = this.router.getCurrentNavigation();
     if (navigation) {
-      this.email = this.loginService.getEmail();
+      this.email = this.loginEmailService.getEmail();
     }
 
     // Gets signalR push notification
@@ -151,7 +153,7 @@ export class LoginViaAuthRequestComponent
     } else {
       // Standard auth request
       // TODO: evaluate if we can remove the setting of this.email in the constructor
-      this.email = this.loginService.getEmail();
+      this.email = this.loginEmailService.getEmail();
 
       if (!this.email) {
         this.platformUtilsService.showToast("error", null, this.i18nService.t("userEmailMissing"));
@@ -388,7 +390,8 @@ export class LoginViaAuthRequestComponent
 
     // Now that we have a decrypted user key in memory, we can check if we
     // need to establish trust on the current device
-    await this.deviceTrustCryptoService.trustDeviceIfRequired();
+    const activeAccount = await firstValueFrom(this.accountService.activeAccount$);
+    await this.deviceTrustCryptoService.trustDeviceIfRequired(activeAccount.id);
 
     // TODO: don't forget to use auto enrollment service everywhere we trust device
 
@@ -472,17 +475,10 @@ export class LoginViaAuthRequestComponent
     }
   }
 
-  async setRememberEmailValues() {
-    const rememberEmail = this.loginService.getRememberEmail();
-    const rememberedEmail = this.loginService.getEmail();
-    await this.stateService.setRememberedEmail(rememberEmail ? rememberedEmail : null);
-    this.loginService.clearValues();
-  }
-
   private async handleSuccessfulLoginNavigation() {
     if (this.state === State.StandardAuthRequest) {
       // Only need to set remembered email on standard login with auth req flow
-      await this.setRememberEmailValues();
+      await this.loginEmailService.saveEmailSettings();
     }
 
     if (this.onSuccessfulLogin != null) {

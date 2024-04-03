@@ -9,6 +9,7 @@ import {
   UserDecryptionOptionsService,
   AuthRequestServiceAbstraction,
   AuthRequestService,
+  LoginEmailServiceAbstraction,
 } from "@bitwarden/auth/common";
 import { ApiService as ApiServiceAbstraction } from "@bitwarden/common/abstractions/api.service";
 import { AuditService as AuditServiceAbstraction } from "@bitwarden/common/abstractions/audit.service";
@@ -145,6 +146,7 @@ import {
 } from "@bitwarden/common/tools/password-strength";
 import { SendApiService } from "@bitwarden/common/tools/send/services/send-api.service";
 import { SendApiService as SendApiServiceAbstraction } from "@bitwarden/common/tools/send/services/send-api.service.abstraction";
+import { SendStateProvider } from "@bitwarden/common/tools/send/services/send-state.provider";
 import { SendService } from "@bitwarden/common/tools/send/services/send.service";
 import { InternalSendService as InternalSendServiceAbstraction } from "@bitwarden/common/tools/send/services/send.service.abstraction";
 import { UserId } from "@bitwarden/common/types/guid";
@@ -206,6 +208,7 @@ import { BrowserStateService as StateServiceAbstraction } from "../platform/serv
 import { BrowserCryptoService } from "../platform/services/browser-crypto.service";
 import { BrowserEnvironmentService } from "../platform/services/browser-environment.service";
 import BrowserLocalStorageService from "../platform/services/browser-local-storage.service";
+import BrowserMemoryStorageService from "../platform/services/browser-memory-storage.service";
 import BrowserMessagingPrivateModeBackgroundService from "../platform/services/browser-messaging-private-mode-background.service";
 import BrowserMessagingService from "../platform/services/browser-messaging.service";
 import { BrowserStateService } from "../platform/services/browser-state.service";
@@ -229,7 +232,7 @@ import RuntimeBackground from "./runtime.background";
 
 export default class MainBackground {
   messagingService: MessagingServiceAbstraction;
-  storageService: AbstractStorageService;
+  storageService: AbstractStorageService & ObservableStorageService;
   secureStorageService: AbstractStorageService;
   memoryStorageService: AbstractMemoryStorageService;
   memoryStorageForStateProviders: AbstractMemoryStorageService & ObservableStorageService;
@@ -258,6 +261,7 @@ export default class MainBackground {
   auditService: AuditServiceAbstraction;
   authService: AuthServiceAbstraction;
   loginStrategyService: LoginStrategyServiceAbstraction;
+  loginEmailService: LoginEmailServiceAbstraction;
   importApiService: ImportApiServiceAbstraction;
   importService: ImportServiceAbstraction;
   exportService: VaultExportServiceAbstraction;
@@ -273,6 +277,7 @@ export default class MainBackground {
   eventUploadService: EventUploadServiceAbstraction;
   policyService: InternalPolicyServiceAbstraction;
   sendService: InternalSendServiceAbstraction;
+  sendStateProvider: SendStateProvider;
   fileUploadService: FileUploadServiceAbstraction;
   cipherFileUploadService: CipherFileUploadServiceAbstraction;
   organizationService: InternalOrganizationServiceAbstraction;
@@ -363,22 +368,28 @@ export default class MainBackground {
     this.cryptoFunctionService = new WebCryptoFunctionService(self);
     this.keyGenerationService = new KeyGenerationService(this.cryptoFunctionService);
     this.storageService = new BrowserLocalStorageService();
+
+    const mv3MemoryStorageCreator = (partitionName: string) => {
+      // TODO: Consider using multithreaded encrypt service in popup only context
+      return new LocalBackedSessionStorageService(
+        new EncryptServiceImplementation(this.cryptoFunctionService, this.logService, false),
+        this.keyGenerationService,
+        new BrowserLocalStorageService(),
+        new BrowserMemoryStorageService(),
+        partitionName,
+      );
+    };
+
     this.secureStorageService = this.storageService; // secure storage is not supported in browsers, so we use local storage and warn users when it is used
     this.memoryStorageService = BrowserApi.isManifestVersion(3)
-      ? new LocalBackedSessionStorageService(
-          new EncryptServiceImplementation(this.cryptoFunctionService, this.logService, false),
-          this.keyGenerationService,
-        )
+      ? mv3MemoryStorageCreator("stateService")
       : new MemoryStorageService();
     this.memoryStorageForStateProviders = BrowserApi.isManifestVersion(3)
-      ? new LocalBackedSessionStorageService(
-          new EncryptServiceImplementation(this.cryptoFunctionService, this.logService, false),
-          this.keyGenerationService,
-        )
+      ? mv3MemoryStorageCreator("stateProviders")
       : new BackgroundMemoryStorageService();
 
     const storageServiceProvider = new StorageServiceProvider(
-      this.storageService as BrowserLocalStorageService,
+      this.storageService,
       this.memoryStorageForStateProviders,
     );
 
@@ -554,11 +565,12 @@ export default class MainBackground {
       this.cryptoFunctionService,
       this.cryptoService,
       this.encryptService,
-      this.stateService,
       this.appIdService,
       this.devicesApiService,
       this.i18nService,
       this.platformUtilsService,
+      this.stateProvider,
+      this.secureStorageService,
       this.userDecryptionOptionsService,
     );
 
@@ -577,6 +589,7 @@ export default class MainBackground {
       this.cryptoService,
       this.apiService,
       this.stateService,
+      this.tokenService,
     );
 
     this.billingAccountProfileStateService = new DefaultBillingAccountProfileStateService(
@@ -697,11 +710,14 @@ export default class MainBackground {
       logoutCallback,
     );
     this.containerService = new ContainerService(this.cryptoService, this.encryptService);
+
+    this.sendStateProvider = new SendStateProvider(this.stateProvider);
     this.sendService = new SendService(
       this.cryptoService,
       this.i18nService,
       this.keyGenerationService,
-      this.stateService,
+      this.sendStateProvider,
+      this.encryptService,
     );
     this.sendApiService = new SendApiService(
       this.apiService,
@@ -752,7 +768,6 @@ export default class MainBackground {
 
     this.autofillService = new AutofillService(
       this.cipherService,
-      this.stateService,
       this.autofillSettingsService,
       this.totpService,
       this.eventCollectionService,
@@ -1081,7 +1096,9 @@ export default class MainBackground {
       await this.stateService.setActiveUser(userId);
 
       if (userId == null) {
-        await this.stateService.setRememberedEmail(null);
+        this.loginEmailService.setRememberEmail(false);
+        await this.loginEmailService.saveEmailSettings();
+
         await this.refreshBadge();
         await this.refreshMenu();
         await this.overlayBackground.updateOverlayCiphers();

@@ -38,13 +38,20 @@ export const BILLING_DISK = new StateDefinition("billing", "disk");
 export const KEY_CONNECTOR_DISK = new StateDefinition("keyConnector", "disk");
 export const ACCOUNT_MEMORY = new StateDefinition("account", "memory");
 export const AVATAR_DISK = new StateDefinition("avatar", "disk", { web: "disk-local" });
+export const ROUTER_DISK = new StateDefinition("router", "disk");
+export const LOGIN_EMAIL_DISK = new StateDefinition("loginEmail", "disk", {
+  web: "disk-local",
+});
+export const LOGIN_STRATEGY_MEMORY = new StateDefinition("loginStrategy", "memory");
 export const SSO_DISK = new StateDefinition("ssoLogin", "disk");
 export const TOKEN_DISK = new StateDefinition("token", "disk");
 export const TOKEN_DISK_LOCAL = new StateDefinition("tokenDiskLocal", "disk", {
   web: "disk-local",
 });
 export const TOKEN_MEMORY = new StateDefinition("token", "memory");
-export const LOGIN_STRATEGY_MEMORY = new StateDefinition("loginStrategy", "memory");
+export const DEVICE_TRUST_DISK_LOCAL = new StateDefinition("deviceTrust", "disk", {
+  web: "disk-local",
+});
 export const USER_DECRYPTION_OPTIONS_DISK = new StateDefinition("userDecryptionOptions", "disk");
 export const VAULT_TIMEOUT_SETTINGS_DISK_LOCAL = new StateDefinition(
   "vaultTimeoutSettings",
@@ -104,6 +111,10 @@ export const SM_ONBOARDING_DISK = new StateDefinition("smOnboarding", "disk", {
 export const GENERATOR_DISK = new StateDefinition("generator", "disk");
 export const GENERATOR_MEMORY = new StateDefinition("generator", "memory");
 export const EVENT_COLLECTION_DISK = new StateDefinition("eventCollection", "disk");
+export const SEND_DISK = new StateDefinition("encryptedSend", "disk", {
+  web: "memory",
+});
+export const SEND_MEMORY = new StateDefinition("decryptedSend", "memory");
 
 // Vault
 
@@ -120,3 +131,4 @@ export const VAULT_ONBOARDING = new StateDefinition("vaultOnboarding", "disk", {
 export const VAULT_SETTINGS_DISK = new StateDefinition("vaultSettings", "disk", {
   web: "disk-local",
 });
+export const VAULT_BROWSER_MEMORY = new StateDefinition("vaultBrowser", "memory");
