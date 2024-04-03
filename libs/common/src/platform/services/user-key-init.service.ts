@@ -1,6 +1,6 @@
 import { Subscription, filter, switchMap } from "rxjs";
 
-import { AccountInfo, AccountService } from "../../auth/abstractions/account.service";
+import { AccountService } from "../../auth/abstractions/account.service";
 import { UserId } from "../../types/guid";
 import { CryptoService } from "../abstractions/crypto.service";
 import { KeySuffixOptions } from "../enums";
@@ -22,15 +22,12 @@ export class UserKeyInitService {
     return this.accountService.activeAccount$
       .pipe(
         filter((activeAccount) => activeAccount != null),
-        switchMap((activeAccount) => this.setUserKeyInMemoryIfAutoUserKeySet(activeAccount)),
+        switchMap((activeAccount) => this.setUserKeyInMemoryIfAutoUserKeySet(activeAccount?.id)),
       )
       .subscribe();
   }
 
-  private async setUserKeyInMemoryIfAutoUserKeySet(
-    activeAccount: { id: UserId | undefined } & AccountInfo,
-  ) {
-    const userId = activeAccount?.id;
+  private async setUserKeyInMemoryIfAutoUserKeySet(userId: UserId) {
     if (userId == null) {
       return;
     }
