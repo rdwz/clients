@@ -394,10 +394,6 @@ export class ApiService implements ApiServiceAbstraction {
     return this.send("POST", "/accounts/reinstate-premium", null, true, false);
   }
 
-  postCancelPremium(): Promise<any> {
-    return this.send("POST", "/accounts/cancel-premium", null, true, false);
-  }
-
   async postAccountStorage(request: StorageRequest): Promise<PaymentResponse> {
     const r = await this.send("POST", "/accounts/storage", request, true, true);
     return new PaymentResponse(r);
@@ -1784,9 +1780,9 @@ export class ApiService implements ApiServiceAbstraction {
 
       await this.tokenService.setTokens(
         tokenResponse.accessToken,
-        tokenResponse.refreshToken,
         vaultTimeoutAction as VaultTimeoutAction,
         vaultTimeout,
+        tokenResponse.refreshToken,
       );
     } else {
       const error = await this.handleError(response, true, true);
