@@ -10,7 +10,7 @@ import { firstValueFrom } from "rxjs";
 
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
 import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
-import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
+import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { TreeNode } from "@bitwarden/common/vault/models/domain/tree-node";
 import { CollectionView } from "@bitwarden/common/vault/models/view/collection.view";
@@ -69,7 +69,7 @@ export class VaultHeaderComponent implements OnInit {
 
   constructor(
     private i18nService: I18nService,
-    private configService: ConfigServiceAbstraction,
+    private configService: ConfigService,
   ) {}
 
   async ngOnInit() {

@@ -5,7 +5,7 @@ import { firstValueFrom } from "rxjs";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
 import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
-import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
+import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
@@ -65,7 +65,7 @@ export class BulkDeleteDialogComponent {
     private i18nService: I18nService,
     private apiService: ApiService,
     private collectionService: CollectionService,
-    private configService: ConfigServiceAbstraction,
+    private configService: ConfigService,
   ) {
     this.cipherIds = params.cipherIds ?? [];
     this.permanent = params.permanent;
@@ -85,7 +85,7 @@ export class BulkDeleteDialogComponent {
 
       if (
         !this.organization ||
-        !this.organization.canEditAnyCollection(flexibleCollectionsV1Enabled)
+        !this.organization.canEditAllCiphers(flexibleCollectionsV1Enabled)
       ) {
         deletePromises.push(this.deleteCiphers());
       } else {
@@ -119,7 +119,7 @@ export class BulkDeleteDialogComponent {
 
   private async deleteCiphers(): Promise<any> {
     const flexibleCollectionsV1Enabled = await firstValueFrom(this.flexibleCollectionsV1Enabled$);
-    const asAdmin = this.organization?.canEditAnyCollection(flexibleCollectionsV1Enabled);
+    const asAdmin = this.organization?.canEditAllCiphers(flexibleCollectionsV1Enabled);
     if (this.permanent) {
       await this.cipherService.deleteManyWithServer(this.cipherIds, asAdmin);
     } else {
