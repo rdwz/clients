@@ -6,22 +6,24 @@ import * as stories from "./anon-layout.stories";
 
 # AnonLayout Component
 
-The AnonLayoutComponent is to be used for unauthenticated pages, where we don't know who the user is
-(this includes viewing a Send).
+The Auth-owned AnonLayoutComponent is to be used for unauthenticated pages, where we don't know who
+the user is (this includes viewing a Send).
 
 The AnonLayoutComponent is not to be implemented by every component that uses it in the component's
 template directly. Instead the AnonLayoutComponent is implemented via routable composition, which
 gives us the advantages of nested routes in Angular.
 
-To allow for routable composition, Web has an AnonLayoutWrapperComponent which embeds the
-AnonLayoutComponent. For clarity:
+To allow for routable composition, Web has an AnonLayoutWrapperComponent which embeds the Auth-owned
+AnonLayoutComponent.
 
-- AnonLayoutComponent = CL component - `<auth-anon-layout>`
+For clarity:
+
+- AnonLayoutComponent = Auth-owned library component - `<auth-anon-layout>`
 - AnonLayoutWrapperComponent = Web component -
   `apps/web/src/app/auth/anon-layout-wrapper.component.ts`
 
-The AnonLayoutWrapperComponent (Web) embeds the AnonLayoutComponent (CL) along with the router
-outlets:
+The AnonLayoutWrapperComponent (Web) embeds the AnonLayoutComponent (Auth-owned) along with the
+router outlets:
 
 ```html
 <!-- File: anon-layout-wrapper.component.html (Web component)-->
@@ -32,14 +34,14 @@ outlets:
 </auth-anon-layout>
 ```
 
-To implement, the developer should not even need to work with the AnonLayoutComponent (CL) directly.
-The devoloper simply uses the AnonLayoutWrapperComponent (Web) in `oss-routing.module.ts` to
-construct the page via routable composition:
+To implement, the developer should not even need to work with the AnonLayoutComponent (Auth-owned)
+directly. The devoloper simply uses the AnonLayoutWrapperComponent (Web) in `oss-routing.module.ts`
+to construct the page via routable composition:
 
 ```javascript
 {
     path: "",
-    component: AnonLayoutWrapperComponent, // Web component (not the CL component)
+    component: AnonLayoutWrapperComponent, // Web component (not the Auth-owned component)
     children: [
       {
         path: "sample-route", // replace with your route
