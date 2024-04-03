@@ -4,7 +4,6 @@ import { SharedModule } from "../shared";
 
 @Component({
   standalone: true,
-  selector: "app-anon-layout-wrapper",
   templateUrl: "anon-layout-wrapper.component.html",
   imports: [SharedModule],
 })

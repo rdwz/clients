@@ -6,25 +6,25 @@ import * as stories from "./anon-layout.stories";
 
 # AnonLayout Component
 
-The AnonLayoutComponent is to be used for all unauthenticated pages, where we don't know who the
-user is (this includes viewing a Send).
+The AnonLayoutComponent is to be used for unauthenticated pages, where we don't know who the user is
+(this includes viewing a Send).
 
-The AnonLayoutComponent is not to be implemented by every component that uses it in the component
+The AnonLayoutComponent is not to be implemented by every component that uses it in the component's
 template directly. Instead the AnonLayoutComponent is implemented via routable composition, which
 gives us the advantages of nested routes in Angular.
 
-To allow for routable composition, Web has an AnonLayoutWrapperComponent which acts as a wrapper and
-embeds the AnonLayoutComponent. For clarity:
+To allow for routable composition, Web has an AnonLayoutWrapperComponent which embeds the
+AnonLayoutComponent. For clarity:
 
-- AnonLayoutComponent = CL component
-- AnonLayoutWrapperComponent = Web component (which wraps the CL component) - in
-  apps/web/src/app/auth/anon-layout-wrapper.component.ts
+- AnonLayoutComponent = CL component - `<auth-anon-layout>`
+- AnonLayoutWrapperComponent = Web component -
+  `apps/web/src/app/auth/anon-layout-wrapper.component.ts`
 
-The contents of the AnonLayoutWrapperComponent (Web) are the AnonLayoutComponent (CL) along with the
-router outlets:
+The AnonLayoutWrapperComponent (Web) embeds the AnonLayoutComponent (CL) along with the router
+outlets:
 
 ```html
-<!-- anon-layout-wrapper.component.html -->
+<!-- File: anon-layout-wrapper.component.html (Web component)-->
 
 <auth-anon-layout>
   <router-outlet></router-outlet>
@@ -32,8 +32,9 @@ router outlets:
 </auth-anon-layout>
 ```
 
-The developer uses the AnonLayoutWrapperComponent (Web) in oss-routing.module.ts and constructs the
-page via routable composition:
+To implement, the developer should not even need to work with the AnonLayoutComponent (CL) directly.
+The devoloper simply uses the AnonLayoutWrapperComponent (Web) in `oss-routing.module.ts` to
+construct the page via routable composition:
 
 ```javascript
 {
@@ -46,7 +47,7 @@ page via routable composition:
       },
       {
         path: "",
-        component: MySecondaryComponent, // replace with your component (or remove this secondary outlet entirely if not needed)
+        component: MySecondaryComponent, // replace with your component (or remove this secondary outlet object entirely if not needed)
         outlet: "secondary",
       },
     ],
