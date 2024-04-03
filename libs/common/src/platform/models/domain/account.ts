@@ -149,7 +149,6 @@ export class AccountProfile {
   name?: string;
   email?: string;
   emailVerified?: boolean;
-  everBeenUnlocked?: boolean;
   forceSetPasswordReason?: ForceSetPasswordReason;
   lastSync?: string;
   userId?: string;

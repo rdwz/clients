@@ -187,8 +187,6 @@ export abstract class StateService<T extends Account = Account> {
    * @deprecated For migration purposes only, use setEncryptedUserKeyPin instead
    */
   setEncryptedPinProtected: (value: string, options?: StorageOptions) => Promise<void>;
-  getEverBeenUnlocked: (options?: StorageOptions) => Promise<boolean>;
-  setEverBeenUnlocked: (value: boolean, options?: StorageOptions) => Promise<void>;
   getForceSetPasswordReason: (options?: StorageOptions) => Promise<ForceSetPasswordReason>;
   setForceSetPasswordReason: (
     value: ForceSetPasswordReason,
