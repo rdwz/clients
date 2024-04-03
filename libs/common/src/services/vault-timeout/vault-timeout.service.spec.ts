@@ -154,7 +154,6 @@ describe("VaultTimeoutService", () => {
     // This does NOT assert all the things that the lock process does
     expect(stateService.getIsAuthenticated).toHaveBeenCalledWith({ userId: userId });
     expect(vaultTimeoutSettingsService.availableVaultTimeoutActions$).toHaveBeenCalledWith(userId);
-    expect(stateService.setEverBeenUnlocked).toHaveBeenCalledWith(true, { userId: userId });
     expect(stateService.setUserKeyAutoUnlock).toHaveBeenCalledWith(null, { userId: userId });
     expect(cryptoService.clearUserKey).toHaveBeenCalledWith(false, userId);
     expect(cryptoService.clearMasterKey).toHaveBeenCalledWith(userId);
