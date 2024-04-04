@@ -28,6 +28,12 @@ function exampleJSON() {
             },
           },
         ],
+        ciphers: [
+          {
+            id: "cipher-id-10",
+          },
+          { id: "cipher-id-11" },
+        ],
       },
     },
     "user-2": {
@@ -40,6 +46,9 @@ function exampleJSON() {
             lastUsedDate: 1709031916943,
           },
         },
+        ciphers: {
+          id: "cipher-id-20",
+        },
       },
     },
   };
@@ -50,30 +59,39 @@ function rollbackJSON() {
     authenticatedAccounts: ["user-1", "user-2"],
     "user-1": {
       data: {
-        localdata: [
+        localData: [
           {
             "6865ba55-7966-4d63-b743-b12000d49631": {
               lastUsedDate: 1708950970632,
             },
+          },
+          {
             "f895f099-6739-4cca-9d61-b12200d04bfa": {
               lastUsedDate: 1709031916943,
             },
           },
         ],
+        ciphers: [
+          {
+            id: "cipher-id-10",
+          },
+          { id: "cipher-id-11" },
+        ],
       },
     },
     "user-2": {
       data: {
-        localdata: [
-          {
-            "fce9e7bf-bb3d-4650-897f-b12300f43541": {
-              lastUsedDate: 1708950970654,
-            },
-            "ffb90bc2-a4ff-4571-b954-b12300f4207e": {
-              lastUsedDate: 1709031916965,
-            },
+        localData: {
+          "fce9e7bf-bb3d-4650-897f-b12300f43541": {
+            lastUsedDate: 1708950970632,
           },
-        ],
+          "ffb90bc2-a4ff-4571-b954-b12300f4207e": {
+            lastUsedDate: 1709031916943,
+          },
+        },
+        ciphers: {
+          id: "cipher-id-20",
+        },
       },
     },
   };
@@ -89,22 +107,30 @@ describe("CipherServiceMigrator", () => {
       sut = new CipherServiceMigrator(54, 55);
     });
 
-    it("should remove local data from all accounts", async () => {
+    it("should remove local data and ciphers from all accounts", async () => {
       await sut.migrate(helper);
-      expect(helper.set).toHaveBeenCalledWith("user-1", {
-        data: {
-          localData: [
-            {
-              "6865ba55-7966-4d63-b743-b12000d49631": {
-                lastUsedDate: 1708950970632,
+      expect(helper.set).toHaveBeenCalledWith({
+        "user-1": {
+          data: {
+            localData: [
+              {
+                "6865ba55-7966-4d63-b743-b12000d49631": {
+                  lastUsedDate: 1708950970632,
+                },
               },
-            },
-            {
-              "f895f099-6739-4cca-9d61-b12200d04bfa": {
-                lastUsedDate: 1709031916943,
+              {
+                "f895f099-6739-4cca-9d61-b12200d04bfa": {
+                  lastUsedDate: 1709031916943,
+                },
               },
-            },
-          ],
+            ],
+            ciphers: [
+              {
+                id: "cipher-id-10",
+              },
+              { id: "cipher-id-11" },
+            ],
+          },
         },
       });
     });

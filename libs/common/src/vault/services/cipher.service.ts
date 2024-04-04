@@ -21,7 +21,7 @@ import Domain from "../../platform/models/domain/domain-base";
 import { EncArrayBuffer } from "../../platform/models/domain/enc-array-buffer";
 import { EncString } from "../../platform/models/domain/enc-string";
 import { SymmetricCryptoKey } from "../../platform/models/domain/symmetric-crypto-key";
-import { ActiveUserState, StateProvider, DerivedState } from "../../platform/state";
+import { ActiveUserState, StateProvider } from "../../platform/state";
 import { CipherId, CollectionId, OrganizationId } from "../../types/guid";
 import { UserKey, OrgKey } from "../../types/key";
 import { CipherService as CipherServiceAbstraction } from "../abstractions/cipher.service";
@@ -59,10 +59,10 @@ import { PasswordHistoryView } from "../models/view/password-history.view";
 import { AddEditCipherInfo } from "../types/add-edit-cipher-info";
 
 import {
-  DECRYPTED_CIPHERS,
   ENCRYPTED_CIPHERS,
   LOCAL_DATA_KEY,
   ADD_EDIT_CIPHER_INFO_KEY,
+  DECRYPTED_CIPHERS,
 } from "./key-state/ciphers.state";
 
 const CIPHER_KEY_ENC_MIN_SERVER_VER = new SemVer("2024.2.0");
@@ -74,12 +74,12 @@ export class CipherService implements CipherServiceAbstraction {
 
   localData$: Observable<Record<CipherId, LocalData>>;
   ciphers$: Observable<Record<CipherId, CipherData>>;
-  cipherViews$: Observable<CipherView[]>;
+  cipherViews$: Observable<Record<CipherId, CipherView>>;
   addEditCipherInfo$: Observable<AddEditCipherInfo>;
 
   private localDataState: ActiveUserState<Record<CipherId, LocalData>>;
   private encryptedCiphersState: ActiveUserState<Record<CipherId, CipherData>>;
-  private decryptedCiphersState: DerivedState<CipherView[]>;
+  private decryptedCiphersState: ActiveUserState<Record<CipherId, CipherView>>;
   private addEditCipherInfoState: ActiveUserState<AddEditCipherInfo>;
 
   constructor(
@@ -97,11 +97,7 @@ export class CipherService implements CipherServiceAbstraction {
   ) {
     this.localDataState = this.stateProvider.getActive(LOCAL_DATA_KEY);
     this.encryptedCiphersState = this.stateProvider.getActive(ENCRYPTED_CIPHERS);
-    this.decryptedCiphersState = this.stateProvider.getDerived(
-      this.encryptedCiphersState.state$,
-      DECRYPTED_CIPHERS,
-      { cipherService: this },
-    );
+    this.decryptedCiphersState = this.stateProvider.getActive(DECRYPTED_CIPHERS);
     this.addEditCipherInfoState = this.stateProvider.getActive(ADD_EDIT_CIPHER_INFO_KEY);
 
     this.localData$ = this.localDataState.state$;
@@ -110,18 +106,13 @@ export class CipherService implements CipherServiceAbstraction {
     this.addEditCipherInfo$ = this.addEditCipherInfoState.state$;
   }
 
-  async getDecryptedCipherCache(): Promise<CipherView[]> {
-    const decryptedCiphers = await firstValueFrom(this.cipherViews$);
-    return decryptedCiphers;
-  }
-
   async setDecryptedCipherCache(value: CipherView[]) {
     // Sometimes we might prematurely decrypt the vault and that will result in no ciphers
     // if we cache it then we may accidentially return it when it's not right, we'd rather try decryption again.
     // We still want to set null though, that is the indicator that the cache isn't valid and we should do decryption.
-    //if (value == null || value.length !== 0) {
-    //  await this.stateService.setDecryptedCiphers(value);
-    //}
+    if (value == null || value.length !== 0) {
+      await this.setDecryptedCiphers(value);
+    }
     if (this.searchService != null) {
       if (value == null) {
         this.searchService.clearIndex();
@@ -129,6 +120,14 @@ export class CipherService implements CipherServiceAbstraction {
         this.searchService.indexCiphers(value);
       }
     }
+  }
+
+  private async setDecryptedCiphers(value: CipherView[]) {
+    const cipherViews: { [id: string]: CipherView } = {};
+    value?.forEach((c) => {
+      cipherViews[c.id] = c;
+    });
+    await this.decryptedCiphersState.update(() => cipherViews);
   }
 
   async clearCache(userId?: string): Promise<void> {
@@ -331,15 +330,20 @@ export class CipherService implements CipherServiceAbstraction {
 
   @sequentialize(() => "getAllDecrypted")
   async getAllDecrypted(): Promise<CipherView[]> {
-    if ((await this.getDecryptedCipherCache()) != null) {
+    let decCiphers = await this.getDecryptedCiphers();
+    if (decCiphers != null && decCiphers.length !== 0) {
       await this.reindexCiphers();
-      return await this.getDecryptedCipherCache();
+      return await this.getDecryptedCiphers();
     }
 
-    const decCiphers = await this.decryptCiphers(await this.getAll());
+    decCiphers = await this.decryptCiphers(await this.getAll());
 
     await this.setDecryptedCipherCache(decCiphers);
     return decCiphers;
+  }
+
+  private async getDecryptedCiphers() {
+    return Object.values(await firstValueFrom(this.cipherViews$));
   }
 
   async decryptCiphers(ciphers: Cipher[]) {
@@ -378,7 +382,7 @@ export class CipherService implements CipherServiceAbstraction {
     const reindexRequired =
       this.searchService != null && (this.searchService.indexedEntityId ?? userId) !== userId;
     if (reindexRequired) {
-      this.searchService.indexCiphers(await this.getDecryptedCipherCache(), userId);
+      this.searchService.indexCiphers(await this.getDecryptedCiphers(), userId);
     }
   }
 
@@ -507,7 +511,7 @@ export class CipherService implements CipherServiceAbstraction {
 
     await this.localDataState.update(() => ciphersLocalData);
 
-    const decryptedCipherCache = await firstValueFrom(this.cipherViews$);
+    const decryptedCipherCache = await this.getDecryptedCiphers();
     if (!decryptedCipherCache) {
       return;
     }
@@ -519,8 +523,7 @@ export class CipherService implements CipherServiceAbstraction {
         break;
       }
     }
-    //TODO Is this the right action? Or should the force be used only for clearing
-    await this.decryptedCiphersState.forceValue(decryptedCipherCache);
+    await this.setDecryptedCiphers(decryptedCipherCache);
   }
 
   async updateLastLaunchedDate(id: string): Promise<void> {
@@ -541,7 +544,7 @@ export class CipherService implements CipherServiceAbstraction {
 
     await this.localDataState.update(() => ciphersLocalData);
 
-    const decryptedCipherCache = await firstValueFrom(this.cipherViews$);
+    const decryptedCipherCache = await this.getDecryptedCiphers();
     if (!decryptedCipherCache) {
       return;
     }
@@ -553,8 +556,7 @@ export class CipherService implements CipherServiceAbstraction {
         break;
       }
     }
-    //TODO Is this the right action? Or should the force be used only for clearing
-    await this.decryptedCiphersState.forceValue(decryptedCipherCache);
+    await this.setDecryptedCiphers(decryptedCipherCache);
   }
 
   async saveNeverDomain(domain: string): Promise<void> {
@@ -1428,7 +1430,7 @@ export class CipherService implements CipherServiceAbstraction {
   }
 
   private async clearDecryptedCiphersState(userId?: string) {
-    await this.decryptedCiphersState.forceValue([]);
+    await this.setDecryptedCiphers(null);
     this.clearSortedCiphers();
   }
 

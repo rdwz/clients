@@ -11,7 +11,7 @@ type ExpectedAccountType = {
 export const CIPHERS_DISK_LOCAL: KeyDefinitionLike = {
   key: "localData",
   stateDefinition: {
-    name: "cipherDataInfo",
+    name: "ciphersLocal",
   },
 };
 
