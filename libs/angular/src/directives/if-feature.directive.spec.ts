@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
 import { mock, MockProxy } from "jest-mock-extended";
 
-import { FeatureFlag, FeatureFlagValue } from "@bitwarden/common/enums/feature-flag.enum";
+import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
 import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 
@@ -41,9 +41,9 @@ describe("IfFeatureDirective", () => {
   let content: HTMLElement;
   let mockConfigService: MockProxy<ConfigService>;
 
-  const mockConfigFlagValue = (flag: FeatureFlag, flagValue: FeatureFlagValue) => {
+  const mockConfigFlagValue = (flag: FeatureFlag, flagValue: string | number | boolean) => {
     mockConfigService.getFeatureFlag.mockImplementation((f, defaultValue) =>
-      flag == f ? Promise.resolve(flagValue) : Promise.resolve(defaultValue),
+      flag == f ? Promise.resolve(flagValue as any) : Promise.resolve(defaultValue),
     );
   };
 
