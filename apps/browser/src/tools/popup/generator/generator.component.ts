@@ -1,7 +1,7 @@
 import { Location } from "@angular/common";
 import { Component } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
-import { Observable } from "rxjs";
+import { firstValueFrom } from "rxjs";
 
 import { GeneratorComponent as BaseGeneratorComponent } from "@bitwarden/angular/tools/generator/components/generator.component";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
@@ -47,7 +47,7 @@ export class GeneratorComponent extends BaseGeneratorComponent {
   }
 
   async ngOnInit() {
-    this.addEditCipherInfo = await firstValueFom(this.cipherService.addEditCipherInfo$);
+    this.addEditCipherInfo = await firstValueFrom(this.cipherService.addEditCipherInfo$);
     if (this.addEditCipherInfo != null) {
       this.cipherState = this.addEditCipherInfo.cipher;
     }
@@ -75,9 +75,4 @@ export class GeneratorComponent extends BaseGeneratorComponent {
   close() {
     this.location.back();
   }
-}
-function firstValueFom(
-  addEditCipherInfo$: Observable<AddEditCipherInfo>,
-): AddEditCipherInfo | PromiseLike<AddEditCipherInfo> {
-  throw new Error("Function not implemented.");
 }

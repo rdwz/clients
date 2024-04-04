@@ -3,6 +3,7 @@ import { Jsonify } from "type-fest";
 import {
   CIPHERS_DISK,
   CIPHERS_DISK_LOCAL,
+  CIPHER_SERVICE_MEMORY,
   DeriveDefinition,
   KeyDefinition,
 } from "../../../platform/state";
@@ -39,7 +40,19 @@ export const LOCAL_DATA_KEY = new KeyDefinition<Record<CipherId, LocalData>>(
 );
 
 export const ADD_EDIT_CIPHER_INFO_KEY = new KeyDefinition<AddEditCipherInfo>(
-  CIPHERS_DISK_LOCAL,
+  CIPHER_SERVICE_MEMORY,
   "addEditCipherInfo",
-  { deserializer: (addEditCipherInfo) => addEditCipherInfo },
+  {
+    deserializer: (addEditCipherInfo: AddEditCipherInfo) => {
+      return addEditCipherInfo == null
+        ? null
+        : {
+            cipher:
+              addEditCipherInfo?.cipher.toJSON != null
+                ? addEditCipherInfo.cipher
+                : CipherView.fromJSON(addEditCipherInfo?.cipher as Jsonify<CipherView>),
+            collectionIds: addEditCipherInfo?.collectionIds,
+          };
+    },
+  },
 );

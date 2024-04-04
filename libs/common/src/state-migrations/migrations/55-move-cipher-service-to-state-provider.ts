@@ -32,7 +32,7 @@ export class CipherServiceMigrator extends Migrator<54, 55> {
       const localData = account?.data?.localData;
       if (localData != null) {
         await helper.setToUser(userId, CIPHERS_DISK_LOCAL, localData);
-        delete account.data;
+        delete account.data.localData;
         updatedAccount = true;
       }
 
@@ -40,7 +40,7 @@ export class CipherServiceMigrator extends Migrator<54, 55> {
       const ciphers = account?.data?.ciphers;
       if (ciphers != null) {
         await helper.setToUser(userId, CIPHERS_DISK, ciphers);
-        delete account.data;
+        delete account.data.ciphers;
         updatedAccount = true;
       }
 

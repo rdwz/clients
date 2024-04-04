@@ -1,6 +1,5 @@
-import { Observable, firstValueFrom, map } from "rxjs";
+import { Observable, firstValueFrom } from "rxjs";
 import { SemVer } from "semver";
-import { Jsonify } from "type-fest";
 
 import { ApiService } from "../../abstractions/api.service";
 import { SearchService } from "../../abstractions/search.service";
@@ -108,19 +107,7 @@ export class CipherService implements CipherServiceAbstraction {
     this.localData$ = this.localDataState.state$;
     this.ciphers$ = this.encryptedCiphersState.state$;
     this.cipherViews$ = this.decryptedCiphersState.state$;
-    this.addEditCipherInfo$ = this.addEditCipherInfoState.state$.pipe(
-      map((info) => {
-        return info == null
-          ? null
-          : {
-              cipher:
-                info?.cipher.toJSON != null
-                  ? info.cipher
-                  : CipherView.fromJSON(info?.cipher as Jsonify<CipherView>),
-              collectionIds: info?.collectionIds,
-            };
-      }),
-    );
+    this.addEditCipherInfo$ = this.addEditCipherInfoState.state$;
   }
 
   async getDecryptedCipherCache(): Promise<CipherView[]> {
@@ -772,7 +759,7 @@ export class CipherService implements CipherServiceAbstraction {
     await this.apiService.send("POST", "/ciphers/bulk-collections", request, true, false);
 
     // Update the local state
-    let ciphers = await firstValueFrom(this.ciphers$);
+    const ciphers = await firstValueFrom(this.ciphers$);
 
     for (const id of cipherIds) {
       const cipher = ciphers[id];
@@ -789,12 +776,7 @@ export class CipherService implements CipherServiceAbstraction {
     }
 
     await this.clearCache();
-    await this.encryptedCiphersState.update(() => {
-      if (ciphers == null) {
-        ciphers = {};
-      }
-      return ciphers;
-    });
+    await this.encryptedCiphersState.update(() => ciphers);
   }
 
   async upsert(cipher: CipherData | CipherData[]): Promise<any> {
@@ -846,16 +828,11 @@ export class CipherService implements CipherServiceAbstraction {
     });
 
     await this.clearCache();
-    await this.encryptedCiphersState.update(() => {
-      if (ciphers == null) {
-        ciphers = {};
-      }
-      return ciphers;
-    });
+    await this.encryptedCiphersState.update(() => ciphers);
   }
 
   async delete(id: string | string[]): Promise<any> {
-    let ciphers = await firstValueFrom(this.ciphers$);
+    const ciphers = await firstValueFrom(this.ciphers$);
     if (ciphers == null) {
       return;
     }
@@ -873,12 +850,7 @@ export class CipherService implements CipherServiceAbstraction {
     }
 
     await this.clearCache();
-    await this.encryptedCiphersState.update(() => {
-      if (ciphers == null) {
-        ciphers = {};
-      }
-      return ciphers;
-    });
+    await this.encryptedCiphersState.update(() => ciphers);
   }
 
   async deleteWithServer(id: string, asAdmin = false): Promise<any> {
