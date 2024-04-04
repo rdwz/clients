@@ -1,4 +1,15 @@
-import { Observable, defer, firstValueFrom, map } from "rxjs";
+import {
+  Observable,
+  combineLatest,
+  defer,
+  distinctUntilChanged,
+  firstValueFrom,
+  from,
+  map,
+  shareReplay,
+  switchMap,
+  tap,
+} from "rxjs";
 
 import { UserDecryptionOptionsServiceAbstraction } from "@bitwarden/auth/common";
 
@@ -13,6 +24,8 @@ import { StateService } from "../../platform/abstractions/state.service";
 import { BiometricStateService } from "../../platform/biometrics/biometric-state.service";
 import { StateProvider } from "../../platform/state";
 import { UserId } from "../../types/guid";
+
+import { VAULT_TIMEOUT_ACTION } from "./vault-timeout-settings.state";
 
 /**
  * - DISABLED: No Pin set
@@ -169,6 +182,80 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
     return currentVaultTimeoutAction === VaultTimeoutAction.LogOut
       ? VaultTimeoutAction.LogOut
       : VaultTimeoutAction.Lock;
+  }
+
+  getVaultTimeoutActionByUserId$(userId: UserId): Observable<VaultTimeoutAction> {
+    return combineLatest([
+      this.stateProvider.getUserState$(VAULT_TIMEOUT_ACTION, userId),
+      this.getMaxVaultTimeoutPolicyByUserId$(userId),
+    ]).pipe(
+      switchMap(([currentVaultTimeoutAction, maxVaultTimeoutPolicy]) => {
+        return from(
+          this.determineVaultTimeoutAction(
+            userId,
+            currentVaultTimeoutAction,
+            maxVaultTimeoutPolicy,
+          ),
+        ).pipe(
+          tap((vaultTimeoutAction: VaultTimeoutAction) => {
+            // As a side effect, set the new value in the state if it's different from the current
+            // We want to avoid having a null timeout action always so we set it to the default if it is null
+            // and if the user becomes subject to a policy that requires a specific action, we set it to that
+            if (vaultTimeoutAction !== currentVaultTimeoutAction) {
+              return this.stateProvider.setUserState(
+                VAULT_TIMEOUT_ACTION,
+                vaultTimeoutAction,
+                userId,
+              );
+            }
+          }),
+        );
+      }),
+      distinctUntilChanged(), // Avoid having the set side effect trigger a new emission of the same action
+      shareReplay({ refCount: true, bufferSize: 1 }),
+    );
+  }
+
+  private async determineVaultTimeoutAction(
+    userId: string,
+    currentVaultTimeoutAction: VaultTimeoutAction | null,
+    maxVaultTimeoutPolicy: Policy | null,
+  ): Promise<VaultTimeoutAction> {
+    const availableVaultTimeoutActions = await this.getAvailableVaultTimeoutActions();
+    if (availableVaultTimeoutActions.length === 1) {
+      return availableVaultTimeoutActions[0];
+    }
+
+    if (maxVaultTimeoutPolicy) {
+      const policyDefinedVaultTimeoutAction = maxVaultTimeoutPolicy.data.action;
+
+      if (
+        policyDefinedVaultTimeoutAction &&
+        availableVaultTimeoutActions.includes(policyDefinedVaultTimeoutAction)
+      ) {
+        return policyDefinedVaultTimeoutAction;
+      }
+    }
+
+    if (
+      maxVaultTimeoutPolicy?.data?.action &&
+      availableVaultTimeoutActions.includes(maxVaultTimeoutPolicy.data.action)
+    ) {
+      // return policy defined vault timeout action
+      return maxVaultTimeoutPolicy.data.action;
+    }
+
+    // No policy applies, default based on master password if no action is set
+    if (currentVaultTimeoutAction == null) {
+      // Depends on whether or not the user has a master password
+      const defaultVaultTimeoutAction = (await this.userHasMasterPassword(userId))
+        ? VaultTimeoutAction.Lock
+        : VaultTimeoutAction.LogOut;
+
+      return defaultVaultTimeoutAction;
+    }
+
+    return currentVaultTimeoutAction;
   }
 
   private getMaxVaultTimeoutPolicyByUserId$(userId: UserId): Observable<Policy | null> {
