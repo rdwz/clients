@@ -84,7 +84,7 @@ describe("Fido2 page script without native WebAuthn support", () => {
   });
 
   describe("destroy", () => {
-    it("should ", async () => {
+    it("should destroy the message listener when receiving a disconnect request", async () => {
       jest.spyOn(globalThis.top, "removeEventListener");
       const SENDER = "bitwarden-webauthn";
       void messenger.handler({ type: MessageType.DisconnectRequest, SENDER, senderId: "1" });
