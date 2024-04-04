@@ -5,7 +5,9 @@ import {
   CreateCredentialResult,
 } from "@bitwarden/common/vault/abstractions/fido2/fido2-client.service.abstraction";
 
-export function createCredentialCreationOptionsMock(customFields = {}): CredentialCreationOptions {
+export function createCredentialCreationOptionsMock(
+  customFields: Partial<CredentialCreationOptions> = {},
+): CredentialCreationOptions {
   return mock<CredentialCreationOptions>({
     publicKey: mock<PublicKeyCredentialCreationOptions>({
       authenticatorSelection: { authenticatorAttachment: "platform" },
@@ -17,7 +19,9 @@ export function createCredentialCreationOptionsMock(customFields = {}): Credenti
   });
 }
 
-export function createCreateCredentialResultMock(customFields = {}): CreateCredentialResult {
+export function createCreateCredentialResultMock(
+  customFields: Partial<CreateCredentialResult> = {},
+): CreateCredentialResult {
   return mock<CreateCredentialResult>({
     credentialId: "mock",
     clientDataJSON: "mock",
@@ -30,7 +34,9 @@ export function createCreateCredentialResultMock(customFields = {}): CreateCrede
   });
 }
 
-export function createCredentialRequestOptionsMock(customFields = {}): CredentialRequestOptions {
+export function createCredentialRequestOptionsMock(
+  customFields: Partial<CredentialRequestOptions> = {},
+): CredentialRequestOptions {
   return mock<CredentialRequestOptions>({
     mediation: "optional",
     publicKey: mock<PublicKeyCredentialRequestOptions>({
@@ -40,7 +46,9 @@ export function createCredentialRequestOptionsMock(customFields = {}): Credentia
   });
 }
 
-export function createAssertCredentialResultMock(customFields = {}): AssertCredentialResult {
+export function createAssertCredentialResultMock(
+  customFields: Partial<AssertCredentialResult> = {},
+): AssertCredentialResult {
   return mock<AssertCredentialResult>({
     credentialId: "mock",
     clientDataJSON: "mock",
