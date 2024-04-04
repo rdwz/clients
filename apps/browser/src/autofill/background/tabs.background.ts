@@ -49,7 +49,7 @@ export default class TabsBackground {
 
     this.focusedWindowId = windowId;
     await this.updateCurrentTabData();
-    this.main.bgServices.messagingService.send("windowChanged");
+    this.main.messagingService.send("windowChanged");
   };
 
   /**
@@ -57,7 +57,7 @@ export default class TabsBackground {
    */
   private handleTabOnActivated = async () => {
     await this.updateCurrentTabData();
-    this.main.bgServices.messagingService.send("tabChanged");
+    this.main.messagingService.send("tabChanged");
   };
 
   /**
@@ -71,7 +71,7 @@ export default class TabsBackground {
 
     await this.notificationBackground.checkNotificationQueue();
     await this.updateCurrentTabData();
-    this.main.bgServices.messagingService.send("tabChanged");
+    this.main.messagingService.send("tabChanged");
   };
 
   /**
@@ -109,7 +109,7 @@ export default class TabsBackground {
     await this.notificationBackground.checkNotificationQueue(tab);
     await this.main.refreshBadge();
     await this.main.refreshMenu();
-    this.main.bgServices.messagingService.send("tabChanged");
+    this.main.messagingService.send("tabChanged");
   };
 
   /**

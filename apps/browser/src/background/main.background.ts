@@ -31,6 +31,7 @@ import {
   UserNotificationSettingsServiceAbstraction,
 } from "@bitwarden/common/autofill/services/user-notification-settings.service";
 import { CryptoService as CryptoServiceAbstraction } from "@bitwarden/common/platform/abstractions/crypto.service";
+import { LogService as LogServiceAbstraction } from "@bitwarden/common/platform/abstractions/log.service";
 import { MessagingService as MessagingServiceAbstraction } from "@bitwarden/common/platform/abstractions/messaging.service";
 import {
   AbstractMemoryStorageService,
@@ -100,6 +101,10 @@ import { SharedBgServicesContainer } from "./shared-bg-services-container.single
 
 export default class MainBackground {
   bgServices: SharedBgServicesContainer;
+
+  // used in other contexts
+  messagingService: MessagingServiceAbstraction;
+  logService: LogServiceAbstraction;
 
   // remaining vault popup getBgServices dependencies
   twoFactorService: TwoFactorServiceAbstraction;
@@ -176,6 +181,8 @@ export default class MainBackground {
       this.lockExtension,
       this.getBackgroundMessagingService(),
     );
+    this.messagingService = this.bgServices.messagingService;
+    this.logService = this.bgServices.logService;
     this.twoFactorService = this.bgServices.twoFactorService;
     this.authService = this.bgServices.authService;
     this.loginStrategyService = this.bgServices.loginStrategyService;
@@ -228,7 +235,7 @@ export default class MainBackground {
     this.eventUploadService = new EventUploadService(
       this.bgServices.apiService,
       this.bgServices.stateProvider,
-      this.bgServices.logService,
+      this.logService,
       this.bgServices.accountService,
       this.bgServices.taskSchedulerService,
     );
@@ -244,7 +251,7 @@ export default class MainBackground {
       this.bgServices.autofillSettingsService,
       this.totpService,
       this.eventCollectionService,
-      this.bgServices.logService,
+      this.logService,
       this.bgServices.domainSettingsService,
       this.userVerificationService,
       this.bgServices.billingAccountProfileStateService,
@@ -267,7 +274,7 @@ export default class MainBackground {
       this.cipherService,
       this.fido2UserInterfaceService,
       this.syncService,
-      this.bgServices.logService,
+      this.logService,
     );
     this.fido2ClientService = new Fido2ClientService(
       this.fido2AuthenticatorService,
@@ -276,7 +283,7 @@ export default class MainBackground {
       this.vaultSettingsService,
       this.bgServices.domainSettingsService,
       this.bgServices.taskSchedulerService,
-      this.bgServices.logService,
+      this.logService,
     );
     const systemUtilsServiceReloadCallback = () => {
       const forceWindowReload =
@@ -287,7 +294,7 @@ export default class MainBackground {
       return Promise.resolve();
     };
     this.systemService = new SystemService(
-      this.bgServices.messagingService,
+      this.messagingService,
       this.bgServices.platformUtilsService,
       systemUtilsServiceReloadCallback,
       this.bgServices.stateService,
@@ -299,7 +306,7 @@ export default class MainBackground {
 
     // Background
     this.fido2Background = new Fido2Background(
-      this.bgServices.logService,
+      this.logService,
       this.fido2ClientService,
       this.vaultSettingsService,
     );
@@ -312,8 +319,8 @@ export default class MainBackground {
       this.bgServices.autofillSettingsService,
       this.systemService,
       this.bgServices.environmentService,
-      this.bgServices.messagingService,
-      this.bgServices.logService,
+      this.messagingService,
+      this.logService,
       this.bgServices.configService,
       this.fido2Background,
     );
@@ -321,11 +328,11 @@ export default class MainBackground {
       this.cryptoService,
       this.bgServices.cryptoFunctionService,
       this.runtimeBackground,
-      this.bgServices.messagingService,
+      this.messagingService,
       this.bgServices.appIdService,
       this.bgServices.platformUtilsService,
       this.bgServices.stateService,
-      this.bgServices.logService,
+      this.logService,
       this.authService,
       this.bgServices.biometricStateService,
     );
@@ -346,7 +353,7 @@ export default class MainBackground {
       this.userNotificationSettingsService,
       this.bgServices.domainSettingsService,
       this.bgServices.environmentService,
-      this.bgServices.logService,
+      this.logService,
       themeStateService,
     );
     this.overlayBackground = new OverlayBackground(
@@ -416,7 +423,7 @@ export default class MainBackground {
       this.bgServices.stateService,
       this.bgServices.autofillSettingsService,
       this.bgServices.i18nService,
-      this.bgServices.logService,
+      this.logService,
       this.bgServices.billingAccountProfileStateService,
     );
 
@@ -546,18 +553,18 @@ export default class MainBackground {
       await this.notificationsService.updateConnection(false);
 
       if (status === AuthenticationStatus.Locked) {
-        this.bgServices.messagingService.send("locked", { userId: userId });
+        this.messagingService.send("locked", { userId: userId });
       } else if (forcePasswordReset) {
-        this.bgServices.messagingService.send("update-temp-password", { userId: userId });
+        this.messagingService.send("update-temp-password", { userId: userId });
       } else {
-        this.bgServices.messagingService.send("unlocked", { userId: userId });
+        this.messagingService.send("unlocked", { userId: userId });
         await this.refreshBadge();
         await this.refreshMenu();
         await this.overlayBackground.updateOverlayCiphers();
         await this.syncService.fullSync(false);
       }
     } finally {
-      this.bgServices.messagingService.send("switchAccountFinish", { userId: userId });
+      this.messagingService.send("switchAccountFinish", { userId: userId });
     }
   }
 
@@ -601,9 +608,9 @@ export default class MainBackground {
     if (newActiveUser != null) {
       // we have a new active user, do not continue tearing down application
       await this.switchAccount(newActiveUser as UserId);
-      this.bgServices.messagingService.send("switchAccountFinish");
+      this.messagingService.send("switchAccountFinish");
     } else {
-      this.bgServices.messagingService.send("doneLoggingOut", { expired: expired, userId: userId });
+      this.messagingService.send("doneLoggingOut", { expired: expired, userId: userId });
     }
 
     if (needStorageReseed) {
