@@ -5,6 +5,7 @@ import { concatMap, filter, firstValueFrom, map, Observable, Subject, takeUntil,
 import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { PolicyType } from "@bitwarden/common/admin-console/enums";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { DomainSettingsService } from "@bitwarden/common/autofill/services/domain-settings.service";
 import { VaultTimeoutAction } from "@bitwarden/common/enums/vault-timeout-action.enum";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
@@ -52,6 +53,7 @@ export class PreferencesComponent implements OnInit {
     private themeStateService: ThemeStateService,
     private domainSettingsService: DomainSettingsService,
     private dialogService: DialogService,
+    private accountService: AccountService,
   ) {
     this.vaultTimeoutOptions = [
       { name: i18nService.t("oneMinute"), value: 1 },
@@ -85,6 +87,8 @@ export class PreferencesComponent implements OnInit {
   }
 
   async ngOnInit() {
+    const activeAcct = await firstValueFrom(this.accountService.activeAccount$);
+
     this.availableVaultTimeoutActions$ =
       this.vaultTimeoutSettingsService.availableVaultTimeoutActions$();
 
@@ -131,9 +135,11 @@ export class PreferencesComponent implements OnInit {
       )
       .subscribe();
     const initialFormValues = {
-      vaultTimeout: await this.vaultTimeoutSettingsService.getVaultTimeout(),
+      vaultTimeout: await firstValueFrom(
+        this.vaultTimeoutSettingsService.getVaultTimeoutByUserId$(activeAcct.id),
+      ),
       vaultTimeoutAction: await firstValueFrom(
-        this.vaultTimeoutSettingsService.vaultTimeoutAction$(),
+        this.vaultTimeoutSettingsService.getVaultTimeoutActionByUserId$(activeAcct.id),
       ),
       enableFavicons: await firstValueFrom(this.domainSettingsService.showFavicons$),
       theme: await firstValueFrom(this.themeStateService.selectedTheme$),
@@ -154,7 +160,10 @@ export class PreferencesComponent implements OnInit {
     }
     const values = this.form.value;
 
+    const activeAcct = await firstValueFrom(this.accountService.activeAccount$);
+
     await this.vaultTimeoutSettingsService.setVaultTimeoutOptions(
+      activeAcct.id,
       values.vaultTimeout,
       values.vaultTimeoutAction,
     );

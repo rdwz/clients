@@ -141,7 +141,9 @@ export class VaultTimeoutService implements VaultTimeoutServiceAbstraction {
       return false;
     }
 
-    const vaultTimeout = await this.vaultTimeoutSettingsService.getVaultTimeout(userId);
+    const vaultTimeout = await firstValueFrom(
+      this.vaultTimeoutSettingsService.getVaultTimeoutByUserId$(userId),
+    );
     if (vaultTimeout == null || vaultTimeout < 0) {
       return false;
     }
@@ -158,7 +160,7 @@ export class VaultTimeoutService implements VaultTimeoutServiceAbstraction {
 
   private async executeTimeoutAction(userId: string): Promise<void> {
     const timeoutAction = await firstValueFrom(
-      this.vaultTimeoutSettingsService.vaultTimeoutAction$(userId),
+      this.vaultTimeoutSettingsService.getVaultTimeoutActionByUserId$(userId),
     );
     timeoutAction === VaultTimeoutAction.LogOut
       ? await this.logOut(userId)
