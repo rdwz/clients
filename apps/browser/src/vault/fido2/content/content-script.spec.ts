@@ -146,13 +146,9 @@ describe("Fido2 Content Script", () => {
     jest.spyOn(chrome.runtime, "sendMessage").mockResolvedValue({ error: errorMessage });
 
     require("./content-script");
+    const result = messenger.handler!(message, abortController);
 
-    try {
-      await messenger.handler!(message, abortController);
-      expect(false).toBe("This test will fail if the promise resolves");
-    } catch (error) {
-      expect(error).toEqual(errorMessage);
-    }
+    await expect(result).rejects.toEqual(errorMessage);
   });
 
   it("skips initializing the content script if the document content type is not 'text/html'", () => {
