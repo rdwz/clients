@@ -21,7 +21,7 @@ import { Fido2ContentScript, Fido2ContentScriptId } from "../enums/fido2-content
 import { Fido2PortName } from "../enums/fido2-port-name.enum";
 
 import { Fido2ExtensionMessage } from "./abstractions/fido2.background";
-import Fido2Background from "./fido2.background";
+import { Fido2Background } from "./fido2.background";
 
 const sharedExecuteScriptOptions = { runAt: "document_start", allFrames: true };
 const contentScriptDetails = {

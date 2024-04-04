@@ -21,7 +21,7 @@ import {
   SharedFido2ScriptRegistrationOptions,
 } from "./abstractions/fido2.background";
 
-export default class Fido2Background implements Fido2BackgroundInterface {
+export class Fido2Background implements Fido2BackgroundInterface {
   private abortManager = new AbortManager();
   private fido2ContentScriptPortsSet = new Set<chrome.runtime.Port>();
   private currentEnablePasskeysSetting: boolean;
