@@ -76,9 +76,9 @@ export default class RuntimeBackground {
     };
 
     BrowserApi.messageListener("runtime.background", backgroundMessageListener);
-    if (this.main.popupOnlyContext) {
-      (self as any).bitwardenBackgroundMessageListener = backgroundMessageListener;
-    }
+    // if (this.main.popupOnlyContext) {
+    //   (self as any).bitwardenBackgroundMessageListener = backgroundMessageListener;
+    // }
   }
 
   async processMessage(msg: any, sender: chrome.runtime.MessageSender): Promise<unknown> {

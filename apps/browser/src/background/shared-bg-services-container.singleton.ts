@@ -124,6 +124,7 @@ import { SendApiService as SendApiServiceAbstraction } from "@bitwarden/common/t
 import { SendStateProvider } from "@bitwarden/common/tools/send/services/send-state.provider";
 import { SendService } from "@bitwarden/common/tools/send/services/send.service";
 import { InternalSendService as InternalSendServiceAbstraction } from "@bitwarden/common/tools/send/services/send.service.abstraction";
+import { UserId } from "@bitwarden/common/types/guid";
 import { CipherService as CipherServiceAbstraction } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { CollectionService as CollectionServiceAbstraction } from "@bitwarden/common/vault/abstractions/collection.service";
 import { CipherFileUploadService as CipherFileUploadServiceAbstraction } from "@bitwarden/common/vault/abstractions/file-upload/cipher-file-upload.service";
@@ -155,6 +156,7 @@ import { BrowserCryptoService } from "../platform/services/browser-crypto.servic
 import { BrowserEnvironmentService } from "../platform/services/browser-environment.service";
 import BrowserLocalStorageService from "../platform/services/browser-local-storage.service";
 import BrowserMemoryStorageService from "../platform/services/browser-memory-storage.service";
+import BrowserMessagingPrivateModeBackgroundService from "../platform/services/browser-messaging-private-mode-background.service";
 import BrowserMessagingService from "../platform/services/browser-messaging.service";
 import { BrowserStateService } from "../platform/services/browser-state.service";
 import { BrowserTaskSchedulerService } from "../platform/services/browser-task-scheduler.service";
@@ -165,8 +167,10 @@ import { BackgroundDerivedStateProvider } from "../platform/state/background-der
 import { BackgroundMemoryStorageService } from "../platform/storage/background-memory-storage.service";
 import VaultTimeoutService from "../services/vault-timeout/vault-timeout.service";
 
-export class BgServicesContainer {
-  // main getBgServices dependencies
+export class SharedBgServicesContainer {
+  private static _instance: SharedBgServicesContainer;
+
+  // vault popup getBgServices dependencies
   readonly twoFactorService: TwoFactorServiceAbstraction;
   readonly authService: AuthServiceAbstraction;
   readonly loginStrategyService: LoginStrategyServiceAbstraction;
@@ -193,63 +197,79 @@ export class BgServicesContainer {
   readonly usernameGenerationService: UsernameGenerationServiceAbstraction;
 
   // Required dependencies for getBgServices
-  private readonly messagingService: BrowserMessagingService;
-  private readonly logService: LogServiceAbstraction;
-  private readonly cryptoFunctionService: CryptoFunctionServiceAbstraction;
-  private readonly keyGenerationService: KeyGenerationServiceAbstraction;
-  private readonly storageService: AbstractStorageService & ObservableStorageService;
-  private readonly storageServiceProvider: StorageServiceProvider;
-  private readonly globalStateProvider: GlobalStateProvider;
-  private readonly i18nService: I18nServiceAbstraction;
-  private readonly platformUtilsService: PlatformUtilsServiceAbstraction;
-  private readonly accountService: AccountServiceAbstraction;
-  private readonly backgroundMessagingService: MessagingServiceAbstraction;
-  private readonly encryptService: EncryptService;
-  private readonly stateService: StateServiceAbstraction;
-  private readonly migrationRunner: MigrationRunner;
-  private readonly secureStorageService: AbstractStorageService;
-  private readonly environmentService: BrowserEnvironmentService;
-  private readonly stateProvider: StateProvider;
-  private readonly stateEventRegistrarService: StateEventRegistrarService;
-  private readonly singleUserStateProvider: SingleUserStateProvider;
-  private readonly activeUserStateProvider: ActiveUserStateProvider;
-  private readonly derivedStateProvider: DerivedStateProvider;
-  private readonly tokenService: TokenServiceAbstraction;
-  private readonly biometricStateService: BiometricStateService;
-  private readonly appIdService: AppIdServiceAbstraction;
-  private readonly apiService: ApiServiceAbstraction;
-  private readonly passwordStrengthService: PasswordStrengthServiceAbstraction;
-  private readonly policyService: InternalPolicyServiceAbstraction;
-  private readonly organizationService: InternalOrganizationServiceAbstraction;
-  private readonly userDecryptionOptionsService: InternalUserDecryptionOptionsServiceAbstraction;
-  private readonly billingAccountProfileStateService: BillingAccountProfileStateService;
-  private readonly taskSchedulerService: BrowserTaskSchedulerService;
-  private readonly fileUploadService: FileUploadServiceAbstraction;
-  private readonly domainSettingsService: DomainSettingsService;
-  private readonly autofillSettingsService: AutofillSettingsServiceAbstraction;
-  private readonly configApiService: ConfigApiServiceAbstraction;
-  private readonly configService: ConfigService;
-  private readonly devicesApiService: DevicesApiServiceAbstraction;
-  private readonly folderService: InternalFolderServiceAbstraction;
-  private readonly sendStateProvider: SendStateProvider;
-  private readonly sendService: InternalSendServiceAbstraction;
-  private readonly providerService: ProviderServiceAbstraction;
-  private readonly folderApiService: FolderApiServiceAbstraction;
-  private readonly sendApiService: SendApiServiceAbstraction;
-  private readonly avatarService: AvatarServiceAbstraction;
-  private readonly individualVaultExportService: IndividualVaultExportServiceAbstraction;
-  private readonly organizationVaultExportService: OrganizationVaultExportServiceAbstraction;
-  private readonly userVerificationApiService: UserVerificationApiServiceAbstraction;
-  private readonly pinCryptoService: PinCryptoServiceAbstraction;
-  private readonly stateEventRunnerService: StateEventRunnerService;
+  readonly messagingService: MessagingServiceAbstraction;
+  readonly logService: LogServiceAbstraction;
+  readonly cryptoFunctionService: CryptoFunctionServiceAbstraction;
+  readonly keyGenerationService: KeyGenerationServiceAbstraction;
+  readonly storageService: AbstractStorageService & ObservableStorageService;
+  readonly storageServiceProvider: StorageServiceProvider;
+  readonly globalStateProvider: GlobalStateProvider;
+  readonly i18nService: I18nServiceAbstraction;
+  readonly platformUtilsService: PlatformUtilsServiceAbstraction;
+  readonly accountService: AccountServiceAbstraction;
+  readonly backgroundMessagingService: MessagingServiceAbstraction;
+  readonly encryptService: EncryptService;
+  readonly stateService: StateServiceAbstraction;
+  readonly migrationRunner: MigrationRunner;
+  readonly secureStorageService: AbstractStorageService;
+  readonly environmentService: BrowserEnvironmentService;
+  readonly stateProvider: StateProvider;
+  readonly stateEventRegistrarService: StateEventRegistrarService;
+  readonly singleUserStateProvider: SingleUserStateProvider;
+  readonly activeUserStateProvider: ActiveUserStateProvider;
+  readonly derivedStateProvider: DerivedStateProvider;
+  readonly tokenService: TokenServiceAbstraction;
+  readonly biometricStateService: BiometricStateService;
+  readonly appIdService: AppIdServiceAbstraction;
+  readonly apiService: ApiServiceAbstraction;
+  readonly passwordStrengthService: PasswordStrengthServiceAbstraction;
+  readonly policyService: InternalPolicyServiceAbstraction;
+  readonly organizationService: InternalOrganizationServiceAbstraction;
+  readonly userDecryptionOptionsService: InternalUserDecryptionOptionsServiceAbstraction;
+  readonly billingAccountProfileStateService: BillingAccountProfileStateService;
+  readonly taskSchedulerService: BrowserTaskSchedulerService;
+  readonly fileUploadService: FileUploadServiceAbstraction;
+  readonly domainSettingsService: DomainSettingsService;
+  readonly autofillSettingsService: AutofillSettingsServiceAbstraction;
+  readonly configApiService: ConfigApiServiceAbstraction;
+  readonly configService: ConfigService;
+  readonly devicesApiService: DevicesApiServiceAbstraction;
+  readonly folderService: InternalFolderServiceAbstraction;
+  readonly sendStateProvider: SendStateProvider;
+  readonly sendService: InternalSendServiceAbstraction;
+  readonly providerService: ProviderServiceAbstraction;
+  readonly folderApiService: FolderApiServiceAbstraction;
+  readonly sendApiService: SendApiServiceAbstraction;
+  readonly avatarService: AvatarServiceAbstraction;
+  readonly individualVaultExportService: IndividualVaultExportServiceAbstraction;
+  readonly organizationVaultExportService: OrganizationVaultExportServiceAbstraction;
+  readonly userVerificationApiService: UserVerificationApiServiceAbstraction;
+  readonly pinCryptoService: PinCryptoServiceAbstraction;
+  readonly stateEventRunnerService: StateEventRunnerService;
 
-  constructor() {
-    this.messagingService = new BrowserMessagingService();
+  constructor(
+    public inPopupContext: boolean,
+    private platformUtilsClipboardWriteCallback: (clipboardValue: string, clearMs: number) => void,
+    private platformUtilsBiometricCallback: () => Promise<boolean>,
+    private logoutCallback: (expired: boolean, userId?: UserId) => Promise<void>,
+    private lockedCallback: () => Promise<void>,
+    private selfReferentialBackgroundMessagingService?: MessagingServiceAbstraction,
+  ) {
+    if (SharedBgServicesContainer._instance) {
+      throw new Error(
+        "SharedBgServicesContainer is a singleton and should only be instantiated once within a given context.",
+      );
+    }
+    SharedBgServicesContainer._instance = this;
+
+    this.messagingService = this.inPopupContext
+      ? new BrowserMessagingPrivateModeBackgroundService()
+      : new BrowserMessagingService();
     this.logService = new ConsoleLogService(false);
     this.cryptoFunctionService = new WebCryptoFunctionService(self);
     this.keyGenerationService = new KeyGenerationService(this.cryptoFunctionService);
     this.storageService = new BrowserLocalStorageService();
-    this.secureStorageService = this.storageService;
+    this.secureStorageService = this.storageService; // secure storage is not supported in browsers, so we use local storage and warn users when it is used
     this.memoryStorageForStateProviders = this.getMemoryStorageForStateProviders();
     this.storageServiceProvider = new StorageServiceProvider(
       this.storageService,
@@ -291,7 +311,8 @@ export class BgServicesContainer {
     );
     this.twoFactorService = new TwoFactorService(this.i18nService, this.platformUtilsService);
     this.memoryStorageService = this.getMemoryStorageService();
-    this.backgroundMessagingService = this.getBackgroundMessagingService();
+    this.backgroundMessagingService =
+      this.selfReferentialBackgroundMessagingService || this.getBackgroundMessagingService();
     this.encryptService = this.getEncryptService();
     this.migrationRunner = new MigrationRunner(
       this.storageService,
@@ -342,9 +363,7 @@ export class BgServicesContainer {
       this.environmentService,
       this.appIdService,
       this.stateService,
-      async (expired: boolean) => {
-        // TODO: Consider how this should be populated
-      },
+      this.logoutCallback,
     );
     this.authService = new AuthService(
       this.accountService,
@@ -606,24 +625,9 @@ export class BgServicesContainer {
     this.twoFactorService.init();
   }
 
-  private platformUtilsClipboardWriteCallback = (clipboardValue: string, clearMs: number) => {
-    void BrowserApi.sendMessage("clearClipboard", { clipboardValue, clearMs });
-  };
-
-  private platformUtilsBiometricCallback = async () => {
-    const response = await BrowserApi.sendMessageWithResponse<{
-      result: boolean;
-      error: string;
-    }>("biometricUnlock");
-    if (!response.result) {
-      throw response.error;
-    }
-    return response.result;
-  };
-
   private mv3MemoryStorageCreator = (partitionName: string) => {
     return new LocalBackedSessionStorageService(
-      new EncryptServiceImplementation(this.cryptoFunctionService, this.logService, false),
+      this.getEncryptService(),
       this.keyGenerationService,
       new BrowserLocalStorageService(),
       new BrowserMemoryStorageService(),
@@ -644,7 +648,7 @@ export class BgServicesContainer {
       : new BackgroundMemoryStorageService();
   }
 
-  private getBackgroundMessagingService = () => {
+  private getBackgroundMessagingService = (): MessagingServiceAbstraction => {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const context = this;
     return new (class extends MessagingServiceAbstraction {
@@ -663,13 +667,5 @@ export class BgServicesContainer {
           true,
         )
       : new EncryptServiceImplementation(this.cryptoFunctionService, this.logService, true);
-  };
-
-  private logoutCallback = async () => {
-    // TODO: Consider how to introduce this.
-  };
-
-  private lockedCallback = async () => {
-    // TODO: Consider how to introduce this.
   };
 }

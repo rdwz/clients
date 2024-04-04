@@ -17,8 +17,10 @@ import TabsBackground from "./tabs.background";
 describe("TabsBackground", () => {
   let tabsBackground: TabsBackground;
   const mainBackground = mock<MainBackground>({
-    messagingService: {
-      send: jest.fn(),
+    bgServices: {
+      messagingService: {
+        send: jest.fn(),
+      },
     },
   });
   const notificationBackground = mock<NotificationBackground>();
@@ -59,7 +61,7 @@ describe("TabsBackground", () => {
         triggerWindowOnFocusedChangedEvent(undefined);
         await flushPromises();
 
-        expect(mainBackground.messagingService.send).not.toHaveBeenCalled();
+        expect(mainBackground.bgServices.messagingService.send).not.toHaveBeenCalled();
       });
 
       it("sets the local focusedWindowId property", async () => {
@@ -82,7 +84,9 @@ describe("TabsBackground", () => {
         triggerWindowOnFocusedChangedEvent(10);
         await flushPromises();
 
-        expect(mainBackground.messagingService.send).toHaveBeenCalledWith("windowChanged");
+        expect(mainBackground.bgServices.messagingService.send).toHaveBeenCalledWith(
+          "windowChanged",
+        );
       });
     });
 
@@ -100,7 +104,7 @@ describe("TabsBackground", () => {
         triggerTabOnActivatedEvent({ tabId: 10, windowId: 20 });
         await flushPromises();
 
-        expect(mainBackground.messagingService.send).toHaveBeenCalledWith("tabChanged");
+        expect(mainBackground.bgServices.messagingService.send).toHaveBeenCalledWith("tabChanged");
       });
     });
 
@@ -136,7 +140,7 @@ describe("TabsBackground", () => {
         triggerTabOnReplacedEvent(10, 20);
         await flushPromises();
 
-        expect(mainBackground.messagingService.send).toHaveBeenCalledWith("tabChanged");
+        expect(mainBackground.bgServices.messagingService.send).toHaveBeenCalledWith("tabChanged");
       });
     });
 
@@ -225,7 +229,7 @@ describe("TabsBackground", () => {
         triggerTabOnUpdatedEvent(focusedWindowId, { status: "loading" }, tab);
         await flushPromises();
 
-        expect(mainBackground.messagingService.send).toHaveBeenCalledWith("tabChanged");
+        expect(mainBackground.bgServices.messagingService.send).toHaveBeenCalledWith("tabChanged");
       });
     });
 

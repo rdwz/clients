@@ -31,7 +31,7 @@ export default class CommandsBackground {
         this.processCommand(
           msg.data.commandToRetry.message.command,
           msg.data.commandToRetry.sender,
-        ).catch((error) => this.main.logService.error(error));
+        ).catch((error) => this.main.bgServices.logService.error(error));
       }
     });
 

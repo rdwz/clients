@@ -142,7 +142,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     };
 
-    (self as any).bitwardenPopupMainMessageListener = bitwardenPopupMainMessageListener;
+    (globalThis as any).bitwardenPopupMainMessageListener = bitwardenPopupMainMessageListener;
     this.browserMessagingApi.messageListener("app.component", bitwardenPopupMainMessageListener);
 
     // eslint-disable-next-line rxjs/no-async-subscribe

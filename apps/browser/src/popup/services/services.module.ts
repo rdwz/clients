@@ -80,6 +80,7 @@ import {
 import { SearchService } from "@bitwarden/common/services/search.service";
 import { PasswordGenerationServiceAbstraction } from "@bitwarden/common/tools/generator/password";
 import { UsernameGenerationServiceAbstraction } from "@bitwarden/common/tools/generator/username";
+import { UserId } from "@bitwarden/common/types/guid";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { CollectionService } from "@bitwarden/common/vault/abstractions/collection.service";
 import { CipherFileUploadService } from "@bitwarden/common/vault/abstractions/file-upload/cipher-file-upload.service";
@@ -92,8 +93,8 @@ import { VaultExportServiceAbstraction } from "@bitwarden/vault-export-core";
 import { UnauthGuardService } from "../../auth/popup/services";
 import { AutofillService as AutofillServiceAbstraction } from "../../autofill/services/abstractions/autofill.service";
 import AutofillService from "../../autofill/services/autofill.service";
-import { BgServicesContainer } from "../../background/bg-services-container";
 import MainBackground from "../../background/main.background";
+import { SharedBgServicesContainer } from "../../background/shared-bg-services-container.singleton";
 import { Account } from "../../models/account";
 import { BrowserApi } from "../../platform/browser/browser-api";
 import BrowserPopupUtils from "../../platform/popup/browser-popup-utils";
@@ -122,8 +123,29 @@ const mainBackground: MainBackground = needsBackgroundInit
   ? createLocalBgService()
   : BrowserApi.getBackgroundPage().bitwardenMain;
 
+function platformUtilsClipboardWriteCallback(clipboardValue: string, clearMs: number) {
+  void BrowserApi.sendMessage("clearClipboard", { clipboardValue, clearMs });
+}
+
+async function platformUtilsBiometricCallback(): Promise<boolean> {
+  const response = await BrowserApi.sendMessageWithResponse<{
+    result: boolean;
+    error: string;
+  }>("biometricUnlock");
+  if (!response.result) {
+    throw response.error;
+  }
+  return response.result;
+}
+
 function createLocalBgService() {
-  const localBgService = new BgServicesContainer();
+  const localBgService = new SharedBgServicesContainer(
+    true,
+    platformUtilsClipboardWriteCallback,
+    platformUtilsBiometricCallback,
+    async (_expired: boolean, _userId?: UserId) => {}, // The logout and locked callbacks need to be set in the popup, but should not actually do anything. This is due to dependencies requiring them to be set.
+    async () => {},
+  );
   void localBgService.bootstrapBaseServices();
   return localBgService;
 }
@@ -279,19 +301,8 @@ const safeProviders: SafeProvider[] = [
       return new ForegroundPlatformUtilsService(
         sanitizer,
         toastrService,
-        (clipboardValue: string, clearMs: number) => {
-          void BrowserApi.sendMessage("clearClipboard", { clipboardValue, clearMs });
-        },
-        async () => {
-          const response = await BrowserApi.sendMessageWithResponse<{
-            result: boolean;
-            error: string;
-          }>("biometricUnlock");
-          if (!response.result) {
-            throw response.error;
-          }
-          return response.result;
-        },
+        platformUtilsClipboardWriteCallback,
+        platformUtilsBiometricCallback,
         window,
       );
     },
