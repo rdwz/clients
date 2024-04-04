@@ -39,7 +39,7 @@
         </td>
         <td bitCell class="tw-mb-auto tw-inline-block tw-w-auto">
           <select
-            *ngIf="!staticPermission && !item.readOnly; else static"
+            *ngIf="!staticPermission && !item.readOnly; else readOnly"
             bitInput
             formControlName="permission"
             (blur)="handleBlur()"
@@ -48,15 +48,15 @@
               {{ p.labelId | i18n }}
             </option>
           </select>
-          <ng-template #static>
-            <ng-container *ngIf="staticPermission; else readOnly">
-              <span>{{ staticPermission | i18n }}</span>
+          <ng-template #readOnly>
+            <ng-container *ngIf="item.readOnly; else static">
+              <div class="tw-overflow-hidden tw-overflow-ellipsis tw-whitespace-nowrap">
+                {{ item.permission | i18n }}
+              </div>
             </ng-container>
           </ng-template>
-          <ng-template #readOnly>
-            <div class="tw-overflow-hidden tw-overflow-ellipsis tw-whitespace-nowrap">
-              {{ item.permission | i18n }}
-            </div>
+          <ng-template #static>
+            <span>{{ staticPermission | i18n }}</span>
           </ng-template>
         </td>
         <td bitCell class="tw-w-0">
