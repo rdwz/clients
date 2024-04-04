@@ -18,7 +18,7 @@ describe("FIDO2 page-script for manifest v2", () => {
     expect(window.document.createElement).not.toHaveBeenCalled();
   });
 
-  it("appends the `page-script.js` file to the document head", () => {
+  it("appends the `page-script.js` file to the document head when the contentType is `text/html`", () => {
     jest.spyOn(window.document.head, "insertBefore").mockImplementation((node) => {
       createdScriptElement = node as HTMLScriptElement;
       return node;
