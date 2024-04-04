@@ -217,12 +217,6 @@ export class MemberDialogComponent implements OnDestroy {
         ({ organization, collections, userDetails, groups, flexibleCollectionsV1Enabled }) => {
           this.setFormValidators(organization);
 
-          this.collectionAccessItems = [].concat(
-            collections.map((c) =>
-              mapCollectionToAccessItemView(c, organization, flexibleCollectionsV1Enabled),
-            ),
-          );
-
           this.groupAccessItems = [].concat(
             groups.map<AccessItemView>((g) => mapGroupToAccessItemView(g)),
           );
