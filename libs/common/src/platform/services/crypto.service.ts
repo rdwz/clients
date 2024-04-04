@@ -55,8 +55,6 @@ import {
   USER_EVER_HAD_USER_KEY,
   USER_PRIVATE_KEY,
   USER_PUBLIC_KEY,
-  PIN_KEY_ENCRYPTED_USER_KEY,
-  PIN_KEY_ENCRYPTED_USER_KEY_EPHEMERAL,
   USER_KEY,
 } from "./key-state/user-key.state";
 
@@ -142,36 +140,6 @@ export class CryptoService implements CryptoServiceAbstraction {
       { encryptService: this.encryptService, cryptoService: this },
     );
     this.activeUserProviderKeys$ = this.activeUserProviderKeysState.state$; // null handled by `derive` function
-  }
-
-  async getPinKeyEncryptedUserKey(userId?: UserId): Promise<EncString> {
-    return EncString.fromJSON(
-      await firstValueFrom(this.stateProvider.getUserState$(PIN_KEY_ENCRYPTED_USER_KEY, userId)),
-    );
-  }
-
-  async setPinKeyEncryptedUserKey(value: EncString, userId?: UserId): Promise<void> {
-    await this.stateProvider.setUserState(
-      PIN_KEY_ENCRYPTED_USER_KEY,
-      value?.encryptedString,
-      userId,
-    );
-  }
-
-  async getPinKeyEncryptedUserKeyEphemeral(userId?: UserId): Promise<EncString> {
-    return EncString.fromJSON(
-      await firstValueFrom(
-        this.stateProvider.getUserState$(PIN_KEY_ENCRYPTED_USER_KEY_EPHEMERAL, userId),
-      ),
-    );
-  }
-
-  async setPinKeyEncryptedUserKeyEphemeral(value: EncString, userId?: UserId): Promise<void> {
-    await this.stateProvider.setUserState(
-      PIN_KEY_ENCRYPTED_USER_KEY_EPHEMERAL,
-      value?.encryptedString,
-      userId,
-    );
   }
 
   async setUserKey(key: UserKey, userId?: UserId): Promise<void> {
