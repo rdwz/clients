@@ -1,5 +1,4 @@
-// import registerContentScript from "content-scripts-register-polyfill/ponyfill.js";
-import { mock } from "jest-mock-extended";
+import { mock, MockProxy } from "jest-mock-extended";
 import { Observable } from "rxjs";
 
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
@@ -31,11 +30,11 @@ const contentScriptDetails = {
 };
 
 describe("Fido2Background", () => {
-  const abortManager: AbortManager = mock<AbortManager>();
-  const abortController: AbortController = mock<AbortController>();
-  const logService: LogService = mock<LogService>();
-  let fido2ClientService: Fido2ClientService;
-  let vaultSettingsService: VaultSettingsService;
+  const abortManager: MockProxy<AbortManager> = mock<AbortManager>();
+  const abortController: MockProxy<AbortController> = mock<AbortController>();
+  const logService: MockProxy<LogService> = mock<LogService>();
+  let fido2ClientService: MockProxy<Fido2ClientService>;
+  let vaultSettingsService: MockProxy<VaultSettingsService>;
   let fido2Background: Fido2Background;
   const tabMock: chrome.tabs.Tab = mock<chrome.tabs.Tab>({
     id: 123,
@@ -60,7 +59,9 @@ describe("Fido2Background", () => {
     fido2Background["abortManager"] = abortManager;
     fido2Background.init();
     executeTabsSpy.mockImplementation();
-    abortManager.runWithAbortController = jest.fn((requestId, runner) => runner(abortController));
+    abortManager.runWithAbortController.mockImplementation((_requestId, runner) =>
+      runner(abortController),
+    );
   });
 
   afterEach(() => {
@@ -127,7 +128,7 @@ describe("Fido2Background", () => {
     });
 
     it("injects the fido2 content-script into the provided tab", async () => {
-      fido2ClientService.isFido2FeatureEnabled = jest.fn().mockResolvedValue(true);
+      fido2ClientService.isFido2FeatureEnabled.mockResolvedValue(true);
 
       await fido2Background["injectFido2ContentScripts"](tabMock);
 
