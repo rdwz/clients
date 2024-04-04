@@ -1,6 +1,7 @@
 import * as bigInt from "big-integer";
 import { Observable, filter, firstValueFrom, map } from "rxjs";
 
+import { PinServiceAbstraction } from "../../../../auth/src/common/abstractions";
 import { EncryptedOrganizationKeyData } from "../../admin-console/models/data/encrypted-organization-key.data";
 import { ProfileOrganizationResponse } from "../../admin-console/models/response/profile-organization.response";
 import { ProfileProviderOrganizationResponse } from "../../admin-console/models/response/profile-provider-organization.response";
@@ -82,6 +83,7 @@ export class CryptoService implements CryptoServiceAbstraction {
   readonly everHadUserKey$: Observable<boolean>;
 
   constructor(
+    protected pinService: PinServiceAbstraction,
     protected keyGenerationService: KeyGenerationService,
     protected cryptoFunctionService: CryptoFunctionService,
     protected encryptService: EncryptService,
@@ -263,7 +265,7 @@ export class CryptoService implements CryptoServiceAbstraction {
     if (keySuffix === KeySuffixOptions.Pin) {
       // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.setPinKeyEncryptedUserKeyEphemeral(null, userId);
+      this.pinService.setPinKeyEncryptedUserKeyEphemeral(null, userId);
       // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.clearDeprecatedKeys(KeySuffixOptions.Pin, userId);
@@ -625,8 +627,8 @@ export class CryptoService implements CryptoServiceAbstraction {
   }
 
   async clearPinKeys(userId?: UserId): Promise<void> {
-    await this.setPinKeyEncryptedUserKey(null, userId);
-    await this.setPinKeyEncryptedUserKeyEphemeral(null, userId);
+    await this.pinService.setPinKeyEncryptedUserKey(null, userId);
+    await this.pinService.setPinKeyEncryptedUserKeyEphemeral(null, userId);
     await this.stateService.setProtectedPin(null, { userId: userId });
     await this.clearDeprecatedKeys(KeySuffixOptions.Pin, userId);
   }
@@ -638,8 +640,8 @@ export class CryptoService implements CryptoServiceAbstraction {
     kdfConfig: KdfConfig,
     pinProtectedUserKey?: EncString,
   ): Promise<UserKey> {
-    pinProtectedUserKey ||= await this.getPinKeyEncryptedUserKey();
-    pinProtectedUserKey ||= await this.getPinKeyEncryptedUserKeyEphemeral();
+    pinProtectedUserKey ||= await this.pinService.getPinKeyEncryptedUserKey();
+    pinProtectedUserKey ||= await this.pinService.getPinKeyEncryptedUserKeyEphemeral();
     if (!pinProtectedUserKey) {
       throw new Error("No PIN protected key found.");
     }
@@ -866,8 +868,8 @@ export class CryptoService implements CryptoServiceAbstraction {
       // migrated once used to unlock
       await this.clearDeprecatedKeys(KeySuffixOptions.Pin, userId);
     } else {
-      await this.setPinKeyEncryptedUserKey(null, userId);
-      await this.setPinKeyEncryptedUserKeyEphemeral(null, userId);
+      await this.pinService.setPinKeyEncryptedUserKey(null, userId);
+      await this.pinService.setPinKeyEncryptedUserKeyEphemeral(null, userId);
     }
   }
 
@@ -889,10 +891,10 @@ export class CryptoService implements CryptoServiceAbstraction {
     );
     const encPin = await this.encryptService.encrypt(key.key, pinKey);
 
-    if ((await this.getPinKeyEncryptedUserKey(userId)) != null) {
-      await this.setPinKeyEncryptedUserKey(encPin, userId);
+    if ((await this.pinService.getPinKeyEncryptedUserKey(userId)) != null) {
+      await this.pinService.setPinKeyEncryptedUserKey(encPin, userId);
     } else {
-      await this.setPinKeyEncryptedUserKeyEphemeral(encPin, userId);
+      await this.pinService.setPinKeyEncryptedUserKeyEphemeral(encPin, userId);
     }
   }
 
@@ -965,7 +967,7 @@ export class CryptoService implements CryptoServiceAbstraction {
 
   protected async clearAllStoredUserKeys(userId?: UserId): Promise<void> {
     await this.stateService.setUserKeyAutoUnlock(null, { userId: userId });
-    await this.setPinKeyEncryptedUserKeyEphemeral(null, userId);
+    await this.pinService.setPinKeyEncryptedUserKeyEphemeral(null, userId);
   }
 
   private async stretchKey(key: SymmetricCryptoKey): Promise<SymmetricCryptoKey> {
@@ -1072,10 +1074,10 @@ export class CryptoService implements CryptoServiceAbstraction {
     const pinProtectedKey = await this.encryptService.encrypt(userKey.key, pinKey);
     if (masterPasswordOnRestart) {
       await this.stateService.setDecryptedPinProtected(null);
-      await this.setPinKeyEncryptedUserKeyEphemeral(pinProtectedKey);
+      await this.pinService.setPinKeyEncryptedUserKeyEphemeral(pinProtectedKey);
     } else {
       await this.stateService.setEncryptedPinProtected(null);
-      await this.setPinKeyEncryptedUserKey(pinProtectedKey);
+      await this.pinService.setPinKeyEncryptedUserKey(pinProtectedKey);
       // We previously only set the protected pin if MP on Restart was enabled
       // now we set it regardless
       const encPin = await this.encryptService.encrypt(pin, userKey);
