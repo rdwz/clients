@@ -156,7 +156,8 @@ describe("Fido2Background", () => {
       tabsQuerySpy.mockResolvedValue([tabMock]);
     });
 
-    it("skips destroying and re-injecting the content scripts if the enablePasskeys setting is first being read", async () => {
+    it("does not destroy and re-inject the content scripts when triggering `handleEnablePasskeysUpdate` with an undefined currentEnablePasskeysSetting property", async () => {
+      fido2Background["currentEnablePasskeysSetting"] = undefined;
       await fido2Background["handleEnablePasskeysUpdate"](true);
 
       expect(fido2Background["fido2ContentScriptPortsSet"].size).toBe(2);
