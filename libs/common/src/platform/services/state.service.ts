@@ -255,7 +255,7 @@ export class StateService<
       ? null
       : {
           cipher:
-            raw?.cipher.toJSON != null
+            raw?.cipher?.toJSON != null
               ? raw.cipher
               : CipherView.fromJSON(raw?.cipher as Jsonify<CipherView>),
           collectionIds: raw?.collectionIds,
@@ -1170,23 +1170,6 @@ export class StateService<
     await this.saveAccount(
       account,
       this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
-    );
-  }
-
-  async getDeepLinkRedirectUrl(options?: StorageOptions): Promise<string> {
-    return (
-      await this.getGlobals(this.reconcileOptions(options, await this.defaultOnDiskOptions()))
-    )?.deepLinkRedirectUrl;
-  }
-
-  async setDeepLinkRedirectUrl(url: string, options?: StorageOptions): Promise<void> {
-    const globals = await this.getGlobals(
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-    globals.deepLinkRedirectUrl = url;
-    await this.saveGlobals(
-      globals,
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
     );
   }
 

@@ -325,7 +325,6 @@ const safeProviders: SafeProvider[] = [
     provide: AutofillService,
     deps: [
       CipherService,
-      StateServiceAbstraction,
       AutofillSettingsServiceAbstraction,
       TotpService,
       EventCollectionServiceAbstraction,
