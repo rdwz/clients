@@ -257,7 +257,7 @@ describe("Fido2Background", () => {
       const message = mock<Fido2ExtensionMessage>({ command: "fido2RegisterCredentialRequest" });
       const sender = mock<chrome.runtime.MessageSender>();
       const sendResponse = jest.fn();
-      jest.spyOn(fido2ClientService, "createCredential").mockRejectedValue(new Error("error"));
+      fido2ClientService.createCredential.mockRejectedValue(new Error("error"));
 
       sendExtensionRuntimeMessage(message, sender, sendResponse);
       await flushPromises();
@@ -288,15 +288,15 @@ describe("Fido2Background", () => {
           requestId: "123",
           data: mock<CreateCredentialParams>(),
         });
-        const createCredentialSpy: jest.SpyInstance = jest.spyOn(
-          fido2ClientService,
-          "createCredential",
-        );
 
         sendExtensionRuntimeMessage(message, senderMock);
         await flushPromises();
 
-        expect(createCredentialSpy).toHaveBeenCalledWith(message.data, tabMock, abortController);
+        expect(fido2ClientService.createCredential).toHaveBeenCalledWith(
+          message.data,
+          tabMock,
+          abortController,
+        );
         expect(focusTabSpy).toHaveBeenCalledWith(tabMock.id);
         expect(focusWindowSpy).toHaveBeenCalledWith(tabMock.windowId);
       });
@@ -309,15 +309,15 @@ describe("Fido2Background", () => {
           requestId: "123",
           data: mock<AssertCredentialParams>(),
         });
-        const assertCredentialSpy: jest.SpyInstance = jest.spyOn(
-          fido2ClientService,
-          "assertCredential",
-        );
 
         sendExtensionRuntimeMessage(message, senderMock);
         await flushPromises();
 
-        expect(assertCredentialSpy).toHaveBeenCalledWith(message.data, tabMock, abortController);
+        expect(fido2ClientService.assertCredential).toHaveBeenCalledWith(
+          message.data,
+          tabMock,
+          abortController,
+        );
         expect(focusTabSpy).toHaveBeenCalledWith(tabMock.id);
         expect(focusWindowSpy).toHaveBeenCalledWith(tabMock.windowId);
       });
