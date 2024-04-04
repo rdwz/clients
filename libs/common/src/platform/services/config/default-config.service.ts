@@ -13,7 +13,7 @@ import {
 } from "rxjs";
 import { SemVer } from "semver";
 
-import { FeatureFlag, FeatureFlagValue } from "../../../enums/feature-flag.enum";
+import { FeatureFlag, FeatureFlagType } from "../../../enums/feature-flag.enum";
 import { UserId } from "../../../types/guid";
 import { ConfigApiServiceAbstraction } from "../../abstractions/config/config-api.service.abstraction";
 import { ConfigService } from "../../abstractions/config/config.service";
@@ -91,19 +91,19 @@ export class DefaultConfigService implements ConfigService {
     );
   }
 
-  getFeatureFlag$<T extends FeatureFlag>(key: T, defaultValue?: FeatureFlagValue[T]) {
+  getFeatureFlag$<Flag extends FeatureFlag>(key: Flag, defaultValue?: FeatureFlagType<Flag>) {
     return this.serverConfig$.pipe(
       map((serverConfig) => {
         if (serverConfig?.featureStates == null || serverConfig.featureStates[key] == null) {
           return defaultValue;
         }
 
-        return serverConfig.featureStates[key] as unknown as FeatureFlagValue[T];
+        return serverConfig.featureStates[key] as FeatureFlagType<Flag>;
       }),
     );
   }
 
-  async getFeatureFlag<T extends FeatureFlag>(key: T, defaultValue?: FeatureFlagValue[T]) {
+  async getFeatureFlag<Flag extends FeatureFlag>(key: Flag, defaultValue?: FeatureFlagType<Flag>) {
     return await firstValueFrom(this.getFeatureFlag$(key, defaultValue));
   }
 
