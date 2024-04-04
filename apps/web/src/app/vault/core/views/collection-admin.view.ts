@@ -60,10 +60,11 @@ export class CollectionAdminView extends CollectionView {
     return returnedUsers;
   }
 
-  override canEdit(org: Organization): boolean {
+  override canEdit(org: Organization, flexibleCollectionsV1Enabled: boolean): boolean {
     return org?.flexibleCollections
-      ? org?.canEditAnyCollection || this.manage
-      : org?.canEditAnyCollection || (org?.canEditAssignedCollections && this.assigned);
+      ? org?.canEditAnyCollection(flexibleCollectionsV1Enabled) || this.manage
+      : org?.canEditAnyCollection(flexibleCollectionsV1Enabled) ||
+          (org?.canEditAssignedCollections && this.assigned);
   }
 
   override canDelete(org: Organization): boolean {
