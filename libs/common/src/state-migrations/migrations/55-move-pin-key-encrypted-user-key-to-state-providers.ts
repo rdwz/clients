@@ -13,7 +13,7 @@ const PIN_KEY_ENCRYPTED_USER_KEY: KeyDefinitionLike = {
   stateDefinition: CRYPTO_STATE,
 };
 
-export class PinKeyEncryptedUserKeyMigrator extends Migrator<53, 54> {
+export class PinKeyEncryptedUserKeyMigrator extends Migrator<54, 55> {
   async migrate(helper: MigrationHelper): Promise<void> {
     const legacyAccounts = await helper.getAccounts<ExpectedAccountState>();
 

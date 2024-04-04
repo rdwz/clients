@@ -50,7 +50,8 @@ import { KeyConnectorMigrator } from "./migrations/50-move-key-connector-to-stat
 import { RememberedEmailMigrator } from "./migrations/51-move-remembered-email-to-state-providers";
 import { DeleteInstalledVersion } from "./migrations/52-delete-installed-version";
 import { DeviceTrustCryptoServiceStateProviderMigrator } from "./migrations/53-migrate-device-trust-crypto-svc-to-state-providers";
-import { PinKeyEncryptedUserKeyMigrator } from "./migrations/54-move-pin-key-encrypted-user-key-to-state-providers";
+import { SendMigrator } from "./migrations/54-move-encrypted-sends";
+import { PinKeyEncryptedUserKeyMigrator } from "./migrations/55-move-pin-key-encrypted-user-key-to-state-providers";
 import { RemoveLegacyEtmKeyMigrator } from "./migrations/6-remove-legacy-etm-key";
 import { MoveBiometricAutoPromptToAccount } from "./migrations/7-move-biometric-auto-prompt-to-account";
 import { MoveStateVersionMigrator } from "./migrations/8-move-state-version";
@@ -58,7 +59,8 @@ import { MoveBrowserSettingsToGlobal } from "./migrations/9-move-browser-setting
 import { MinVersionMigrator } from "./migrations/min-version";
 
 export const MIN_VERSION = 3;
-export const CURRENT_VERSION = 54;
+export const CURRENT_VERSION = 55;
+
 export type MinVersion = typeof MIN_VERSION;
 
 export function createMigrationBuilder() {
@@ -114,7 +116,8 @@ export function createMigrationBuilder() {
     .with(RememberedEmailMigrator, 50, 51)
     .with(DeleteInstalledVersion, 51, 52)
     .with(DeviceTrustCryptoServiceStateProviderMigrator, 52, 53)
-    .with(PinKeyEncryptedUserKeyMigrator, 53, CURRENT_VERSION);
+    .with(SendMigrator, 53, 54)
+    .with(PinKeyEncryptedUserKeyMigrator, 54, CURRENT_VERSION);
 }
 
 export async function currentVersion(

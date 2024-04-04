@@ -3,7 +3,7 @@ import { MockProxy } from "jest-mock-extended";
 import { MigrationHelper } from "../migration-helper";
 import { mockMigrationHelper, runMigrator } from "../migration-helper.spec";
 
-import { PinKeyEncryptedUserKeyMigrator } from "./54-move-pin-key-encrypted-user-key-to-state-providers";
+import { PinKeyEncryptedUserKeyMigrator } from "./55-move-pin-key-encrypted-user-key-to-state-providers";
 
 function rollbackJSON() {
   return {
@@ -26,7 +26,7 @@ function rollbackJSON() {
 }
 
 describe("PinKeyEncryptedUserKeyMigrator", () => {
-  const migrator = new PinKeyEncryptedUserKeyMigrator(53, 54);
+  const migrator = new PinKeyEncryptedUserKeyMigrator(54, 55);
 
   it("should migrate the pinKeyEncryptedUserKey property from the account settings object to a user StorageKey", async () => {
     const output = await runMigrator(migrator, {
@@ -108,8 +108,8 @@ describe("PinKeyEncryptedUserKeyMigrator", () => {
     };
 
     beforeEach(() => {
-      helper = mockMigrationHelper(rollbackJSON(), 54);
-      sut = new PinKeyEncryptedUserKeyMigrator(53, 54);
+      helper = mockMigrationHelper(rollbackJSON(), 55);
+      sut = new PinKeyEncryptedUserKeyMigrator(54, 55);
     });
 
     it("should null out the pinKeyEncryptedUserKey user StorageKey for each account", async () => {
