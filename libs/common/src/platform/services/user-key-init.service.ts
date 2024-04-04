@@ -1,8 +1,9 @@
-import { Subscription, filter, switchMap } from "rxjs";
+import { EMPTY, Subscription, catchError, filter, from, switchMap } from "rxjs";
 
 import { AccountService } from "../../auth/abstractions/account.service";
 import { UserId } from "../../types/guid";
 import { CryptoService } from "../abstractions/crypto.service";
+import { LogService } from "../abstractions/log.service";
 import { KeySuffixOptions } from "../enums";
 
 // TODO: this is a half measure improvement which allows us to reduce some side effects today (cryptoService.getUserKey setting user key in memory if auto key exists)
@@ -15,6 +16,7 @@ export class UserKeyInitService {
   constructor(
     private accountService: AccountService,
     private cryptoService: CryptoService,
+    private logService: LogService,
   ) {}
 
   // Note: must listen for changes to support account switching
@@ -22,7 +24,17 @@ export class UserKeyInitService {
     return this.accountService.activeAccount$
       .pipe(
         filter((activeAccount) => activeAccount != null),
-        switchMap((activeAccount) => this.setUserKeyInMemoryIfAutoUserKeySet(activeAccount?.id)),
+        switchMap((activeAccount) =>
+          from(this.setUserKeyInMemoryIfAutoUserKeySet(activeAccount?.id)).pipe(
+            catchError((err: unknown) => {
+              this.logService.warning(
+                `setUserKeyInMemoryIfAutoUserKeySet failed with error: ${err}`,
+              );
+              // Returning EMPTY to protect obs chain from cancellation in case of error
+              return EMPTY;
+            }),
+          ),
+        ),
       )
       .subscribe();
   }

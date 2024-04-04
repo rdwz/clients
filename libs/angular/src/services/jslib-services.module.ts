@@ -1085,7 +1085,7 @@ const safeProviders: SafeProvider[] = [
   safeProvider({
     provide: UserKeyInitService,
     useClass: UserKeyInitService,
-    deps: [AccountService, CryptoServiceAbstraction],
+    deps: [AccountService, CryptoServiceAbstraction, LogService],
   }),
   safeProvider({
     provide: ErrorHandler,
