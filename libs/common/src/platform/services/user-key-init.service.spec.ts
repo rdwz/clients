@@ -4,6 +4,7 @@ import { FakeAccountService, mockAccountServiceWith } from "../../../spec";
 import { CsprngArray } from "../../types/csprng";
 import { UserId } from "../../types/guid";
 import { UserKey } from "../../types/key";
+import { LogService } from "../abstractions/log.service";
 import { KeySuffixOptions } from "../enums";
 import { Utils } from "../misc/utils";
 import { SymmetricCryptoKey } from "../models/domain/symmetric-crypto-key";
@@ -19,9 +20,10 @@ describe("UserKeyInitService", () => {
   const accountService: FakeAccountService = mockAccountServiceWith(mockUserId);
 
   const cryptoService = mock<CryptoService>();
+  const logService = mock<LogService>();
 
   beforeEach(() => {
-    userKeyInitService = new UserKeyInitService(accountService, cryptoService);
+    userKeyInitService = new UserKeyInitService(accountService, cryptoService, logService);
   });
 
   it("instantiates", () => {
