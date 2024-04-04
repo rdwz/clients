@@ -28,12 +28,9 @@
     appStopProp
   >
     {{ collection.name }}
-    <span
-      *ngIf="collection.addAccess && collection.name !== 'Unassigned'"
-      bitBadge
-      variant="warning"
-      >{{ "addAccess" | i18n }}</span
-    >
+    <span *ngIf="collection.addAccess && collection.id !== Unassigned" bitBadge variant="warning">{{
+      "addAccess" | i18n
+    }}</span>
   </button>
 </td>
 <td bitCell [ngClass]="RowHeightClass" *ngIf="showOwner">
