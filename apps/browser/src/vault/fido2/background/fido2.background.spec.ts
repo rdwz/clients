@@ -109,7 +109,7 @@ describe("Fido2Background", () => {
   });
 
   describe("injectFido2ContentScripts", () => {
-    it("injects the fido2 page-script-mv2-append content script into the provided tab", async () => {
+    it("injects the page-script-mv2-append content script into the provided tab", async () => {
       isManifestVersionSpy.mockImplementation((manifestVersion) => manifestVersion === 2);
 
       await fido2Background["injectFido2ContentScripts"](tabMock);
@@ -164,7 +164,7 @@ describe("Fido2Background", () => {
       expect(executeTabsSpy).not.toHaveBeenCalled();
     });
 
-    it("destroys the content scripts but skips re-injecting them if the enablePasskeys setting is set to `false`", async () => {
+    it("destroys the content scripts but skips re-injecting them when the enablePasskeys setting is set to `false`", async () => {
       fido2Background["currentEnablePasskeysSetting"] = true;
 
       await fido2Background["handleEnablePasskeysUpdate"](false);
@@ -174,7 +174,7 @@ describe("Fido2Background", () => {
       expect(executeTabsSpy).not.toHaveBeenCalled();
     });
 
-    it("destroys and re-injects the content scripts if the enablePasskeys setting is set to `true`", async () => {
+    it("destroys and re-injects the content scripts when the enablePasskeys setting is set to `true`", async () => {
       fido2Background["currentEnablePasskeysSetting"] = false;
 
       await fido2Background["handleEnablePasskeysUpdate"](true);
@@ -184,67 +184,71 @@ describe("Fido2Background", () => {
       expect(executeTabsSpy).toHaveBeenCalledWith(tabMock.id, contentScriptDetails);
     });
 
-    it("registers the page-script-append-mv2.js and content-script.js content scripts for manifest v2 if the enablePasskeys setting is turned on", async () => {
-      isManifestVersionSpy.mockImplementation((manifestVersion) => manifestVersion === 2);
+    describe("given manifest v2", () => {
+      it("registers the page-script-append-mv2.js and content-script.js content scripts when the enablePasskeys setting is set to `true`", async () => {
+        isManifestVersionSpy.mockImplementation((manifestVersion) => manifestVersion === 2);
 
-      await fido2Background["handleEnablePasskeysUpdate"](true);
+        await fido2Background["handleEnablePasskeysUpdate"](true);
 
-      expect(BrowserApi.registerContentScriptsMv2).toHaveBeenCalledWith({
-        js: [
-          { file: Fido2ContentScript.PageScriptAppend },
-          { file: Fido2ContentScript.ContentScript },
-        ],
-        ...fido2Background["sharedRegistrationOptions"],
+        expect(BrowserApi.registerContentScriptsMv2).toHaveBeenCalledWith({
+          js: [
+            { file: Fido2ContentScript.PageScriptAppend },
+            { file: Fido2ContentScript.ContentScript },
+          ],
+          ...fido2Background["sharedRegistrationOptions"],
+        });
+      });
+
+      it("unregisters any existing registered content scripts when the enablePasskeys setting is set to `false`", async () => {
+        isManifestVersionSpy.mockImplementation((manifestVersion) => manifestVersion === 2);
+        fido2Background["registeredContentScripts"] = {
+          unregister: jest.fn(),
+        };
+
+        await fido2Background["handleEnablePasskeysUpdate"](false);
+
+        expect(fido2Background["registeredContentScripts"].unregister).toHaveBeenCalled();
+        expect(BrowserApi.registerContentScriptsMv2).not.toHaveBeenCalled();
       });
     });
 
-    it("unregisters any existing registered content scripts for manifest v2 if the enablePasskeys setting is turned off", async () => {
-      isManifestVersionSpy.mockImplementation((manifestVersion) => manifestVersion === 2);
-      fido2Background["registeredContentScripts"] = {
-        unregister: jest.fn(),
-      };
+    describe("given manifest v3", () => {
+      it("registers the page-script.js and content-script.js content scripts when the enablePasskeys setting is set to `true`", async () => {
+        isManifestVersionSpy.mockImplementation((manifestVersion) => manifestVersion === 3);
 
-      await fido2Background["handleEnablePasskeysUpdate"](false);
+        await fido2Background["handleEnablePasskeysUpdate"](true);
 
-      expect(fido2Background["registeredContentScripts"].unregister).toHaveBeenCalled();
-      expect(BrowserApi.registerContentScriptsMv2).not.toHaveBeenCalled();
-    });
-
-    it("registers the page-script.js and content-script.js content scripts for manifest v3 if the enablePasskeys setting is turned on", async () => {
-      isManifestVersionSpy.mockImplementation((manifestVersion) => manifestVersion === 3);
-
-      await fido2Background["handleEnablePasskeysUpdate"](true);
-
-      expect(BrowserApi.registerContentScriptsMv3).toHaveBeenCalledWith([
-        {
-          id: Fido2ContentScriptId.PageScript,
-          js: [Fido2ContentScript.PageScript],
-          world: "MAIN",
-          ...fido2Background["sharedRegistrationOptions"],
-        },
-        {
-          id: Fido2ContentScriptId.ContentScript,
-          js: [Fido2ContentScript.ContentScript],
-          ...fido2Background["sharedRegistrationOptions"],
-        },
-      ]);
-      expect(BrowserApi.unregisterContentScriptsMv3).not.toHaveBeenCalled();
-    });
-
-    it("unregisters the FIDO2 page-script.js and content-script.js content scripts for manifest v3 if the enablePasskeys setting is turned off", async () => {
-      isManifestVersionSpy.mockImplementation((manifestVersion) => manifestVersion === 3);
-
-      await fido2Background["handleEnablePasskeysUpdate"](false);
-
-      expect(BrowserApi.unregisterContentScriptsMv3).toHaveBeenCalledWith({
-        ids: [Fido2ContentScriptId.PageScript, Fido2ContentScriptId.ContentScript],
+        expect(BrowserApi.registerContentScriptsMv3).toHaveBeenCalledWith([
+          {
+            id: Fido2ContentScriptId.PageScript,
+            js: [Fido2ContentScript.PageScript],
+            world: "MAIN",
+            ...fido2Background["sharedRegistrationOptions"],
+          },
+          {
+            id: Fido2ContentScriptId.ContentScript,
+            js: [Fido2ContentScript.ContentScript],
+            ...fido2Background["sharedRegistrationOptions"],
+          },
+        ]);
+        expect(BrowserApi.unregisterContentScriptsMv3).not.toHaveBeenCalled();
       });
-      expect(BrowserApi.registerContentScriptsMv3).not.toHaveBeenCalled();
+
+      it("unregisters the page-script.js and content-script.js content scripts when the enablePasskeys setting is set to `false`", async () => {
+        isManifestVersionSpy.mockImplementation((manifestVersion) => manifestVersion === 3);
+
+        await fido2Background["handleEnablePasskeysUpdate"](false);
+
+        expect(BrowserApi.unregisterContentScriptsMv3).toHaveBeenCalledWith({
+          ids: [Fido2ContentScriptId.PageScript, Fido2ContentScriptId.ContentScript],
+        });
+        expect(BrowserApi.registerContentScriptsMv3).not.toHaveBeenCalled();
+      });
     });
   });
 
   describe("extension message handlers", () => {
-    it("ignores messages who do not have a handler associated with a command within the message", () => {
+    it("ignores messages that do not have a handler associated with a command within the message", () => {
       const message = mock<Fido2ExtensionMessage>({ command: "nonexistentCommand" });
 
       sendExtensionRuntimeMessage(message);
@@ -351,7 +355,7 @@ describe("Fido2Background", () => {
       expect(portMock.onDisconnect.addListener).not.toHaveBeenCalled();
     });
 
-    it("disconnects the port connection if the Fido2 feature is not enabled", async () => {
+    it("disconnects the port connection when the Fido2 feature is not enabled", async () => {
       fido2ClientService.isFido2FeatureEnabled.mockResolvedValue(false);
 
       triggerRuntimeOnConnectEvent(portMock);
@@ -361,7 +365,7 @@ describe("Fido2Background", () => {
       expect(fido2Background["fido2ContentScriptPortsSet"].size).toBe(0);
     });
 
-    it("disconnects the port connection if the url is malformed", async () => {
+    it("disconnects the port connection when the url is malformed", async () => {
       portMock.sender.url = "malformed-url";
 
       triggerRuntimeOnConnectEvent(portMock);
@@ -372,7 +376,7 @@ describe("Fido2Background", () => {
       expect(logService.error).toHaveBeenCalled();
     });
 
-    it("adds the port to the fido2ContentScriptPortsSet if the Fido2 feature is enabled", async () => {
+    it("adds the port to the fido2ContentScriptPortsSet when the Fido2 feature is enabled", async () => {
       triggerRuntimeOnConnectEvent(portMock);
       await flushPromises();
 
