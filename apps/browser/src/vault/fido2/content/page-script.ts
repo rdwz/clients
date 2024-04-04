@@ -37,9 +37,7 @@ import { Messenger } from "./messaging/messenger";
     } catch {
       /* empty */
     }
-  }
-
-  if (browserNativeWebauthnSupport) {
+  } else {
     void BrowserPublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(
       (available) => {
         browserNativeWebauthnPlatformAuthenticatorSupport = available;
