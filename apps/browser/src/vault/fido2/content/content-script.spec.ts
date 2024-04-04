@@ -51,7 +51,7 @@ describe("Fido2 Content Script", () => {
     expect(messenger.destroy).toHaveBeenCalled();
   });
 
-  it("handles a FIDO2 credential creation request message", async () => {
+  it("handles a FIDO2 credential creation request message from the window message listener, formats the message and sends the formatted message to the extension background", async () => {
     const message = mock<MessageWithMetadata>({
       type: MessageType.CredentialCreationRequest,
       data: mock<InsecureCreateCredentialParams>(),
@@ -77,7 +77,7 @@ describe("Fido2 Content Script", () => {
     });
   });
 
-  it("handles a FIDO2 credential get request message", async () => {
+  it("handles a FIDO2 credential get request message from the window message listener, formats the message and sends the formatted message to the extension background", async () => {
     const message = mock<MessageWithMetadata>({
       type: MessageType.CredentialGetRequest,
       data: mock<InsecureCreateCredentialParams>(),
