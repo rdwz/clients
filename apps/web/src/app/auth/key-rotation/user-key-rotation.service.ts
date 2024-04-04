@@ -86,7 +86,7 @@ export class UserKeyRotationService {
     request.emergencyAccessKeys = await this.emergencyAccessService.getRotatedKeys(newUserKey);
     request.resetPasswordKeys = await this.resetPasswordService.getRotatedKeys(newUserKey);
 
-    if (await this.configService.getFeatureFlag<boolean>(FeatureFlag.KeyRotationImprovements)) {
+    if (await this.configService.getFeatureFlag(FeatureFlag.KeyRotationImprovements)) {
       await this.apiService.postUserKeyUpdate(request);
     } else {
       await this.rotateUserKeyAndEncryptedDataLegacy(request);

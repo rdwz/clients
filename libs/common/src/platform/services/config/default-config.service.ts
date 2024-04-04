@@ -90,19 +90,20 @@ export class DefaultConfigService implements ConfigService {
       map((config) => config?.environment?.cloudRegion ?? Region.US),
     );
   }
-  getFeatureFlag$<T extends FeatureFlagValue>(key: FeatureFlag, defaultValue?: T) {
+
+  getFeatureFlag$<T extends FeatureFlag>(key: T, defaultValue?: FeatureFlagValue[T]) {
     return this.serverConfig$.pipe(
       map((serverConfig) => {
         if (serverConfig?.featureStates == null || serverConfig.featureStates[key] == null) {
           return defaultValue;
         }
 
-        return serverConfig.featureStates[key] as T;
+        return serverConfig.featureStates[key] as unknown as FeatureFlagValue[T];
       }),
     );
   }
 
-  async getFeatureFlag<T extends FeatureFlagValue>(key: FeatureFlag, defaultValue?: T) {
+  async getFeatureFlag<T extends FeatureFlag>(key: T, defaultValue?: FeatureFlagValue[T]) {
     return await firstValueFrom(this.getFeatureFlag$(key, defaultValue));
   }
 
