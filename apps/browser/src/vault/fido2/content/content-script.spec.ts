@@ -1,4 +1,4 @@
-import { mock } from "jest-mock-extended";
+import { mock, MockProxy } from "jest-mock-extended";
 
 import { CreateCredentialResult } from "@bitwarden/common/vault/abstractions/fido2/fido2-client.service.abstraction";
 
@@ -30,7 +30,7 @@ describe("Fido2 Content Script", () => {
       messenger.destroy = jest.fn();
       return messenger;
     });
-  const portSpy: chrome.runtime.Port = createPortSpyMock(Fido2PortName.InjectedScript);
+  const portSpy: MockProxy<chrome.runtime.Port> = createPortSpyMock(Fido2PortName.InjectedScript);
   chrome.runtime.connect = jest.fn(() => portSpy);
 
   afterEach(() => {
