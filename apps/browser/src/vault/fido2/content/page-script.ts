@@ -58,7 +58,7 @@ import { Messenger } from "./messaging/messenger";
     get: navigator.credentials.get.bind(navigator.credentials) as typeof navigator.credentials.get,
   };
 
-  const messenger = ((window as any).messenger = Messenger.forDOMCommunication(window));
+  const messenger = Messenger.forDOMCommunication(window);
   let waitForFocusTimeout: number | NodeJS.Timeout;
   let focusListenerHandler: () => void;
 
