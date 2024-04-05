@@ -521,6 +521,7 @@ const safeProviders: SafeProvider[] = [
     provide: CryptoServiceAbstraction,
     useClass: CryptoService,
     deps: [
+      PinServiceAbstraction,
       KeyGenerationServiceAbstraction,
       CryptoFunctionServiceAbstraction,
       EncryptService,
@@ -614,6 +615,7 @@ const safeProviders: SafeProvider[] = [
     provide: VaultTimeoutSettingsServiceAbstraction,
     useClass: VaultTimeoutSettingsService,
     deps: [
+      PinServiceAbstraction,
       UserDecryptionOptionsServiceAbstraction,
       CryptoServiceAbstraction,
       TokenServiceAbstraction,
@@ -943,6 +945,7 @@ const safeProviders: SafeProvider[] = [
     provide: PinServiceAbstraction,
     useClass: PinService,
     deps: [
+      StateProvider,
       StateServiceAbstraction,
       CryptoServiceAbstraction,
       VaultTimeoutSettingsServiceAbstraction,

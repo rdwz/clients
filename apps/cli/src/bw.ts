@@ -352,6 +352,7 @@ export class Main {
     );
 
     this.cryptoService = new CryptoService(
+      this.pinService,
       this.keyGenerationService,
       this.cryptoFunctionService,
       this.encryptService,
@@ -550,6 +551,7 @@ export class Main {
     this.biometricStateService = new DefaultBiometricStateService(this.stateProvider);
 
     this.vaultTimeoutSettingsService = new VaultTimeoutSettingsService(
+      this.pinService,
       this.userDecryptionOptionsService,
       this.cryptoService,
       this.tokenService,
@@ -559,6 +561,7 @@ export class Main {
     );
 
     this.pinService = new PinService(
+      this.stateProvider,
       this.stateService,
       this.cryptoService,
       this.vaultTimeoutSettingsService,
