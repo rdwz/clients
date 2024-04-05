@@ -3,6 +3,7 @@ import { Component, Inject } from "@angular/core";
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { KdfConfig } from "@bitwarden/common/auth/models/domain/kdf-config";
 import { KdfRequest } from "@bitwarden/common/models/request/kdf.request";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
@@ -37,6 +38,7 @@ export class ChangeKdfConfirmationComponent {
     private messagingService: MessagingService,
     private stateService: StateService,
     private logService: LogService,
+    private kdfConfigService: KdfConfigService,
     @Inject(DIALOG_DATA) params: { kdf: KdfType; kdfConfig: KdfConfig },
   ) {
     this.kdf = params.kdf;
@@ -75,7 +77,7 @@ export class ChangeKdfConfirmationComponent {
     const email = await this.stateService.getEmail();
 
     // Ensure the KDF config is valid.
-    this.cryptoService.validateKdfConfig(this.kdf, this.kdfConfig);
+    this.kdfConfigService.validateKdfConfig(this.kdfConfig);
 
     const newMasterKey = await this.cryptoService.makeMasterKey(
       masterPassword,

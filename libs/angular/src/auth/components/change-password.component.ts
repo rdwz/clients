@@ -3,7 +3,7 @@ import { Subject, takeUntil } from "rxjs";
 
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { MasterPasswordPolicyOptions } from "@bitwarden/common/admin-console/models/domain/master-password-policy-options";
-import { KdfConfigServiceAbstraction } from "@bitwarden/common/auth/abstractions/kdf-config.service.abstraction";
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { KdfConfig } from "@bitwarden/common/auth/models/domain/kdf-config";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
@@ -44,7 +44,7 @@ export class ChangePasswordComponent implements OnInit, OnDestroy {
     protected policyService: PolicyService,
     protected stateService: StateService,
     protected dialogService: DialogService,
-    protected KdfConfigService: KdfConfigServiceAbstraction,
+    protected kdfConfigService: KdfConfigService,
   ) {}
 
   async ngOnInit() {
@@ -74,7 +74,7 @@ export class ChangePasswordComponent implements OnInit, OnDestroy {
 
     const email = await this.stateService.getEmail();
     if (this.kdfConfig == null) {
-      this.kdfConfig = await this.KdfConfigService.getKdfConfig();
+      this.kdfConfig = await this.kdfConfigService.getKdfConfig();
     }
 
     // Create new master key

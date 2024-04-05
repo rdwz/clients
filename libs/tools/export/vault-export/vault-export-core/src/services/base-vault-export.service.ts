@@ -1,4 +1,4 @@
-import { KdfConfigServiceAbstraction } from "@bitwarden/common/auth/abstractions/kdf-config.service.abstraction";
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { KdfConfig } from "@bitwarden/common/auth/models/domain/kdf-config";
 import { CryptoFunctionService } from "@bitwarden/common/platform/abstractions/crypto-function.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
@@ -11,7 +11,7 @@ export class BaseVaultExportService {
   constructor(
     protected cryptoService: CryptoService,
     private cryptoFunctionService: CryptoFunctionService,
-    private kdfConfigService: KdfConfigServiceAbstraction,
+    private kdfConfigService: KdfConfigService,
   ) {}
 
   protected async buildPasswordExport(clearText: string, password: string): Promise<string> {

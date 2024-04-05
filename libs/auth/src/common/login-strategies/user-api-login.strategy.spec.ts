@@ -1,6 +1,7 @@
 import { mock, MockProxy } from "jest-mock-extended";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { KeyConnectorService } from "@bitwarden/common/auth/abstractions/key-connector.service";
 import { TokenService } from "@bitwarden/common/auth/abstractions/token.service";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
@@ -38,6 +39,7 @@ describe("UserApiLoginStrategy", () => {
   let keyConnectorService: MockProxy<KeyConnectorService>;
   let environmentService: MockProxy<EnvironmentService>;
   let billingAccountProfileStateService: MockProxy<BillingAccountProfileStateService>;
+  let kdfConfigService: MockProxy<KdfConfigService>;
 
   let apiLogInStrategy: UserApiLoginStrategy;
   let credentials: UserApiLoginCredentials;
@@ -60,6 +62,7 @@ describe("UserApiLoginStrategy", () => {
     keyConnectorService = mock<KeyConnectorService>();
     environmentService = mock<EnvironmentService>();
     billingAccountProfileStateService = mock<BillingAccountProfileStateService>();
+    kdfConfigService = mock<KdfConfigService>();
 
     appIdService.getAppId.mockResolvedValue(deviceId);
     tokenService.getTwoFactorToken.mockResolvedValue(null);
@@ -79,6 +82,7 @@ describe("UserApiLoginStrategy", () => {
       environmentService,
       keyConnectorService,
       billingAccountProfileStateService,
+      kdfConfigService,
     );
 
     credentials = new UserApiLoginCredentials(apiClientId, apiClientSecret);

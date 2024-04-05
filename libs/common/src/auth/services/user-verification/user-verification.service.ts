@@ -7,7 +7,7 @@ import { PlatformUtilsService } from "../../../platform/abstractions/platform-ut
 import { StateService } from "../../../platform/abstractions/state.service";
 import { KeySuffixOptions } from "../../../platform/enums/key-suffix-options.enum";
 import { UserKey } from "../../../types/key";
-import { KdfConfigServiceAbstraction } from "../../abstractions/kdf-config.service.abstraction";
+import { KdfConfigService } from "../../abstractions/kdf-config.service";
 import { KeyConnectorService as KeyConnectorServiceAbstraction } from "../../abstractions/key-connector.service";
 import { UserVerificationApiServiceAbstraction } from "../../abstractions/user-verification/user-verification-api.service.abstraction";
 import { UserVerificationService as UserVerificationServiceAbstraction } from "../../abstractions/user-verification/user-verification.service.abstraction";
@@ -40,7 +40,7 @@ export class UserVerificationService implements UserVerificationServiceAbstracti
     private logService: LogService,
     private vaultTimeoutSettingsService: VaultTimeoutSettingsServiceAbstraction,
     private platformUtilsService: PlatformUtilsService,
-    private kdfConfigService: KdfConfigServiceAbstraction,
+    private kdfConfigService: KdfConfigService,
   ) {}
 
   async getAvailableVerificationOptions(

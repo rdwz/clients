@@ -1,5 +1,5 @@
 import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
-import { KdfConfigServiceAbstraction } from "@bitwarden/common/auth/abstractions/kdf-config.service.abstraction";
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { KdfConfig } from "@bitwarden/common/auth/models/domain/kdf-config";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
@@ -16,7 +16,7 @@ export class PinCryptoService implements PinCryptoServiceAbstraction {
     private cryptoService: CryptoService,
     private vaultTimeoutSettingsService: VaultTimeoutSettingsService,
     private logService: LogService,
-    private kdfConfigService: KdfConfigServiceAbstraction,
+    private kdfConfigService: KdfConfigService,
   ) {}
   async decryptUserKeyWithPin(pin: string): Promise<UserKey | null> {
     try {

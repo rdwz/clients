@@ -3,6 +3,7 @@ import { Jsonify } from "type-fest";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { DeviceTrustCryptoServiceAbstraction } from "@bitwarden/common/auth/abstractions/device-trust-crypto.service.abstraction";
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { TokenService } from "@bitwarden/common/auth/abstractions/token.service";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
 import { AuthResult } from "@bitwarden/common/auth/models/domain/auth-result";
@@ -56,6 +57,7 @@ export class AuthRequestLoginStrategy extends LoginStrategy {
     twoFactorService: TwoFactorService,
     private deviceTrustCryptoService: DeviceTrustCryptoServiceAbstraction,
     billingAccountProfileStateService: BillingAccountProfileStateService,
+    kdfConfigService: KdfConfigService,
   ) {
     super(
       cryptoService,
@@ -68,6 +70,7 @@ export class AuthRequestLoginStrategy extends LoginStrategy {
       stateService,
       twoFactorService,
       billingAccountProfileStateService,
+      kdfConfigService,
     );
 
     this.cache = new BehaviorSubject(data);

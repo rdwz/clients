@@ -39,6 +39,7 @@ import { OrganizationMigrator } from "./migrations/40-move-organization-state-to
 import { EventCollectionMigrator } from "./migrations/41-move-event-collection-to-state-provider";
 import { EnableFaviconMigrator } from "./migrations/42-move-enable-favicon-to-domain-settings-state-provider";
 import { KeyConnectorMigrator } from "./migrations/43-move-key-connector-to-state-provider";
+import { KdfConfigMigrator } from "./migrations/44-move-kdf-config-to-state-provider";
 import { AddKeyTypeToOrgKeysMigrator } from "./migrations/5-add-key-type-to-org-keys";
 import { RemoveLegacyEtmKeyMigrator } from "./migrations/6-remove-legacy-etm-key";
 import { MoveBiometricAutoPromptToAccount } from "./migrations/7-move-biometric-auto-prompt-to-account";
@@ -47,7 +48,7 @@ import { MoveBrowserSettingsToGlobal } from "./migrations/9-move-browser-setting
 import { MinVersionMigrator } from "./migrations/min-version";
 
 export const MIN_VERSION = 3;
-export const CURRENT_VERSION = 43;
+export const CURRENT_VERSION = 44;
 export type MinVersion = typeof MIN_VERSION;
 
 export function createMigrationBuilder() {
@@ -92,7 +93,8 @@ export function createMigrationBuilder() {
     .with(OrganizationMigrator, 39, 40)
     .with(EventCollectionMigrator, 40, 41)
     .with(EnableFaviconMigrator, 41, 42)
-    .with(KeyConnectorMigrator, 42, CURRENT_VERSION);
+    .with(KeyConnectorMigrator, 42, 43)
+    .with(KdfConfigMigrator, 43, CURRENT_VERSION);
 }
 
 export async function currentVersion(

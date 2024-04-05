@@ -3,6 +3,7 @@ import { MockProxy, mock } from "jest-mock-extended";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { DeviceTrustCryptoServiceAbstraction } from "@bitwarden/common/auth/abstractions/device-trust-crypto.service.abstraction";
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { KeyConnectorService } from "@bitwarden/common/auth/abstractions/key-connector.service";
 import { TokenService } from "@bitwarden/common/auth/abstractions/token.service";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
@@ -52,6 +53,7 @@ describe("LoginStrategyService", () => {
   let deviceTrustCryptoService: MockProxy<DeviceTrustCryptoServiceAbstraction>;
   let authRequestService: MockProxy<AuthRequestServiceAbstraction>;
   let billingAccountProfileStateService: MockProxy<BillingAccountProfileStateService>;
+  let kdfConfigService: MockProxy<KdfConfigService>;
 
   let stateProvider: FakeGlobalStateProvider;
   let loginStrategyCacheExpirationState: FakeGlobalState<Date | null>;
@@ -76,6 +78,7 @@ describe("LoginStrategyService", () => {
     authRequestService = mock<AuthRequestServiceAbstraction>();
     billingAccountProfileStateService = mock<BillingAccountProfileStateService>();
     stateProvider = new FakeGlobalStateProvider();
+    kdfConfigService = mock<KdfConfigService>();
 
     sut = new LoginStrategyService(
       cryptoService,
@@ -97,6 +100,7 @@ describe("LoginStrategyService", () => {
       authRequestService,
       stateProvider,
       billingAccountProfileStateService,
+      kdfConfigService,
     );
 
     loginStrategyCacheExpirationState = stateProvider.getFake(CACHE_EXPIRATION_KEY);

@@ -1,6 +1,7 @@
 import { firstValueFrom } from "rxjs";
 
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { CryptoFunctionService } from "@bitwarden/common/platform/abstractions/crypto-function.service";
 import { EncryptService } from "@bitwarden/common/platform/abstractions/encrypt.service";
 import { KeyGenerationService } from "@bitwarden/common/platform/abstractions/key-generation.service";
@@ -29,6 +30,7 @@ export class ElectronCryptoService extends CryptoService {
     accountService: AccountService,
     stateProvider: StateProvider,
     private biometricStateService: BiometricStateService,
+    kdfConfigService: KdfConfigService,
   ) {
     super(
       keyGenerationService,
@@ -39,6 +41,7 @@ export class ElectronCryptoService extends CryptoService {
       stateService,
       accountService,
       stateProvider,
+      kdfConfigService,
     );
   }
 

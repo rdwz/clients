@@ -1,6 +1,7 @@
 import { mock, MockProxy } from "jest-mock-extended";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { TokenService } from "@bitwarden/common/auth/abstractions/token.service";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
 import { AuthResult } from "@bitwarden/common/auth/models/domain/auth-result";
@@ -36,6 +37,7 @@ describe("WebAuthnLoginStrategy", () => {
   let stateService!: MockProxy<StateService>;
   let twoFactorService!: MockProxy<TwoFactorService>;
   let billingAccountProfileStateService: MockProxy<BillingAccountProfileStateService>;
+  let kdfConfigService: MockProxy<KdfConfigService>;
 
   let webAuthnLoginStrategy!: WebAuthnLoginStrategy;
 
@@ -71,6 +73,7 @@ describe("WebAuthnLoginStrategy", () => {
     stateService = mock<StateService>();
     twoFactorService = mock<TwoFactorService>();
     billingAccountProfileStateService = mock<BillingAccountProfileStateService>();
+    kdfConfigService = mock<KdfConfigService>();
 
     tokenService.getTwoFactorToken.mockResolvedValue(null);
     appIdService.getAppId.mockResolvedValue(deviceId);
@@ -88,6 +91,7 @@ describe("WebAuthnLoginStrategy", () => {
       stateService,
       twoFactorService,
       billingAccountProfileStateService,
+      kdfConfigService,
     );
 
     // Create credentials

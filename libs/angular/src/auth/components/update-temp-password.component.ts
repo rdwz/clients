@@ -4,7 +4,7 @@ import { Router } from "@angular/router";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { MasterPasswordPolicyOptions } from "@bitwarden/common/admin-console/models/domain/master-password-policy-options";
-import { KdfConfigServiceAbstraction } from "@bitwarden/common/auth/abstractions/kdf-config.service.abstraction";
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
 import { VerificationType } from "@bitwarden/common/auth/enums/verification-type";
 import { ForceSetPasswordReason } from "@bitwarden/common/auth/models/domain/force-set-password-reason";
@@ -57,7 +57,7 @@ export class UpdateTempPasswordComponent extends BaseChangePasswordComponent {
     private userVerificationService: UserVerificationService,
     protected router: Router,
     dialogService: DialogService,
-    KdfConfigService: KdfConfigServiceAbstraction,
+    kdfConfigService: KdfConfigService,
   ) {
     super(
       i18nService,
@@ -68,7 +68,7 @@ export class UpdateTempPasswordComponent extends BaseChangePasswordComponent {
       policyService,
       stateService,
       dialogService,
-      KdfConfigService,
+      kdfConfigService,
     );
   }
 
@@ -101,7 +101,7 @@ export class UpdateTempPasswordComponent extends BaseChangePasswordComponent {
 
   async setupSubmitActions(): Promise<boolean> {
     this.email = await this.stateService.getEmail();
-    this.kdfConfig = await this.KdfConfigService.getKdfConfig();
+    this.kdfConfig = await this.kdfConfigService.getKdfConfig();
     return true;
   }
 

@@ -28,6 +28,7 @@ import { AuthService as AuthServiceAbstraction } from "@bitwarden/common/auth/ab
 import { DeviceTrustCryptoServiceAbstraction } from "@bitwarden/common/auth/abstractions/device-trust-crypto.service.abstraction";
 import { DevicesServiceAbstraction } from "@bitwarden/common/auth/abstractions/devices/devices.service.abstraction";
 import { DevicesApiServiceAbstraction } from "@bitwarden/common/auth/abstractions/devices-api.service.abstraction";
+import { KdfConfigService as kdfConfigServiceAbstraction } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { KeyConnectorService as KeyConnectorServiceAbstraction } from "@bitwarden/common/auth/abstractions/key-connector.service";
 import { SsoLoginServiceAbstraction } from "@bitwarden/common/auth/abstractions/sso-login.service.abstraction";
 import { TokenService as TokenServiceAbstraction } from "@bitwarden/common/auth/abstractions/token.service";
@@ -42,6 +43,7 @@ import { AvatarService } from "@bitwarden/common/auth/services/avatar.service";
 import { DeviceTrustCryptoService } from "@bitwarden/common/auth/services/device-trust-crypto.service.implementation";
 import { DevicesServiceImplementation } from "@bitwarden/common/auth/services/devices/devices.service.implementation";
 import { DevicesApiServiceImplementation } from "@bitwarden/common/auth/services/devices-api.service.implementation";
+import { KdfConfigService } from "@bitwarden/common/auth/services/kdf-config.service";
 import { KeyConnectorService } from "@bitwarden/common/auth/services/key-connector.service";
 import { SsoLoginService } from "@bitwarden/common/auth/services/sso-login.service";
 import { TokenService } from "@bitwarden/common/auth/services/token.service";
@@ -311,6 +313,7 @@ export default class MainBackground {
   stateEventRunnerService: StateEventRunnerService;
   ssoLoginService: SsoLoginServiceAbstraction;
   billingAccountProfileStateService: BillingAccountProfileStateService;
+  kdfConfigService: kdfConfigServiceAbstraction;
 
   onUpdatedRan: boolean;
   onReplacedRan: boolean;
@@ -473,6 +476,7 @@ export default class MainBackground {
       this.accountService,
       this.stateProvider,
       this.biometricStateService,
+      this.kdfConfigService,
     );
 
     this.appIdService = new AppIdService(this.globalStateProvider);
@@ -516,6 +520,8 @@ export default class MainBackground {
       logoutCallback,
       this.stateProvider,
     );
+
+    this.kdfConfigService = new KdfConfigService(this.stateProvider);
 
     this.passwordStrengthService = new PasswordStrengthService();
 
@@ -592,6 +598,7 @@ export default class MainBackground {
       this.authRequestService,
       this.globalStateProvider,
       this.billingAccountProfileStateService,
+      this.kdfConfigService,
     );
 
     this.ssoLoginService = new SsoLoginService(this.stateProvider);
@@ -643,6 +650,7 @@ export default class MainBackground {
       this.cryptoService,
       this.vaultTimeoutSettingsService,
       this.logService,
+      this.kdfConfigService,
     );
 
     this.userVerificationService = new UserVerificationService(
@@ -655,6 +663,7 @@ export default class MainBackground {
       this.logService,
       this.vaultTimeoutSettingsService,
       this.platformUtilsService,
+      this.kdfConfigService,
     );
 
     this.vaultFilterService = new VaultFilterService(
@@ -766,7 +775,7 @@ export default class MainBackground {
       this.cipherService,
       this.cryptoService,
       this.cryptoFunctionService,
-      this.stateService,
+      this.kdfConfigService,
     );
 
     this.organizationVaultExportService = new OrganizationVaultExportService(
@@ -774,8 +783,8 @@ export default class MainBackground {
       this.apiService,
       this.cryptoService,
       this.cryptoFunctionService,
-      this.stateService,
       this.collectionService,
+      this.kdfConfigService,
     );
 
     this.exportService = new VaultExportService(

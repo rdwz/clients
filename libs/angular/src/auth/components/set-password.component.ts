@@ -11,7 +11,7 @@ import { PolicyApiServiceAbstraction } from "@bitwarden/common/admin-console/abs
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { MasterPasswordPolicyOptions } from "@bitwarden/common/admin-console/models/domain/master-password-policy-options";
 import { OrganizationAutoEnrollStatusResponse } from "@bitwarden/common/admin-console/models/response/organization-auto-enroll-status.response";
-import { KdfConfigServiceAbstraction } from "@bitwarden/common/auth/abstractions/kdf-config.service.abstraction";
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { SsoLoginServiceAbstraction } from "@bitwarden/common/auth/abstractions/sso-login.service.abstraction";
 import { ForceSetPasswordReason } from "@bitwarden/common/auth/models/domain/force-set-password-reason";
 import { SetPasswordRequest } from "@bitwarden/common/auth/models/request/set-password.request";
@@ -63,7 +63,7 @@ export class SetPasswordComponent extends BaseChangePasswordComponent {
     private organizationUserService: OrganizationUserService,
     private ssoLoginService: SsoLoginServiceAbstraction,
     dialogService: DialogService,
-    KdfConfigService: KdfConfigServiceAbstraction,
+    kdfConfigService: KdfConfigService,
   ) {
     super(
       i18nService,
@@ -74,7 +74,7 @@ export class SetPasswordComponent extends BaseChangePasswordComponent {
       policyService,
       stateService,
       dialogService,
-      KdfConfigService,
+      kdfConfigService,
     );
   }
 
@@ -232,7 +232,7 @@ export class SetPasswordComponent extends BaseChangePasswordComponent {
     acctDecryptionOpts.hasMasterPassword = true;
     await this.stateService.setAccountDecryptionOptions(acctDecryptionOpts);
 
-    await this.KdfConfigService.setKdfConfig(this.kdfConfig);
+    await this.kdfConfigService.setKdfConfig(this.kdfConfig);
     await this.cryptoService.setMasterKey(masterKey);
     await this.cryptoService.setUserKey(userKey[0]);
 

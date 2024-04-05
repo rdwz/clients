@@ -6,7 +6,6 @@ import { TokenService } from "../../auth/abstractions/token.service";
 import { AuthenticationStatus } from "../../auth/enums/authentication-status";
 import { AdminAuthRequestStorable } from "../../auth/models/domain/admin-auth-req-storable";
 import { ForceSetPasswordReason } from "../../auth/models/domain/force-set-password-reason";
-import { KdfConfig } from "../../auth/models/domain/kdf-config";
 import { BiometricKey } from "../../auth/types/biometric-key";
 import { WindowState } from "../../models/domain/window-state";
 import { GeneratorOptions } from "../../tools/generator/generator-options";
@@ -30,7 +29,7 @@ import {
   AbstractMemoryStorageService,
   AbstractStorageService,
 } from "../abstractions/storage.service";
-import { HtmlStorageLocation, KdfType, StorageLocation } from "../enums";
+import { HtmlStorageLocation, StorageLocation } from "../enums";
 import { StateFactory } from "../factories/state-factory";
 import { Utils } from "../misc/utils";
 import { ServerConfigData } from "../models/data/server-config.data";
@@ -1200,49 +1199,6 @@ export class StateService<
     return (
       (await this.tokenService.getAccessToken(options?.userId as UserId)) != null &&
       (await this.getUserId(options)) != null
-    );
-  }
-
-  async getKdfConfig(options?: StorageOptions): Promise<KdfConfig> {
-    const iterations = (
-      await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskOptions()))
-    )?.profile?.kdfIterations;
-    const memory = (
-      await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskOptions()))
-    )?.profile?.kdfMemory;
-    const parallelism = (
-      await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskOptions()))
-    )?.profile?.kdfParallelism;
-    return new KdfConfig(iterations, memory, parallelism);
-  }
-
-  async setKdfConfig(config: KdfConfig, options?: StorageOptions): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-    account.profile.kdfIterations = config.iterations;
-    account.profile.kdfMemory = config.memory;
-    account.profile.kdfParallelism = config.parallelism;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-  }
-
-  async getKdfType(options?: StorageOptions): Promise<KdfType> {
-    return (
-      await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskOptions()))
-    )?.profile?.kdfType;
-  }
-
-  async setKdfType(value: KdfType, options?: StorageOptions): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-    account.profile.kdfType = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
     );
   }
 

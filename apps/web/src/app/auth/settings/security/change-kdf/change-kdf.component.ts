@@ -1,6 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 
-import { KdfConfigServiceAbstraction } from "@bitwarden/common/auth/abstractions/kdf-config.service.abstraction";
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { KdfConfig } from "@bitwarden/common/auth/models/domain/kdf-config";
 import {
   DEFAULT_KDF_CONFIG,
@@ -31,7 +31,7 @@ export class ChangeKdfComponent implements OnInit {
 
   constructor(
     private dialogService: DialogService,
-    private KdfConfigService: KdfConfigServiceAbstraction,
+    private kdfConfigService: KdfConfigService,
   ) {
     this.kdfOptions = [
       { name: "PBKDF2 SHA-256", value: KdfType.PBKDF2_SHA256 },
@@ -40,7 +40,7 @@ export class ChangeKdfComponent implements OnInit {
   }
 
   async ngOnInit() {
-    this.kdfConfig = await this.KdfConfigService.getKdfConfig();
+    this.kdfConfig = await this.kdfConfigService.getKdfConfig();
   }
 
   async onChangeKdf(newValue: KdfType) {

@@ -1,5 +1,6 @@
 import { mock, MockProxy } from "jest-mock-extended";
 
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { KdfConfig } from "@bitwarden/common/auth/models/domain/kdf-config";
 import { CipherWithIdExport } from "@bitwarden/common/models/export/cipher-with-ids.export";
 import { CryptoFunctionService } from "@bitwarden/common/platform/abstractions/crypto-function.service";
@@ -7,7 +8,6 @@ import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.se
 import { KdfType, PBKDF2_ITERATIONS } from "@bitwarden/common/platform/enums";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { EncryptedString, EncString } from "@bitwarden/common/platform/models/domain/enc-string";
-import { StateService } from "@bitwarden/common/platform/services/state.service";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { FolderService } from "@bitwarden/common/vault/abstractions/folder/folder.service.abstraction";
 import { CipherType } from "@bitwarden/common/vault/enums";
@@ -144,19 +144,20 @@ describe("VaultExportService", () => {
   let cipherService: MockProxy<CipherService>;
   let folderService: MockProxy<FolderService>;
   let cryptoService: MockProxy<CryptoService>;
-  let stateService: MockProxy<StateService>;
+  let kdfConfigService: MockProxy<KdfConfigService>;
 
   beforeEach(() => {
     cryptoFunctionService = mock<CryptoFunctionService>();
     cipherService = mock<CipherService>();
     folderService = mock<FolderService>();
     cryptoService = mock<CryptoService>();
-    stateService = mock<StateService>();
+    kdfConfigService = mock<KdfConfigService>();
 
     folderService.getAllDecryptedFromState.mockResolvedValue(UserFolderViews);
     folderService.getAllFromState.mockResolvedValue(UserFolders);
-    stateService.getKdfType.mockResolvedValue(KdfType.PBKDF2_SHA256);
-    stateService.getKdfConfig.mockResolvedValue(new KdfConfig(PBKDF2_ITERATIONS.defaultValue));
+    kdfConfigService.getKdfConfig.mockResolvedValue(
+      new KdfConfig(PBKDF2_ITERATIONS.defaultValue, KdfType.PBKDF2_SHA256),
+    );
     cryptoService.encrypt.mockResolvedValue(new EncString("encrypted"));
 
     exportService = new IndividualVaultExportService(
@@ -164,7 +165,7 @@ describe("VaultExportService", () => {
       cipherService,
       cryptoService,
       cryptoFunctionService,
-      stateService,
+      kdfConfigService,
     );
   });
 

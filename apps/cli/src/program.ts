@@ -156,6 +156,7 @@ export class Program {
             this.main.policyApiService,
             this.main.organizationService,
             async () => await this.main.logout(),
+            this.main.kdfConfigService,
           );
           const response = await command.run(email, password, options);
           this.processResponse(response, true);
@@ -263,6 +264,7 @@ export class Program {
             this.main.syncService,
             this.main.organizationApiService,
             async () => await this.main.logout(),
+            this.main.kdfConfigService,
           );
           const response = await command.run(password, cmd);
           this.processResponse(response);
@@ -623,6 +625,7 @@ export class Program {
           this.main.syncService,
           this.main.organizationApiService,
           this.main.logout,
+          this.main.kdfConfigService,
         );
         const response = await command.run(null, null);
         if (!response.success) {

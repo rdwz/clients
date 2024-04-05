@@ -11,6 +11,7 @@ import { PolicyApiServiceAbstraction } from "@bitwarden/common/admin-console/abs
 import { InternalPolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { AuthService } from "@bitwarden/common/auth/abstractions/auth.service";
 import { DeviceTrustCryptoServiceAbstraction } from "@bitwarden/common/auth/abstractions/device-trust-crypto.service.abstraction";
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
 import { AuthenticationStatus } from "@bitwarden/common/auth/enums/authentication-status";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
@@ -62,6 +63,7 @@ export class LockComponent extends BaseLockComponent {
     pinCryptoService: PinCryptoServiceAbstraction,
     private routerService: BrowserRouterService,
     biometricStateService: BiometricStateService,
+    kdfConfigService: KdfConfigService,
   ) {
     super(
       router,
@@ -84,6 +86,7 @@ export class LockComponent extends BaseLockComponent {
       userVerificationService,
       pinCryptoService,
       biometricStateService,
+      kdfConfigService,
     );
     this.successRoute = "/tabs/current";
     this.isInitialLockScreen = (window as any).previousPopupUrl == null;

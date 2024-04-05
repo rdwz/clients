@@ -1,7 +1,7 @@
 import * as papa from "papaparse";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
-import { KdfConfigServiceAbstraction } from "@bitwarden/common/auth/abstractions/kdf-config.service.abstraction";
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { CipherWithIdExport, CollectionWithIdExport } from "@bitwarden/common/models/export";
 import { CryptoFunctionService } from "@bitwarden/common/platform/abstractions/crypto-function.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
@@ -37,7 +37,7 @@ export class OrganizationVaultExportService
     cryptoService: CryptoService,
     cryptoFunctionService: CryptoFunctionService,
     private collectionService: CollectionService,
-    kdfConfigService: KdfConfigServiceAbstraction,
+    kdfConfigService: KdfConfigService,
   ) {
     super(cryptoService, cryptoFunctionService, kdfConfigService);
   }

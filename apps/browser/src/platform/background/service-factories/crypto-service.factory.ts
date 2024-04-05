@@ -4,6 +4,7 @@ import {
   AccountServiceInitOptions,
   accountServiceFactory,
 } from "../../../auth/background/service-factories/account-service.factory";
+import { kdfConfigServiceFactory } from "../../../auth/background/service-factories/kdf-config-service.factory";
 import {
   StateServiceInitOptions,
   stateServiceFactory,
@@ -62,6 +63,7 @@ export function cryptoServiceFactory(
         await accountServiceFactory(cache, opts),
         await stateProviderFactory(cache, opts),
         await biometricStateServiceFactory(cache, opts),
+        await kdfConfigServiceFactory(cache, opts),
       ),
   );
 }

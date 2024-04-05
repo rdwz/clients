@@ -75,12 +75,11 @@ describe("KeyGenerationService", () => {
     it("should derive a 32 byte key from a password using pbkdf2", async () => {
       const password = "password";
       const salt = "salt";
-      const kdf = KdfType.PBKDF2_SHA256;
-      const kdfConfig = new KdfConfig(600_000);
+      const kdfConfig = new KdfConfig(600_000, KdfType.PBKDF2_SHA256);
 
       cryptoFunctionService.pbkdf2.mockResolvedValue(new Uint8Array(32));
 
-      const key = await sut.deriveKeyFromPassword(password, salt, kdf, kdfConfig);
+      const key = await sut.deriveKeyFromPassword(password, salt, kdfConfig);
 
       expect(key.key.length).toEqual(32);
     });
@@ -88,13 +87,12 @@ describe("KeyGenerationService", () => {
     it("should derive a 32 byte key from a password using argon2id", async () => {
       const password = "password";
       const salt = "salt";
-      const kdf = KdfType.Argon2id;
-      const kdfConfig = new KdfConfig(600_000, 15);
+      const kdfConfig = new KdfConfig(600_000, KdfType.Argon2id, 15);
 
       cryptoFunctionService.hash.mockResolvedValue(new Uint8Array(32));
       cryptoFunctionService.argon2.mockResolvedValue(new Uint8Array(32));
 
-      const key = await sut.deriveKeyFromPassword(password, salt, kdf, kdfConfig);
+      const key = await sut.deriveKeyFromPassword(password, salt, kdfConfig);
 
       expect(key.key.length).toEqual(32);
     });

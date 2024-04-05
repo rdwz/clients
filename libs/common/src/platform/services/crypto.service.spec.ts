@@ -4,6 +4,7 @@ import { firstValueFrom, of } from "rxjs";
 import { FakeAccountService, mockAccountServiceWith } from "../../../spec/fake-account-service";
 import { FakeActiveUserState, FakeSingleUserState } from "../../../spec/fake-state";
 import { FakeStateProvider } from "../../../spec/fake-state-provider";
+import { KdfConfigService } from "../../auth/abstractions/kdf-config.service";
 import { AuthenticationStatus } from "../../auth/enums/authentication-status";
 import { CsprngArray } from "../../types/csprng";
 import { UserId } from "../../types/guid";
@@ -36,6 +37,7 @@ describe("cryptoService", () => {
   const platformUtilService = mock<PlatformUtilsService>();
   const logService = mock<LogService>();
   const stateService = mock<StateService>();
+  const kdfConfigService = mock<KdfConfigService>();
   let stateProvider: FakeStateProvider;
 
   const mockUserId = Utils.newGuid() as UserId;
@@ -54,6 +56,7 @@ describe("cryptoService", () => {
       stateService,
       accountService,
       stateProvider,
+      kdfConfigService,
     );
   });
 

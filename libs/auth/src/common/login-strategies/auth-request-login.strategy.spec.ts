@@ -2,6 +2,7 @@ import { mock, MockProxy } from "jest-mock-extended";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { DeviceTrustCryptoServiceAbstraction } from "@bitwarden/common/auth/abstractions/device-trust-crypto.service.abstraction";
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { TokenService } from "@bitwarden/common/auth/abstractions/token.service";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
 import { IdentityTokenResponse } from "@bitwarden/common/auth/models/response/identity-token.response";
@@ -39,6 +40,7 @@ describe("AuthRequestLoginStrategy", () => {
   let twoFactorService: MockProxy<TwoFactorService>;
   let deviceTrustCryptoService: MockProxy<DeviceTrustCryptoServiceAbstraction>;
   let billingAccountProfileStateService: MockProxy<BillingAccountProfileStateService>;
+  let kdfConfigService: MockProxy<KdfConfigService>;
 
   let authRequestLoginStrategy: AuthRequestLoginStrategy;
   let credentials: AuthRequestLoginCredentials;
@@ -67,6 +69,7 @@ describe("AuthRequestLoginStrategy", () => {
     twoFactorService = mock<TwoFactorService>();
     deviceTrustCryptoService = mock<DeviceTrustCryptoServiceAbstraction>();
     billingAccountProfileStateService = mock<BillingAccountProfileStateService>();
+    kdfConfigService = mock<KdfConfigService>();
 
     tokenService.getTwoFactorToken.mockResolvedValue(null);
     appIdService.getAppId.mockResolvedValue(deviceId);
@@ -85,6 +88,7 @@ describe("AuthRequestLoginStrategy", () => {
       twoFactorService,
       deviceTrustCryptoService,
       billingAccountProfileStateService,
+      kdfConfigService,
     );
 
     tokenResponse = identityTokenResponseFactory();

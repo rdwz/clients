@@ -26,6 +26,7 @@ import { AccountService } from "@bitwarden/common/auth/abstractions/account.serv
 import { AvatarService as AvatarServiceAbstraction } from "@bitwarden/common/auth/abstractions/avatar.service";
 import { DeviceTrustCryptoServiceAbstraction } from "@bitwarden/common/auth/abstractions/device-trust-crypto.service.abstraction";
 import { DevicesApiServiceAbstraction } from "@bitwarden/common/auth/abstractions/devices-api.service.abstraction";
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { AccountServiceImplementation } from "@bitwarden/common/auth/services/account.service";
 import { AuthService } from "@bitwarden/common/auth/services/auth.service";
 import { AvatarService } from "@bitwarden/common/auth/services/avatar.service";
@@ -222,6 +223,7 @@ export class Main {
   stateEventRunnerService: StateEventRunnerService;
   biometricStateService: BiometricStateService;
   billingAccountProfileStateService: BillingAccountProfileStateService;
+  kdfConfigService: KdfConfigService;
 
   constructor() {
     let p = null;
@@ -347,6 +349,7 @@ export class Main {
       this.stateService,
       this.accountService,
       this.stateProvider,
+      this.kdfConfigService,
     );
 
     this.appIdService = new AppIdService(this.globalStateProvider);
@@ -480,6 +483,7 @@ export class Main {
       this.authRequestService,
       this.globalStateProvider,
       this.billingAccountProfileStateService,
+      this.kdfConfigService,
     );
 
     this.authService = new AuthService(
@@ -541,6 +545,7 @@ export class Main {
       this.cryptoService,
       this.vaultTimeoutSettingsService,
       this.logService,
+      this.kdfConfigService,
     );
 
     this.userVerificationService = new UserVerificationService(
@@ -553,6 +558,7 @@ export class Main {
       this.logService,
       this.vaultTimeoutSettingsService,
       this.platformUtilsService,
+      this.kdfConfigService,
     );
 
     this.vaultTimeoutService = new VaultTimeoutService(
@@ -613,7 +619,7 @@ export class Main {
       this.cipherService,
       this.cryptoService,
       this.cryptoFunctionService,
-      this.stateService,
+      this.kdfConfigService,
     );
 
     this.organizationExportService = new OrganizationVaultExportService(
@@ -621,8 +627,8 @@ export class Main {
       this.apiService,
       this.cryptoService,
       this.cryptoFunctionService,
-      this.stateService,
       this.collectionService,
+      this.kdfConfigService,
     );
 
     this.exportService = new VaultExportService(

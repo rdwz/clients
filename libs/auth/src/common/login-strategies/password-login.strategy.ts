@@ -4,6 +4,7 @@ import { Jsonify } from "type-fest";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { MasterPasswordPolicyOptions } from "@bitwarden/common/admin-console/models/domain/master-password-policy-options";
+import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { TokenService } from "@bitwarden/common/auth/abstractions/token.service";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
 import { AuthResult } from "@bitwarden/common/auth/models/domain/auth-result";
@@ -88,6 +89,7 @@ export class PasswordLoginStrategy extends LoginStrategy {
     private policyService: PolicyService,
     private loginStrategyService: LoginStrategyServiceAbstraction,
     billingAccountProfileStateService: BillingAccountProfileStateService,
+    kdfConfigService: KdfConfigService,
   ) {
     super(
       cryptoService,
@@ -100,6 +102,7 @@ export class PasswordLoginStrategy extends LoginStrategy {
       stateService,
       twoFactorService,
       billingAccountProfileStateService,
+      kdfConfigService,
     );
 
     this.cache = new BehaviorSubject(data);
