@@ -128,4 +128,4 @@ export const CIPHERS_DISK = new StateDefinition("ciphers", "disk", { web: "memor
 export const CIPHERS_DISK_LOCAL = new StateDefinition("ciphersLocal", "disk", {
   web: "disk-local",
 });
-export const CIPHERS_MEMORY = new StateDefinition("ciphers", "memory");
+export const CIPHERS_MEMORY = new StateDefinition("ciphersMemory", "memory");

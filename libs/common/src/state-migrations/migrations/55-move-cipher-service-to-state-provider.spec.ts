@@ -1,9 +1,10 @@
-import { MockProxy } from "jest-mock-extended";
+import { MockProxy, any } from "jest-mock-extended";
 
 import { MigrationHelper } from "../migration-helper";
 import { mockMigrationHelper } from "../migration-helper.spec";
 
 import {
+  CIPHERS_DISK,
   CIPHERS_DISK_LOCAL,
   CipherServiceMigrator,
 } from "./55-move-cipher-service-to-state-provider";
@@ -13,42 +14,30 @@ function exampleJSON() {
     global: {
       otherStuff: "otherStuff1",
     },
-    authenticatedAccounts: ["user-1", "user-2"],
-    "user-1": {
-      data: {
-        localData: [
-          {
-            "6865ba55-7966-4d63-b743-b12000d49631": {
-              lastUsedDate: 1708950970632,
-            },
-          },
-          {
-            "f895f099-6739-4cca-9d61-b12200d04bfa": {
-              lastUsedDate: 1709031916943,
-            },
-          },
-        ],
-        ciphers: [
-          {
-            id: "cipher-id-10",
-          },
-          { id: "cipher-id-11" },
-        ],
-      },
-    },
-    "user-2": {
+    authenticatedAccounts: ["user1", "user2"],
+    user1: {
       data: {
         localData: {
-          "fce9e7bf-bb3d-4650-897f-b12300f43541": {
+          "6865ba55-7966-4d63-b743-b12000d49631": {
             lastUsedDate: 1708950970632,
           },
-          "ffb90bc2-a4ff-4571-b954-b12300f4207e": {
+          "f895f099-6739-4cca-9d61-b12200d04bfa": {
             lastUsedDate: 1709031916943,
           },
         },
         ciphers: {
-          id: "cipher-id-20",
+          "cipher-id-10": {
+            id: "cipher-id-10",
+          },
+          "cipher-id-11": {
+            id: "cipher-id-11",
+          },
         },
+      },
+    },
+    user2: {
+      data: {
+        otherStuff: "otherStuff5",
       },
     },
   };
@@ -56,42 +45,38 @@ function exampleJSON() {
 
 function rollbackJSON() {
   return {
-    authenticatedAccounts: ["user-1", "user-2"],
-    "user-1": {
-      data: {
-        localData: [
-          {
-            "6865ba55-7966-4d63-b743-b12000d49631": {
-              lastUsedDate: 1708950970632,
-            },
-          },
-          {
-            "f895f099-6739-4cca-9d61-b12200d04bfa": {
-              lastUsedDate: 1709031916943,
-            },
-          },
-        ],
-        ciphers: [
-          {
-            id: "cipher-id-10",
-          },
-          { id: "cipher-id-11" },
-        ],
+    user_user1_ciphersLocal_localData: {
+      "6865ba55-7966-4d63-b743-b12000d49631": {
+        lastUsedDate: 1708950970632,
+      },
+      "f895f099-6739-4cca-9d61-b12200d04bfa": {
+        lastUsedDate: 1709031916943,
       },
     },
-    "user-2": {
+    user_user1_ciphers_ciphers: {
+      "cipher-id-10": {
+        id: "cipher-id-10",
+      },
+      "cipher-id-11": {
+        id: "cipher-id-11",
+      },
+    },
+    global: {
+      otherStuff: "otherStuff1",
+    },
+    authenticatedAccounts: ["user1", "user2"],
+    user1: {
+      data: {},
+    },
+    user2: {
       data: {
         localData: {
-          "fce9e7bf-bb3d-4650-897f-b12300f43541": {
-            lastUsedDate: 1708950970632,
-          },
-          "ffb90bc2-a4ff-4571-b954-b12300f4207e": {
-            lastUsedDate: 1709031916943,
-          },
+          otherStuff: "otherStuff3",
         },
         ciphers: {
-          id: "cipher-id-20",
+          otherStuff: "otherStuff4",
         },
+        otherStuff: "otherStuff5",
       },
     },
   };
@@ -109,30 +94,33 @@ describe("CipherServiceMigrator", () => {
 
     it("should remove local data and ciphers from all accounts", async () => {
       await sut.migrate(helper);
-      expect(helper.set).toHaveBeenCalledWith({
-        "user-1": {
-          data: {
-            localData: [
-              {
-                "6865ba55-7966-4d63-b743-b12000d49631": {
-                  lastUsedDate: 1708950970632,
-                },
-              },
-              {
-                "f895f099-6739-4cca-9d61-b12200d04bfa": {
-                  lastUsedDate: 1709031916943,
-                },
-              },
-            ],
-            ciphers: [
-              {
-                id: "cipher-id-10",
-              },
-              { id: "cipher-id-11" },
-            ],
-          },
+      expect(helper.set).toHaveBeenCalledWith("user1", {
+        data: {},
+      });
+    });
+
+    it("should migrate localData and ciphers to state provider for accounts that have the data", async () => {
+      await sut.migrate(helper);
+
+      expect(helper.setToUser).toHaveBeenCalledWith("user1", CIPHERS_DISK_LOCAL, {
+        "6865ba55-7966-4d63-b743-b12000d49631": {
+          lastUsedDate: 1708950970632,
+        },
+        "f895f099-6739-4cca-9d61-b12200d04bfa": {
+          lastUsedDate: 1709031916943,
         },
       });
+      expect(helper.setToUser).toHaveBeenCalledWith("user1", CIPHERS_DISK, {
+        "cipher-id-10": {
+          id: "cipher-id-10",
+        },
+        "cipher-id-11": {
+          id: "cipher-id-11",
+        },
+      });
+
+      expect(helper.setToUser).not.toHaveBeenCalledWith("user2", CIPHERS_DISK_LOCAL, any());
+      expect(helper.setToUser).not.toHaveBeenCalledWith("user2", CIPHERS_DISK, any());
     });
   });
 
@@ -142,9 +130,41 @@ describe("CipherServiceMigrator", () => {
       sut = new CipherServiceMigrator(54, 55);
     });
 
-    it.each(["user-1", "user-2"])("should null out new values", async (userId) => {
+    it.each(["user1", "user2"])("should null out new values", async (userId) => {
       await sut.rollback(helper);
       expect(helper.setToUser).toHaveBeenCalledWith(userId, CIPHERS_DISK_LOCAL, null);
+      expect(helper.setToUser).toHaveBeenCalledWith(userId, CIPHERS_DISK, null);
+    });
+
+    it("should add back localData and ciphers to all accounts", async () => {
+      await sut.rollback(helper);
+
+      expect(helper.set).toHaveBeenCalledWith("user1", {
+        data: {
+          localData: {
+            "6865ba55-7966-4d63-b743-b12000d49631": {
+              lastUsedDate: 1708950970632,
+            },
+            "f895f099-6739-4cca-9d61-b12200d04bfa": {
+              lastUsedDate: 1709031916943,
+            },
+          },
+          ciphers: {
+            "cipher-id-10": {
+              id: "cipher-id-10",
+            },
+            "cipher-id-11": {
+              id: "cipher-id-11",
+            },
+          },
+        },
+      });
+    });
+
+    it("should not add data back if data wasn't migrated or acct doesn't exist", async () => {
+      await sut.rollback(helper);
+
+      expect(helper.set).not.toHaveBeenCalledWith("user2", any());
     });
   });
 });
