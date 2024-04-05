@@ -11,7 +11,7 @@ export enum FeatureFlag {
   AC1795_UpdatedSubscriptionStatusSection = "AC-1795_updated-subscription-status-section",
 }
 
-type DefaultValue = boolean | number | string;
+export type AllowedFeatureFlagTypes = boolean | number | string;
 
 /**
  * Default value for feature flags.
@@ -20,7 +20,7 @@ type DefaultValue = boolean | number | string;
  */
 export const DefaultFeatureFlagValue = {
   [FeatureFlag.BrowserFilelessImport]: false as boolean,
-  [FeatureFlag.ItemShare]: false as boolean,
+  [FeatureFlag.ItemShare]: "no",
   [FeatureFlag.FlexibleCollectionsV1]: false as boolean,
   [FeatureFlag.VaultOnboarding]: false as boolean,
   [FeatureFlag.GeneratorToolsModernization]: false as boolean,
@@ -29,7 +29,7 @@ export const DefaultFeatureFlagValue = {
   [FeatureFlag.ShowPaymentMethodWarningBanners]: false as boolean,
   [FeatureFlag.EnableConsolidatedBilling]: false as boolean,
   [FeatureFlag.AC1795_UpdatedSubscriptionStatusSection]: false as boolean,
-} satisfies Record<FeatureFlag, DefaultValue>;
+} satisfies Record<FeatureFlag, AllowedFeatureFlagTypes>;
 
 export type DefaultFeatureFlagValueType = typeof DefaultFeatureFlagValue;
 
