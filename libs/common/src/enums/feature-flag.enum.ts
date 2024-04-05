@@ -11,31 +11,26 @@ export enum FeatureFlag {
   AC1795_UpdatedSubscriptionStatusSection = "AC-1795_updated-subscription-status-section",
 }
 
-// Map of feature flags to their value type. `string`, `number` and `boolean` are the only supported types.
-export const FeatureFlagRuntimeTypes = {
-  [FeatureFlag.BrowserFilelessImport]: "boolean",
-  [FeatureFlag.ItemShare]: "boolean",
-  [FeatureFlag.FlexibleCollectionsV1]: "boolean",
-  [FeatureFlag.VaultOnboarding]: "boolean",
-  [FeatureFlag.GeneratorToolsModernization]: "boolean",
-  [FeatureFlag.KeyRotationImprovements]: "boolean",
-  [FeatureFlag.FlexibleCollectionsMigration]: "boolean",
-  [FeatureFlag.ShowPaymentMethodWarningBanners]: "boolean",
-  [FeatureFlag.EnableConsolidatedBilling]: "boolean",
-  [FeatureFlag.AC1795_UpdatedSubscriptionStatusSection]: "boolean",
-} as const;
+type DefaultValue = boolean | number | string;
 
-// Helpers for mapping between runtime and static types
-type RuntimeType = "boolean" | "string" | "number";
-type RuntimeToStatic<T extends RuntimeType> = T extends "boolean"
-  ? boolean
-  : T extends "string"
-    ? string
-    : T extends "number"
-      ? number
-      : never;
+/**
+ * Default value for feature flags.
+ *
+ * Flags MUST be short lived and SHALL be removed once enabled.
+ */
+export const DefaultFeatureFlagValue = {
+  [FeatureFlag.BrowserFilelessImport]: false as boolean,
+  [FeatureFlag.ItemShare]: "no" as string,
+  [FeatureFlag.FlexibleCollectionsV1]: false as boolean,
+  [FeatureFlag.VaultOnboarding]: false as boolean,
+  [FeatureFlag.GeneratorToolsModernization]: false as boolean,
+  [FeatureFlag.KeyRotationImprovements]: false as boolean,
+  [FeatureFlag.FlexibleCollectionsMigration]: false as boolean,
+  [FeatureFlag.ShowPaymentMethodWarningBanners]: false as boolean,
+  [FeatureFlag.EnableConsolidatedBilling]: false as boolean,
+  [FeatureFlag.AC1795_UpdatedSubscriptionStatusSection]: false as boolean,
+} satisfies Record<FeatureFlag, DefaultValue>;
 
-// Typescript type of the feature flag values
-export type FeatureFlagType<Flag extends FeatureFlag> = RuntimeToStatic<
-  (typeof FeatureFlagRuntimeTypes)[Flag]
->;
+export type DefaultFeatureFlagValueType = typeof DefaultFeatureFlagValue;
+
+export type FeatureFlagType<Flag extends FeatureFlag> = DefaultFeatureFlagValueType[Flag];

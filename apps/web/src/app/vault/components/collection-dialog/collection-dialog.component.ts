@@ -72,7 +72,7 @@ export enum CollectionDialogAction {
 })
 export class CollectionDialogComponent implements OnInit, OnDestroy {
   protected flexibleCollectionsV1Enabled$ = this.configService
-    .getFeatureFlag$(FeatureFlag.FlexibleCollectionsV1, false)
+    .getFeatureFlag$(FeatureFlag.FlexibleCollectionsV1)
     .pipe(first());
 
   private destroy$ = new Subject<void>();

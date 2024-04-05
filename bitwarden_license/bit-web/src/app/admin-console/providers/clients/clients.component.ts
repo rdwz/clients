@@ -54,7 +54,6 @@ export class ClientsComponent implements OnInit {
 
   protected enableConsolidatedBilling$ = this.configService.getFeatureFlag$(
     FeatureFlag.EnableConsolidatedBilling,
-    false,
   );
 
   constructor(

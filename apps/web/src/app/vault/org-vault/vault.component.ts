@@ -192,7 +192,6 @@ export class VaultComponent implements OnInit, OnDestroy {
 
     this._flexibleCollectionsV1FlagEnabled = await this.configService.getFeatureFlag(
       FeatureFlag.FlexibleCollectionsV1,
-      false,
     );
 
     const filter$ = this.routedVaultFilterService.filter$;

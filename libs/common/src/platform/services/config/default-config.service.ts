@@ -13,7 +13,11 @@ import {
 } from "rxjs";
 import { SemVer } from "semver";
 
-import { FeatureFlag, FeatureFlagType } from "../../../enums/feature-flag.enum";
+import {
+  DefaultFeatureFlagValue,
+  FeatureFlag,
+  FeatureFlagType,
+} from "../../../enums/feature-flag.enum";
 import { UserId } from "../../../types/guid";
 import { ConfigApiServiceAbstraction } from "../../abstractions/config/config-api.service.abstraction";
 import { ConfigService } from "../../abstractions/config/config.service";
@@ -91,11 +95,11 @@ export class DefaultConfigService implements ConfigService {
     );
   }
 
-  getFeatureFlag$<Flag extends FeatureFlag>(key: Flag, defaultValue?: FeatureFlagType<Flag>) {
+  getFeatureFlag$<Flag extends FeatureFlag>(key: Flag) {
     return this.serverConfig$.pipe(
       map((serverConfig) => {
         if (serverConfig?.featureStates == null || serverConfig.featureStates[key] == null) {
-          return defaultValue;
+          return DefaultFeatureFlagValue[key];
         }
 
         return serverConfig.featureStates[key] as FeatureFlagType<Flag>;
@@ -103,8 +107,8 @@ export class DefaultConfigService implements ConfigService {
     );
   }
 
-  async getFeatureFlag<Flag extends FeatureFlag>(key: Flag, defaultValue?: FeatureFlagType<Flag>) {
-    return await firstValueFrom(this.getFeatureFlag$(key, defaultValue));
+  async getFeatureFlag<Flag extends FeatureFlag>(key: Flag) {
+    return await firstValueFrom(this.getFeatureFlag$(key));
   }
 
   checkServerMeetsVersionRequirement$(minimumRequiredServerVersion: SemVer) {
