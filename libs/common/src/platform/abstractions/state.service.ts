@@ -206,14 +206,6 @@ export abstract class StateService<T extends Account = Account> {
   ) => Promise<void>;
   getGeneratorOptions: (options?: StorageOptions) => Promise<GeneratorOptions>;
   setGeneratorOptions: (value: GeneratorOptions, options?: StorageOptions) => Promise<void>;
-  /**
-   * Gets the user's Pin, encrypted by the user key
-   */
-  getProtectedPin: (options?: StorageOptions) => Promise<string>;
-  /**
-   * Sets the user's Pin, encrypted by the user key
-   */
-  setProtectedPin: (value: string, options?: StorageOptions) => Promise<void>;
   getSecurityStamp: (options?: StorageOptions) => Promise<string>;
   setSecurityStamp: (value: string, options?: StorageOptions) => Promise<void>;
   getUserId: (options?: StorageOptions) => Promise<string>;

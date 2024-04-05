@@ -174,7 +174,6 @@ export class AccountSettings {
   passwordGenerationOptions?: PasswordGeneratorOptions;
   usernameGenerationOptions?: UsernameGeneratorOptions;
   generatorOptions?: GeneratorOptions;
-  protectedPin?: string;
   vaultTimeout?: number;
   vaultTimeoutAction?: string = "lock";
   approveLoginRequests?: boolean;

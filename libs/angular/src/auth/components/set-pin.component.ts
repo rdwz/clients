@@ -2,6 +2,7 @@ import { DialogRef } from "@angular/cdk/dialog";
 import { Directive, OnInit } from "@angular/core";
 import { FormBuilder, Validators } from "@angular/forms";
 
+import { PinServiceAbstraction } from "@bitwarden/auth/common";
 import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
@@ -17,6 +18,7 @@ export class SetPinComponent implements OnInit {
   });
 
   constructor(
+    private pinService: PinServiceAbstraction,
     private dialogRef: DialogRef,
     private cryptoService: CryptoService,
     private userVerificationService: UserVerificationService,
@@ -50,12 +52,12 @@ export class SetPinComponent implements OnInit {
     const pinProtectedKey = await this.cryptoService.encrypt(userKey.key, pinKey);
     const encPin = await this.cryptoService.encrypt(pin, userKey);
 
-    await this.stateService.setProtectedPin(encPin.encryptedString);
+    await this.pinService.setProtectedPin(encPin.encryptedString);
 
     if (masterPassOnRestart) {
-      await this.cryptoService.setPinKeyEncryptedUserKeyEphemeral(pinProtectedKey);
+      await this.pinService.setPinKeyEncryptedUserKeyEphemeral(pinProtectedKey);
     } else {
-      await this.cryptoService.setPinKeyEncryptedUserKey(pinProtectedKey);
+      await this.pinService.setPinKeyEncryptedUserKey(pinProtectedKey);
     }
 
     this.dialogRef.close(true);

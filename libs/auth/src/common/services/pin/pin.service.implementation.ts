@@ -19,23 +19,28 @@ import { UserKey } from "@bitwarden/common/types/key";
 
 import { PinServiceAbstraction } from "../../abstractions/pin.service.abstraction";
 
-export const PIN_KEY_ENCRYPTED_USER_KEY = new UserKeyDefinition<EncryptedString>(
+const PIN_KEY_ENCRYPTED_USER_KEY = new UserKeyDefinition<EncryptedString>(
   CRYPTO_DISK,
   "pinKeyEncryptedUserKey",
   {
-    deserializer: (obj) => obj,
+    deserializer: (value) => value,
     clearOn: [],
   },
 );
 
-export const PIN_KEY_ENCRYPTED_USER_KEY_EPHEMERAL = new UserKeyDefinition<EncryptedString>(
+const PIN_KEY_ENCRYPTED_USER_KEY_EPHEMERAL = new UserKeyDefinition<EncryptedString>(
   CRYPTO_MEMORY,
   "pinKeyEncryptedUserKeyEphemeral",
   {
-    deserializer: (obj) => obj,
+    deserializer: (value) => value,
     clearOn: ["logout"],
   },
 );
+
+const PROTECTED_PIN = new UserKeyDefinition<string>(CRYPTO_DISK, "protectedPin", {
+  deserializer: (value) => value,
+  clearOn: [], // TODO: verify
+});
 
 export class PinService implements PinServiceAbstraction {
   constructor(
@@ -74,6 +79,14 @@ export class PinService implements PinServiceAbstraction {
       value?.encryptedString,
       userId,
     );
+  }
+
+  async getProtectedPin(userId?: UserId): Promise<string> {
+    return await firstValueFrom(this.stateProvider.getUserState$(PROTECTED_PIN, userId));
+  }
+
+  async setProtectedPin(value: string, userId?: UserId): Promise<void> {
+    await this.stateProvider.setUserState(PROTECTED_PIN, value, userId);
   }
 
   async decryptUserKeyWithPin(pin: string): Promise<UserKey | null> {
@@ -155,7 +168,7 @@ export class PinService implements PinServiceAbstraction {
   }
 
   private async validatePin(userKey: UserKey, pin: string): Promise<boolean> {
-    const protectedPin = await this.stateService.getProtectedPin();
+    const protectedPin = await this.getProtectedPin();
     const decryptedPin = await this.cryptoService.decryptToUtf8(
       new EncString(protectedPin),
       userKey,

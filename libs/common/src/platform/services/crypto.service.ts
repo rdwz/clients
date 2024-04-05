@@ -629,7 +629,7 @@ export class CryptoService implements CryptoServiceAbstraction {
   async clearPinKeys(userId?: UserId): Promise<void> {
     await this.pinService.setPinKeyEncryptedUserKey(null, userId);
     await this.pinService.setPinKeyEncryptedUserKeyEphemeral(null, userId);
-    await this.stateService.setProtectedPin(null, { userId: userId });
+    await this.pinService.setProtectedPin(null, userId);
     await this.clearDeprecatedKeys(KeySuffixOptions.Pin, userId);
   }
 
@@ -880,7 +880,7 @@ export class CryptoService implements CryptoServiceAbstraction {
    */
   protected async storePinKey(key: UserKey, userId?: UserId) {
     const pin = await this.encryptService.decryptToUtf8(
-      new EncString(await this.stateService.getProtectedPin({ userId: userId })),
+      new EncString(await this.pinService.getProtectedPin(userId)),
       key,
     );
     const pinKey = await this.makePinKey(
@@ -907,7 +907,7 @@ export class CryptoService implements CryptoServiceAbstraction {
         break;
       }
       case KeySuffixOptions.Pin: {
-        const protectedPin = await this.stateService.getProtectedPin({ userId: userId });
+        const protectedPin = await this.pinService.getProtectedPin(userId);
         shouldStoreKey = !!protectedPin;
         break;
       }
@@ -1081,7 +1081,7 @@ export class CryptoService implements CryptoServiceAbstraction {
       // We previously only set the protected pin if MP on Restart was enabled
       // now we set it regardless
       const encPin = await this.encryptService.encrypt(pin, userKey);
-      await this.stateService.setProtectedPin(encPin.encryptedString);
+      await this.pinService.setProtectedPin(encPin.encryptedString);
     }
     // This also clears the old Biometrics key since the new Biometrics key will
     // be created when the user key is set.

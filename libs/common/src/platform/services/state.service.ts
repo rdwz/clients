@@ -1033,23 +1033,6 @@ export class StateService<
     );
   }
 
-  async getProtectedPin(options?: StorageOptions): Promise<string> {
-    return (
-      await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskOptions()))
-    )?.settings?.protectedPin;
-  }
-
-  async setProtectedPin(value: string, options?: StorageOptions): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-    account.settings.protectedPin = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-  }
-
   async getSecurityStamp(options?: StorageOptions): Promise<string> {
     return (
       await this.getAccount(this.reconcileOptions(options, await this.defaultInMemoryOptions()))

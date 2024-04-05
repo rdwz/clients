@@ -336,7 +336,7 @@ export class LockComponent implements OnInit, OnDestroy {
 
     this.pinStatus = await this.vaultTimeoutSettingsService.isPinLockSet();
 
-    let ephemeralPinSet = await this.cryptoService.getPinKeyEncryptedUserKeyEphemeral();
+    let ephemeralPinSet = await this.pinService.getPinKeyEncryptedUserKeyEphemeral();
     ephemeralPinSet ||= await this.stateService.getDecryptedPinProtected();
     this.pinEnabled =
       (this.pinStatus === "TRANSIENT" && !!ephemeralPinSet) || this.pinStatus === "PERSISTANT";

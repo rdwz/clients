@@ -1,6 +1,9 @@
 import { defer, firstValueFrom } from "rxjs";
 
-import { UserDecryptionOptionsServiceAbstraction } from "@bitwarden/auth/common";
+import {
+  PinServiceAbstraction,
+  UserDecryptionOptionsServiceAbstraction,
+} from "@bitwarden/auth/common";
 
 import { VaultTimeoutSettingsService as VaultTimeoutSettingsServiceAbstraction } from "../../abstractions/vault-timeout/vault-timeout-settings.service";
 import { PolicyService } from "../../admin-console/abstractions/policy/policy.service.abstraction";
@@ -21,6 +24,7 @@ export type PinLockType = "DISABLED" | "PERSISTANT" | "TRANSIENT";
 
 export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceAbstraction {
   constructor(
+    private pinService: PinServiceAbstraction,
     private userDecryptionOptionsService: UserDecryptionOptionsServiceAbstraction,
     private cryptoService: CryptoService,
     private tokenService: TokenService,
@@ -67,8 +71,8 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
   async isPinLockSet(userId?: string): Promise<PinLockType> {
     // we can't check the protected pin for both because old accounts only
     // used it for MP on Restart
-    const pinIsEnabled = !!(await this.stateService.getProtectedPin({ userId }));
-    const aUserKeyPinIsSet = !!(await this.cryptoService.getPinKeyEncryptedUserKey(userId));
+    const pinIsEnabled = !!(await this.pinService.getProtectedPin(userId as UserId));
+    const aUserKeyPinIsSet = !!(await this.pinService.getPinKeyEncryptedUserKey(userId));
     const anOldUserKeyPinIsSet = !!(await this.stateService.getEncryptedPinProtected({ userId }));
 
     if (aUserKeyPinIsSet || anOldUserKeyPinIsSet) {
