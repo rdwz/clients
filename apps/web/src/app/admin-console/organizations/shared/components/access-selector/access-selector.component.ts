@@ -212,6 +212,10 @@ export class AccessSelectorComponent implements ControlValueAccessor, OnInit, On
   /** Required for NG_VALUE_ACCESSOR */
   registerOnChange(fn: any): void {
     this.notifyOnChange = fn;
+
+    // This fixes a problem where disabled rows were still appearing in the emitted value until the form value was changed.
+    // Call this one time when it's first registered to pick up any changes that have already occurred.
+    this.notifyOnChange(this.selectionList.formArray.value);
   }
 
   /** Required for NG_VALUE_ACCESSOR */
