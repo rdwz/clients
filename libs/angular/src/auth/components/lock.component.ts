@@ -10,6 +10,7 @@ import { VaultTimeoutService } from "@bitwarden/common/abstractions/vault-timeou
 import { PolicyApiServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/policy/policy-api.service.abstraction";
 import { InternalPolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { MasterPasswordPolicyOptions } from "@bitwarden/common/admin-console/models/domain/master-password-policy-options";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { DeviceTrustCryptoServiceAbstraction } from "@bitwarden/common/auth/abstractions/device-trust-crypto.service.abstraction";
 import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
 import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
@@ -76,6 +77,7 @@ export class LockComponent implements OnInit, OnDestroy {
     protected userVerificationService: UserVerificationService,
     protected pinCryptoService: PinCryptoServiceAbstraction,
     protected biometricStateService: BiometricStateService,
+    protected accountService: AccountService,
     protected kdfConfigService: KdfConfigService,
   ) {}
 
@@ -121,7 +123,7 @@ export class LockComponent implements OnInit, OnDestroy {
       return;
     }
 
-    await this.biometricStateService.setPromptCancelled();
+    await this.biometricStateService.setUserPromptCancelled();
     const userKey = await this.cryptoService.getUserKeyFromStorage(KeySuffixOptions.Biometric);
 
     if (userKey) {
@@ -269,14 +271,15 @@ export class LockComponent implements OnInit, OnDestroy {
 
     // Now that we have a decrypted user key in memory, we can check if we
     // need to establish trust on the current device
-    await this.deviceTrustCryptoService.trustDeviceIfRequired();
+    const activeAccount = await firstValueFrom(this.accountService.activeAccount$);
+    await this.deviceTrustCryptoService.trustDeviceIfRequired(activeAccount.id);
 
     await this.doContinue(evaluatePasswordAfterUnlock);
   }
 
   private async doContinue(evaluatePasswordAfterUnlock: boolean) {
     await this.stateService.setEverBeenUnlocked(true);
-    await this.biometricStateService.resetPromptCancelled();
+    await this.biometricStateService.resetUserPromptCancelled();
     this.messagingService.send("unlocked");
 
     if (evaluatePasswordAfterUnlock) {
@@ -346,7 +349,7 @@ export class LockComponent implements OnInit, OnDestroy {
         !this.platformUtilsService.supportsSecureStorage());
     this.email = await this.stateService.getEmail();
 
-    this.webVaultHostname = await this.environmentService.getHost();
+    this.webVaultHostname = (await this.environmentService.getEnvironment()).getHostname();
   }
 
   /**
