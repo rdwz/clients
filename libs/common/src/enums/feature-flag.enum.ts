@@ -20,7 +20,7 @@ type DefaultValue = boolean | number | string;
  */
 export const DefaultFeatureFlagValue = {
   [FeatureFlag.BrowserFilelessImport]: false as boolean,
-  [FeatureFlag.ItemShare]: "no" as string,
+  [FeatureFlag.ItemShare]: false as boolean,
   [FeatureFlag.FlexibleCollectionsV1]: false as boolean,
   [FeatureFlag.VaultOnboarding]: false as boolean,
   [FeatureFlag.GeneratorToolsModernization]: false as boolean,
