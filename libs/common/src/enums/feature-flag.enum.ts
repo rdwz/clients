@@ -13,22 +13,25 @@ export enum FeatureFlag {
 
 export type AllowedFeatureFlagTypes = boolean | number | string;
 
+// Helper to ensure the value is treated as a boolean.
+const FALSE = false as boolean;
+
 /**
  * Default value for feature flags.
  *
  * Flags MUST be short lived and SHALL be removed once enabled.
  */
 export const DefaultFeatureFlagValue = {
-  [FeatureFlag.BrowserFilelessImport]: false as boolean,
-  [FeatureFlag.ItemShare]: "no",
-  [FeatureFlag.FlexibleCollectionsV1]: false as boolean,
-  [FeatureFlag.VaultOnboarding]: false as boolean,
-  [FeatureFlag.GeneratorToolsModernization]: false as boolean,
-  [FeatureFlag.KeyRotationImprovements]: false as boolean,
-  [FeatureFlag.FlexibleCollectionsMigration]: false as boolean,
-  [FeatureFlag.ShowPaymentMethodWarningBanners]: false as boolean,
-  [FeatureFlag.EnableConsolidatedBilling]: false as boolean,
-  [FeatureFlag.AC1795_UpdatedSubscriptionStatusSection]: false as boolean,
+  [FeatureFlag.BrowserFilelessImport]: FALSE,
+  [FeatureFlag.ItemShare]: FALSE,
+  [FeatureFlag.FlexibleCollectionsV1]: FALSE,
+  [FeatureFlag.VaultOnboarding]: FALSE,
+  [FeatureFlag.GeneratorToolsModernization]: FALSE,
+  [FeatureFlag.KeyRotationImprovements]: FALSE,
+  [FeatureFlag.FlexibleCollectionsMigration]: FALSE,
+  [FeatureFlag.ShowPaymentMethodWarningBanners]: FALSE,
+  [FeatureFlag.EnableConsolidatedBilling]: FALSE,
+  [FeatureFlag.AC1795_UpdatedSubscriptionStatusSection]: FALSE,
 } satisfies Record<FeatureFlag, AllowedFeatureFlagTypes>;
 
 export type DefaultFeatureFlagValueType = typeof DefaultFeatureFlagValue;
