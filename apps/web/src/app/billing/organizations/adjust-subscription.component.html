@@ -3,7 +3,7 @@
     <div class="tw-col-span-8">
       <bit-form-field>
         <bit-label>{{ "subscriptionSeats" | i18n }}</bit-label>
-        <input bitInput formControlName="newSeatCount" type="number" min="0" step="1" required />
+        <input bitInput formControlName="newSeatCount" type="number" min="0" step="1" />
         <bit-hint>
           <strong>{{ "total" | i18n }}:</strong> {{ additionalSeatCount || 0 }} &times;
           {{ seatPrice | currency: "$" }} = {{ adjustedSeatTotal | currency: "$" }} /
@@ -41,7 +41,6 @@
               : adjustSubscriptionForm.value.newSeatCount
           "
           step="1"
-          [required]="adjustSubscriptionForm.value.limitSubscription"
         />
         <bit-hint>
           <strong>{{ "maxSeatCost" | i18n }}:</strong> {{ additionalMaxSeatCount || 0 }} &times;
