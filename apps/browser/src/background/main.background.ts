@@ -211,7 +211,7 @@ import BrowserLocalStorageService from "../platform/services/browser-local-stora
 import BrowserMemoryStorageService from "../platform/services/browser-memory-storage.service";
 import BrowserMessagingPrivateModeBackgroundService from "../platform/services/browser-messaging-private-mode-background.service";
 import BrowserMessagingService from "../platform/services/browser-messaging.service";
-import { BrowserStateService } from "../platform/services/browser-state.service";
+import { DefaultBrowserStateService } from "../platform/services/default-browser-state.service";
 import I18nService from "../platform/services/i18n.service";
 import { LocalBackedSessionStorageService } from "../platform/services/local-backed-session-storage.service";
 import { BackgroundPlatformUtilsService } from "../platform/services/platform-utils/background-platform-utils.service";
@@ -466,7 +466,7 @@ export default class MainBackground {
       new MigrationBuilderService(),
     );
 
-    this.stateService = new BrowserStateService(
+    this.stateService = new DefaultBrowserStateService(
       this.storageService,
       this.secureStorageService,
       this.memoryStorageService,
@@ -908,6 +908,7 @@ export default class MainBackground {
       this.environmentService,
       this.logService,
       themeStateService,
+      this.configService,
     );
     this.overlayBackground = new OverlayBackground(
       this.cipherService,
@@ -1139,12 +1140,10 @@ export default class MainBackground {
       this.cipherService.clear(userId),
       this.folderService.clear(userId),
       this.collectionService.clear(userId),
-      this.policyService.clear(userId),
       this.passwordGenerationService.clear(userId),
       this.vaultTimeoutSettingsService.clear(userId),
       this.vaultFilterService.clear(),
       this.biometricStateService.logout(userId),
-      this.providerService.save(null, userId),
       /* We intentionally do not clear:
        *  - autofillSettingsService
        *  - badgeSettingsService
