@@ -313,11 +313,6 @@ export class MemberDialogComponent implements OnDestroy {
 
     // Populate all available collections (including current user access where applicable)
     this.collectionAccessItems = collections
-      .filter(
-        (c) =>
-          c.canEdit(organization, flexibleCollectionsV1Enabled) || // the current user can assign access, or
-          c.users.find((access) => access.id == userDetails.id), // the user being edited is already assigned
-      )
       .map((c) =>
         mapCollectionToAccessItemView(
           c,
@@ -325,6 +320,10 @@ export class MemberDialogComponent implements OnDestroy {
           flexibleCollectionsV1Enabled,
           c.users.find((access) => access.id === userDetails.id),
         ),
+      )
+      // But remove collections that we can't assign access to, unless the user is already assigned
+      .filter(
+        (item) => !item.readonly || userDetails.collections.some((access) => access.id == item.id),
       );
 
     // Populate additional collection access via groups (rendered as separate rows from user access)
@@ -342,12 +341,7 @@ export class MemberDialogComponent implements OnDestroy {
 
     // Set current collections and groups the user has access to (excluding collections the current user doesn't have
     // permissions to change - they are included as readonly via the CollectionAccessItems
-    const accessSelections = mapToAccessSelections(
-      userDetails,
-      collections,
-      organization,
-      flexibleCollectionsV1Enabled,
-    );
+    const accessSelections = mapToAccessSelections(userDetails, this.collectionAccessItems);
     const groupAccessSelections = mapToGroupAccessSelections(userDetails.groups);
 
     this.formGroup.removeControl("emails");
@@ -647,25 +641,22 @@ function mapGroupToAccessItemView(group: GroupView): AccessItemView {
 
 function mapToAccessSelections(
   user: OrganizationUserAdminView,
-  collections: CollectionAdminView[],
-  organization: Organization,
-  flexibleCollectionsV1Enabled: boolean,
+  items: AccessItemView[],
 ): AccessItemValue[] {
   if (user == undefined) {
     return [];
   }
 
-  return user.collections
-    .filter((selection) =>
-      collections
-        .find((c) => c.id == selection.id)
-        ?.canEdit(organization, flexibleCollectionsV1Enabled),
-    )
-    .map<AccessItemValue>((selection) => ({
-      id: selection.id,
-      type: AccessItemType.Collection,
-      permission: convertToPermission(selection),
-    }));
+  return (
+    user.collections
+      // The FormControl value only represents editable collection access - exclude readonly access selections
+      .filter((selection) => !items.find((item) => item.id == selection.id).readonly)
+      .map<AccessItemValue>((selection) => ({
+        id: selection.id,
+        type: AccessItemType.Collection,
+        permission: convertToPermission(selection),
+      }))
+  );
 }
 
 function mapToGroupAccessSelections(groups: string[]): AccessItemValue[] {
