@@ -177,8 +177,6 @@ export class AccountSettings {
   pinKeyEncryptedUserKey?: EncryptedString;
   pinKeyEncryptedUserKeyEphemeral?: EncryptedString;
   protectedPin?: string;
-  vaultTimeout?: number;
-  vaultTimeoutAction?: string = "lock";
   approveLoginRequests?: boolean;
 
   /** @deprecated July 2023, left for migration purposes*/
