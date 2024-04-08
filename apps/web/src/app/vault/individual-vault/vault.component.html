@@ -49,6 +49,7 @@
       [useEvents]="false"
       [showAdminActions]="false"
       (onEvent)="onVaultItemsEvent($event)"
+      [flexibleCollectionsV1Enabled]="flexibleCollectionsV1Enabled$ | async"
     >
     </app-vault-items>
     <div
