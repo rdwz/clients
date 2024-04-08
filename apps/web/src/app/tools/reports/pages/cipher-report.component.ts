@@ -5,13 +5,13 @@ import { ModalService } from "@bitwarden/angular/services/modal.service";
 import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
+import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { CipherRepromptType } from "@bitwarden/common/vault/enums/cipher-reprompt-type";
 import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { PasswordRepromptService } from "@bitwarden/vault";
 
 import { AddEditComponent } from "../../../vault/individual-vault/add-edit.component";
 import { AddEditComponent as OrgAddEditComponent } from "../../../vault/org-vault/add-edit.component";
-import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 
 @Directive()
 export class CipherReportComponent implements OnDestroy {
