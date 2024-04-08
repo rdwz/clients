@@ -28,7 +28,7 @@ import { ChangeAvatarComponent } from "../auth/settings/account/change-avatar.co
 import { ChangeEmailComponent } from "../auth/settings/account/change-email.component";
 import { DangerZoneComponent } from "../auth/settings/account/danger-zone.component";
 import { DeauthorizeSessionsComponent } from "../auth/settings/account/deauthorize-sessions.component";
-import { DeleteAccountComponent } from "../auth/settings/account/delete-account.component";
+import { DeleteAccountDialogComponent } from "../auth/settings/account/delete-account-dialog.component";
 import { ProfileComponent } from "../auth/settings/account/profile.component";
 import { EmergencyAccessAttachmentsComponent } from "../auth/settings/emergency-access/attachments/emergency-access-attachments.component";
 import { EmergencyAccessConfirmComponent } from "../auth/settings/emergency-access/confirm/emergency-access-confirm.component";
@@ -125,7 +125,7 @@ import { SharedModule } from "./shared.module";
     ChangeEmailComponent,
     CollectionsComponent,
     DeauthorizeSessionsComponent,
-    DeleteAccountComponent,
+    DeleteAccountDialogComponent,
     DomainRulesComponent,
     EmergencyAccessAddEditComponent,
     EmergencyAccessAttachmentsComponent,
@@ -199,7 +199,7 @@ import { SharedModule } from "./shared.module";
     ChangeEmailComponent,
     CollectionsComponent,
     DeauthorizeSessionsComponent,
-    DeleteAccountComponent,
+    DeleteAccountDialogComponent,
     DomainRulesComponent,
     DynamicAvatarComponent,
     EmergencyAccessAddEditComponent,

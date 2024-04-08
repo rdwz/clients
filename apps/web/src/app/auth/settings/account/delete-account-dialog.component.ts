@@ -9,10 +9,9 @@ import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/pl
 import { DialogService } from "@bitwarden/components";
 
 @Component({
-  selector: "app-delete-account",
-  templateUrl: "delete-account.component.html",
+  templateUrl: "delete-account-dialog.component.html",
 })
-export class DeleteAccountComponent {
+export class DeleteAccountDialogComponent {
   deleteForm = this.formBuilder.group({
     verification: undefined as Verification | undefined,
   });
@@ -36,7 +35,7 @@ export class DeleteAccountComponent {
     );
   };
 
-  static openDeleteAccountDialog(dialogService: DialogService) {
-    return dialogService.open(DeleteAccountComponent);
+  static open(dialogService: DialogService) {
+    return dialogService.open(DeleteAccountDialogComponent);
   }
 }
