@@ -30,7 +30,7 @@ export abstract class VaultTimeoutSettingsService {
    * calculated based on the current state, if a max vault timeout policy applies to the user,
    * and what the user's available unlock methods are.
    *
-   * A new action will be emitted if the current state changes or if the user's policy changes and the new policy affect the action.
+   * A new action will be emitted if the current state changes or if the user's policy changes and the new policy affects the action.
    * @param userId - the user id to get the vault timeout action for
    */
   getVaultTimeoutActionByUserId$: (userId: string) => Observable<VaultTimeoutAction>;
@@ -38,6 +38,8 @@ export abstract class VaultTimeoutSettingsService {
   /**
    * Get the vault timeout for the given user id. The returned value is calculated based on the current state
    * and if a max vault timeout policy applies to the user.
+   *
+   * A new timeout will be emitted if the current state changes or if the user's policy changes and the new policy affects the timeout.
    * @param userId The user id to get the vault timeout for
    */
   getVaultTimeoutByUserId$: (userId: string) => Observable<number>;
