@@ -977,6 +977,7 @@ export default class MainBackground {
       this.stateService,
       this.notificationsService,
       this.accountService,
+      this.vaultTimeoutSettingsService,
     );
     this.webRequestBackground = new WebRequestBackground(
       this.platformUtilsService,
@@ -1193,7 +1194,10 @@ export default class MainBackground {
   }
 
   private async needsStorageReseed(): Promise<boolean> {
-    const currentVaultTimeout = await this.stateService.getVaultTimeout();
+    const activeAccount = await firstValueFrom(this.accountService.activeAccount$);
+    const currentVaultTimeout = await firstValueFrom(
+      this.vaultTimeoutSettingsService.getVaultTimeoutByUserId$(activeAccount.id),
+    );
     return currentVaultTimeout == null ? false : true;
   }
 

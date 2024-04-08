@@ -1,6 +1,7 @@
 import { firstValueFrom } from "rxjs";
 
 import { NotificationsService } from "@bitwarden/common/abstractions/notifications.service";
+import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
 import { VaultTimeoutService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout.service";
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { VaultTimeoutAction } from "@bitwarden/common/enums/vault-timeout-action.enum";
@@ -19,6 +20,7 @@ export default class IdleBackground {
     private stateService: BrowserStateService,
     private notificationsService: NotificationsService,
     private accountService: AccountService,
+    private vaultTimeoutSettingsService: VaultTimeoutSettingsService,
   ) {
     this.idle = chrome.idle || (browser != null ? browser.idle : null);
   }
@@ -54,10 +56,14 @@ export default class IdleBackground {
             const allUsers = await firstValueFrom(this.accountService.accounts$);
             for (const userId in allUsers) {
               // If the screen is locked or the screensaver activates
-              const timeout = await this.stateService.getVaultTimeout({ userId: userId });
+              const timeout = await firstValueFrom(
+                this.vaultTimeoutSettingsService.getVaultTimeoutByUserId$(userId),
+              );
               if (timeout === -2) {
                 // On System Lock vault timeout option
-                const action = await this.stateService.getVaultTimeoutAction({ userId: userId });
+                const action = await firstValueFrom(
+                  this.vaultTimeoutSettingsService.getVaultTimeoutActionByUserId$(userId),
+                );
                 if (action === VaultTimeoutAction.LogOut) {
                   await this.vaultTimeoutService.logOut(userId);
                 } else {

@@ -734,8 +734,12 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   private async getVaultTimeoutOptions(userId: string): Promise<[number, string]> {
-    const timeout = await this.stateService.getVaultTimeout({ userId: userId });
-    const action = await this.stateService.getVaultTimeoutAction({ userId: userId });
+    const timeout = await firstValueFrom(
+      this.vaultTimeoutSettingsService.getVaultTimeoutByUserId$(userId),
+    );
+    const action = await firstValueFrom(
+      this.vaultTimeoutSettingsService.getVaultTimeoutActionByUserId$(userId),
+    );
     return [timeout, action];
   }
 
