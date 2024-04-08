@@ -133,7 +133,7 @@ export class AccessSelectorComponent implements ControlValueAccessor, OnInit, On
 
   set items(val: AccessItemView[]) {
     const selected = (this.selectionList.formArray.getRawValue() ?? []).concat(
-      val.filter((m) => isCollectionAccessViaGroup(m)),
+      val.filter((m) => m.readonly),
     );
     this.selectionList.populateItems(
       val.map((m) => {
@@ -212,10 +212,6 @@ export class AccessSelectorComponent implements ControlValueAccessor, OnInit, On
   /** Required for NG_VALUE_ACCESSOR */
   registerOnChange(fn: any): void {
     this.notifyOnChange = fn;
-
-    // This fixes a problem where disabled rows were still appearing in the emitted value until the form value was changed.
-    // Call this one time when it's first registered to pick up any changes that have already occurred.
-    this.notifyOnChange(this.selectionList.formArray.value);
   }
 
   /** Required for NG_VALUE_ACCESSOR */
@@ -249,9 +245,7 @@ export class AccessSelectorComponent implements ControlValueAccessor, OnInit, On
     this.selectionList.deselectAll();
 
     // We need to also select any collection access via a group - this is readonly but isn't included in the form value
-    this.selectionList.selectItems(
-      this.items.filter((m) => isCollectionAccessViaGroup(m)).map((m) => m.id),
-    );
+    this.selectionList.selectItems(this.items.filter((m) => m.readonly).map((m) => m.id));
 
     // If the new value is null, then we're done
     if (selectedItems == null) {
@@ -350,8 +344,4 @@ export class AccessSelectorComponent implements ControlValueAccessor, OnInit, On
       Number(b.readonly) - Number(a.readonly)
     );
   }
-}
-
-function isCollectionAccessViaGroup(item: AccessItemView) {
-  return item.type === AccessItemType.Collection && item.viaGroupName != null;
 }
