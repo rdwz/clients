@@ -65,6 +65,8 @@ describe("Fido2 page script with native WebAuthn support", () => {
     });
 
     it("creates and returns a WebAuthn credential when the navigator API is called to create credentials", async () => {
+      await navigator.credentials.create(mockCredentialCreationOptions);
+
       expect(WebauthnUtils.mapCredentialCreationOptions).toHaveBeenCalledWith(
         mockCredentialCreationOptions,
         true,

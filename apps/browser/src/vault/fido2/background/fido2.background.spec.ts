@@ -75,7 +75,7 @@ describe("Fido2Background", () => {
   });
 
   describe("injectFido2ContentScriptsInAllTabs", () => {
-    it("does not inject the FIDO2 content script when tabs that do not have a secure url protocol", async () => {
+    it("does not inject any FIDO2 content scripts when no tabs have a secure url protocol", async () => {
       const insecureTab = mock<chrome.tabs.Tab>({ id: 789, url: "http://example.com" });
       tabsQuerySpy.mockResolvedValueOnce([insecureTab]);
 
