@@ -7902,5 +7902,9 @@
   },
   "unassignedItemsBanner": {
     "message": "Notice: Unassigned organization items are no longer visible in your All Vaults view across devices and are now only accessible via the Admin Console. Assign these items to a collection from the Admin Console to make them visible."
+  },
+  "integrationsAndSdks": {
+    "message": "Integrations & SDKs",
+    "description": "The title for the section that deals with integrations and SDKs."
   }
 }
