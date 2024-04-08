@@ -244,7 +244,7 @@ export class AccessSelectorComponent implements ControlValueAccessor, OnInit, On
     // Always clear the internal selection list on a new value
     this.selectionList.deselectAll();
 
-    // We need to also select any collection access via a group - this is readonly but isn't included in the form value
+    // We need to also select any read only items to appear in the table
     this.selectionList.selectItems(this.items.filter((m) => m.readonly).map((m) => m.id));
 
     // If the new value is null, then we're done
@@ -326,14 +326,6 @@ export class AccessSelectorComponent implements ControlValueAccessor, OnInit, On
 
   protected canEditItemPermission(item: AccessItemView) {
     return this.permissionMode == PermissionMode.Edit && !item.readonly && !item.accessAllItems;
-  }
-
-  /**
-   * Deselected items that are capable of being edited/selected. Excludes readonly items that the user does not have
-   * permission to grant access to.
-   */
-  protected get editableDeselectedItems() {
-    return this.selectionList.deselectedItems.filter((i) => !i.readonly);
   }
 
   private _itemComparator(a: AccessItemView, b: AccessItemView) {
