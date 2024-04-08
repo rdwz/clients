@@ -27,6 +27,10 @@ import {
   FactoryOptions,
 } from "../../platform/background/service-factories/factory-options";
 import {
+  logServiceFactory,
+  LogServiceInitOptions,
+} from "../../platform/background/service-factories/log-service.factory";
+import {
   StateProviderInitOptions,
   stateProviderFactory,
 } from "../../platform/background/service-factories/state-provider.factory";
@@ -44,7 +48,8 @@ export type VaultTimeoutSettingsServiceInitOptions = VaultTimeoutSettingsService
   PolicyServiceInitOptions &
   StateServiceInitOptions &
   BiometricStateServiceInitOptions &
-  StateProviderInitOptions;
+  StateProviderInitOptions &
+  LogServiceInitOptions;
 
 export function vaultTimeoutSettingsServiceFactory(
   cache: { vaultTimeoutSettingsService?: AbstractVaultTimeoutSettingsService } & CachedServices,
@@ -63,6 +68,7 @@ export function vaultTimeoutSettingsServiceFactory(
         await stateServiceFactory(cache, opts),
         await biometricStateServiceFactory(cache, opts),
         await stateProviderFactory(cache, opts),
+        await logServiceFactory(cache, opts),
       ),
   );
 }

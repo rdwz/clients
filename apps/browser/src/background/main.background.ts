@@ -661,6 +661,7 @@ export default class MainBackground {
       this.stateService,
       this.biometricStateService,
       this.stateProvider,
+      this.logService,
     );
 
     this.pinCryptoService = new PinCryptoService(

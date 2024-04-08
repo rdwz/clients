@@ -1,5 +1,7 @@
 import {
+  EMPTY,
   Observable,
+  catchError,
   combineLatest,
   defer,
   distinctUntilChanged,
@@ -20,6 +22,7 @@ import { Policy } from "../../admin-console/models/domain/policy";
 import { TokenService } from "../../auth/abstractions/token.service";
 import { VaultTimeoutAction } from "../../enums/vault-timeout-action.enum";
 import { CryptoService } from "../../platform/abstractions/crypto.service";
+import { LogService } from "../../platform/abstractions/log.service";
 import { StateService } from "../../platform/abstractions/state.service";
 import { BiometricStateService } from "../../platform/biometrics/biometric-state.service";
 import { StateProvider } from "../../platform/state";
@@ -43,6 +46,7 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
     private stateService: StateService,
     private biometricStateService: BiometricStateService,
     private stateProvider: StateProvider,
+    private logService: LogService,
   ) {}
 
   async setVaultTimeoutOptions(
@@ -128,7 +132,11 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
               return this.stateProvider.setUserState(VAULT_TIMEOUT, vaultTimeout, userId);
             }
           }),
-          // TODO: add catchError - log errors and return EMPTY
+          catchError((error: unknown) => {
+            // Protect outer observable from canceling on error by catching and returning EMPTY
+            this.logService.error(`Error getting vault timeout: ${error}`);
+            return EMPTY;
+          }),
         );
       }),
       distinctUntilChanged(), // Avoid having the set side effect trigger a new emission of the same action
@@ -186,7 +194,11 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
               );
             }
           }),
-          // TODO: catchError - log errors and return EMPTY
+          catchError((error: unknown) => {
+            // Protect outer observable from canceling on error by catching and returning EMPTY
+            this.logService.error(`Error getting vault timeout: ${error}`);
+            return EMPTY;
+          }),
         );
       }),
       distinctUntilChanged(), // Avoid having the set side effect trigger a new emission of the same action
