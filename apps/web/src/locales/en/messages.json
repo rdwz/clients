@@ -7906,5 +7906,11 @@
   "integrationsAndSdks": {
     "message": "Integrations & SDKs",
     "description": "The title for the section that deals with integrations and SDKs."
+  },
+  "integrations":{
+    "message": "Integrations"
+  },
+  "integrationsDesc": {
+    "message": "Automatically sync secrets from Bitwarden Secrets Manager to a third-party service."
   }
 }
