@@ -11,13 +11,13 @@ describe("Fido2 Utils", () => {
       expect(b64String).toBe(b64HelloWorldString);
     });
 
-    it("should return an empty string for an empty ArrayBuffer", () => {
+    it("should return an empty string when given an empty ArrayBuffer", () => {
       const buffer = new Uint8Array([]).buffer;
       const b64String = Fido2Utils.fromBufferToB64(buffer);
       expect(b64String).toBe("");
     });
 
-    it("should return null for null input", () => {
+    it("should return null when given null input", () => {
       const b64String = Fido2Utils.fromBufferToB64(null);
       expect(b64String).toBeNull();
     });
@@ -32,7 +32,7 @@ describe("Fido2 Utils", () => {
       expect(resultArray).toEqual(expectedArray);
     });
 
-    it("should return null for null input", () => {
+    it("should return null when given null input", () => {
       const expectedArray = Fido2Utils.fromB64ToArray(null);
       expect(expectedArray).toBeNull();
     });
