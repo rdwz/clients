@@ -12,7 +12,6 @@ import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/pl
   selector: "app-verify-recover-delete-org",
   templateUrl: "verify-recover-delete-org.component.html",
 })
-// eslint-disable-next-line rxjs-angular/prefer-takeuntil
 export class VerifyRecoverDeleteOrgComponent implements OnInit {
   name: string;
   formPromise: Promise<any>;
