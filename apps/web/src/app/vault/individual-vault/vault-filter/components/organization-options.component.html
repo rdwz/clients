@@ -26,20 +26,18 @@
         *ngIf="allowEnrollmentChanges(organization) && !organization.resetPasswordEnrolled"
         bitMenuItem
         (click)="toggleResetPasswordEnrollment(organization)"
-        aria-labelledby="enrollAccountRecovery"
       >
         <i class="bwi bwi-fw bwi-key" aria-hidden="true"></i>
-        <span id="enrollAccountRecovery">{{ "enrollAccountRecovery" | i18n }}</span>
+        {{ "enrollAccountRecovery" | i18n }}
       </button>
       <button
         type="button"
         *ngIf="allowEnrollmentChanges(organization) && organization.resetPasswordEnrolled"
         bitMenuItem
         (click)="toggleResetPasswordEnrollment(organization)"
-        aria-labelledBy="withdrawAccountRecovery"
       >
         <i class="bwi bwi-fw bwi-undo" aria-hidden="true"></i>
-        <span id="withdrawAccountRecovery">{{ "withdrawAccountRecovery" | i18n }}</span>
+        {{ "withdrawAccountRecovery" | i18n }}
       </button>
       <ng-container *ngIf="showSsoOptions(organization)">
         <button
@@ -47,33 +45,20 @@
           *ngIf="organization.ssoBound; else linkSso"
           bitMenuItem
           (click)="unlinkSso(organization)"
-          aria-labelledby="unlinkSso"
         >
           <i class="bwi bwi-fw bwi-chain-broken" aria-hidden="true"></i>
-          <span id="unlinkSso">{{ "unlinkSso" | i18n }}</span>
+          {{ "unlinkSso" | i18n }}
         </button>
         <ng-template #linkSso>
-          <a
-            href="#"
-            bitMenuItem
-            app-link-sso
-            [organization]="organization"
-            aria-labelledby="linkSSO"
-          >
+          <a href="#" bitMenuItem app-link-sso [organization]="organization">
             <i class="bwi bwi-fw bwi-link" aria-hidden="true"></i>
-            <span id="linkSSO">{{ "linkSso" | i18n }}</span>
+            {{ "linkSso" | i18n }}
           </a>
         </ng-template>
       </ng-container>
-      <button
-        *ngIf="showLeaveOrgOption"
-        type="button"
-        bitMenuItem
-        (click)="leave(organization)"
-        aria-labelledby="leaveOrganization"
-      >
+      <button *ngIf="showLeaveOrgOption" type="button" bitMenuItem (click)="leave(organization)">
         <i class="bwi bwi-fw bwi-sign-out tw-text-danger" aria-hidden="true"></i>
-        <span id="leaveOrganization" class="tw-text-danger">{{ "leave" | i18n }}</span>
+        <span class="tw-text-danger">{{ "leave" | i18n }}</span>
       </button>
     </div>
   </bit-menu>
