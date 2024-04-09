@@ -6,6 +6,7 @@ import { CollectionView } from "@bitwarden/common/vault/models/view/collection.v
 
 import { GroupView } from "../../../admin-console/organizations/core";
 import { CollectionAdminView } from "../../core/views/collection-admin.view";
+import { Unassigned } from "../../individual-vault/vault-filter/shared/models/routed-vault-filter.model";
 
 import {
   convertToPermission,
@@ -52,7 +53,7 @@ export class VaultCollectionRowComponent {
   }
 
   get permissionText() {
-    if (!(this.collection as CollectionAdminView).assigned) {
+    if (this.collection.id != Unassigned && !(this.collection as CollectionAdminView).assigned) {
       return this.i18nService.t("noAccess");
     } else {
       const permissionList = getPermissionList(this.organization?.flexibleCollections);
@@ -60,6 +61,13 @@ export class VaultCollectionRowComponent {
         permissionList.find((p) => p.perm === convertToPermission(this.collection))?.labelId,
       );
     }
+  }
+
+  get permissionTooltip() {
+    if (this.collection.id == Unassigned) {
+      return this.i18nService.t("collectionAdminConsoleManaged");
+    }
+    return "";
   }
 
   protected edit() {

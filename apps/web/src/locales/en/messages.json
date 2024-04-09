@@ -7902,5 +7902,8 @@
   },
   "noAccess": {
     "message": "No access"
+  },
+  "collectionAdminConsoleManaged": {
+    "message": "This collection is only accessible from the admin console"
   }
 }
