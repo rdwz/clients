@@ -2,6 +2,7 @@ import { BehaviorSubject, map, Observable } from "rxjs";
 import { Jsonify } from "type-fest";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
+import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { MasterPasswordPolicyOptions } from "@bitwarden/common/admin-console/models/domain/master-password-policy-options";
 import { TokenService } from "@bitwarden/common/auth/abstractions/token.service";
@@ -84,6 +85,7 @@ export class PasswordLoginStrategy extends LoginStrategy {
     private policyService: PolicyService,
     private loginStrategyService: LoginStrategyServiceAbstraction,
     billingAccountProfileStateService: BillingAccountProfileStateService,
+    vaultTimeoutSettingsService: VaultTimeoutSettingsService,
   ) {
     super(
       cryptoService,
@@ -97,6 +99,7 @@ export class PasswordLoginStrategy extends LoginStrategy {
       twoFactorService,
       userDecryptionOptionsService,
       billingAccountProfileStateService,
+      vaultTimeoutSettingsService,
     );
 
     this.cache = new BehaviorSubject(data);

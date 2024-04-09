@@ -596,6 +596,17 @@ export default class MainBackground {
       this.stateProvider,
     );
 
+    this.vaultTimeoutSettingsService = new VaultTimeoutSettingsService(
+      this.userDecryptionOptionsService,
+      this.cryptoService,
+      this.tokenService,
+      this.policyService,
+      this.stateService,
+      this.biometricStateService,
+      this.stateProvider,
+      this.logService,
+    );
+
     this.loginStrategyService = new LoginStrategyService(
       this.cryptoService,
       this.apiService,
@@ -617,6 +628,7 @@ export default class MainBackground {
       this.userDecryptionOptionsService,
       this.globalStateProvider,
       this.billingAccountProfileStateService,
+      this.vaultTimeoutSettingsService,
     );
 
     this.ssoLoginService = new SsoLoginService(this.stateProvider);
@@ -652,17 +664,6 @@ export default class MainBackground {
       this.stateProvider,
     );
     this.folderApiService = new FolderApiService(this.folderService, this.apiService);
-
-    this.vaultTimeoutSettingsService = new VaultTimeoutSettingsService(
-      this.userDecryptionOptionsService,
-      this.cryptoService,
-      this.tokenService,
-      this.policyService,
-      this.stateService,
-      this.biometricStateService,
-      this.stateProvider,
-      this.logService,
-    );
 
     this.pinCryptoService = new PinCryptoService(
       this.stateService,

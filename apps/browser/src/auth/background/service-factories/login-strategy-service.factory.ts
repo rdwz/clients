@@ -5,6 +5,10 @@ import {
   PolicyServiceInitOptions,
 } from "../../../admin-console/background/service-factories/policy-service.factory";
 import {
+  vaultTimeoutSettingsServiceFactory,
+  VaultTimeoutSettingsServiceInitOptions,
+} from "../../../background/service-factories/vault-timeout-settings-service.factory";
+import {
   apiServiceFactory,
   ApiServiceInitOptions,
 } from "../../../platform/background/service-factories/api-service.factory";
@@ -99,7 +103,8 @@ export type LoginStrategyServiceInitOptions = LoginStrategyServiceFactoryOptions
   AuthRequestServiceInitOptions &
   UserDecryptionOptionsServiceInitOptions &
   GlobalStateProviderInitOptions &
-  BillingAccountProfileStateServiceInitOptions;
+  BillingAccountProfileStateServiceInitOptions &
+  VaultTimeoutSettingsServiceInitOptions;
 
 export function loginStrategyServiceFactory(
   cache: { loginStrategyService?: LoginStrategyServiceAbstraction } & CachedServices,
@@ -131,6 +136,7 @@ export function loginStrategyServiceFactory(
         await internalUserDecryptionOptionServiceFactory(cache, opts),
         await globalStateProviderFactory(cache, opts),
         await billingAccountProfileStateServiceFactory(cache, opts),
+        await vaultTimeoutSettingsServiceFactory(cache, opts),
       ),
   );
 }

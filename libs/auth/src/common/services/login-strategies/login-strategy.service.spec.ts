@@ -1,6 +1,7 @@
 import { MockProxy, mock } from "jest-mock-extended";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
+import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { DeviceTrustCryptoServiceAbstraction } from "@bitwarden/common/auth/abstractions/device-trust-crypto.service.abstraction";
 import { KeyConnectorService } from "@bitwarden/common/auth/abstractions/key-connector.service";
@@ -57,6 +58,7 @@ describe("LoginStrategyService", () => {
   let authRequestService: MockProxy<AuthRequestServiceAbstraction>;
   let userDecryptionOptionsService: MockProxy<InternalUserDecryptionOptionsServiceAbstraction>;
   let billingAccountProfileStateService: MockProxy<BillingAccountProfileStateService>;
+  let vaultTimeoutSettingsService: MockProxy<VaultTimeoutSettingsService>;
 
   let stateProvider: FakeGlobalStateProvider;
   let loginStrategyCacheExpirationState: FakeGlobalState<Date | null>;
@@ -82,6 +84,7 @@ describe("LoginStrategyService", () => {
     userDecryptionOptionsService = mock<UserDecryptionOptionsService>();
     billingAccountProfileStateService = mock<BillingAccountProfileStateService>();
     stateProvider = new FakeGlobalStateProvider();
+    vaultTimeoutSettingsService = mock<VaultTimeoutSettingsService>();
 
     sut = new LoginStrategyService(
       cryptoService,
@@ -104,6 +107,7 @@ describe("LoginStrategyService", () => {
       userDecryptionOptionsService,
       stateProvider,
       billingAccountProfileStateService,
+      vaultTimeoutSettingsService,
     );
 
     loginStrategyCacheExpirationState = stateProvider.getFake(CACHE_EXPIRATION_KEY);

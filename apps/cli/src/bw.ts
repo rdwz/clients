@@ -480,6 +480,19 @@ export class Main {
       this.stateProvider,
     );
 
+    this.biometricStateService = new DefaultBiometricStateService(this.stateProvider);
+
+    this.vaultTimeoutSettingsService = new VaultTimeoutSettingsService(
+      this.userDecryptionOptionsService,
+      this.cryptoService,
+      this.tokenService,
+      this.policyService,
+      this.stateService,
+      this.biometricStateService,
+      this.stateProvider,
+      this.logService,
+    );
+
     this.loginStrategyService = new LoginStrategyService(
       this.cryptoService,
       this.apiService,
@@ -501,6 +514,7 @@ export class Main {
       this.userDecryptionOptionsService,
       this.globalStateProvider,
       this.billingAccountProfileStateService,
+      this.vaultTimeoutSettingsService,
     );
 
     this.authService = new AuthService(
@@ -546,19 +560,6 @@ export class Main {
 
     const lockedCallback = async (userId?: string) =>
       await this.cryptoService.clearStoredUserKey(KeySuffixOptions.Auto);
-
-    this.biometricStateService = new DefaultBiometricStateService(this.stateProvider);
-
-    this.vaultTimeoutSettingsService = new VaultTimeoutSettingsService(
-      this.userDecryptionOptionsService,
-      this.cryptoService,
-      this.tokenService,
-      this.policyService,
-      this.stateService,
-      this.biometricStateService,
-      this.stateProvider,
-      this.logService,
-    );
 
     this.pinCryptoService = new PinCryptoService(
       this.stateService,

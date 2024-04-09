@@ -1,6 +1,7 @@
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, firstValueFrom } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
+import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
 import { TokenService } from "@bitwarden/common/auth/abstractions/token.service";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
 import { TwoFactorProviderType } from "@bitwarden/common/auth/enums/two-factor-provider-type";
@@ -71,6 +72,7 @@ export abstract class LoginStrategy {
     protected twoFactorService: TwoFactorService,
     protected userDecryptionOptionsService: InternalUserDecryptionOptionsServiceAbstraction,
     protected billingAccountProfileStateService: BillingAccountProfileStateService,
+    protected vaultTimeoutSettingsService: VaultTimeoutSettingsService,
   ) {}
 
   abstract exportCache(): CacheData;
@@ -164,8 +166,12 @@ export abstract class LoginStrategy {
     // If you don't persist existing admin auth requests on login, they will get deleted.
     const adminAuthRequest = await this.stateService.getAdminAuthRequest({ userId });
 
-    const vaultTimeoutAction = await this.stateService.getVaultTimeoutAction();
-    const vaultTimeout = await this.stateService.getVaultTimeout();
+    const vaultTimeoutAction = await firstValueFrom(
+      this.vaultTimeoutSettingsService.getVaultTimeoutActionByUserId$(userId),
+    );
+    const vaultTimeout = await firstValueFrom(
+      this.vaultTimeoutSettingsService.getVaultTimeoutByUserId$(userId),
+    );
 
     // set access token and refresh token before account initialization so authN status can be accurate
     // User id will be derived from the access token.
