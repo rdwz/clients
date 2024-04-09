@@ -161,7 +161,7 @@ const routes: Routes = [
         path: "verify-recover-delete-org",
         component: VerifyRecoverDeleteOrgComponent,
         canActivate: [UnauthGuard],
-        data: { titleId: "deleteAccount" },
+        data: { titleId: "deleteOrganization" },
       },
       {
         path: "send/:sendId/:key",

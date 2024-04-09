@@ -1,14 +1,14 @@
 <form #form (ngSubmit)="submit()" [appApiAction]="formPromise" class="container" ngNativeValidate>
   <div class="row justify-content-md-center mt-5">
     <div class="col-5">
-      <p class="lead text-center mb-4">{{ "deleteAccount" | i18n }}</p>
+      <p class="lead text-center mb-4">{{ "deleteOrganization" | i18n }}</p>
       <div class="card">
         <div class="card-body">
-          <app-callout type="warning">{{ "deleteAccountWarning" | i18n }}</app-callout>
+          <app-callout type="warning">{{ "deleteOrganizationWarning" | i18n }}</app-callout>
           <p class="text-center">
             <strong>{{ name }}</strong>
           </p>
-          <p>{{ "deleteRecoverConfirmDesc" | i18n }}</p>
+          <p>{{ "deleteRecoverOrgConfirmDesc" | i18n }}</p>
           <hr />
           <div class="d-flex">
             <button
@@ -16,7 +16,7 @@
               class="btn btn-danger btn-block btn-submit"
               [disabled]="form.loading"
             >
-              <span>{{ "deleteAccount" | i18n }}</span>
+              <span>{{ "deleteOrganization" | i18n }}</span>
               <i
                 class="bwi bwi-spinner bwi-spin"
                 title="{{ 'loading' | i18n }}"

@@ -50,8 +50,8 @@ export class VerifyRecoverDeleteOrgComponent implements OnInit {
       await this.formPromise;
       this.platformUtilsService.showToast(
         "success",
-        this.i18nService.t("accountDeleted"),
-        this.i18nService.t("accountDeletedDesc"),
+        this.i18nService.t("organizationDeleted"),
+        this.i18nService.t("organizationDeletedDesc"),
       );
       // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
