@@ -7899,5 +7899,8 @@
   },
   "machineAccountAccessUpdated": {
     "message": "Machine account access updated"
+  },
+  "restrictedGroupAccessDesc": {
+    "message": "You cannot add yourself to a group."
   }
 }
