@@ -19,6 +19,7 @@ import {
   AuthRequestServiceAbstraction,
   LoginStrategyServiceAbstraction,
 } from "@bitwarden/auth/common";
+import { EventCollectionService as EventCollectionServiceAbstraction } from "@bitwarden/common/abstractions/event/event-collection.service";
 import { NotificationsService } from "@bitwarden/common/abstractions/notifications.service";
 import { SearchService as SearchServiceAbstraction } from "@bitwarden/common/abstractions/search.service";
 import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
@@ -47,6 +48,7 @@ import {
   UserNotificationSettingsService,
   UserNotificationSettingsServiceAbstraction,
 } from "@bitwarden/common/autofill/services/user-notification-settings.service";
+import { BillingAccountProfileStateService } from "@bitwarden/common/billing/abstractions/account/billing-account-profile-state.service";
 import { CryptoFunctionService } from "@bitwarden/common/platform/abstractions/crypto-function.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { EncryptService } from "@bitwarden/common/platform/abstractions/encrypt.service";
@@ -85,7 +87,8 @@ import { DialogService } from "@bitwarden/components";
 import { VaultExportServiceAbstraction } from "@bitwarden/vault-export-core";
 
 import { UnauthGuardService } from "../../auth/popup/services";
-import { AutofillService } from "../../autofill/services/abstractions/autofill.service";
+import { AutofillService as AutofillServiceAbstraction } from "../../autofill/services/abstractions/autofill.service";
+import AutofillService from "../../autofill/services/autofill.service";
 import MainBackground from "../../background/main.background";
 import { Account } from "../../models/account";
 import { BrowserApi } from "../../platform/browser/browser-api";
@@ -96,11 +99,12 @@ import { BrowserEnvironmentService } from "../../platform/services/browser-envir
 import BrowserLocalStorageService from "../../platform/services/browser-local-storage.service";
 import BrowserMessagingPrivateModePopupService from "../../platform/services/browser-messaging-private-mode-popup.service";
 import BrowserMessagingService from "../../platform/services/browser-messaging.service";
-import { BrowserStateService } from "../../platform/services/browser-state.service";
+import { DefaultBrowserStateService } from "../../platform/services/default-browser-state.service";
 import I18nService from "../../platform/services/i18n.service";
 import { ForegroundPlatformUtilsService } from "../../platform/services/platform-utils/foreground-platform-utils.service";
 import { ForegroundDerivedStateProvider } from "../../platform/state/foreground-derived-state.provider";
 import { ForegroundMemoryStorageService } from "../../platform/storage/foreground-memory-storage.service";
+import { BrowserSendStateService } from "../../tools/popup/services/browser-send-state.service";
 import { FilePopoutUtilsService } from "../../tools/popup/services/file-popout-utils.service";
 import { VaultBrowserStateService } from "../../vault/services/vault-browser-state.service";
 import { VaultFilterService } from "../../vault/services/vault-filter.service";
@@ -313,9 +317,21 @@ const safeProviders: SafeProvider[] = [
     deps: [],
   }),
   safeProvider({
+    provide: AutofillServiceAbstraction,
+    useExisting: AutofillService,
+  }),
+  safeProvider({
     provide: AutofillService,
-    useFactory: getBgService<AutofillService>("autofillService"),
-    deps: [],
+    deps: [
+      CipherService,
+      AutofillSettingsServiceAbstraction,
+      TotpService,
+      EventCollectionServiceAbstraction,
+      LogService,
+      DomainSettingsService,
+      UserVerificationService,
+      BillingAccountProfileStateService,
+    ],
   }),
   safeProvider({
     provide: VaultExportServiceAbstraction,
@@ -397,7 +413,7 @@ const safeProviders: SafeProvider[] = [
       tokenService: TokenService,
       migrationRunner: MigrationRunner,
     ) => {
-      return new BrowserStateService(
+      return new DefaultBrowserStateService(
         storageService,
         secureStorageService,
         memoryStorageService,
@@ -470,6 +486,11 @@ const safeProviders: SafeProvider[] = [
   safeProvider({
     provide: UserNotificationSettingsServiceAbstraction,
     useClass: UserNotificationSettingsService,
+    deps: [StateProvider],
+  }),
+  safeProvider({
+    provide: BrowserSendStateService,
+    useClass: BrowserSendStateService,
     deps: [StateProvider],
   }),
 ];
