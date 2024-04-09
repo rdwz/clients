@@ -104,6 +104,6 @@ export class TwoFactorVerifyComponent {
   }
 
   static open(dialogService: DialogService, config: DialogConfig<TwoFactorVerifyDialogData>) {
-    return dialogService.open(TwoFactorVerifyComponent, config);
+    return dialogService.open<AuthResponse<any>>(TwoFactorVerifyComponent, config);
   }
 }
