@@ -4,6 +4,7 @@ import { FormBuilder, Validators } from "@angular/forms";
 import {
   catchError,
   combineLatest,
+  concatMap,
   from,
   map,
   Observable,
@@ -169,30 +170,32 @@ export class GroupAddEditComponent implements OnInit, OnDestroy {
     );
   }
 
-  // TODO: this is returning a new observable every time, we need it to be an actual obs and not a getter
-  private get groupDetails$() {
-    if (!this.editMode) {
-      return of(undefined);
-    }
+  private groupDetails$: Observable<GroupView | undefined> = of(this.editMode).pipe(
+    concatMap((editMode) => {
+      if (!editMode) {
+        return undefined;
+      }
 
-    return combineLatest([
-      this.groupService.get(this.organizationId, this.groupId),
-      this.apiService.getGroupUsers(this.organizationId, this.groupId),
-    ]).pipe(
-      map(([groupView, users]) => {
-        groupView.members = users;
-        return groupView;
-      }),
-      catchError((e: unknown) => {
-        if (e instanceof ErrorResponse) {
-          this.logService.error(e.message);
-        } else {
-          this.logService.error(e.toString());
-        }
-        return of(undefined);
-      }),
-    );
-  }
+      return combineLatest([
+        this.groupService.get(this.organizationId, this.groupId),
+        this.apiService.getGroupUsers(this.organizationId, this.groupId),
+      ]).pipe(
+        map(([groupView, users]) => {
+          groupView.members = users;
+          return groupView;
+        }),
+        catchError((e: unknown) => {
+          if (e instanceof ErrorResponse) {
+            this.logService.error(e.message);
+          } else {
+            this.logService.error(e.toString());
+          }
+          return of(undefined);
+        }),
+      );
+    }),
+    shareReplay({ refCount: false }),
+  );
 
   restrictGroupAccess$ = combineLatest([
     this.organizationService.get$(this.organizationId),
