@@ -1,5 +1,5 @@
 import { mock, MockProxy } from "jest-mock-extended";
-import { BehaviorSubject, firstValueFrom } from "rxjs";
+import { of } from "rxjs";
 
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import {
@@ -29,15 +29,6 @@ const contentScriptDetails = {
   ...sharedExecuteScriptOptions,
 };
 
-jest.mock("rxjs", () => {
-  const rxjs = jest.requireActual("rxjs");
-  const { firstValueFrom } = rxjs;
-  return {
-    ...rxjs,
-    firstValueFrom: jest.fn(firstValueFrom),
-  };
-});
-
 describe("Fido2Background", () => {
   const tabsQuerySpy: jest.SpyInstance = jest.spyOn(BrowserApi, "tabsQuery");
   const executeTabsSpy: jest.SpyInstance = jest.spyOn(BrowserApi, "executeScriptInTab");
@@ -46,7 +37,6 @@ describe("Fido2Background", () => {
   const focusWindowSpy: jest.SpyInstance = jest
     .spyOn(BrowserApi, "focusWindow")
     .mockResolvedValue();
-  let isPasskeySettingEnabledSpy: jest.SpyInstance;
   let abortManager!: MockProxy<AbortManager>;
   let abortController!: MockProxy<AbortController>;
   let tabMock!: MockProxy<chrome.tabs.Tab>;
@@ -67,13 +57,11 @@ describe("Fido2Background", () => {
     senderMock = mock<chrome.runtime.MessageSender>({ id: "1", tab: tabMock });
     logService = mock<LogService>();
     fido2ClientService = mock<Fido2ClientService>();
-    vaultSettingsService = mock<VaultSettingsService>({
-      enablePasskeys$: new BehaviorSubject(true),
-    });
+    vaultSettingsService = mock<VaultSettingsService>();
+    vaultSettingsService.enablePasskeys$ = of(true);
     fido2Background = new Fido2Background(logService, fido2ClientService, vaultSettingsService);
     fido2Background["abortManager"] = abortManager;
     fido2Background.init();
-    isPasskeySettingEnabledSpy = jest.spyOn(fido2Background as any, "isPasskeySettingEnabled");
     executeTabsSpy.mockImplementation();
     abortManager.runWithAbortController.mockImplementation((_requestId, runner) =>
       runner(abortController),
@@ -165,7 +153,7 @@ describe("Fido2Background", () => {
         mock<chrome.runtime.Port>(),
       ]);
       tabsQuerySpy.mockResolvedValue([tabMock]);
-      isPasskeySettingEnabledSpy.mockReturnValue(true);
+      vaultSettingsService.enablePasskeys$ = of(true);
     });
 
     it("does not destroy and re-inject the content scripts when triggering `handleEnablePasskeysUpdate` with an undefined currentEnablePasskeysSetting property", async () => {
@@ -207,7 +195,7 @@ describe("Fido2Background", () => {
       });
 
       it("unregisters any existing registered content scripts when the enablePasskeys setting is set to `false`", async () => {
-        isPasskeySettingEnabledSpy.mockReturnValue(false);
+        vaultSettingsService.enablePasskeys$ = of(false);
         isManifestVersionSpy.mockImplementation((manifestVersion) => manifestVersion === 2);
         fido2Background["registeredContentScripts"] = {
           unregister: jest.fn(),
@@ -216,7 +204,7 @@ describe("Fido2Background", () => {
         await fido2Background["handleEnablePasskeysUpdate"](true, false);
 
         expect(fido2Background["registeredContentScripts"].unregister).toHaveBeenCalled();
-        expect(BrowserApi.registerContentScriptsMv2).not.toHaveBeenCalled();
+        expect(BrowserApi.registerContentScriptsMv2).not.toHaveBeenCalledTimes(2);
       });
     });
 
@@ -243,7 +231,7 @@ describe("Fido2Background", () => {
       });
 
       it("unregisters the page-script.js and content-script.js content scripts when the enablePasskeys setting is set to `false`", async () => {
-        isPasskeySettingEnabledSpy.mockReturnValue(false);
+        vaultSettingsService.enablePasskeys$ = of(false);
         isManifestVersionSpy.mockImplementation((manifestVersion) => manifestVersion === 3);
 
         await fido2Background["handleEnablePasskeysUpdate"](true, false);
@@ -251,16 +239,8 @@ describe("Fido2Background", () => {
         expect(BrowserApi.unregisterContentScriptsMv3).toHaveBeenCalledWith({
           ids: [Fido2ContentScriptId.PageScript, Fido2ContentScriptId.ContentScript],
         });
-        expect(BrowserApi.registerContentScriptsMv3).not.toHaveBeenCalled();
+        expect(BrowserApi.registerContentScriptsMv3).not.toHaveBeenCalledTimes(2);
       });
-    });
-  });
-
-  describe("isPasskeySettingEnabled", () => {
-    it("returns the firstValueFrom the `enablePasskeys$` observable", () => {
-      void fido2Background["isPasskeySettingEnabled"]();
-
-      expect(firstValueFrom).toHaveBeenCalledWith(vaultSettingsService.enablePasskeys$);
     });
   });
 
