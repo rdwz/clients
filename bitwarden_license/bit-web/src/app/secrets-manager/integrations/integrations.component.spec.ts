@@ -8,7 +8,7 @@ import { I18nPipe } from "../../../../../../libs/components/src/shared/i18n.pipe
 
 import { IntegrationCardComponent } from "./integration-card/integration-card.component";
 import { IntegrationGridComponent } from "./integration-grid/integration-grid.component";
-import { IntegrationsAndSDKsComponent } from "./integrations-and-sdks.component";
+import { IntegrationsComponent } from "./integrations.component";
 
 @Component({
   selector: "app-header",
@@ -22,13 +22,13 @@ class MockHeaderComponent {}
 })
 class MockNewMenuComponent {}
 
-describe("IntegrationsAndSDKsComponent", () => {
-  let fixture: ComponentFixture<IntegrationsAndSDKsComponent>;
+describe("IntegrationsComponent", () => {
+  let fixture: ComponentFixture<IntegrationsComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [
-        IntegrationsAndSDKsComponent,
+        IntegrationsComponent,
         IntegrationGridComponent,
         IntegrationCardComponent,
         MockHeaderComponent,
@@ -42,7 +42,7 @@ describe("IntegrationsAndSDKsComponent", () => {
         },
       ],
     }).compileComponents();
-    fixture = TestBed.createComponent(IntegrationsAndSDKsComponent);
+    fixture = TestBed.createComponent(IntegrationsComponent);
     fixture.detectChanges();
   });
 

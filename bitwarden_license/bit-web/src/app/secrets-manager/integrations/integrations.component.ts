@@ -5,10 +5,10 @@ import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.servic
 import { Integration } from "./models/integration";
 
 @Component({
-  selector: "sm-integrations-and-sdks",
-  templateUrl: "./integrations-and-sdks.component.html",
+  selector: "sm-integrations",
+  templateUrl: "./integrations.component.html",
 })
-export class IntegrationsAndSDKsComponent {
+export class IntegrationsComponent {
   private integrationsAndSdks: Integration[] = [];
 
   constructor(i18nService: I18nService) {

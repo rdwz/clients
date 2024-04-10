@@ -1,12 +1,12 @@
 import { NgModule } from "@angular/core";
 import { RouterModule, Routes } from "@angular/router";
 
-import { IntegrationsAndSDKsComponent } from "./integrations-and-sdks.component";
+import { IntegrationsComponent } from "./integrations.component";
 
 const routes: Routes = [
   {
     path: "",
-    component: IntegrationsAndSDKsComponent,
+    component: IntegrationsComponent,
   },
 ];
 
