@@ -30,15 +30,12 @@ export const VAULT_TIMEOUT_ACTION: KeyDefinitionLike = {
 
 export class VaultTimeoutSettingsServiceStateProviderMigrator extends Migrator<55, 56> {
   async migrate(helper: MigrationHelper): Promise<void> {
-    // Move global data
     const globalData = await helper.get<ExpectedGlobalType>("global");
 
     const accounts = await helper.getAccounts<ExpectedAccountType>();
     async function migrateAccount(
       userId: string,
       account: ExpectedAccountType | undefined,
-      globalVaultTimeout: number | undefined,
-      globalVaultTimeoutAction: string | undefined,
     ): Promise<void> {
       let updatedAccount = false;
 
@@ -64,8 +61,9 @@ export class VaultTimeoutSettingsServiceStateProviderMigrator extends Migrator<5
         updatedAccount = true;
       }
 
-      // TODO: do we need to migrate global data? Only stateService.getVaultTimeoutAction even referenced global data.
-      // We could simply default to lock if the user has no vaultTimeoutAction set as that's what the account init did.
+      // Note: we are explicitly not worrying about mapping over the global fallback vault timeout / action
+      // into the new state provider framework.  It was originally a fallback but hasn't been used for years
+      // so this migration will clean up the global properties fully.
 
       if (updatedAccount) {
         // Save the migrated account only if it was updated
@@ -73,11 +71,7 @@ export class VaultTimeoutSettingsServiceStateProviderMigrator extends Migrator<5
       }
     }
 
-    await Promise.all([
-      ...accounts.map(({ userId, account }) =>
-        migrateAccount(userId, account, globalData?.vaultTimeout, globalData?.vaultTimeoutAction),
-      ),
-    ]);
+    await Promise.all([...accounts.map(({ userId, account }) => migrateAccount(userId, account))]);
 
     // Delete global data
     delete globalData?.vaultTimeout;
