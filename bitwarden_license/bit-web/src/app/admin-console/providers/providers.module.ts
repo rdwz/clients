@@ -27,19 +27,9 @@ import { WebProviderService } from "./services/web-provider.service";
 import { AccountComponent } from "./settings/account.component";
 import { SetupProviderComponent } from "./setup/setup-provider.component";
 import { SetupComponent } from "./setup/setup.component";
+import { DangerZoneComponent } from "../../../../../../apps/web/src/app/auth/settings/account/danger-zone.component";
 
 @NgModule({
-  imports: [
-    CommonModule,
-    FormsModule,
-    OssModule,
-    JslibModule,
-    ProvidersRoutingModule,
-    OrganizationPlansComponent,
-    SearchModule,
-    ProvidersLayoutComponent,
-    PaymentMethodWarningsModule,
-  ],
   declarations: [
     AcceptProviderComponent,
     AccountComponent,
@@ -57,5 +47,17 @@ import { SetupComponent } from "./setup/setup.component";
     ManageClientOrganizationSubscriptionComponent,
   ],
   providers: [WebProviderService, ProviderPermissionsGuard],
+  imports: [
+    CommonModule,
+    FormsModule,
+    OssModule,
+    JslibModule,
+    ProvidersRoutingModule,
+    OrganizationPlansComponent,
+    SearchModule,
+    ProvidersLayoutComponent,
+    PaymentMethodWarningsModule,
+    DangerZoneComponent,
+  ],
 })
 export class ProvidersModule {}

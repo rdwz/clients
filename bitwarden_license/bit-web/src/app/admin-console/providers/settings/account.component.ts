@@ -1,13 +1,16 @@
 import { Component } from "@angular/core";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 
+import { UserVerificationDialogComponent } from "@bitwarden/auth/angular";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { ProviderUpdateRequest } from "@bitwarden/common/admin-console/models/request/provider/provider-update.request";
 import { ProviderResponse } from "@bitwarden/common/admin-console/models/response/provider/provider.response";
+import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { SyncService } from "@bitwarden/common/vault/abstractions/sync/sync.service.abstraction";
+import { DialogService } from "@bitwarden/components";
 
 @Component({
   selector: "provider-account",
@@ -29,7 +32,10 @@ export class AccountComponent {
     private route: ActivatedRoute,
     private syncService: SyncService,
     private platformUtilsService: PlatformUtilsService,
+    userVerificationService: UserVerificationService,
     private logService: LogService,
+    private dialogService: DialogService,
+    private router: Router,
   ) {}
 
   async ngOnInit() {
@@ -61,5 +67,65 @@ export class AccountComponent {
     } catch (e) {
       this.logService.error(`Handled exception: ${e}`);
     }
+  }
+
+  async deleteProvider() {
+    const providerClients = await this.apiService.getProviderClients(this.providerId);
+    if (providerClients.data != null && providerClients.data.length > 0) {
+      await this.dialogService.openSimpleDialog({
+        title: { key: "deleteProviderName", placeholders: [this.provider.name] },
+        content: { key: "deleteProviderWarningDesc", placeholders: [this.provider.name] },
+        acceptButtonText: { key: "ok" },
+        type: "danger",
+      });
+
+      return false;
+    }
+
+    const userVerified = await this.verifyUser();
+    if (!userVerified) {
+      return;
+    }
+
+    try {
+      await this.apiService.deleteProvider(this.providerId);
+      this.platformUtilsService.showToast(
+        "success",
+        this.i18nService.t("providerDeleted"),
+        this.i18nService.t("providerDeletedDesc"),
+      );
+    } catch (e) {
+      this.logService.error(e);
+    }
+
+    this.router.navigate(["/"]);
+  }
+
+  private async verifyUser(): Promise<boolean> {
+    const confirmDescription = "deleteProviderConfirmation";
+    const result = await UserVerificationDialogComponent.open(this.dialogService, {
+      title: "deleteProvider",
+      bodyText: confirmDescription,
+      confirmButtonOptions: {
+        text: "deleteProvider",
+        type: "danger",
+      },
+    });
+
+    // Handle the result of the dialog based on user action and verification success
+    if (result.userAction === "cancel") {
+      // User cancelled the dialog
+      return false;
+    }
+
+    // User confirmed the dialog so check verification success
+    if (!result.verificationSuccess) {
+      if (result.noAvailableClientVerificationMethods) {
+        // No client-side verification methods are available
+        // Could send user to configure a verification method like PIN or biometrics
+      }
+      return false;
+    }
+    return true;
   }
 }

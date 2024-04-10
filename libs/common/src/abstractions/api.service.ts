@@ -381,6 +381,7 @@ export abstract class ApiService {
     organizationId: string,
     request: ProviderVerifyDeleteRecoverRequest,
   ) => Promise<any>;
+  deleteProvider: (id: string) => Promise<void>;
 
   getProviderUsers: (providerId: string) => Promise<ListResponse<ProviderUserUserDetailsResponse>>;
   getProviderUser: (providerId: string, id: string) => Promise<ProviderUserResponse>;

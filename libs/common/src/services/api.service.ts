@@ -1188,6 +1188,10 @@ export class ApiService implements ApiServiceAbstraction {
     );
   }
 
+  async deleteProvider(id: string): Promise<void> {
+    await this.send("DELETE", "/providers/" + id, null, true, false);
+  }
+
   // Provider User APIs
 
   async getProviderUsers(
