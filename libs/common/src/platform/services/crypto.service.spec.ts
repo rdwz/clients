@@ -5,6 +5,7 @@ import { FakeAccountService, mockAccountServiceWith } from "../../../spec/fake-a
 import { FakeActiveUserState, FakeSingleUserState } from "../../../spec/fake-state";
 import { FakeStateProvider } from "../../../spec/fake-state-provider";
 import { AuthenticationStatus } from "../../auth/enums/authentication-status";
+import { VAULT_TIMEOUT } from "../../services/vault-timeout/vault-timeout-settings.state";
 import { CsprngArray } from "../../types/csprng";
 import { UserId } from "../../types/guid";
 import { UserKey, MasterKey, PinKey } from "../../types/key";
@@ -236,7 +237,7 @@ describe("cryptoService", () => {
 
     describe("Auto Key refresh", () => {
       it("sets an Auto key if vault timeout is set to null", async () => {
-        stateService.getVaultTimeout.mockResolvedValue(null);
+        await stateProvider.setUserState(VAULT_TIMEOUT, null, mockUserId);
 
         await cryptoService.setUserKey(mockUserKey, mockUserId);
 
@@ -246,7 +247,7 @@ describe("cryptoService", () => {
       });
 
       it("clears the Auto key if vault timeout is set to anything other than null", async () => {
-        stateService.getVaultTimeout.mockResolvedValue(10);
+        await stateProvider.setUserState(VAULT_TIMEOUT, 10, mockUserId);
 
         await cryptoService.setUserKey(mockUserKey, mockUserId);
 

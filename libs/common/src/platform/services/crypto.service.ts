@@ -9,6 +9,7 @@ import { AccountService } from "../../auth/abstractions/account.service";
 import { AuthenticationStatus } from "../../auth/enums/authentication-status";
 import { KdfConfig } from "../../auth/models/domain/kdf-config";
 import { Utils } from "../../platform/misc/utils";
+import { VAULT_TIMEOUT } from "../../services/vault-timeout/vault-timeout-settings.state";
 import { CsprngArray } from "../../types/csprng";
 import { OrganizationId, ProviderId, UserId } from "../../types/guid";
 import {
@@ -900,7 +901,13 @@ export class CryptoService implements CryptoServiceAbstraction {
     let shouldStoreKey = false;
     switch (keySuffix) {
       case KeySuffixOptions.Auto: {
-        const vaultTimeout = await this.stateService.getVaultTimeout({ userId: userId });
+        // TODO: Sharing the UserKeyDefinition is temporary to get around a circ dep issue between
+        // the VaultTimeoutSettingsSvc and this service.
+        // This should be fixed as part of the PM-7082 - Auto Key Service work.
+        const vaultTimeout = await firstValueFrom(
+          this.stateProvider.getUserState$(VAULT_TIMEOUT, userId),
+        );
+
         shouldStoreKey = vaultTimeout == null;
         break;
       }
