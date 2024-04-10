@@ -32,10 +32,10 @@ describe("IntegrationCardComponent", () => {
 
   it("renders card body", () => {
     const name = fixture.nativeElement.querySelector("h3");
-    const link = fixture.nativeElement.querySelector("p");
+    const link = fixture.nativeElement.querySelector("a");
 
     expect(name.textContent).toBe("Integration Name");
-    expect(link.textContent).toBe("Get started with integration");
+    expect(link.textContent.trim()).toBe("Get started with integration");
   });
 
   it("assigns external rel attribute", () => {
