@@ -6,12 +6,14 @@ import {
   CachedServices,
   factory,
 } from "../../../platform/background/service-factories/factory-options";
-import { stateProviderFactory } from "../../../platform/background/service-factories/state-provider.factory";
-import { StateServiceInitOptions } from "../../../platform/background/service-factories/state-service.factory";
+import {
+  StateProviderInitOptions,
+  stateProviderFactory,
+} from "../../../platform/background/service-factories/state-provider.factory";
 
 type KdfConfigServiceFactoryOptions = FactoryOptions;
 
-export type KdfConfigServiceInitOptions = KdfConfigServiceFactoryOptions & StateServiceInitOptions;
+export type KdfConfigServiceInitOptions = KdfConfigServiceFactoryOptions & StateProviderInitOptions;
 
 export function kdfConfigServiceFactory(
   cache: { kdfConfigService?: AbstractKdfConfigService } & CachedServices,

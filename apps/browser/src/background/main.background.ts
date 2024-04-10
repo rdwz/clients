@@ -484,6 +484,9 @@ export default class MainBackground {
     const themeStateService = new DefaultThemeStateService(this.globalStateProvider);
 
     this.i18nService = new I18nService(BrowserApi.getUILanguage(), this.globalStateProvider);
+
+    this.kdfConfigService = new KdfConfigService(this.stateProvider);
+
     this.cryptoService = new BrowserCryptoService(
       this.keyGenerationService,
       this.cryptoFunctionService,
@@ -538,8 +541,6 @@ export default class MainBackground {
       logoutCallback,
       this.stateProvider,
     );
-
-    this.kdfConfigService = new KdfConfigService(this.stateProvider);
 
     this.passwordStrengthService = new PasswordStrengthService();
 
