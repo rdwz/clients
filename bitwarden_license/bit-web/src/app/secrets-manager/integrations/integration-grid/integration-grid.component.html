@@ -4,7 +4,7 @@
   <li *ngFor="let integration of integrations">
     <sm-integration-card
       [name]="integration.name"
-      [secondaryText]="integration.secondaryText"
+      [linkText]="integration.linkText"
       [linkURL]="integration.linkURL"
       [image]="integration.image"
       [externalURL]="integration.type === 'sdk'"

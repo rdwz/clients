@@ -3,6 +3,6 @@ export type Integration = {
   name: string;
   image: string;
   linkURL: string;
-  secondaryText: string;
+  linkText: string;
   type: "integration" | "sdk";
 };

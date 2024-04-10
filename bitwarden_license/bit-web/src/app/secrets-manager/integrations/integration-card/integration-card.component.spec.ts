@@ -18,7 +18,7 @@ describe("IntegrationCardComponent", () => {
 
     component.name = "Integration Name";
     component.image = "test-image.png";
-    component.secondaryText = "Get started with integration";
+    component.linkText = "Get started with integration";
     component.linkURL = "https://example.com/";
 
     fixture.detectChanges();

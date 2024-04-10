@@ -7,7 +7,7 @@ import { Component, Input } from "@angular/core";
 export class IntegrationCardComponent {
   @Input() name: string;
   @Input() image: string;
-  @Input() secondaryText: string;
+  @Input() linkText: string;
   @Input() linkURL: string;
 
   /** Adds relevant `rel` attribute to external links */
