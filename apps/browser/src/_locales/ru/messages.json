@@ -2386,12 +2386,6 @@
     "message": "Европа",
     "description": "European Union"
   },
-  "usDomain": {
-    "message": "bitwarden.com"
-  },
-  "euDomain": {
-    "message": "bitwarden.eu"
-  },
   "accessDenied": {
     "message": "Доступ запрещен. У вас нет разрешения на просмотр этой страницы."
   },
@@ -3005,5 +2999,11 @@
   "saveCipherAttemptFailed": {
     "message": "Ошибка сохранения учетных данных. Проверьте консоль для получения подробной информации.",
     "description": "Notification message for when saving credentials has failed."
+  },
+  "removePasskey": {
+    "message": "Удалить passkey"
+  },
+  "passkeyRemoved": {
+    "message": "Passkey удален"
   }
 }

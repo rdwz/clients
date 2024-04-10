@@ -6,8 +6,8 @@ import { OrganizationService } from "@bitwarden/common/admin-console/abstraction
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
 import { ProductType } from "@bitwarden/common/enums";
 import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
+import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
-import { ConfigService } from "@bitwarden/common/platform/services/config/config.service";
 import { TreeNode } from "@bitwarden/common/vault/models/domain/tree-node";
 import { DialogService, SimpleDialogOptions } from "@bitwarden/components";
 
@@ -64,7 +64,8 @@ export class VaultHeaderComponent implements OnInit {
   protected CollectionDialogTabType = CollectionDialogTabType;
   protected organizations$ = this.organizationService.organizations$;
 
-  private restrictProviderAccessFlag: boolean;
+  private flexibleCollectionsV1Enabled = false;
+  private restrictProviderAccessFlag = false;
 
   constructor(
     private organizationService: OrganizationService,
@@ -76,6 +77,9 @@ export class VaultHeaderComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
+    this.flexibleCollectionsV1Enabled = await firstValueFrom(
+      this.configService.getFeatureFlag$(FeatureFlag.FlexibleCollectionsV1),
+    );
     this.restrictProviderAccessFlag = await this.configService.getFeatureFlag(
       FeatureFlag.RestrictProviderAccess,
       false,
@@ -171,7 +175,7 @@ export class VaultHeaderComponent implements OnInit {
     }
 
     // Otherwise, check if we can edit the specified collection
-    return this.collection.node.canEdit(this.organization);
+    return this.collection.node.canEdit(this.organization, this.flexibleCollectionsV1Enabled);
   }
 
   addCipher() {

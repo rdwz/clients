@@ -2386,12 +2386,6 @@
     "message": "ES",
     "description": "European Union"
   },
-  "usDomain": {
-    "message": "bitwarden.com"
-  },
-  "euDomain": {
-    "message": "bitwarden.eu"
-  },
   "accessDenied": {
     "message": "Prieiga uždrausta. Neturi teisės peržiūrėti šį puslapį."
   },
@@ -3005,5 +2999,11 @@
   "saveCipherAttemptFailed": {
     "message": "Klaida išsaugant kredencialus. Išsamesnės informacijos patikrink konsolėje.",
     "description": "Notification message for when saving credentials has failed."
+  },
+  "removePasskey": {
+    "message": "Pašalinti slaptaraktį"
+  },
+  "passkeyRemoved": {
+    "message": "Pašalintas slaptaraktis"
   }
 }

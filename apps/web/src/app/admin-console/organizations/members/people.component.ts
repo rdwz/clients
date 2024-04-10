@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, ViewContainerRef } from "@angular/core";
+import { Component, ViewChild, ViewContainerRef } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import {
   combineLatest,
@@ -9,7 +9,6 @@ import {
   map,
   Observable,
   shareReplay,
-  Subject,
   switchMap,
   takeUntil,
 } from "rxjs";
@@ -21,6 +20,7 @@ import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { SearchService } from "@bitwarden/common/abstractions/search.service";
 import { OrganizationApiServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/organization/organization-api.service.abstraction";
 import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
+import { OrganizationManagementPreferencesService } from "@bitwarden/common/admin-console/abstractions/organization-management-preferences/organization-management-preferences.service";
 import { OrganizationUserService } from "@bitwarden/common/admin-console/abstractions/organization-user/organization-user.service";
 import { OrganizationUserConfirmRequest } from "@bitwarden/common/admin-console/abstractions/organization-user/requests";
 import {
@@ -35,6 +35,7 @@ import {
   PolicyType,
 } from "@bitwarden/common/admin-console/enums";
 import { Organization } from "@bitwarden/common/admin-console/models/domain/organization";
+import { Policy } from "@bitwarden/common/admin-console/models/domain/policy";
 import { OrganizationKeysRequest } from "@bitwarden/common/admin-console/models/request/organization-keys.request";
 import { ProductType } from "@bitwarden/common/enums";
 import { ListResponse } from "@bitwarden/common/models/response/list.response";
@@ -42,7 +43,6 @@ import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.se
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
-import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
 import { ValidationService } from "@bitwarden/common/platform/abstractions/validation.service";
 import { CollectionService } from "@bitwarden/common/vault/abstractions/collection.service";
 import { SyncService } from "@bitwarden/common/vault/abstractions/sync/sync.service.abstraction";
@@ -51,7 +51,6 @@ import { Collection } from "@bitwarden/common/vault/models/domain/collection";
 import { CollectionDetailsResponse } from "@bitwarden/common/vault/models/response/collection.response";
 import { DialogService, SimpleDialogOptions } from "@bitwarden/components";
 
-import { flagEnabled } from "../../../../utils/flags";
 import { openEntityEventsDialog } from "../../../admin-console/organizations/manage/entity-events.component";
 import { BasePeopleComponent } from "../../common/base.people.component";
 import { GroupService } from "../core";
@@ -73,10 +72,7 @@ import { ResetPasswordComponent } from "./components/reset-password.component";
   selector: "app-org-people",
   templateUrl: "people.component.html",
 })
-export class PeopleComponent
-  extends BasePeopleComponent<OrganizationUserView>
-  implements OnInit, OnDestroy
-{
+export class PeopleComponent extends BasePeopleComponent<OrganizationUserView> {
   @ViewChild("groupsTemplate", { read: ViewContainerRef, static: true })
   groupsModalRef: ViewContainerRef;
   @ViewChild("confirmTemplate", { read: ViewContainerRef, static: true })
@@ -99,7 +95,6 @@ export class PeopleComponent
   orgResetPasswordPolicyEnabled = false;
 
   protected canUseSecretsManager$: Observable<boolean>;
-  private destroy$ = new Subject<void>();
 
   constructor(
     apiService: ApiService,
@@ -116,7 +111,6 @@ export class PeopleComponent
     searchPipe: SearchPipe,
     userNamePipe: UserNamePipe,
     private syncService: SyncService,
-    stateService: StateService,
     private organizationService: OrganizationService,
     private organizationApiService: OrganizationApiServiceAbstraction,
     private organizationUserService: OrganizationUserService,
@@ -124,6 +118,7 @@ export class PeopleComponent
     private router: Router,
     private groupService: GroupService,
     private collectionService: CollectionService,
+    organizationManagementPreferencesService: OrganizationManagementPreferencesService,
   ) {
     super(
       apiService,
@@ -136,26 +131,24 @@ export class PeopleComponent
       logService,
       searchPipe,
       userNamePipe,
-      stateService,
       dialogService,
+      organizationManagementPreferencesService,
     );
   }
 
   async ngOnInit() {
     const organization$ = this.route.params.pipe(
-      map((params) => this.organizationService.get(params.organizationId)),
+      concatMap((params) => this.organizationService.get$(params.organizationId)),
       shareReplay({ refCount: true, bufferSize: 1 }),
     );
 
-    this.canUseSecretsManager$ = organization$.pipe(
-      map((org) => org.useSecretsManager && flagEnabled("secretsManager")),
-    );
+    this.canUseSecretsManager$ = organization$.pipe(map((org) => org.useSecretsManager));
 
     const policies$ = organization$.pipe(
       switchMap((organization) => {
         if (organization.isProviderUser) {
           return from(this.policyApiService.getPolicies(organization.id)).pipe(
-            map((response) => this.policyService.mapPoliciesFromToken(response)),
+            map((response) => Policy.fromListResponse(response)),
           );
         }
 
@@ -212,8 +205,7 @@ export class PeopleComponent
   }
 
   ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+    super.ngOnDestroy();
   }
 
   async load() {
@@ -570,7 +562,8 @@ export class PeopleComponent
   }
 
   async bulkEnableSM() {
-    const users = this.getCheckedUsers();
+    const users = this.getCheckedUsers().filter((ou) => !ou.accessSecretsManager);
+
     if (users.length === 0) {
       this.platformUtilsService.showToast(
         "error",
@@ -587,6 +580,7 @@ export class PeopleComponent
 
     await lastValueFrom(dialogRef.closed);
     this.selectAll(false);
+    await this.load();
   }
 
   async events(user: OrganizationUserView) {

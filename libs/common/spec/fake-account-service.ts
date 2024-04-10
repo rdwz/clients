@@ -32,12 +32,8 @@ export class FakeAccountService implements AccountService {
   get activeUserId() {
     return this._activeUserId;
   }
-  get accounts$() {
-    return this.accountsSubject.asObservable();
-  }
-  get activeAccount$() {
-    return this.activeAccountSubject.asObservable();
-  }
+  accounts$ = this.accountsSubject.asObservable();
+  activeAccount$ = this.activeAccountSubject.asObservable();
   accountLock$: Observable<UserId>;
   accountLogout$: Observable<UserId>;
 
@@ -70,6 +66,9 @@ export class FakeAccountService implements AccountService {
   }
 
   async switchAccount(userId: UserId): Promise<void> {
+    const next =
+      userId == null ? null : { id: userId, ...this.accountsSubject["_buffer"]?.[0]?.[userId] };
+    this.activeAccountSubject.next(next);
     await this.mock.switchAccount(userId);
   }
 }

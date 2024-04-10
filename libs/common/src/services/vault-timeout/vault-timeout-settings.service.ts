@@ -1,5 +1,7 @@
 import { defer, firstValueFrom } from "rxjs";
 
+import { UserDecryptionOptionsServiceAbstraction } from "@bitwarden/auth/common";
+
 import { VaultTimeoutSettingsService as VaultTimeoutSettingsServiceAbstraction } from "../../abstractions/vault-timeout/vault-timeout-settings.service";
 import { PolicyService } from "../../admin-console/abstractions/policy/policy.service.abstraction";
 import { PolicyType } from "../../admin-console/enums";
@@ -19,6 +21,7 @@ export type PinLockType = "DISABLED" | "PERSISTANT" | "TRANSIENT";
 
 export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceAbstraction {
   constructor(
+    private userDecryptionOptionsService: UserDecryptionOptionsServiceAbstraction,
     private cryptoService: CryptoService,
     private tokenService: TokenService,
     private policyService: PolicyService,
@@ -29,7 +32,7 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
   async setVaultTimeoutOptions(timeout: number, action: VaultTimeoutAction): Promise<void> {
     // We swap these tokens from being on disk for lock actions, and in memory for logout actions
     // Get them here to set them to their new location after changing the timeout action and clearing if needed
-    const token = await this.tokenService.getToken();
+    const accessToken = await this.tokenService.getAccessToken();
     const refreshToken = await this.tokenService.getRefreshToken();
     const clientId = await this.tokenService.getClientId();
     const clientSecret = await this.tokenService.getClientSecret();
@@ -37,21 +40,22 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
     await this.stateService.setVaultTimeout(timeout);
 
     const currentAction = await this.stateService.getVaultTimeoutAction();
+
     if (
       (timeout != null || timeout === 0) &&
       action === VaultTimeoutAction.LogOut &&
       action !== currentAction
     ) {
       // if we have a vault timeout and the action is log out, reset tokens
-      await this.tokenService.clearToken();
+      await this.tokenService.clearTokens();
     }
 
     await this.stateService.setVaultTimeoutAction(action);
 
-    await this.tokenService.setToken(token);
-    await this.tokenService.setRefreshToken(refreshToken);
-    await this.tokenService.setClientId(clientId);
-    await this.tokenService.setClientSecret(clientSecret);
+    await this.tokenService.setTokens(accessToken, action, timeout, refreshToken, [
+      clientId,
+      clientSecret,
+    ]);
 
     await this.cryptoService.refreshAdditionalKeys();
   }
@@ -173,12 +177,15 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
   }
 
   private async userHasMasterPassword(userId: string): Promise<boolean> {
-    const acctDecryptionOpts = await this.stateService.getAccountDecryptionOptions({
-      userId: userId,
-    });
+    if (userId) {
+      const decryptionOptions = await firstValueFrom(
+        this.userDecryptionOptionsService.userDecryptionOptionsById$(userId),
+      );
 
-    if (acctDecryptionOpts?.hasMasterPassword != undefined) {
-      return acctDecryptionOpts.hasMasterPassword;
+      if (decryptionOptions?.hasMasterPassword != undefined) {
+        return decryptionOptions.hasMasterPassword;
+      }
     }
+    return await firstValueFrom(this.userDecryptionOptionsService.hasMasterPassword$);
   }
 }

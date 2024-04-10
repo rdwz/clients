@@ -19,19 +19,20 @@ import { FingerprintDialogComponent } from "@bitwarden/auth/angular";
 import { EventUploadService } from "@bitwarden/common/abstractions/event/event-upload.service";
 import { NotificationsService } from "@bitwarden/common/abstractions/notifications.service";
 import { SearchService } from "@bitwarden/common/abstractions/search.service";
-import { SettingsService } from "@bitwarden/common/abstractions/settings.service";
 import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
 import { VaultTimeoutService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout.service";
+import { InternalOrganizationServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 import { InternalPolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { ProviderService } from "@bitwarden/common/admin-console/abstractions/provider.service";
 import { AuthService } from "@bitwarden/common/auth/abstractions/auth.service";
 import { KeyConnectorService } from "@bitwarden/common/auth/abstractions/key-connector.service";
+import { MasterPasswordServiceAbstraction } from "@bitwarden/common/auth/abstractions/master-password.service.abstraction";
 import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
 import { AuthenticationStatus } from "@bitwarden/common/auth/enums/authentication-status";
 import { ForceSetPasswordReason } from "@bitwarden/common/auth/models/domain/force-set-password-reason";
 import { VaultTimeoutAction } from "@bitwarden/common/enums/vault-timeout-action.enum";
 import { BroadcasterService } from "@bitwarden/common/platform/abstractions/broadcaster.service";
-import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
+import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
@@ -120,9 +121,9 @@ export class AppComponent implements OnInit, OnDestroy {
   private accountCleanUpInProgress: { [userId: string]: boolean } = {};
 
   constructor(
+    private masterPasswordService: MasterPasswordServiceAbstraction,
     private broadcasterService: BroadcasterService,
     private folderService: InternalFolderService,
-    private settingsService: SettingsService,
     private syncService: SyncService,
     private passwordGenerationService: PasswordGenerationServiceAbstraction,
     private cipherService: CipherService,
@@ -148,11 +149,12 @@ export class AppComponent implements OnInit, OnDestroy {
     private modalService: ModalService,
     private keyConnectorService: KeyConnectorService,
     private userVerificationService: UserVerificationService,
-    private configService: ConfigServiceAbstraction,
+    private configService: ConfigService,
     private dialogService: DialogService,
     private biometricStateService: BiometricStateService,
     private stateEventRunnerService: StateEventRunnerService,
     private providerService: ProviderService,
+    private organizationService: InternalOrganizationServiceAbstraction,
   ) {}
 
   ngOnInit() {
@@ -265,7 +267,7 @@ export class AppComponent implements OnInit, OnDestroy {
               // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
               // eslint-disable-next-line @typescript-eslint/no-floating-promises
               this.updateAppMenu();
-              this.configService.triggerServerConfigFetch();
+              await this.configService.ensureConfigFetched();
             }
             break;
           case "openSettings":
@@ -408,8 +410,9 @@ export class AppComponent implements OnInit, OnDestroy {
               (await this.authService.getAuthStatus(message.userId)) ===
               AuthenticationStatus.Locked;
             const forcedPasswordReset =
-              (await this.stateService.getForceSetPasswordReason({ userId: message.userId })) !=
-              ForceSetPasswordReason.None;
+              (await firstValueFrom(
+                this.masterPasswordService.forceSetPasswordReason$(message.userId),
+              )) != ForceSetPasswordReason.None;
             if (locked) {
               this.messagingService.send("locked", { userId: message.userId });
             } else if (forcedPasswordReset) {
@@ -574,19 +577,16 @@ export class AppComponent implements OnInit, OnDestroy {
 
     let preLogoutActiveUserId;
     try {
-      await this.eventUploadService.uploadEvents(userBeingLoggedOut);
+      // Provide the userId of the user to upload events for
+      await this.eventUploadService.uploadEvents(userBeingLoggedOut as UserId);
       await this.syncService.setLastSync(new Date(0), userBeingLoggedOut);
       await this.cryptoService.clearKeys(userBeingLoggedOut);
-      await this.settingsService.clear(userBeingLoggedOut);
       await this.cipherService.clear(userBeingLoggedOut);
       await this.folderService.clear(userBeingLoggedOut);
       await this.collectionService.clear(userBeingLoggedOut);
       await this.passwordGenerationService.clear(userBeingLoggedOut);
       await this.vaultTimeoutSettingsService.clear(userBeingLoggedOut);
-      await this.policyService.clear(userBeingLoggedOut);
-      await this.keyConnectorService.clear();
       await this.biometricStateService.logout(userBeingLoggedOut as UserId);
-      await this.providerService.save(null, userBeingLoggedOut as UserId);
 
       await this.stateEventRunnerService.handleEvent("logout", userBeingLoggedOut as UserId);
 
@@ -609,7 +609,7 @@ export class AppComponent implements OnInit, OnDestroy {
     // This must come last otherwise the logout will prematurely trigger
     // a process reload before all the state service user data can be cleaned up
     if (userBeingLoggedOut === preLogoutActiveUserId) {
-      this.searchService.clearIndex();
+      await this.searchService.clearIndex();
       this.authService.logOut(async () => {
         if (expired) {
           this.platformUtilsService.showToast(

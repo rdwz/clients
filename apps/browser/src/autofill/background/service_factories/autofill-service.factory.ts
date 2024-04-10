@@ -6,10 +6,7 @@ import {
   EventCollectionServiceInitOptions,
   eventCollectionServiceFactory,
 } from "../../../background/service-factories/event-collection-service.factory";
-import {
-  settingsServiceFactory,
-  SettingsServiceInitOptions,
-} from "../../../background/service-factories/settings-service.factory";
+import { billingAccountProfileStateServiceFactory } from "../../../platform/background/service-factories/billing-account-profile-state-service.factory";
 import {
   CachedServices,
   factory,
@@ -19,10 +16,6 @@ import {
   logServiceFactory,
   LogServiceInitOptions,
 } from "../../../platform/background/service-factories/log-service.factory";
-import {
-  stateServiceFactory,
-  StateServiceInitOptions,
-} from "../../../platform/background/service-factories/state-service.factory";
 import {
   cipherServiceFactory,
   CipherServiceInitOptions,
@@ -38,18 +31,21 @@ import {
   AutofillSettingsServiceInitOptions,
   autofillSettingsServiceFactory,
 } from "./autofill-settings-service.factory";
+import {
+  DomainSettingsServiceInitOptions,
+  domainSettingsServiceFactory,
+} from "./domain-settings-service.factory";
 
 type AutoFillServiceOptions = FactoryOptions;
 
 export type AutoFillServiceInitOptions = AutoFillServiceOptions &
   CipherServiceInitOptions &
-  StateServiceInitOptions &
   AutofillSettingsServiceInitOptions &
   TotpServiceInitOptions &
   EventCollectionServiceInitOptions &
   LogServiceInitOptions &
-  SettingsServiceInitOptions &
-  UserVerificationServiceInitOptions;
+  UserVerificationServiceInitOptions &
+  DomainSettingsServiceInitOptions;
 
 export function autofillServiceFactory(
   cache: { autofillService?: AbstractAutoFillService } & CachedServices,
@@ -62,13 +58,13 @@ export function autofillServiceFactory(
     async () =>
       new AutofillService(
         await cipherServiceFactory(cache, opts),
-        await stateServiceFactory(cache, opts),
         await autofillSettingsServiceFactory(cache, opts),
         await totpServiceFactory(cache, opts),
         await eventCollectionServiceFactory(cache, opts),
         await logServiceFactory(cache, opts),
-        await settingsServiceFactory(cache, opts),
+        await domainSettingsServiceFactory(cache, opts),
         await userVerificationServiceFactory(cache, opts),
+        await billingAccountProfileStateServiceFactory(cache, opts),
       ),
   );
 }

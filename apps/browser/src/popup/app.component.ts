@@ -1,26 +1,19 @@
-import {
-  ChangeDetectorRef,
-  Component,
-  NgZone,
-  OnDestroy,
-  OnInit,
-  SecurityContext,
-} from "@angular/core";
-import { DomSanitizer } from "@angular/platform-browser";
+import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { NavigationEnd, Router, RouterOutlet } from "@angular/router";
-import { IndividualConfig, ToastrService } from "ngx-toastr";
+import { ToastrService } from "ngx-toastr";
 import { filter, concatMap, Subject, takeUntil, firstValueFrom } from "rxjs";
 
 import { AuthService } from "@bitwarden/common/auth/abstractions/auth.service";
 import { BroadcasterService } from "@bitwarden/common/platform/abstractions/broadcaster.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
-import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
-import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { DialogService, SimpleDialogOptions } from "@bitwarden/components";
 
 import { BrowserApi } from "../platform/browser/browser-api";
 import { ZonedMessageListenerService } from "../platform/browser/zoned-message-listener.service";
 import { BrowserStateService } from "../platform/services/abstractions/browser-state.service";
+import { ForegroundPlatformUtilsService } from "../platform/services/platform-utils/foreground-platform-utils.service";
+import { BrowserSendStateService } from "../tools/popup/services/browser-send-state.service";
+import { VaultBrowserStateService } from "../vault/services/vault-browser-state.service";
 
 import { routerTransition } from "./app-routing.animations";
 import { DesktopSyncVerificationDialogComponent } from "./components/desktop-sync-verification-dialog.component";
@@ -46,11 +39,11 @@ export class AppComponent implements OnInit, OnDestroy {
     private i18nService: I18nService,
     private router: Router,
     private stateService: BrowserStateService,
-    private messagingService: MessagingService,
+    private browserSendStateService: BrowserSendStateService,
+    private vaultBrowserStateService: VaultBrowserStateService,
     private changeDetectorRef: ChangeDetectorRef,
     private ngZone: NgZone,
-    private sanitizer: DomSanitizer,
-    private platformUtilsService: PlatformUtilsService,
+    private platformUtilsService: ForegroundPlatformUtilsService,
     private dialogService: DialogService,
     private browserMessagingApi: ZonedMessageListenerService,
   ) {}
@@ -151,7 +144,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     };
 
-    (window as any).bitwardenPopupMainMessageListener = bitwardenPopupMainMessageListener;
+    (self as any).bitwardenPopupMainMessageListener = bitwardenPopupMainMessageListener;
     this.browserMessagingApi.messageListener("app.component", bitwardenPopupMainMessageListener);
 
     // eslint-disable-next-line rxjs/no-async-subscribe
@@ -217,31 +210,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   private showToast(msg: any) {
-    let message = "";
-
-    const options: Partial<IndividualConfig> = {};
-
-    if (typeof msg.text === "string") {
-      message = msg.text;
-    } else if (msg.text.length === 1) {
-      message = msg.text[0];
-    } else {
-      msg.text.forEach(
-        (t: string) =>
-          (message += "<p>" + this.sanitizer.sanitize(SecurityContext.HTML, t) + "</p>"),
-      );
-      options.enableHtml = true;
-    }
-    if (msg.options != null) {
-      if (msg.options.trustedHtml === true) {
-        options.enableHtml = true;
-      }
-      if (msg.options.timeout != null && msg.options.timeout > 0) {
-        options.timeOut = msg.options.timeout;
-      }
-    }
-
-    this.toastrService.show(message, msg.title, options, "toast-" + msg.type);
+    this.platformUtilsService.showToast(msg.type, msg.title, msg.text, msg.options);
   }
 
   private async showDialog(msg: SimpleDialogOptions) {
@@ -262,10 +231,10 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     await Promise.all([
-      this.stateService.setBrowserGroupingComponentState(null),
-      this.stateService.setBrowserVaultItemsComponentState(null),
-      this.stateService.setBrowserSendComponentState(null),
-      this.stateService.setBrowserSendTypeComponentState(null),
+      this.vaultBrowserStateService.setBrowserGroupingsComponentState(null),
+      this.vaultBrowserStateService.setBrowserVaultItemsComponentState(null),
+      this.browserSendStateService.setBrowserSendComponentState(null),
+      this.browserSendStateService.setBrowserSendTypeComponentState(null),
     ]);
   }
 }
