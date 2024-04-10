@@ -352,7 +352,12 @@ export class VaultComponent implements OnInit, OnDestroy {
           }
         } else {
           // Pre-flexible collections logic, to be removed after flexible collections is fully released
-          if (organization.canEditAllCiphers(this.flexibleCollectionsV1Enabled)) {
+          if (
+            organization.canEditAllCiphers(
+              this.flexibleCollectionsV1Enabled,
+              this.restrictProviderAccessEnabled,
+            )
+          ) {
             ciphers = await this.cipherService.getAllFromApiForOrganization(organization.id);
           } else {
             ciphers = (await this.cipherService.getAllDecrypted()).filter(
@@ -441,7 +446,8 @@ export class VaultComponent implements OnInit, OnDestroy {
         }
 
         return (
-          (filter.collectionId === Unassigned && !organization.canEditUnassignedCiphers()) ||
+          (filter.collectionId === Unassigned &&
+            !organization.canEditUnassignedCiphers(this.restrictProviderAccessEnabled)) ||
           (!organization.canEditAllCiphers(
             this.flexibleCollectionsV1Enabled,
             this.restrictProviderAccessEnabled,
@@ -490,7 +496,8 @@ export class VaultComponent implements OnInit, OnDestroy {
       map(([filter, collection, organization]) => {
         return (
           // Filtering by unassigned, show message if not admin
-          (filter.collectionId === Unassigned && !organization.canEditUnassignedCiphers()) ||
+          (filter.collectionId === Unassigned &&
+            !organization.canEditUnassignedCiphers(this.restrictProviderAccessEnabled)) ||
           // Filtering by a collection, so show message if user is not assigned
           (collection != undefined &&
             !collection.node.assigned &&
@@ -729,13 +736,13 @@ export class VaultComponent implements OnInit, OnDestroy {
           map((c) => {
             return c.sort((a, b) => {
               if (
-                a.canEditItems(this.organization, true) &&
-                !b.canEditItems(this.organization, true)
+                a.canEditItems(this.organization, true, this.restrictProviderAccessEnabled) &&
+                !b.canEditItems(this.organization, true, this.restrictProviderAccessEnabled)
               ) {
                 return -1;
               } else if (
-                !a.canEditItems(this.organization, true) &&
-                b.canEditItems(this.organization, true)
+                !a.canEditItems(this.organization, true, this.restrictProviderAccessEnabled) &&
+                b.canEditItems(this.organization, true, this.restrictProviderAccessEnabled)
               ) {
                 return 1;
               } else {
@@ -753,6 +760,7 @@ export class VaultComponent implements OnInit, OnDestroy {
       this.collectionsModalRef,
       (comp) => {
         comp.flexibleCollectionsV1Enabled = this.flexibleCollectionsV1Enabled;
+        comp.restrictProviderAccess = this.restrictProviderAccessEnabled;
         comp.collectionIds = cipher.collectionIds;
         comp.collections = collections;
         comp.organization = this.organization;
@@ -1189,7 +1197,10 @@ export class VaultComponent implements OnInit, OnDestroy {
   }
 
   protected deleteCipherWithServer(id: string, permanent: boolean) {
-    const asAdmin = this.organization?.canEditAllCiphers(this.flexibleCollectionsV1Enabled);
+    const asAdmin = this.organization?.canEditAllCiphers(
+      this.flexibleCollectionsV1Enabled,
+      this.restrictProviderAccessEnabled,
+    );
     return permanent
       ? this.cipherService.deleteWithServer(id, asAdmin)
       : this.cipherService.softDeleteWithServer(id, asAdmin);

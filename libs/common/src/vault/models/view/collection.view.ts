@@ -38,7 +38,11 @@ export class CollectionView implements View, ITreeNodeObject {
     }
   }
 
-  canEditItems(org: Organization, v1FlexibleCollections: boolean): boolean {
+  canEditItems(
+    org: Organization,
+    v1FlexibleCollections: boolean,
+    restrictProviderAccess: boolean,
+  ): boolean {
     if (org != null && org.id !== this.organizationId) {
       throw new Error(
         "Id of the organization provided does not match the org id of the collection.",
@@ -47,7 +51,7 @@ export class CollectionView implements View, ITreeNodeObject {
 
     if (org?.flexibleCollections) {
       return (
-        org?.canEditAllCiphers(v1FlexibleCollections) ||
+        org?.canEditAllCiphers(v1FlexibleCollections, restrictProviderAccess) ||
         this.manage ||
         (this.assigned && !this.readOnly)
       );

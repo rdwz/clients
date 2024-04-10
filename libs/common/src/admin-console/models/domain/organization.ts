@@ -203,8 +203,10 @@ export class Organization {
     );
   }
 
-  canEditUnassignedCiphers() {
-    // TODO: Update this to exclude Providers if provider access is restricted in AC-1707
+  canEditUnassignedCiphers(restrictProviderAccessFlagEnabled: boolean) {
+    if (this.isProviderUser) {
+      return !restrictProviderAccessFlagEnabled;
+    }
     return this.isAdmin || this.permissions.editAnyCollection;
   }
 

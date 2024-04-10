@@ -23,6 +23,7 @@ export class CollectionsComponent implements OnInit {
   collections: CollectionView[] = [];
   organization: Organization;
   flexibleCollectionsV1Enabled: boolean;
+  restrictProviderAccess: boolean;
 
   protected cipherDomain: Cipher;
 
@@ -62,7 +63,12 @@ export class CollectionsComponent implements OnInit {
   async submit() {
     const selectedCollectionIds = this.collections
       .filter((c) => {
-        if (this.organization.canEditAllCiphers(this.flexibleCollectionsV1Enabled)) {
+        if (
+          this.organization.canEditAllCiphers(
+            this.flexibleCollectionsV1Enabled,
+            this.restrictProviderAccess,
+          )
+        ) {
           return !!(c as any).checked;
         } else {
           return !!(c as any).checked && c.readOnly == null;

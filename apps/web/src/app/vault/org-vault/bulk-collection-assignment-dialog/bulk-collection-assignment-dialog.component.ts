@@ -74,9 +74,13 @@ export class BulkCollectionAssignmentDialogComponent implements OnDestroy, OnIni
       FeatureFlag.FlexibleCollectionsV1,
       false,
     );
+    const restrictProviderAccess = await this.configService.getFeatureFlag(
+      FeatureFlag.RestrictProviderAccess,
+      false,
+    );
     const org = await this.organizationService.get(this.params.organizationId);
 
-    if (org.canEditAllCiphers(v1FCEnabled)) {
+    if (org.canEditAllCiphers(v1FCEnabled, restrictProviderAccess)) {
       this.editableItems = this.params.ciphers;
     } else {
       this.editableItems = this.params.ciphers.filter((c) => c.edit);
