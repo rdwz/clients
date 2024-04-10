@@ -80,19 +80,7 @@ export class InactiveTwoFactorReportComponent extends CipherReportComponent impl
         }
       });
 
-      this.ciphers = inactive2faCiphers.map((ciph: any) => {
-        ciph.orgFilterStatus = ciph.organizationId;
-
-        if (this.filterStatus.indexOf(ciph.organizationId) === -1 && ciph.organizationId != null) {
-          this.filterStatus.push(ciph.organizationId);
-        } else if (this.filterStatus.indexOf(1) === -1 && ciph.organizationId == null) {
-          this.filterStatus.splice(1, 0, 1);
-        }
-        if (this.filterStatus.length > 2) {
-          this.showFilterToggle = true;
-        }
-        return ciph;
-      });
+      this.filterCiphersByOrg(inactive2faCiphers);
       this.cipherDocs = docs;
     }
   }

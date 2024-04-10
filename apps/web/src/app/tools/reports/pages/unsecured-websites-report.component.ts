@@ -41,20 +41,6 @@ export class UnsecuredWebsitesReportComponent extends CipherReportComponent impl
       return c.login.uris.some((u: any) => u.uri != null && u.uri.indexOf("http://") === 0);
     });
 
-    this.ciphers = unsecuredCiphers.filter((c: any) => {
-      c.orgFilterStatus = c.organizationId;
-
-      if ((!this.organization && c.edit) || (this.organization && !c.edit)) {
-        if (this.filterStatus.indexOf(c.organizationId) === -1 && c.organizationId != null) {
-          this.filterStatus.push(c.organizationId);
-        } else if (this.filterStatus.indexOf(1) === -1 && c.organizationId == null) {
-          this.filterStatus.splice(1, 0, 1);
-        }
-        if (this.filterStatus.length > 2) {
-          this.showFilterToggle = true;
-        }
-        return c;
-      }
-    });
+    this.filterCiphersByOrg(unsecuredCiphers);
   }
 }

@@ -105,19 +105,8 @@ export class WeakPasswordsReportComponent extends CipherReportComponent implemen
         this.passwordStrengthCache.get(this.getCacheKey(b))
       );
     });
-    this.ciphers = this.weakPasswordCiphers.map((ciph: any) => {
-      ciph.orgFilterStatus = ciph.organizationId;
 
-      if (this.filterStatus.indexOf(ciph.organizationId) === -1 && ciph.organizationId != null) {
-        this.filterStatus.push(ciph.organizationId);
-      } else if (this.filterStatus.indexOf(1) === -1 && ciph.organizationId == null) {
-        this.filterStatus.splice(1, 0, 1);
-      }
-      if (this.filterStatus.length > 2) {
-        this.showFilterToggle = true;
-      }
-      return ciph;
-    });
+    this.filterCiphersByOrg(this.weakPasswordCiphers);
   }
 
   protected canManageCipher(c: CipherView): boolean {

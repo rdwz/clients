@@ -134,4 +134,20 @@ export class CipherReportComponent implements OnDestroy {
   protected async getAllCiphers(): Promise<CipherView[]> {
     return await this.cipherService.getAllDecrypted();
   }
+
+  protected filterCiphersByOrg(ciphersList: CipherView[]) {
+    this.ciphers = ciphersList.map((ciph: any) => {
+      ciph.orgFilterStatus = ciph.organizationId;
+
+      if (this.filterStatus.indexOf(ciph.organizationId) === -1 && ciph.organizationId != null) {
+        this.filterStatus.push(ciph.organizationId);
+      } else if (this.filterStatus.indexOf(1) === -1 && ciph.organizationId == null) {
+        this.filterStatus.splice(1, 0, 1);
+      }
+      return ciph;
+    });
+    if (this.filterStatus.length > 2) {
+      this.showFilterToggle = true;
+    }
+  }
 }
