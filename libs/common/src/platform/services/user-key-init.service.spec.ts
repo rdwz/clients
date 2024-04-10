@@ -26,10 +26,6 @@ describe("UserKeyInitService", () => {
     userKeyInitService = new UserKeyInitService(accountService, cryptoService, logService);
   });
 
-  it("instantiates", () => {
-    expect(userKeyInitService).not.toBeFalsy();
-  });
-
   describe("listenForActiveUserChangesToSetUserKey()", () => {
     it("calls setUserKeyInMemoryIfAutoUserKeySet if there is an active user", () => {
       // Arrange
