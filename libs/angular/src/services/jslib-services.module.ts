@@ -379,6 +379,7 @@ const safeProviders: SafeProvider[] = [
       InternalUserDecryptionOptionsServiceAbstraction,
       GlobalStateProvider,
       BillingAccountProfileStateService,
+      VaultTimeoutSettingsServiceAbstraction,
     ],
   }),
   safeProvider({
@@ -554,7 +555,7 @@ const safeProviders: SafeProvider[] = [
       PlatformUtilsServiceAbstraction,
       EnvironmentService,
       AppIdServiceAbstraction,
-      StateServiceAbstraction,
+      VaultTimeoutSettingsServiceAbstraction,
       LOGOUT_CALLBACK,
     ],
   }),

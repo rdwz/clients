@@ -494,12 +494,28 @@ export default class MainBackground {
     );
 
     this.appIdService = new AppIdService(this.globalStateProvider);
+
+    this.userDecryptionOptionsService = new UserDecryptionOptionsService(this.stateProvider);
+    this.organizationService = new OrganizationService(this.stateProvider);
+    this.policyService = new PolicyService(this.stateProvider, this.organizationService);
+
+    this.vaultTimeoutSettingsService = new VaultTimeoutSettingsService(
+      this.userDecryptionOptionsService,
+      this.cryptoService,
+      this.tokenService,
+      this.policyService,
+      this.stateService,
+      this.biometricStateService,
+      this.stateProvider,
+      this.logService,
+    );
+
     this.apiService = new ApiService(
       this.tokenService,
       this.platformUtilsService,
       this.environmentService,
       this.appIdService,
-      this.stateService,
+      this.vaultTimeoutSettingsService,
       (expired: boolean) => this.logout(expired),
     );
     this.domainSettingsService = new DefaultDomainSettingsService(this.stateProvider);
@@ -516,8 +532,7 @@ export default class MainBackground {
       this.stateProvider,
     );
     this.syncNotifierService = new SyncNotifierService();
-    this.organizationService = new OrganizationService(this.stateProvider);
-    this.policyService = new PolicyService(this.stateProvider, this.organizationService);
+
     this.autofillSettingsService = new AutofillSettingsService(
       this.stateProvider,
       this.policyService,
@@ -557,8 +572,6 @@ export default class MainBackground {
       };
     })();
 
-    this.userDecryptionOptionsService = new UserDecryptionOptionsService(this.stateProvider);
-
     this.devicesApiService = new DevicesApiServiceImplementation(this.apiService);
     this.deviceTrustCryptoService = new DeviceTrustCryptoService(
       this.keyGenerationService,
@@ -594,17 +607,6 @@ export default class MainBackground {
 
     this.billingAccountProfileStateService = new DefaultBillingAccountProfileStateService(
       this.stateProvider,
-    );
-
-    this.vaultTimeoutSettingsService = new VaultTimeoutSettingsService(
-      this.userDecryptionOptionsService,
-      this.cryptoService,
-      this.tokenService,
-      this.policyService,
-      this.stateService,
-      this.biometricStateService,
-      this.stateProvider,
-      this.logService,
     );
 
     this.loginStrategyService = new LoginStrategyService(
