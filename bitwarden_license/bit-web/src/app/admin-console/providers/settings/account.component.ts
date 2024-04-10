@@ -87,8 +87,9 @@ export class AccountComponent {
       return;
     }
 
+    this.formPromise = this.apiService.deleteProvider(this.providerId);
     try {
-      await this.apiService.deleteProvider(this.providerId);
+      await this.formPromise;
       this.platformUtilsService.showToast(
         "success",
         this.i18nService.t("providerDeleted"),
@@ -97,8 +98,7 @@ export class AccountComponent {
     } catch (e) {
       this.logService.error(e);
     }
-
-    this.router.navigate(["/"]);
+    this.formPromise = null;
   }
 
   private async verifyUser(): Promise<boolean> {

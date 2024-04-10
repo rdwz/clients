@@ -41,6 +41,7 @@ import { SetupComponent } from "./setup/setup.component";
     ProvidersLayoutComponent,
     PaymentMethodWarningsModule,
     TaxInfoComponent,
+    DangerZoneComponent,
   ],
   declarations: [
     AcceptProviderComponent,
@@ -59,17 +60,5 @@ import { SetupComponent } from "./setup/setup.component";
     ManageClientOrganizationSubscriptionComponent,
   ],
   providers: [WebProviderService, ProviderPermissionsGuard],
-  imports: [
-    CommonModule,
-    FormsModule,
-    OssModule,
-    JslibModule,
-    ProvidersRoutingModule,
-    OrganizationPlansComponent,
-    SearchModule,
-    ProvidersLayoutComponent,
-    PaymentMethodWarningsModule,
-    DangerZoneComponent,
-  ],
 })
 export class ProvidersModule {}
