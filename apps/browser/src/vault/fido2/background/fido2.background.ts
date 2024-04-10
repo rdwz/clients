@@ -12,6 +12,7 @@ import {
 import { VaultSettingsService } from "@bitwarden/common/vault/abstractions/vault-settings/vault-settings.service";
 
 import { BrowserApi } from "../../../platform/browser/browser-api";
+import { ScriptInjectorService } from "../../../platform/services/script-injector.service";
 import { AbortManager } from "../../background/abort-manager";
 import { Fido2ContentScript, Fido2ContentScriptId } from "../enums/fido2-content-script.enum";
 import { Fido2PortName } from "../enums/fido2-port-name.enum";
@@ -171,31 +172,17 @@ export class Fido2Background implements Fido2BackgroundInterface {
    * @param tab - The current tab to inject the scripts into.
    */
   private async injectFido2ContentScripts(tab: chrome.tabs.Tab): Promise<void> {
-    this.injectFido2PageScript(tab);
-    void BrowserApi.executeScriptInTab(tab.id, {
-      file: Fido2ContentScript.ContentScript,
-      ...this.sharedInjectionDetails,
+    void ScriptInjectorService.inject({
+      tabId: tab.id,
+      injectDetails: this.sharedInjectionDetails,
+      mv2Details: { file: Fido2ContentScript.PageScriptAppend },
+      mv3Details: { file: Fido2ContentScript.PageScript, world: "MAIN" },
     });
-  }
 
-  /**
-   * Injects the FIDO2 page script into the current tab.
-   *
-   * @param tab - The current tab to inject the script into.
-   */
-  private injectFido2PageScript(tab: chrome.tabs.Tab) {
-    if (BrowserApi.isManifestVersion(3)) {
-      void BrowserApi.executeScriptInTab(
-        tab.id,
-        { file: Fido2ContentScript.PageScript, ...this.sharedInjectionDetails },
-        { world: "MAIN" },
-      );
-      return;
-    }
-
-    void BrowserApi.executeScriptInTab(tab.id, {
-      file: Fido2ContentScript.PageScriptAppend,
-      ...this.sharedInjectionDetails,
+    void ScriptInjectorService.inject({
+      tabId: tab.id,
+      injectDetails: this.sharedInjectionDetails,
+      combinedManifestVersionDetails: { file: Fido2ContentScript.ContentScript },
     });
   }
 
