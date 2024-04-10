@@ -39,6 +39,7 @@ import { UpdateTempPasswordComponent } from "./auth/update-temp-password.compone
 import { VerifyEmailTokenComponent } from "./auth/verify-email-token.component";
 import { VerifyRecoverDeleteComponent } from "./auth/verify-recover-delete.component";
 import { FrontendLayoutComponent } from "./layouts/frontend-layout.component";
+import { VerifyRecoverDeleteProviderComponent } from "./auth/verify-recover-delete-provider.component";
 import { UserLayoutComponent } from "./layouts/user-layout.component";
 import { DomainRulesComponent } from "./settings/domain-rules.component";
 import { PreferencesComponent } from "./settings/preferences.component";
@@ -153,6 +154,12 @@ const routes: Routes = [
       {
         path: "verify-recover-delete",
         component: VerifyRecoverDeleteComponent,
+        canActivate: [UnauthGuard],
+        data: { titleId: "deleteAccount" },
+      },
+      {
+        path: "verify-recover-delete-provider",
+        component: VerifyRecoverDeleteProviderComponent,
         canActivate: [UnauthGuard],
         data: { titleId: "deleteAccount" },
       },

@@ -141,6 +141,7 @@ import {
   CollectionResponse,
 } from "../vault/models/response/collection.response";
 import { SyncResponse } from "../vault/models/response/sync.response";
+import { ProviderVerifyDeleteRecoverRequest } from "@bitwarden/common/admin-console/models/request/provider/provider-verify-delete-recover.request";
 
 /**
  * @deprecated The `ApiService` class is deprecated and calls should be extracted into individual
@@ -1172,6 +1173,19 @@ export class ApiService implements ApiServiceAbstraction {
   async putProvider(id: string, request: ProviderUpdateRequest) {
     const r = await this.send("PUT", "/providers/" + id, request, true, true);
     return new ProviderResponse(r);
+  }
+
+  providerRecoverDeleteToken(
+    providerId: string,
+    request: ProviderVerifyDeleteRecoverRequest,
+  ): Promise<any> {
+    return this.send(
+      "POST",
+      "/providers/" + providerId + "/delete-recover-token",
+      request,
+      false,
+      false,
+    );
   }
 
   // Provider User APIs

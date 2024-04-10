@@ -126,6 +126,7 @@ import {
   CollectionResponse,
 } from "../vault/models/response/collection.response";
 import { SyncResponse } from "../vault/models/response/sync.response";
+import { ProviderVerifyDeleteRecoverRequest } from "@bitwarden/common/admin-console/models/request/provider/provider-verify-delete-recover.request";
 
 /**
  * @deprecated The `ApiService` class is deprecated and calls should be extracted into individual
@@ -376,6 +377,10 @@ export abstract class ApiService {
   postProviderSetup: (id: string, request: ProviderSetupRequest) => Promise<ProviderResponse>;
   getProvider: (id: string) => Promise<ProviderResponse>;
   putProvider: (id: string, request: ProviderUpdateRequest) => Promise<ProviderResponse>;
+  providerRecoverDeleteToken: (
+    organizationId: string,
+    request: ProviderVerifyDeleteRecoverRequest,
+  ) => Promise<any>;
 
   getProviderUsers: (providerId: string) => Promise<ListResponse<ProviderUserUserDetailsResponse>>;
   getProviderUser: (providerId: string, id: string) => Promise<ProviderUserResponse>;
