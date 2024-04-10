@@ -30,7 +30,7 @@ export class UserKeyInitService {
               this.logService.warning(
                 `setUserKeyInMemoryIfAutoUserKeySet failed with error: ${err}`,
               );
-              // Returning EMPTY to protect obs chain from cancellation in case of error
+              // Returning EMPTY to protect observable chain from cancellation in case of error
               return EMPTY;
             }),
           ),
