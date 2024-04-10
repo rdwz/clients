@@ -149,14 +149,10 @@ describe("FilelessImporterBackground ", () => {
       triggerRuntimeOnConnectEvent(lpImporterPort);
       await flushPromises();
 
-      expect(executeScriptInTabSpy).toHaveBeenCalledWith(
-        lpImporterPort.sender.tab.id,
-        {
-          file: "content/lp-suppress-import-download-script-append-mv2.js",
-          runAt: "document_start",
-        },
-        undefined,
-      );
+      expect(executeScriptInTabSpy).toHaveBeenCalledWith(lpImporterPort.sender.tab.id, {
+        file: "content/lp-suppress-import-download-script-append-mv2.js",
+        runAt: "document_start",
+      });
     });
   });
 

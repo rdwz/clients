@@ -3,6 +3,12 @@ import { BrowserApi } from "../browser/browser-api";
 import { ScriptInjectionConfig } from "./abstractions/script-injector.service";
 
 export class ScriptInjectorService {
+  /**
+   * Facilitates the injection of a script into a tab context. Will adjust
+   * behavior between manifest v2 and v3 based on the passed configuration.
+   *
+   * @param config - The configuration for the script injection.
+   */
   static async inject(config: ScriptInjectionConfig): Promise<void> {
     const { tabId, injectDetails, combinedManifestVersionDetails, mv2Details, mv3Details } = config;
 

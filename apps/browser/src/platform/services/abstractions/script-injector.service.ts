@@ -3,7 +3,7 @@ export type ScriptInjectionConfig = {
   injectDetails: {
     allFrames?: boolean;
     frameId?: number;
-    runAt?: chrome.tabs.InjectDetails["runAt"];
+    runAt?: "document_start" | "document_end" | "document_idle";
   };
   combinedManifestVersionDetails?: {
     file: string;

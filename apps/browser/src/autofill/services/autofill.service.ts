@@ -20,6 +20,7 @@ import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { FieldView } from "@bitwarden/common/vault/models/view/field.view";
 
 import { BrowserApi } from "../../platform/browser/browser-api";
+import { ScriptInjectorService } from "../../platform/services/script-injector.service";
 import { openVaultItemPasswordRepromptPopout } from "../../vault/popup/utils/vault-popout-window";
 import { AutofillPort } from "../enums/autofill-port.enums";
 import AutofillField from "../models/autofill-field";
@@ -113,19 +114,20 @@ export default class AutofillService implements AutofillServiceInterface {
     if (triggeringOnPageLoad && autoFillOnPageLoadIsEnabled) {
       injectedScripts.push("autofiller.js");
     } else {
-      await BrowserApi.executeScriptInTab(tab.id, {
-        file: "content/content-message-handler.js",
-        runAt: "document_start",
+      await ScriptInjectorService.inject({
+        tabId: tab.id,
+        injectDetails: { runAt: "document_start" },
+        combinedManifestVersionDetails: { file: "content/content-message-handler.js" },
       });
     }
 
     injectedScripts.push("notificationBar.js", "contextMenuHandler.js");
 
     for (const injectedScript of injectedScripts) {
-      await BrowserApi.executeScriptInTab(tab.id, {
-        file: `content/${injectedScript}`,
-        frameId,
-        runAt: "document_start",
+      await ScriptInjectorService.inject({
+        tabId: tab.id,
+        injectDetails: { runAt: "document_start", frameId },
+        combinedManifestVersionDetails: { file: `content/${injectedScript}` },
       });
     }
   }
