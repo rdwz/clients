@@ -12,6 +12,9 @@ import { FieldView } from "../models/view/field.view";
 import { AddEditCipherInfo } from "../types/add-edit-cipher-info";
 
 export abstract class CipherService {
+  /**
+   *  An observable monitoring the add/edit cipher info saved to memory.
+   */
   addEditCipherInfo$: Observable<AddEditCipherInfo>;
   clearCache: (userId?: string) => Promise<void>;
   encrypt: (
@@ -106,6 +109,5 @@ export abstract class CipherService {
     asAdmin?: boolean,
   ) => Promise<void>;
   getKeyForCipherKeyDecryption: (cipher: Cipher) => Promise<any>;
-  decryptCiphers: (ciphers: Cipher[]) => Promise<CipherView[]>;
   setAddEditCipherInfo: (value: AddEditCipherInfo) => Promise<void>;
 }

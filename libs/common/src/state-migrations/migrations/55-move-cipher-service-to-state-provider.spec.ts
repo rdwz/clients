@@ -88,7 +88,7 @@ describe("CipherServiceMigrator", () => {
 
   describe("migrate", () => {
     beforeEach(() => {
-      helper = mockMigrationHelper(exampleJSON(), 55);
+      helper = mockMigrationHelper(exampleJSON(), 54);
       sut = new CipherServiceMigrator(54, 55);
     });
 

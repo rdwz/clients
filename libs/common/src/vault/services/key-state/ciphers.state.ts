@@ -37,15 +37,16 @@ export const ADD_EDIT_CIPHER_INFO_KEY = new KeyDefinition<AddEditCipherInfo>(
   "addEditCipherInfo",
   {
     deserializer: (addEditCipherInfo: AddEditCipherInfo) => {
-      return addEditCipherInfo == null
-        ? null
-        : {
-            cipher:
-              addEditCipherInfo?.cipher.toJSON != null
-                ? addEditCipherInfo.cipher
-                : CipherView.fromJSON(addEditCipherInfo?.cipher as Jsonify<CipherView>),
-            collectionIds: addEditCipherInfo?.collectionIds,
-          };
+      if (addEditCipherInfo == null) {
+        return null;
+      }
+
+      const cipher =
+        addEditCipherInfo?.cipher.toJSON != null
+          ? addEditCipherInfo.cipher
+          : CipherView.fromJSON(addEditCipherInfo?.cipher as Jsonify<CipherView>);
+
+      return { cipher, collectionIds: addEditCipherInfo.collectionIds };
     },
   },
 );

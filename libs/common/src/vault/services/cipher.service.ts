@@ -346,7 +346,7 @@ export class CipherService implements CipherServiceAbstraction {
     return Object.values(await firstValueFrom(this.cipherViews$));
   }
 
-  async decryptCiphers(ciphers: Cipher[]) {
+  private async decryptCiphers(ciphers: Cipher[]) {
     const orgKeys = await this.cryptoService.getOrgKeys();
     const userKey = await this.cryptoService.getUserKeyWithLegacySupport();
     if (Object.keys(orgKeys).length === 0 && userKey == null) {
@@ -782,30 +782,24 @@ export class CipherService implements CipherServiceAbstraction {
   }
 
   async upsert(cipher: CipherData | CipherData[]): Promise<any> {
-    let ciphers = await firstValueFrom(this.ciphers$);
-    if (ciphers == null) {
-      ciphers = {};
-    }
-
-    if (cipher instanceof CipherData) {
-      const c = cipher as CipherData;
-      ciphers[c.id as CipherId] = c;
-    } else {
-      (cipher as CipherData[]).forEach((c) => {
-        ciphers[c.id as CipherId] = c;
-      });
-    }
-
-    await this.replace(ciphers);
+    const ciphers = cipher instanceof CipherData ? [cipher] : cipher;
+    await this.updateEncryptedCipherState((current) => {
+      ciphers.forEach((c) => current[c.id as CipherId]);
+      return current;
+    });
   }
 
   async replace(ciphers: { [id: string]: CipherData }): Promise<any> {
+    await this.updateEncryptedCipherState(() => ciphers);
+  }
+
+  private async updateEncryptedCipherState(
+    update: (current: Record<CipherId, CipherData>) => Record<CipherId, CipherData>,
+  ) {
     await this.clearDecryptedCiphersState();
-    await this.encryptedCiphersState.update(() => {
-      if (ciphers == null) {
-        ciphers = {};
-      }
-      return ciphers;
+    await this.encryptedCiphersState.update((current) => {
+      const result = update(current ?? {});
+      return result;
     });
   }
 

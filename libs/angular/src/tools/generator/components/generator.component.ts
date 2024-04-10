@@ -19,7 +19,6 @@ import {
   UsernameGeneratorOptions,
 } from "@bitwarden/common/tools/generator/username";
 import { EmailForwarderOptions } from "@bitwarden/common/tools/models/domain/email-forwarder-options";
-import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 
 @Directive()
 export class GeneratorComponent implements OnInit {
@@ -58,7 +57,6 @@ export class GeneratorComponent implements OnInit {
     protected usernameGenerationService: UsernameGenerationServiceAbstraction,
     protected platformUtilsService: PlatformUtilsService,
     protected stateService: StateService,
-    protected cipherService: CipherService,
     protected i18nService: I18nService,
     protected logService: LogService,
     protected route: ActivatedRoute,

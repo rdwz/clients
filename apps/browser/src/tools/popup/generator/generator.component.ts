@@ -21,6 +21,7 @@ import { AddEditCipherInfo } from "@bitwarden/common/vault/types/add-edit-cipher
 export class GeneratorComponent extends BaseGeneratorComponent {
   private addEditCipherInfo: AddEditCipherInfo;
   private cipherState: CipherView;
+  private cipherService: CipherService;
 
   constructor(
     passwordGenerationService: PasswordGenerationServiceAbstraction,
@@ -38,12 +39,12 @@ export class GeneratorComponent extends BaseGeneratorComponent {
       usernameGenerationService,
       platformUtilsService,
       stateService,
-      cipherService,
       i18nService,
       logService,
       route,
       window,
     );
+    this.cipherService = cipherService;
   }
 
   async ngOnInit() {
