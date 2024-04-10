@@ -386,7 +386,11 @@ export class VaultComponent implements OnInit, OnDestroy {
           collectionsToReturn = collections.map((c) => {
             const groupsCanManage = c.node.groupsCanManage();
             const usersCanManage = c.node.usersCanManage(this.orgRevokedUsers);
-            if (groupsCanManage.length === 0 && usersCanManage.length === 0) {
+            if (
+              groupsCanManage.length === 0 &&
+              usersCanManage.length === 0 &&
+              c.node.id !== Unassigned
+            ) {
               c.node.addAccess = true;
               this.showAddAccessToggle = true;
             } else {
