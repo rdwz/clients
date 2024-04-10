@@ -49,15 +49,15 @@ export class SetPinComponent implements OnInit {
       await this.stateService.getKdfConfig(),
     );
     const userKey = await this.cryptoService.getUserKey();
-    const pinProtectedKey = await this.cryptoService.encrypt(userKey.key, pinKey);
-    const encPin = await this.cryptoService.encrypt(pin, userKey);
+    const pinKeyEncryptedUserKey = await this.cryptoService.encrypt(userKey.key, pinKey);
+    const userKeyEncryptedPin = await this.cryptoService.encrypt(pin, userKey);
 
-    await this.pinService.setProtectedPin(encPin.encryptedString);
+    await this.pinService.setProtectedPin(userKeyEncryptedPin.encryptedString);
 
     if (masterPassOnRestart) {
-      await this.pinService.setPinKeyEncryptedUserKeyEphemeral(pinProtectedKey);
+      await this.pinService.setPinKeyEncryptedUserKeyEphemeral(pinKeyEncryptedUserKey);
     } else {
-      await this.pinService.setPinKeyEncryptedUserKey(pinProtectedKey);
+      await this.pinService.setPinKeyEncryptedUserKey(pinKeyEncryptedUserKey);
     }
 
     this.dialogRef.close(true);

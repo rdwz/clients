@@ -638,15 +638,18 @@ export class CryptoService implements CryptoServiceAbstraction {
     salt: string,
     kdf: KdfType,
     kdfConfig: KdfConfig,
-    pinProtectedUserKey?: EncString,
+    pinKeyEncryptedUserKey?: EncString,
   ): Promise<UserKey> {
-    pinProtectedUserKey ||= await this.pinService.getPinKeyEncryptedUserKey();
-    pinProtectedUserKey ||= await this.pinService.getPinKeyEncryptedUserKeyEphemeral();
-    if (!pinProtectedUserKey) {
-      throw new Error("No PIN protected key found.");
+    pinKeyEncryptedUserKey ||= await this.pinService.getPinKeyEncryptedUserKey();
+    pinKeyEncryptedUserKey ||= await this.pinService.getPinKeyEncryptedUserKeyEphemeral();
+
+    if (!pinKeyEncryptedUserKey) {
+      throw new Error("No PIN encrypted key found.");
     }
+
     const pinKey = await this.makePinKey(pin, salt, kdf, kdfConfig);
-    const userKey = await this.encryptService.decryptToBytes(pinProtectedUserKey, pinKey);
+    const userKey = await this.encryptService.decryptToBytes(pinKeyEncryptedUserKey, pinKey);
+
     return new SymmetricCryptoKey(userKey) as UserKey;
   }
 
@@ -656,17 +659,21 @@ export class CryptoService implements CryptoServiceAbstraction {
     salt: string,
     kdf: KdfType,
     kdfConfig: KdfConfig,
-    pinProtectedMasterKey?: EncString,
+    pinKeyEncryptedMasterKey?: EncString,
   ): Promise<MasterKey> {
-    if (!pinProtectedMasterKey) {
-      const pinProtectedMasterKeyString = await this.stateService.getEncryptedPinProtected();
-      if (pinProtectedMasterKeyString == null) {
-        throw new Error("No PIN protected key found.");
+    if (!pinKeyEncryptedMasterKey) {
+      const pinKeyEncryptedMasterKeyString = await this.stateService.getEncryptedPinProtected();
+
+      if (pinKeyEncryptedMasterKeyString == null) {
+        throw new Error("No PIN encrypted key found.");
       }
-      pinProtectedMasterKey = new EncString(pinProtectedMasterKeyString);
+
+      pinKeyEncryptedMasterKey = new EncString(pinKeyEncryptedMasterKeyString);
     }
+
     const pinKey = await this.makePinKey(pin, salt, kdf, kdfConfig);
-    const masterKey = await this.encryptService.decryptToBytes(pinProtectedMasterKey, pinKey);
+    const masterKey = await this.encryptService.decryptToBytes(pinKeyEncryptedMasterKey, pinKey);
+
     return new SymmetricCryptoKey(masterKey) as MasterKey;
   }
 
@@ -1063,29 +1070,39 @@ export class CryptoService implements CryptoServiceAbstraction {
     email: string,
     kdf: KdfType,
     kdfConfig: KdfConfig,
-    oldPinKey: EncString,
+    oldPinKeyEncryptedMasterKey: EncString,
   ): Promise<UserKey> {
     // Decrypt
-    const masterKey = await this.decryptMasterKeyWithPin(pin, email, kdf, kdfConfig, oldPinKey);
+    const masterKey = await this.decryptMasterKeyWithPin(
+      pin,
+      email,
+      kdf,
+      kdfConfig,
+      oldPinKeyEncryptedMasterKey,
+    );
     const encUserKey = await this.stateService.getEncryptedCryptoSymmetricKey();
     const userKey = await this.decryptUserKeyWithMasterKey(masterKey, new EncString(encUserKey));
+
     // Migrate
     const pinKey = await this.makePinKey(pin, email, kdf, kdfConfig);
-    const pinProtectedKey = await this.encryptService.encrypt(userKey.key, pinKey);
+    const pinKeyEncryptedUserKey = await this.encryptService.encrypt(userKey.key, pinKey);
+
     if (masterPasswordOnRestart) {
       await this.stateService.setDecryptedPinProtected(null);
-      await this.pinService.setPinKeyEncryptedUserKeyEphemeral(pinProtectedKey);
+      await this.pinService.setPinKeyEncryptedUserKeyEphemeral(pinKeyEncryptedUserKey);
     } else {
       await this.stateService.setEncryptedPinProtected(null);
-      await this.pinService.setPinKeyEncryptedUserKey(pinProtectedKey);
+      await this.pinService.setPinKeyEncryptedUserKey(pinKeyEncryptedUserKey);
       // We previously only set the protected pin if MP on Restart was enabled
       // now we set it regardless
-      const encPin = await this.encryptService.encrypt(pin, userKey);
-      await this.pinService.setProtectedPin(encPin.encryptedString);
+      const userKeyEncryptedPin = await this.encryptService.encrypt(pin, userKey);
+      await this.pinService.setProtectedPin(userKeyEncryptedPin.encryptedString);
     }
+
     // This also clears the old Biometrics key since the new Biometrics key will
     // be created when the user key is set.
     await this.stateService.setCryptoMasterKeyBiometric(null);
+
     return userKey;
   }
 

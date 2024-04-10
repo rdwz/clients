@@ -100,6 +100,7 @@ export class PinService implements PinServiceAbstraction {
       const kdfConfig: KdfConfig = await this.stateService.getKdfConfig();
       let userKey: UserKey;
       const email = await this.stateService.getEmail();
+
       if (oldPinKeyEncryptedMasterKey) {
         userKey = await this.cryptoService.decryptAndMigrateOldPinKey(
           pinLockType === "TRANSIENT",
@@ -136,7 +137,7 @@ export class PinService implements PinServiceAbstraction {
     }
   }
 
-  // Note: oldPinKeyEncryptedMasterKey is only used for migrating old pin keys
+  // Note: oldPinKeyEncryptedMasterKey (aka "pinProtected") is only used for migrating old pin keys
   // and will be null for all migrated accounts
   private async getPinKeyEncryptedKeys(
     pinLockType: PinLockType,

@@ -336,7 +336,7 @@ export abstract class CryptoService {
    * @param salt The user's salt
    * @param kdf The user's KDF
    * @param kdfConfig The user's KDF config
-   * @param pinProtectedUserKey The user's PIN protected symmetric key, if not provided
+   * @param pinKeyEncryptedUserKey The user's PIN protected symmetric key, if not provided
    * it will be retrieved from storage
    * @returns The decrypted user key
    */
@@ -345,7 +345,7 @@ export abstract class CryptoService {
     salt: string,
     kdf: KdfType,
     kdfConfig: KdfConfig,
-    protectedKeyCs?: EncString,
+    pinKeyEncryptedUserKey?: EncString,
   ): Promise<UserKey>;
   /**
    * Creates a new Pin key that encrypts the user key instead of the
@@ -355,7 +355,7 @@ export abstract class CryptoService {
    * @param email User's email
    * @param kdf User's KdfType
    * @param kdfConfig User's KdfConfig
-   * @param oldPinKey The old Pin key from state (retrieved from different
+   * @param oldPinKeyEncryptedMasterKey The old pin key encrypted master key from state (retrieved from different
    * places depending on if Master Password on Restart was enabled)
    * @returns The user key
    */
@@ -365,7 +365,7 @@ export abstract class CryptoService {
     email: string,
     kdf: KdfType,
     kdfConfig: KdfConfig,
-    oldPinKey: EncString,
+    oldPinKeyEncryptedMasterKey: EncString,
   ): Promise<UserKey>;
   /**
    * Replaces old master auto keys with new user auto keys

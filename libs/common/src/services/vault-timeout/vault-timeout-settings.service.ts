@@ -71,13 +71,20 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
   async isPinLockSet(userId?: string): Promise<PinLockType> {
     // we can't check the protected pin for both because old accounts only
     // used it for MP on Restart
-    const pinIsEnabled = !!(await this.pinService.getProtectedPin(userId as UserId));
-    const aUserKeyPinIsSet = !!(await this.pinService.getPinKeyEncryptedUserKey(userId));
-    const anOldUserKeyPinIsSet = !!(await this.stateService.getEncryptedPinProtected({ userId }));
+    const aUserKeyEncryptedPinIsSet = !!(await this.pinService.getProtectedPin(userId as UserId));
+    const aPinKeyEncryptedUserKeyIsSet =
+      !!(await this.pinService.getPinKeyEncryptedUserKey(userId));
+    const anOldPinKeyEncryptedMasterKeyIsSet = !!(await this.stateService.getEncryptedPinProtected({
+      userId,
+    }));
 
-    if (aUserKeyPinIsSet || anOldUserKeyPinIsSet) {
+    if (aPinKeyEncryptedUserKeyIsSet || anOldPinKeyEncryptedMasterKeyIsSet) {
       return "PERSISTANT";
-    } else if (pinIsEnabled && !aUserKeyPinIsSet && !anOldUserKeyPinIsSet) {
+    } else if (
+      aUserKeyEncryptedPinIsSet &&
+      !aPinKeyEncryptedUserKeyIsSet &&
+      !anOldPinKeyEncryptedMasterKeyIsSet
+    ) {
       return "TRANSIENT";
     } else {
       return "DISABLED";
