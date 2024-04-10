@@ -8,7 +8,7 @@ import { KeySuffixOptions } from "../enums";
 
 // TODO: this is a half measure improvement which allows us to reduce some side effects today (cryptoService.getUserKey setting user key in memory if auto key exists)
 // but ideally, in the future, we would be able to put this logic into the cryptoService
-// after the vault timeout settings svc is transitioned to state provider so that
+// after the vault timeout settings service is transitioned to state provider so that
 // the getUserKey logic can simply go to the correct location based on the vault timeout settings
 // similar to the TokenService (it would either go to secure storage for the auto user key or memory for the user key)
 
