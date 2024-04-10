@@ -23,6 +23,7 @@ export class CipherReportComponent implements OnDestroy {
   hasLoaded = false;
   ciphers: CipherView[] = [];
   organization: Organization;
+  organizations: Organization[];
   organizations$: Observable<Organization[]>;
 
   filterStatus: any = [0];
@@ -38,6 +39,9 @@ export class CipherReportComponent implements OnDestroy {
     protected i18nService: I18nService,
   ) {
     this.organizations$ = this.organizationService.organizations$;
+    this.organizations$.pipe(takeUntil(this.destroyed$)).subscribe((orgs) => {
+      this.organizations = orgs;
+    });
   }
 
   ngOnDestroy(): void {
@@ -52,13 +56,11 @@ export class CipherReportComponent implements OnDestroy {
     } else if (filterId === 1) {
       orgName = this.i18nService.t("me");
     } else {
-      this.organizations$.pipe(takeUntil(this.destroyed$)).subscribe((orgs) => {
-        orgs.filter((org: Organization) => {
-          if (org.id === filterId) {
-            orgName = org.name;
-            return org;
-          }
-        });
+      this.organizations.filter((org: Organization) => {
+        if (org.id === filterId) {
+          orgName = org.name;
+          return org;
+        }
       });
     }
     return orgName;
