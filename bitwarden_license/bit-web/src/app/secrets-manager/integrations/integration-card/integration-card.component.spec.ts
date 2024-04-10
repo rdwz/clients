@@ -37,4 +37,13 @@ describe("IntegrationCardComponent", () => {
     expect(name.textContent).toBe("Integration Name");
     expect(link.textContent).toBe("Get started with integration");
   });
+
+  it("assigns external rel attribute", () => {
+    component.externalURL = true;
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector("a");
+
+    expect(link.rel).toBe("noopener noreferrer");
+  });
 });

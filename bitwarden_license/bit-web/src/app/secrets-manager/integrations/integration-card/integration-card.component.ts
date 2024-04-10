@@ -9,4 +9,6 @@ export class IntegrationCardComponent {
   @Input() image: string;
   @Input() secondaryText: string;
   @Input() linkURL: string;
+  /** Adds relevant `rel` attribute to external links */
+  @Input() externalURL?: boolean;
 }

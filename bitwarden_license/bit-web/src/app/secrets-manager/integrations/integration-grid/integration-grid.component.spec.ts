@@ -54,4 +54,11 @@ describe("IntegrationGridComponent", () => {
     expect(card.componentInstance.secondaryText).toBe("View SDK 2");
     expect(card.componentInstance.linkURL).toBe("https://example.com/2");
   });
+
+  it("assigns `externalURL` for SDKs", () => {
+    const card = fixture.debugElement.queryAll(By.directive(IntegrationCardComponent));
+
+    expect(card[0].componentInstance.externalURL).toBe(false);
+    expect(card[1].componentInstance.externalURL).toBe(true);
+  });
 });
