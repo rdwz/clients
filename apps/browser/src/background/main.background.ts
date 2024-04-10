@@ -32,6 +32,7 @@ import { DeviceTrustCryptoServiceAbstraction } from "@bitwarden/common/auth/abst
 import { DevicesServiceAbstraction } from "@bitwarden/common/auth/abstractions/devices/devices.service.abstraction";
 import { DevicesApiServiceAbstraction } from "@bitwarden/common/auth/abstractions/devices-api.service.abstraction";
 import { KeyConnectorService as KeyConnectorServiceAbstraction } from "@bitwarden/common/auth/abstractions/key-connector.service";
+import { InternalMasterPasswordServiceAbstraction } from "@bitwarden/common/auth/abstractions/master-password.service.abstraction";
 import { SsoLoginServiceAbstraction } from "@bitwarden/common/auth/abstractions/sso-login.service.abstraction";
 import { TokenService as TokenServiceAbstraction } from "@bitwarden/common/auth/abstractions/token.service";
 import { TwoFactorService as TwoFactorServiceAbstraction } from "@bitwarden/common/auth/abstractions/two-factor.service";
@@ -46,6 +47,7 @@ import { DeviceTrustCryptoService } from "@bitwarden/common/auth/services/device
 import { DevicesServiceImplementation } from "@bitwarden/common/auth/services/devices/devices.service.implementation";
 import { DevicesApiServiceImplementation } from "@bitwarden/common/auth/services/devices-api.service.implementation";
 import { KeyConnectorService } from "@bitwarden/common/auth/services/key-connector.service";
+import { MasterPasswordService } from "@bitwarden/common/auth/services/master-password/master-password.service";
 import { SsoLoginService } from "@bitwarden/common/auth/services/sso-login.service";
 import { TokenService } from "@bitwarden/common/auth/services/token.service";
 import { TwoFactorService } from "@bitwarden/common/auth/services/two-factor.service";
@@ -211,7 +213,7 @@ import BrowserLocalStorageService from "../platform/services/browser-local-stora
 import BrowserMemoryStorageService from "../platform/services/browser-memory-storage.service";
 import BrowserMessagingPrivateModeBackgroundService from "../platform/services/browser-messaging-private-mode-background.service";
 import BrowserMessagingService from "../platform/services/browser-messaging.service";
-import { BrowserStateService } from "../platform/services/browser-state.service";
+import { DefaultBrowserStateService } from "../platform/services/default-browser-state.service";
 import I18nService from "../platform/services/i18n.service";
 import { LocalBackedSessionStorageService } from "../platform/services/local-backed-session-storage.service";
 import { BackgroundPlatformUtilsService } from "../platform/services/platform-utils/background-platform-utils.service";
@@ -242,6 +244,7 @@ export default class MainBackground {
   keyGenerationService: KeyGenerationServiceAbstraction;
   cryptoService: CryptoServiceAbstraction;
   cryptoFunctionService: CryptoFunctionServiceAbstraction;
+  masterPasswordService: InternalMasterPasswordServiceAbstraction;
   tokenService: TokenServiceAbstraction;
   appIdService: AppIdServiceAbstraction;
   apiService: ApiServiceAbstraction;
@@ -466,7 +469,7 @@ export default class MainBackground {
       new MigrationBuilderService(),
     );
 
-    this.stateService = new BrowserStateService(
+    this.stateService = new DefaultBrowserStateService(
       this.storageService,
       this.secureStorageService,
       this.memoryStorageService,
@@ -480,8 +483,11 @@ export default class MainBackground {
 
     const themeStateService = new DefaultThemeStateService(this.globalStateProvider);
 
+    this.masterPasswordService = new MasterPasswordService(this.stateProvider);
+
     this.i18nService = new I18nService(BrowserApi.getUILanguage(), this.globalStateProvider);
     this.cryptoService = new BrowserCryptoService(
+      this.masterPasswordService,
       this.keyGenerationService,
       this.cryptoFunctionService,
       this.encryptService,
@@ -525,6 +531,8 @@ export default class MainBackground {
     this.badgeSettingsService = new BadgeSettingsService(this.stateProvider);
     this.policyApiService = new PolicyApiService(this.policyService, this.apiService);
     this.keyConnectorService = new KeyConnectorService(
+      this.accountService,
+      this.masterPasswordService,
       this.cryptoService,
       this.apiService,
       this.tokenService,
@@ -578,9 +586,10 @@ export default class MainBackground {
 
     this.authRequestService = new AuthRequestService(
       this.appIdService,
+      this.accountService,
+      this.masterPasswordService,
       this.cryptoService,
       this.apiService,
-      this.stateService,
     );
 
     this.authService = new AuthService(
@@ -597,6 +606,8 @@ export default class MainBackground {
     );
 
     this.loginStrategyService = new LoginStrategyService(
+      this.accountService,
+      this.masterPasswordService,
       this.cryptoService,
       this.apiService,
       this.tokenService,
@@ -674,6 +685,8 @@ export default class MainBackground {
     this.userVerificationService = new UserVerificationService(
       this.stateService,
       this.cryptoService,
+      this.accountService,
+      this.masterPasswordService,
       this.i18nService,
       this.userVerificationApiService,
       this.userDecryptionOptionsService,
@@ -696,6 +709,8 @@ export default class MainBackground {
     this.vaultSettingsService = new VaultSettingsService(this.stateProvider);
 
     this.vaultTimeoutService = new VaultTimeoutService(
+      this.accountService,
+      this.masterPasswordService,
       this.cipherService,
       this.folderService,
       this.collectionService,
@@ -731,6 +746,8 @@ export default class MainBackground {
     this.providerService = new ProviderService(this.stateProvider);
 
     this.syncService = new SyncService(
+      this.masterPasswordService,
+      this.accountService,
       this.apiService,
       this.domainSettingsService,
       this.folderService,
@@ -881,6 +898,8 @@ export default class MainBackground {
       this.fido2Service,
     );
     this.nativeMessagingBackground = new NativeMessagingBackground(
+      this.accountService,
+      this.masterPasswordService,
       this.cryptoService,
       this.cryptoFunctionService,
       this.runtimeBackground,
@@ -911,6 +930,7 @@ export default class MainBackground {
       this.environmentService,
       this.logService,
       themeStateService,
+      this.configService,
     );
     this.overlayBackground = new OverlayBackground(
       this.cipherService,
@@ -1109,7 +1129,7 @@ export default class MainBackground {
 
       const status = await this.authService.getAuthStatus(userId);
       const forcePasswordReset =
-        (await this.stateService.getForceSetPasswordReason({ userId: userId })) !=
+        (await firstValueFrom(this.masterPasswordService.forceSetPasswordReason$(userId))) !=
         ForceSetPasswordReason.None;
 
       await this.systemService.clearPendingClipboard();
@@ -1142,12 +1162,10 @@ export default class MainBackground {
       this.cipherService.clear(userId),
       this.folderService.clear(userId),
       this.collectionService.clear(userId),
-      this.policyService.clear(userId),
       this.passwordGenerationService.clear(userId),
       this.vaultTimeoutSettingsService.clear(userId),
       this.vaultFilterService.clear(),
       this.biometricStateService.logout(userId),
-      this.providerService.save(null, userId),
       /* We intentionally do not clear:
        *  - autofillSettingsService
        *  - badgeSettingsService
