@@ -13,6 +13,7 @@ import { createPortSpyMock } from "../../../autofill/spec/autofill-mocks";
 import {
   flushPromises,
   sendExtensionRuntimeMessage,
+  triggerPortOnDisconnectEvent,
   triggerRuntimeOnConnectEvent,
 } from "../../../autofill/spec/testing-utils";
 import { BrowserApi } from "../../../platform/browser/browser-api";
@@ -65,6 +66,7 @@ describe("Fido2Background", () => {
     vaultSettingsService = mock<VaultSettingsService>();
     enablePasskeysMock$ = new BehaviorSubject(true);
     vaultSettingsService.enablePasskeys$ = enablePasskeysMock$;
+    fido2ClientService.isFido2FeatureEnabled.mockResolvedValue(true);
     fido2Background = new Fido2Background(logService, fido2ClientService, vaultSettingsService);
     abortManagerMock = mock<AbortManager>();
     abortController = mock<AbortController>();
@@ -166,11 +168,10 @@ describe("Fido2Background", () => {
       jest.spyOn(BrowserApi, "registerContentScriptsMv2");
       jest.spyOn(BrowserApi, "registerContentScriptsMv3");
       jest.spyOn(BrowserApi, "unregisterContentScriptsMv3");
-      portMock = mock<chrome.runtime.Port>();
-      fido2Background["fido2ContentScriptPortsSet"] = new Set<chrome.runtime.Port>([
-        portMock,
-        mock<chrome.runtime.Port>(),
-      ]);
+      portMock = createPortSpyMock(Fido2PortName.InjectedScript);
+      triggerRuntimeOnConnectEvent(portMock);
+      triggerRuntimeOnConnectEvent(createPortSpyMock("some-other-port"));
+
       tabsQuerySpy.mockResolvedValue([tabMock]);
     });
 
@@ -398,19 +399,20 @@ describe("Fido2Background", () => {
 
     beforeEach(() => {
       portMock = createPortSpyMock(Fido2PortName.InjectedScript);
+      triggerRuntimeOnConnectEvent(portMock);
       fido2Background["fido2ContentScriptPortsSet"].add(portMock);
     });
 
     it("ignores the port disconnection if it does not have the correct name", () => {
       const port = createPortSpyMock("nonexistentPort");
 
-      fido2Background["handleInjectScriptPortOnDisconnect"](port);
+      triggerPortOnDisconnectEvent(port);
 
       expect(fido2Background["fido2ContentScriptPortsSet"].size).toBe(1);
     });
 
     it("removes the port from the fido2ContentScriptPortsSet", () => {
-      fido2Background["handleInjectScriptPortOnDisconnect"](portMock);
+      triggerPortOnDisconnectEvent(portMock);
 
       expect(fido2Background["fido2ContentScriptPortsSet"].size).toBe(0);
     });
