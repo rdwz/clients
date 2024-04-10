@@ -69,8 +69,9 @@ export class AuthService implements AuthServiceAbstraction {
       return AuthenticationStatus.LoggedOut;
     }
 
-    // This checks if we have a user key in memory OR if we have the auto user key in secure storage for never lock scenarios
-    const hasUserKey = await this.cryptoService.hasUserKey(userId as UserId);
+    // Note: since we aggresively set the auto user key to memory if it exists on app init (see InitService)
+    // we only need to check if the user key is in memory.
+    const hasUserKey = await this.cryptoService.hasUserKeyInMemory(userId as UserId);
 
     return hasUserKey ? AuthenticationStatus.Unlocked : AuthenticationStatus.Locked;
   }
