@@ -10,9 +10,11 @@ import { LogService } from "../../../platform/abstractions/log.service";
 import { PlatformUtilsService } from "../../../platform/abstractions/platform-utils.service";
 import { StateService } from "../../../platform/abstractions/state.service";
 import { KeySuffixOptions } from "../../../platform/enums/key-suffix-options.enum";
+import { UserId } from "../../../types/guid";
 import { UserKey } from "../../../types/key";
+import { AccountService } from "../../abstractions/account.service";
 import { KdfConfigService } from "../../abstractions/kdf-config.service";
-import { KeyConnectorService as KeyConnectorServiceAbstraction } from "../../abstractions/key-connector.service";
+import { InternalMasterPasswordServiceAbstraction } from "../../abstractions/master-password.service.abstraction";
 import { UserVerificationApiServiceAbstraction } from "../../abstractions/user-verification/user-verification-api.service.abstraction";
 import { UserVerificationService as UserVerificationServiceAbstraction } from "../../abstractions/user-verification/user-verification.service.abstraction";
 import { VerificationType } from "../../enums/verification-type";
@@ -37,7 +39,8 @@ export class UserVerificationService implements UserVerificationServiceAbstracti
   constructor(
     private stateService: StateService,
     private cryptoService: CryptoService,
-    private keyConnectorService: KeyConnectorServiceAbstraction,
+    private accountService: AccountService,
+    private masterPasswordService: InternalMasterPasswordServiceAbstraction,
     private i18nService: I18nService,
     private userVerificationApiService: UserVerificationApiServiceAbstraction,
     private userDecryptionOptionsService: UserDecryptionOptionsServiceAbstraction,
@@ -111,7 +114,8 @@ export class UserVerificationService implements UserVerificationServiceAbstracti
     if (verification.type === VerificationType.OTP) {
       request.otp = verification.secret;
     } else {
-      let masterKey = await this.cryptoService.getMasterKey();
+      const userId = (await firstValueFrom(this.accountService.activeAccount$))?.id;
+      let masterKey = await firstValueFrom(this.masterPasswordService.masterKey$(userId));
       if (!masterKey && !alreadyHashed) {
         masterKey = await this.cryptoService.makeMasterKey(
           verification.secret,
@@ -167,7 +171,8 @@ export class UserVerificationService implements UserVerificationServiceAbstracti
   private async verifyUserByMasterPassword(
     verification: MasterPasswordVerification,
   ): Promise<boolean> {
-    let masterKey = await this.cryptoService.getMasterKey();
+    const userId = (await firstValueFrom(this.accountService.activeAccount$))?.id;
+    let masterKey = await firstValueFrom(this.masterPasswordService.masterKey$(userId));
     if (!masterKey) {
       masterKey = await this.cryptoService.makeMasterKey(
         verification.secret,
@@ -183,7 +188,7 @@ export class UserVerificationService implements UserVerificationServiceAbstracti
       throw new Error(this.i18nService.t("invalidMasterPassword"));
     }
     // TODO: we should re-evaluate later on if user verification should have the side effect of modifying state. Probably not.
-    await this.cryptoService.setMasterKey(masterKey);
+    await this.masterPasswordService.setMasterKey(masterKey, userId);
     return true;
   }
 
@@ -232,9 +237,10 @@ export class UserVerificationService implements UserVerificationServiceAbstracti
   }
 
   async hasMasterPasswordAndMasterKeyHash(userId?: string): Promise<boolean> {
+    userId ??= (await firstValueFrom(this.accountService.activeAccount$))?.id;
     return (
       (await this.hasMasterPassword(userId)) &&
-      (await this.cryptoService.getMasterKeyHash()) != null
+      (await firstValueFrom(this.masterPasswordService.masterKeyHash$(userId as UserId))) != null
     );
   }
 

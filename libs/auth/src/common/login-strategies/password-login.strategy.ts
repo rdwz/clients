@@ -1,10 +1,12 @@
-import { BehaviorSubject, map, Observable } from "rxjs";
+import { BehaviorSubject, firstValueFrom, map, Observable } from "rxjs";
 import { Jsonify } from "type-fest";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { MasterPasswordPolicyOptions } from "@bitwarden/common/admin-console/models/domain/master-password-policy-options";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config.service";
+import { InternalMasterPasswordServiceAbstraction } from "@bitwarden/common/auth/abstractions/master-password.service.abstraction";
 import { TokenService } from "@bitwarden/common/auth/abstractions/token.service";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
 import { AuthResult } from "@bitwarden/common/auth/models/domain/auth-result";
@@ -71,6 +73,8 @@ export class PasswordLoginStrategy extends LoginStrategy {
 
   constructor(
     data: PasswordLoginStrategyData,
+    accountService: AccountService,
+    masterPasswordService: InternalMasterPasswordServiceAbstraction,
     cryptoService: CryptoService,
     apiService: ApiService,
     tokenService: TokenService,
@@ -88,6 +92,8 @@ export class PasswordLoginStrategy extends LoginStrategy {
     kdfConfigService: KdfConfigService,
   ) {
     super(
+      accountService,
+      masterPasswordService,
       cryptoService,
       apiService,
       tokenService,
@@ -160,8 +166,10 @@ export class PasswordLoginStrategy extends LoginStrategy {
           });
         } else {
           // Authentication was successful, save the force update password options with the state service
-          await this.stateService.setForceSetPasswordReason(
+          const userId = (await firstValueFrom(this.accountService.activeAccount$))?.id;
+          await this.masterPasswordService.setForceSetPasswordReason(
             ForceSetPasswordReason.WeakMasterPassword,
+            userId,
           );
           authResult.forcePasswordReset = ForceSetPasswordReason.WeakMasterPassword;
         }
@@ -187,7 +195,8 @@ export class PasswordLoginStrategy extends LoginStrategy {
       !result.requiresCaptcha &&
       forcePasswordResetReason != ForceSetPasswordReason.None
     ) {
-      await this.stateService.setForceSetPasswordReason(forcePasswordResetReason);
+      const userId = (await firstValueFrom(this.accountService.activeAccount$))?.id;
+      await this.masterPasswordService.setForceSetPasswordReason(forcePasswordResetReason, userId);
       result.forcePasswordReset = forcePasswordResetReason;
     }
 
@@ -196,8 +205,9 @@ export class PasswordLoginStrategy extends LoginStrategy {
 
   protected override async setMasterKey(response: IdentityTokenResponse) {
     const { masterKey, localMasterKeyHash } = this.cache.value;
-    await this.cryptoService.setMasterKey(masterKey);
-    await this.cryptoService.setMasterKeyHash(localMasterKeyHash);
+    const userId = (await firstValueFrom(this.accountService.activeAccount$))?.id;
+    await this.masterPasswordService.setMasterKey(masterKey, userId);
+    await this.masterPasswordService.setMasterKeyHash(localMasterKeyHash, userId);
   }
 
   protected override async setUserKey(response: IdentityTokenResponse): Promise<void> {
@@ -207,7 +217,8 @@ export class PasswordLoginStrategy extends LoginStrategy {
     }
     await this.cryptoService.setMasterKeyEncryptedUserKey(response.key);
 
-    const masterKey = await this.cryptoService.getMasterKey();
+    const userId = (await firstValueFrom(this.accountService.activeAccount$))?.id;
+    const masterKey = await firstValueFrom(this.masterPasswordService.masterKey$(userId));
     if (masterKey) {
       const userKey = await this.cryptoService.decryptUserKeyWithMasterKey(masterKey);
       await this.cryptoService.setUserKey(userKey);

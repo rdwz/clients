@@ -6,6 +6,7 @@ import { KdfConfigService } from "@bitwarden/common/auth/abstractions/kdf-config
 import { TokenService } from "@bitwarden/common/auth/abstractions/token.service";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
 import { IdentityTokenResponse } from "@bitwarden/common/auth/models/response/identity-token.response";
+import { FakeMasterPasswordService } from "@bitwarden/common/auth/services/master-password/fake-master-password.service";
 import { BillingAccountProfileStateService } from "@bitwarden/common/billing/abstractions/account/billing-account-profile-state.service";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
@@ -15,7 +16,9 @@ import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/pl
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
+import { FakeAccountService, mockAccountServiceWith } from "@bitwarden/common/spec";
 import { CsprngArray } from "@bitwarden/common/types/csprng";
+import { UserId } from "@bitwarden/common/types/guid";
 import { MasterKey, UserKey } from "@bitwarden/common/types/key";
 
 import { InternalUserDecryptionOptionsServiceAbstraction } from "../abstractions/user-decryption-options.service.abstraction";
@@ -43,6 +46,10 @@ describe("AuthRequestLoginStrategy", () => {
   let deviceTrustCryptoService: MockProxy<DeviceTrustCryptoServiceAbstraction>;
   let billingAccountProfileStateService: MockProxy<BillingAccountProfileStateService>;
   let kdfConfigService: MockProxy<KdfConfigService>;
+
+  const mockUserId = Utils.newGuid() as UserId;
+  let accountService: FakeAccountService;
+  let masterPasswordService: FakeMasterPasswordService;
 
   let authRequestLoginStrategy: AuthRequestLoginStrategy;
   let credentials: AuthRequestLoginCredentials;
@@ -74,12 +81,17 @@ describe("AuthRequestLoginStrategy", () => {
     billingAccountProfileStateService = mock<BillingAccountProfileStateService>();
     kdfConfigService = mock<KdfConfigService>();
 
+    accountService = mockAccountServiceWith(mockUserId);
+    masterPasswordService = new FakeMasterPasswordService();
+
     tokenService.getTwoFactorToken.mockResolvedValue(null);
     appIdService.getAppId.mockResolvedValue(deviceId);
     tokenService.decodeAccessToken.mockResolvedValue({});
 
     authRequestLoginStrategy = new AuthRequestLoginStrategy(
       cache,
+      accountService,
+      masterPasswordService,
       cryptoService,
       apiService,
       tokenService,
@@ -112,13 +124,16 @@ describe("AuthRequestLoginStrategy", () => {
     const masterKey = new SymmetricCryptoKey(new Uint8Array(64).buffer as CsprngArray) as MasterKey;
     const userKey = new SymmetricCryptoKey(new Uint8Array(64).buffer as CsprngArray) as UserKey;
 
-    cryptoService.getMasterKey.mockResolvedValue(masterKey);
+    masterPasswordService.masterKeySubject.next(masterKey);
     cryptoService.decryptUserKeyWithMasterKey.mockResolvedValue(userKey);
 
     await authRequestLoginStrategy.logIn(credentials);
 
-    expect(cryptoService.setMasterKey).toHaveBeenCalledWith(masterKey);
-    expect(cryptoService.setMasterKeyHash).toHaveBeenCalledWith(decMasterKeyHash);
+    expect(masterPasswordService.mock.setMasterKey).toHaveBeenCalledWith(masterKey, mockUserId);
+    expect(masterPasswordService.mock.setMasterKeyHash).toHaveBeenCalledWith(
+      decMasterKeyHash,
+      mockUserId,
+    );
     expect(cryptoService.setMasterKeyEncryptedUserKey).toHaveBeenCalledWith(tokenResponse.key);
     expect(cryptoService.setUserKey).toHaveBeenCalledWith(userKey);
     expect(deviceTrustCryptoService.trustDeviceIfRequired).toHaveBeenCalled();
@@ -140,8 +155,8 @@ describe("AuthRequestLoginStrategy", () => {
     await authRequestLoginStrategy.logIn(credentials);
 
     // setMasterKey and setMasterKeyHash should not be called
-    expect(cryptoService.setMasterKey).not.toHaveBeenCalled();
-    expect(cryptoService.setMasterKeyHash).not.toHaveBeenCalled();
+    expect(masterPasswordService.mock.setMasterKey).not.toHaveBeenCalled();
+    expect(masterPasswordService.mock.setMasterKeyHash).not.toHaveBeenCalled();
 
     // setMasterKeyEncryptedUserKey, setUserKey, and setPrivateKey should still be called
     expect(cryptoService.setMasterKeyEncryptedUserKey).toHaveBeenCalledWith(tokenResponse.key);
