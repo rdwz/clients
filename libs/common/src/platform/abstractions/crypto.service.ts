@@ -136,18 +136,6 @@ export abstract class CryptoService {
     userKey?: UserKey,
   ): Promise<[UserKey, EncString]>;
   /**
-   * Decrypts the user key with the provided master key
-   * @param masterKey The user's master key
-   * @param userKey The user's encrypted symmetric key
-   * @param userId The desired user
-   * @returns The user key
-   */
-  abstract decryptUserKeyWithMasterKey(
-    masterKey: MasterKey,
-    userKey?: EncString,
-    userId?: string,
-  ): Promise<UserKey>;
-  /**
    * Creates a master password hash from the user's master password. Can
    * be used for local authentication or for server authentication depending
    * on the hashPurpose provided.
@@ -263,26 +251,7 @@ export abstract class CryptoService {
    * @param userId The desired user
    */
   abstract clearPinKeys(userId?: string): Promise<void>;
-  /**
-   * Creates a new Pin key that encrypts the user key instead of the
-   * master key. Clears the old Pin key from state.
-   * @param masterPasswordOnRestart True if Master Password on Restart is enabled
-   * @param pin User's PIN
-   * @param email User's email
-   * @param kdf User's KdfType
-   * @param kdfConfig User's KdfConfig
-   * @param oldPinKeyEncryptedMasterKey The old pin key encrypted master key from state (retrieved from different
-   * places depending on if Master Password on Restart was enabled)
-   * @returns The user key
-   */
-  abstract decryptAndMigrateOldPinKey(
-    masterPasswordOnRestart: boolean,
-    pin: string,
-    email: string,
-    kdf: KdfType,
-    kdfConfig: KdfConfig,
-    oldPinKeyEncryptedMasterKey: EncString,
-  ): Promise<UserKey>;
+
   /**
    * Replaces old master auto keys with new user auto keys
    */
@@ -337,16 +306,6 @@ export abstract class CryptoService {
    */
   abstract validateKdfConfig(kdf: KdfType, kdfConfig: KdfConfig): void;
 
-  /**
-   * @deprecated Left for migration purposes. Use decryptUserKeyWithPin instead.
-   */
-  abstract decryptMasterKeyWithPin(
-    pin: string,
-    salt: string,
-    kdf: KdfType,
-    kdfConfig: KdfConfig,
-    protectedKeyCs?: EncString,
-  ): Promise<MasterKey>;
   /**
    * Previously, the master key was used for any additional key like the biometrics or pin key.
    * We have switched to using the user key for these purposes. This method is for clearing the state

@@ -266,7 +266,7 @@ export class LockComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const userKey = await this.cryptoService.decryptUserKeyWithMasterKey(masterKey);
+    const userKey = await this.masterPasswordService.decryptUserKeyWithMasterKey(masterKey);
     await this.masterPasswordService.setMasterKey(masterKey, userId);
     await this.setUserKeyAndContinue(userKey, true);
   }

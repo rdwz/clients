@@ -184,11 +184,11 @@ describe("UserApiLoginStrategy", () => {
 
     apiService.postIdentityToken.mockResolvedValue(tokenResponse);
     masterPasswordService.masterKeySubject.next(masterKey);
-    cryptoService.decryptUserKeyWithMasterKey.mockResolvedValue(userKey);
+    masterPasswordService.decryptUserKeyWithMasterKey.mockResolvedValue(userKey);
 
     await apiLogInStrategy.logIn(credentials);
 
-    expect(cryptoService.decryptUserKeyWithMasterKey).toHaveBeenCalledWith(masterKey);
+    expect(masterPasswordService.decryptUserKeyWithMasterKey).toHaveBeenCalledWith(masterKey);
     expect(cryptoService.setUserKey).toHaveBeenCalledWith(userKey);
   });
 });

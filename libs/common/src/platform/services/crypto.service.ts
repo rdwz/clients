@@ -336,46 +336,6 @@ export class CryptoService implements CryptoServiceAbstraction {
     return await this.buildProtectedSymmetricKey(masterKey, userKey.key);
   }
 
-  // TODO: move to master password service
-  async decryptUserKeyWithMasterKey(
-    masterKey: MasterKey,
-    userKey?: EncString,
-    userId?: UserId,
-  ): Promise<UserKey> {
-    userId ??= await firstValueFrom(this.stateProvider.activeUserId$);
-    userKey ??= await this.masterPasswordService.getMasterKeyEncryptedUserKey(userId);
-    masterKey ??= await firstValueFrom(this.masterPasswordService.masterKey$(userId));
-    if (masterKey == null) {
-      throw new Error("No master key found.");
-    }
-
-    // Try one more way to get the user key if it still wasn't found.
-    if (userKey == null) {
-      const deprecatedKey = await this.stateService.getEncryptedCryptoSymmetricKey({
-        userId: userId,
-      });
-      if (deprecatedKey == null) {
-        throw new Error("No encrypted user key found.");
-      }
-      userKey = new EncString(deprecatedKey);
-    }
-
-    let decUserKey: Uint8Array;
-    if (userKey.encryptionType === EncryptionType.AesCbc256_B64) {
-      decUserKey = await this.encryptService.decryptToBytes(userKey, masterKey);
-    } else if (userKey.encryptionType === EncryptionType.AesCbc256_HmacSha256_B64) {
-      const newKey = await this.keyGenerationService.stretchKey(masterKey);
-      decUserKey = await this.encryptService.decryptToBytes(userKey, newKey);
-    } else {
-      throw new Error("Unsupported encryption type.");
-    }
-    if (decUserKey == null) {
-      return null;
-    }
-
-    return new SymmetricCryptoKey(decUserKey) as UserKey;
-  }
-
   // TODO: move to MasterPasswordService
   async hashMasterKey(
     password: string,
@@ -584,30 +544,6 @@ export class CryptoService implements CryptoServiceAbstraction {
     await this.pinService.setPinKeyEncryptedUserKeyEphemeral(null, userId);
     await this.pinService.setProtectedPin(null, userId);
     await this.clearDeprecatedKeys(KeySuffixOptions.Pin, userId);
-  }
-
-  // only for migration purposes
-  async decryptMasterKeyWithPin(
-    pin: string,
-    salt: string,
-    kdf: KdfType,
-    kdfConfig: KdfConfig,
-    pinKeyEncryptedMasterKey?: EncString,
-  ): Promise<MasterKey> {
-    if (!pinKeyEncryptedMasterKey) {
-      const pinKeyEncryptedMasterKeyString = await this.stateService.getEncryptedPinProtected();
-
-      if (pinKeyEncryptedMasterKeyString == null) {
-        throw new Error("No PIN encrypted key found.");
-      }
-
-      pinKeyEncryptedMasterKey = new EncString(pinKeyEncryptedMasterKeyString);
-    }
-
-    const pinKey = await this.pinService.makePinKey(pin, salt, kdf, kdfConfig);
-    const masterKey = await this.encryptService.decryptToBytes(pinKeyEncryptedMasterKey, pinKey);
-
-    return new SymmetricCryptoKey(masterKey) as MasterKey;
   }
 
   async makeSendKey(keyMaterial: CsprngArray): Promise<SymmetricCryptoKey> {
@@ -983,7 +919,7 @@ export class CryptoService implements CryptoServiceAbstraction {
     const encryptedUserKey = await this.stateService.getEncryptedCryptoSymmetricKey({
       userId: userId,
     });
-    const userKey = await this.decryptUserKeyWithMasterKey(
+    const userKey = await this.masterPasswordService.decryptUserKeyWithMasterKey(
       masterKey,
       new EncString(encryptedUserKey),
       userId,
@@ -993,48 +929,6 @@ export class CryptoService implements CryptoServiceAbstraction {
     await this.stateService.setCryptoMasterKeyAuto(null, { userId: userId });
     // Set encrypted user key in case user immediately locks without syncing
     await this.setMasterKeyEncryptedUserKey(encryptedUserKey);
-  }
-
-  async decryptAndMigrateOldPinKey(
-    masterPasswordOnRestart: boolean,
-    pin: string,
-    email: string,
-    kdf: KdfType,
-    kdfConfig: KdfConfig,
-    oldPinKeyEncryptedMasterKey: EncString,
-  ): Promise<UserKey> {
-    // Decrypt
-    const masterKey = await this.decryptMasterKeyWithPin(
-      pin,
-      email,
-      kdf,
-      kdfConfig,
-      oldPinKeyEncryptedMasterKey,
-    );
-    const encUserKey = await this.stateService.getEncryptedCryptoSymmetricKey();
-    const userKey = await this.decryptUserKeyWithMasterKey(masterKey, new EncString(encUserKey));
-
-    // Migrate
-    const pinKey = await this.pinService.makePinKey(pin, email, kdf, kdfConfig);
-    const pinKeyEncryptedUserKey = await this.encryptService.encrypt(userKey.key, pinKey);
-
-    if (masterPasswordOnRestart) {
-      await this.stateService.setDecryptedPinProtected(null);
-      await this.pinService.setPinKeyEncryptedUserKeyEphemeral(pinKeyEncryptedUserKey);
-    } else {
-      await this.stateService.setEncryptedPinProtected(null);
-      await this.pinService.setPinKeyEncryptedUserKey(pinKeyEncryptedUserKey);
-      // We previously only set the protected pin if MP on Restart was enabled
-      // now we set it regardless
-      const userKeyEncryptedPin = await this.encryptService.encrypt(pin, userKey);
-      await this.pinService.setProtectedPin(userKeyEncryptedPin.encryptedString);
-    }
-
-    // This also clears the old Biometrics key since the new Biometrics key will
-    // be created when the user key is set.
-    await this.stateService.setCryptoMasterKeyBiometric(null);
-
-    return userKey;
   }
 
   // --DEPRECATED METHODS--

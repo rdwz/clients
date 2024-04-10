@@ -2,7 +2,7 @@ import { KdfConfig } from "@bitwarden/common/auth/models/domain/kdf-config";
 import { KdfType } from "@bitwarden/common/platform/enums";
 import { EncString } from "@bitwarden/common/platform/models/domain/enc-string";
 import { UserId } from "@bitwarden/common/types/guid";
-import { PinKey, UserKey } from "@bitwarden/common/types/key";
+import { MasterKey, PinKey, UserKey } from "@bitwarden/common/types/key";
 
 export abstract class PinServiceAbstraction {
   /**
@@ -63,6 +63,38 @@ export abstract class PinServiceAbstraction {
     kdf: KdfType,
     kdfConfig: KdfConfig,
   ): Promise<PinKey>;
+
+  /**
+   * Creates a new Pin key that encrypts the user key instead of the
+   * master key. Clears the old Pin key from state.
+   * @param masterPasswordOnRestart True if Master Password on Restart is enabled
+   * @param pin User's PIN
+   * @param email User's email
+   * @param kdf User's KdfType
+   * @param kdfConfig User's KdfConfig
+   * @param oldPinKeyEncryptedMasterKey The old pin key encrypted master key from state (retrieved from different
+   * places depending on if Master Password on Restart was enabled)
+   * @returns The user key
+   */
+  abstract decryptAndMigrateOldPinKey(
+    masterPasswordOnRestart: boolean,
+    pin: string,
+    email: string,
+    kdf: KdfType,
+    kdfConfig: KdfConfig,
+    oldPinKeyEncryptedMasterKey: EncString,
+  ): Promise<UserKey>;
+
+  /**
+   * @deprecated Left for migration purposes. Use decryptUserKeyWithPin instead.
+   */
+  abstract decryptMasterKeyWithPin(
+    pin: string,
+    salt: string,
+    kdf: KdfType,
+    kdfConfig: KdfConfig,
+    protectedKeyCs?: EncString,
+  ): Promise<MasterKey>;
 
   decryptUserKeyWithPin: (pin: string) => Promise<UserKey | null>;
 }

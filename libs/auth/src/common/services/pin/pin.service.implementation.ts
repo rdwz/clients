@@ -1,6 +1,7 @@
 import { firstValueFrom } from "rxjs";
 
 import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
+import { InternalMasterPasswordServiceAbstraction } from "@bitwarden/common/auth/abstractions/master-password.service.abstraction";
 import { KdfConfig } from "@bitwarden/common/auth/models/domain/kdf-config";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { EncryptService } from "@bitwarden/common/platform/abstractions/encrypt.service";
@@ -18,7 +19,7 @@ import {
 } from "@bitwarden/common/platform/state";
 import { PinLockType } from "@bitwarden/common/services/vault-timeout/vault-timeout-settings.service";
 import { UserId } from "@bitwarden/common/types/guid";
-import { PinKey, UserKey } from "@bitwarden/common/types/key";
+import { MasterKey, PinKey, UserKey } from "@bitwarden/common/types/key";
 
 import { PinServiceAbstraction } from "../../abstractions/pin.service.abstraction";
 
@@ -49,6 +50,7 @@ export class PinService implements PinServiceAbstraction {
   constructor(
     private stateProvider: StateProvider,
     private stateService: StateService,
+    private masterPasswordService: InternalMasterPasswordServiceAbstraction,
     private keyGenerationService: KeyGenerationService,
     private encryptService: EncryptService,
     private cryptoService: CryptoService,
@@ -94,6 +96,75 @@ export class PinService implements PinServiceAbstraction {
     await this.stateProvider.setUserState(PROTECTED_PIN, value, userId);
   }
 
+  async decryptAndMigrateOldPinKey(
+    masterPasswordOnRestart: boolean,
+    pin: string,
+    email: string,
+    kdf: KdfType,
+    kdfConfig: KdfConfig,
+    oldPinKeyEncryptedMasterKey: EncString,
+  ): Promise<UserKey> {
+    // Decrypt
+    const masterKey = await this.decryptMasterKeyWithPin(
+      pin,
+      email,
+      kdf,
+      kdfConfig,
+      oldPinKeyEncryptedMasterKey,
+    );
+    const encUserKey = await this.stateService.getEncryptedCryptoSymmetricKey();
+    const userKey = await this.masterPasswordService.decryptUserKeyWithMasterKey(
+      masterKey,
+      new EncString(encUserKey),
+    );
+
+    // Migrate
+    const pinKey = await this.makePinKey(pin, email, kdf, kdfConfig);
+    const pinKeyEncryptedUserKey = await this.encryptService.encrypt(userKey.key, pinKey);
+
+    if (masterPasswordOnRestart) {
+      await this.stateService.setDecryptedPinProtected(null);
+      await this.setPinKeyEncryptedUserKeyEphemeral(pinKeyEncryptedUserKey);
+    } else {
+      await this.stateService.setEncryptedPinProtected(null);
+      await this.setPinKeyEncryptedUserKey(pinKeyEncryptedUserKey);
+      // We previously only set the protected pin if MP on Restart was enabled
+      // now we set it regardless
+      const userKeyEncryptedPin = await this.encryptService.encrypt(pin, userKey);
+      await this.setProtectedPin(userKeyEncryptedPin.encryptedString);
+    }
+
+    // This also clears the old Biometrics key since the new Biometrics key will
+    // be created when the user key is set.
+    await this.stateService.setCryptoMasterKeyBiometric(null);
+
+    return userKey;
+  }
+
+  // only for migration purposes
+  async decryptMasterKeyWithPin(
+    pin: string,
+    salt: string,
+    kdf: KdfType,
+    kdfConfig: KdfConfig,
+    pinKeyEncryptedMasterKey?: EncString,
+  ): Promise<MasterKey> {
+    if (!pinKeyEncryptedMasterKey) {
+      const pinKeyEncryptedMasterKeyString = await this.stateService.getEncryptedPinProtected();
+
+      if (pinKeyEncryptedMasterKeyString == null) {
+        throw new Error("No PIN encrypted key found.");
+      }
+
+      pinKeyEncryptedMasterKey = new EncString(pinKeyEncryptedMasterKeyString);
+    }
+
+    const pinKey = await this.makePinKey(pin, salt, kdf, kdfConfig);
+    const masterKey = await this.encryptService.decryptToBytes(pinKeyEncryptedMasterKey, pinKey);
+
+    return new SymmetricCryptoKey(masterKey) as MasterKey;
+  }
+
   async decryptUserKeyWithPin(pin: string): Promise<UserKey | null> {
     try {
       const pinLockType: PinLockType = await this.vaultTimeoutSettingsService.isPinLockSet();
@@ -107,7 +178,7 @@ export class PinService implements PinServiceAbstraction {
       const email = await this.stateService.getEmail();
 
       if (oldPinKeyEncryptedMasterKey) {
-        userKey = await this.cryptoService.decryptAndMigrateOldPinKey(
+        userKey = await this.decryptAndMigrateOldPinKey(
           pinLockType === "TRANSIENT",
           pin,
           email,
@@ -194,10 +265,11 @@ export class PinService implements PinServiceAbstraction {
 
   private async validatePin(userKey: UserKey, pin: string): Promise<boolean> {
     const protectedPin = await this.getProtectedPin();
-    const decryptedPin = await this.cryptoService.decryptToUtf8(
+    const decryptedPin = await this.encryptService.decryptToUtf8(
       new EncString(protectedPin),
       userKey,
     );
+
     return decryptedPin === pin;
   }
 }

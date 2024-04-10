@@ -2,7 +2,7 @@ import { Observable } from "rxjs";
 
 import { EncString } from "../../platform/models/domain/enc-string";
 import { UserId } from "../../types/guid";
-import { MasterKey } from "../../types/key";
+import { MasterKey, UserKey } from "../../types/key";
 import { ForceSetPasswordReason } from "../models/domain/force-set-password-reason";
 
 export abstract class MasterPasswordServiceAbstraction {
@@ -79,4 +79,17 @@ export abstract class InternalMasterPasswordServiceAbstraction extends MasterPas
     reason: ForceSetPasswordReason,
     userId: UserId,
   ) => Promise<void>;
+
+  /**
+   * Decrypts the user key with the provided master key
+   * @param masterKey The user's master key
+   * @param userKey The user's encrypted symmetric key
+   * @param userId The desired user
+   * @returns The user key
+   */
+  abstract decryptUserKeyWithMasterKey(
+    masterKey: MasterKey,
+    userKey?: EncString,
+    userId?: string,
+  ): Promise<UserKey>;
 }
