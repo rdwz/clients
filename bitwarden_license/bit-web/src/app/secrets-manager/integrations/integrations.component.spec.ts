@@ -3,8 +3,8 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
 import { mock } from "jest-mock-extended";
 
-import { I18nService } from "../../../../../../libs/common/src/platform/abstractions/i18n.service.ts";
-import { I18nPipe } from "../../../../../../libs/components/src/shared/i18n.pipe.ts";
+import { I18nService } from "../../../../../../libs/common/src/platform/abstractions/i18n.service";
+import { I18nPipe } from "../../../../../../libs/components/src/shared/i18n.pipe";
 
 import { IntegrationCardComponent } from "./integration-card/integration-card.component";
 import { IntegrationGridComponent } from "./integration-grid/integration-grid.component";
