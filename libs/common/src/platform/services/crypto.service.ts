@@ -209,10 +209,7 @@ export class CryptoService implements CryptoServiceAbstraction {
     if (userId == null) {
       return false;
     }
-    return (
-      (await this.hasUserKeyInMemory(userId)) ||
-      (await this.hasUserKeyStored(KeySuffixOptions.Auto, userId))
-    );
+    return await this.hasUserKeyInMemory(userId);
   }
 
   async hasUserKeyInMemory(userId?: UserId): Promise<boolean> {

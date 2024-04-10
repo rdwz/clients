@@ -134,17 +134,6 @@ describe("cryptoService", () => {
     },
   );
 
-  describe("hasUserKey", () => {
-    it.each([true, false])(
-      "returns %s when the user key is not in memory, but the auto key is set",
-      async (hasKey) => {
-        stateProvider.singleUser.getFake(mockUserId, USER_KEY).nextState(null);
-        cryptoService.hasUserKeyStored = jest.fn().mockResolvedValue(hasKey);
-        expect(await cryptoService.hasUserKey(mockUserId)).toBe(hasKey);
-      },
-    );
-  });
-
   describe("getUserKeyWithLegacySupport", () => {
     let mockUserKey: UserKey;
     let mockMasterKey: MasterKey;
