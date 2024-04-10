@@ -791,7 +791,7 @@ const safeProviders: SafeProvider[] = [
   safeProvider({
     provide: InternalMasterPasswordServiceAbstraction,
     useClass: MasterPasswordService,
-    deps: [StateProvider],
+    deps: [StateProvider, StateService, KeyGenerationServiceAbstraction, EncryptService],
   }),
   safeProvider({
     provide: MasterPasswordServiceAbstraction,
@@ -976,9 +976,9 @@ const safeProviders: SafeProvider[] = [
     deps: [
       StateProvider,
       StateServiceAbstraction,
+      InternalMasterPasswordServiceAbstraction,
       KeyGenerationServiceAbstraction,
       EncryptService,
-      CryptoServiceAbstraction,
       VaultTimeoutSettingsServiceAbstraction,
       LogService,
     ],

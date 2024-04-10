@@ -5,10 +5,6 @@ import {
   vaultTimeoutSettingsServiceFactory,
 } from "../../../background/service-factories/vault-timeout-settings-service.factory";
 import {
-  CryptoServiceInitOptions,
-  cryptoServiceFactory,
-} from "../../../platform/background/service-factories/crypto-service.factory";
-import {
   EncryptServiceInitOptions,
   encryptServiceFactory,
 } from "../../../platform/background/service-factories/encrypt-service.factory";
@@ -34,14 +30,19 @@ import {
   stateServiceFactory,
 } from "../../../platform/background/service-factories/state-service.factory";
 
+import {
+  MasterPasswordServiceInitOptions,
+  internalMasterPasswordServiceFactory,
+} from "./master-password-service.factory";
+
 type PinServiceFactoryOptions = FactoryOptions;
 
 export type PinServiceInitOptions = PinServiceFactoryOptions &
   StateProviderInitOptions &
   StateServiceInitOptions &
+  MasterPasswordServiceInitOptions &
   KeyGenerationServiceInitOptions &
   EncryptServiceInitOptions &
-  CryptoServiceInitOptions &
   VaultTimeoutSettingsServiceInitOptions &
   LogServiceInitOptions;
 
@@ -57,9 +58,9 @@ export function pinServiceFactory(
       new PinService(
         await stateProviderFactory(cache, opts),
         await stateServiceFactory(cache, opts),
+        await internalMasterPasswordServiceFactory(cache, opts),
         await keyGenerationServiceFactory(cache, opts),
         await encryptServiceFactory(cache, opts),
-        await cryptoServiceFactory(cache, opts),
         await vaultTimeoutSettingsServiceFactory(cache, opts),
         await logServiceFactory(cache, opts),
       ),

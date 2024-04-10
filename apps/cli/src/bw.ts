@@ -571,9 +571,9 @@ export class Main {
     this.pinService = new PinService(
       this.stateProvider,
       this.stateService,
+      this.masterPasswordService,
       this.keyGenerationService,
       this.encryptService,
-      this.cryptoService,
       this.vaultTimeoutSettingsService,
       this.logService,
     );

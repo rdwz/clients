@@ -3,7 +3,6 @@ import { firstValueFrom } from "rxjs";
 import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
 import { InternalMasterPasswordServiceAbstraction } from "@bitwarden/common/auth/abstractions/master-password.service.abstraction";
 import { KdfConfig } from "@bitwarden/common/auth/models/domain/kdf-config";
-import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { EncryptService } from "@bitwarden/common/platform/abstractions/encrypt.service";
 import { KeyGenerationService } from "@bitwarden/common/platform/abstractions/key-generation.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
@@ -53,7 +52,6 @@ export class PinService implements PinServiceAbstraction {
     private masterPasswordService: InternalMasterPasswordServiceAbstraction,
     private keyGenerationService: KeyGenerationService,
     private encryptService: EncryptService,
-    private cryptoService: CryptoService,
     private vaultTimeoutSettingsService: VaultTimeoutSettingsService,
     private logService: LogService,
   ) {}

@@ -483,7 +483,12 @@ export default class MainBackground {
 
     const themeStateService = new DefaultThemeStateService(this.globalStateProvider);
 
-    this.masterPasswordService = new MasterPasswordService(this.stateProvider);
+    this.masterPasswordService = new MasterPasswordService(
+      this.stateProvider,
+      this.stateService,
+      this.keyGenerationService,
+      this.encryptService,
+    );
 
     this.i18nService = new I18nService(BrowserApi.getUILanguage(), this.globalStateProvider);
     this.cryptoService = new BrowserCryptoService(
@@ -677,9 +682,9 @@ export default class MainBackground {
     this.pinService = new PinService(
       this.stateProvider,
       this.stateService,
+      this.masterPasswordService,
       this.keyGenerationService,
       this.encryptService,
-      this.cryptoService,
       this.vaultTimeoutSettingsService,
       this.logService,
     );
