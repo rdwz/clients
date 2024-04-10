@@ -677,6 +677,8 @@ export default class MainBackground {
     this.pinService = new PinService(
       this.stateProvider,
       this.stateService,
+      this.keyGenerationService,
+      this.encryptService,
       this.cryptoService,
       this.vaultTimeoutSettingsService,
       this.logService,
@@ -810,6 +812,7 @@ export default class MainBackground {
     this.individualVaultExportService = new IndividualVaultExportService(
       this.folderService,
       this.cipherService,
+      this.pinService,
       this.cryptoService,
       this.cryptoFunctionService,
       this.stateService,
@@ -818,6 +821,7 @@ export default class MainBackground {
     this.organizationVaultExportService = new OrganizationVaultExportService(
       this.cipherService,
       this.apiService,
+      this.pinService,
       this.cryptoService,
       this.cryptoFunctionService,
       this.stateService,

@@ -1,6 +1,8 @@
+import { KdfConfig } from "@bitwarden/common/auth/models/domain/kdf-config";
+import { KdfType } from "@bitwarden/common/platform/enums";
 import { EncString } from "@bitwarden/common/platform/models/domain/enc-string";
 import { UserId } from "@bitwarden/common/types/guid";
-import { UserKey } from "@bitwarden/common/types/key";
+import { PinKey, UserKey } from "@bitwarden/common/types/key";
 
 export abstract class PinServiceAbstraction {
   /**
@@ -31,6 +33,36 @@ export abstract class PinServiceAbstraction {
    * Sets the user's Pin, encrypted by the user key
    */
   setProtectedPin: (value: string, userId?: UserId) => Promise<void>;
+  /**
+   * Decrypts the user key with their pin
+   * @param pin The user's PIN
+   * @param salt The user's salt
+   * @param kdf The user's KDF
+   * @param kdfConfig The user's KDF config
+   * @param pinKeyEncryptedUserKey The user's PIN protected symmetric key, if not provided
+   * it will be retrieved from storage
+   * @returns The decrypted user key
+   */
+  abstract decryptUserKey(
+    pin: string,
+    salt: string,
+    kdf: KdfType,
+    kdfConfig: KdfConfig,
+    pinKeyEncryptedUserKey?: EncString,
+  ): Promise<UserKey>;
+  /**
+   * @param pin The user's pin
+   * @param salt The user's salt
+   * @param kdf The user's kdf
+   * @param kdfConfig The user's kdf config
+   * @returns A key derived from the user's pin
+   */
+  abstract makePinKey(
+    pin: string,
+    salt: string,
+    kdf: KdfType,
+    kdfConfig: KdfConfig,
+  ): Promise<PinKey>;
 
   decryptUserKeyWithPin: (pin: string) => Promise<UserKey | null>;
 }

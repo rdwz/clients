@@ -56,4 +56,6 @@ export abstract class KeyGenerationService {
     kdf: KdfType,
     kdfConfig: KdfConfig,
   ): Promise<SymmetricCryptoKey>;
+
+  abstract stretchKey(key: SymmetricCryptoKey): Promise<SymmetricCryptoKey>;
 }

@@ -17,6 +17,7 @@ import {
   BitwardenUnEncryptedOrgJsonExport,
 } from "@bitwarden/vault-export-core";
 
+import { PinServiceAbstraction } from "../../../../auth/src/common/abstractions";
 import { ImportResult } from "../../models/import-result";
 import { BaseImporter } from "../base-importer";
 import { Importer } from "../importer";
@@ -28,6 +29,7 @@ export class BitwardenJsonImporter extends BaseImporter implements Importer {
     protected cryptoService: CryptoService,
     protected i18nService: I18nService,
     protected cipherService: CipherService,
+    protected pinService: PinServiceAbstraction,
   ) {
     super();
   }

@@ -42,7 +42,7 @@ export class SetPinComponent implements OnInit {
       return;
     }
 
-    const pinKey = await this.cryptoService.makePinKey(
+    const pinKey = await this.pinService.makePinKey(
       pin,
       await this.stateService.getEmail(),
       await this.stateService.getKdfType(),

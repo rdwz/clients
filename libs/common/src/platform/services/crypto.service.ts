@@ -18,7 +18,6 @@ import {
   UserKey,
   MasterKey,
   ProviderKey,
-  PinKey,
   CipherKey,
   UserPrivateKey,
   UserPublicKey,
@@ -365,7 +364,7 @@ export class CryptoService implements CryptoServiceAbstraction {
     if (userKey.encryptionType === EncryptionType.AesCbc256_B64) {
       decUserKey = await this.encryptService.decryptToBytes(userKey, masterKey);
     } else if (userKey.encryptionType === EncryptionType.AesCbc256_HmacSha256_B64) {
-      const newKey = await this.stretchKey(masterKey);
+      const newKey = await this.keyGenerationService.stretchKey(masterKey);
       decUserKey = await this.encryptService.decryptToBytes(userKey, newKey);
     } else {
       throw new Error("Unsupported encryption type.");
@@ -580,36 +579,11 @@ export class CryptoService implements CryptoServiceAbstraction {
     await this.stateProvider.setUserState(USER_ENCRYPTED_PRIVATE_KEY, null, userId);
   }
 
-  async makePinKey(pin: string, salt: string, kdf: KdfType, kdfConfig: KdfConfig): Promise<PinKey> {
-    const pinKey = await this.keyGenerationService.deriveKeyFromPassword(pin, salt, kdf, kdfConfig);
-    return (await this.stretchKey(pinKey)) as PinKey;
-  }
-
   async clearPinKeys(userId?: UserId): Promise<void> {
     await this.pinService.setPinKeyEncryptedUserKey(null, userId);
     await this.pinService.setPinKeyEncryptedUserKeyEphemeral(null, userId);
     await this.pinService.setProtectedPin(null, userId);
     await this.clearDeprecatedKeys(KeySuffixOptions.Pin, userId);
-  }
-
-  async decryptUserKeyWithPin(
-    pin: string,
-    salt: string,
-    kdf: KdfType,
-    kdfConfig: KdfConfig,
-    pinKeyEncryptedUserKey?: EncString,
-  ): Promise<UserKey> {
-    pinKeyEncryptedUserKey ||= await this.pinService.getPinKeyEncryptedUserKey();
-    pinKeyEncryptedUserKey ||= await this.pinService.getPinKeyEncryptedUserKeyEphemeral();
-
-    if (!pinKeyEncryptedUserKey) {
-      throw new Error("No PIN encrypted key found.");
-    }
-
-    const pinKey = await this.makePinKey(pin, salt, kdf, kdfConfig);
-    const userKey = await this.encryptService.decryptToBytes(pinKeyEncryptedUserKey, pinKey);
-
-    return new SymmetricCryptoKey(userKey) as UserKey;
   }
 
   // only for migration purposes
@@ -630,7 +604,7 @@ export class CryptoService implements CryptoServiceAbstraction {
       pinKeyEncryptedMasterKey = new EncString(pinKeyEncryptedMasterKeyString);
     }
 
-    const pinKey = await this.makePinKey(pin, salt, kdf, kdfConfig);
+    const pinKey = await this.pinService.makePinKey(pin, salt, kdf, kdfConfig);
     const masterKey = await this.encryptService.decryptToBytes(pinKeyEncryptedMasterKey, pinKey);
 
     return new SymmetricCryptoKey(masterKey) as MasterKey;
@@ -855,7 +829,7 @@ export class CryptoService implements CryptoServiceAbstraction {
       new EncString(await this.pinService.getProtectedPin(userId)),
       key,
     );
-    const pinKey = await this.makePinKey(
+    const pinKey = await this.pinService.makePinKey(
       pin,
       await this.stateService.getEmail({ userId: userId }),
       await this.stateService.getKdfType({ userId: userId }),
@@ -942,15 +916,6 @@ export class CryptoService implements CryptoServiceAbstraction {
     await this.pinService.setPinKeyEncryptedUserKeyEphemeral(null, userId);
   }
 
-  private async stretchKey(key: SymmetricCryptoKey): Promise<SymmetricCryptoKey> {
-    const newKey = new Uint8Array(64);
-    const encKey = await this.cryptoFunctionService.hkdfExpand(key.key, "enc", 32, "sha256");
-    const macKey = await this.cryptoFunctionService.hkdfExpand(key.key, "mac", 32, "sha256");
-    newKey.set(new Uint8Array(encKey));
-    newKey.set(new Uint8Array(macKey), 32);
-    return new SymmetricCryptoKey(newKey);
-  }
-
   private async hashPhrase(hash: Uint8Array, minimumEntropy = 64) {
     const entropyPerWord = Math.log(EFFLongWordList.length) / Math.log(2);
     let numWords = Math.ceil(minimumEntropy / entropyPerWord);
@@ -977,7 +942,7 @@ export class CryptoService implements CryptoServiceAbstraction {
   ): Promise<[T, EncString]> {
     let protectedSymKey: EncString = null;
     if (encryptionKey.key.byteLength === 32) {
-      const stretchedEncryptionKey = await this.stretchKey(encryptionKey);
+      const stretchedEncryptionKey = await this.keyGenerationService.stretchKey(encryptionKey);
       protectedSymKey = await this.encryptService.encrypt(newSymKey, stretchedEncryptionKey);
     } else if (encryptionKey.key.byteLength === 64) {
       protectedSymKey = await this.encryptService.encrypt(newSymKey, encryptionKey);
@@ -1050,7 +1015,7 @@ export class CryptoService implements CryptoServiceAbstraction {
     const userKey = await this.decryptUserKeyWithMasterKey(masterKey, new EncString(encUserKey));
 
     // Migrate
-    const pinKey = await this.makePinKey(pin, email, kdf, kdfConfig);
+    const pinKey = await this.pinService.makePinKey(pin, email, kdf, kdfConfig);
     const pinKeyEncryptedUserKey = await this.encryptService.encrypt(userKey.key, pinKey);
 
     if (masterPasswordOnRestart) {

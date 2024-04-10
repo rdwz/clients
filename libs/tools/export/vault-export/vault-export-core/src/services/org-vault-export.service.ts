@@ -17,6 +17,7 @@ import { CollectionDetailsResponse } from "@bitwarden/common/vault/models/respon
 import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { CollectionView } from "@bitwarden/common/vault/models/view/collection.view";
 
+import { PinServiceAbstraction } from "../../../../../../auth/src/common/abstractions";
 import {
   BitwardenCsvOrgExportType,
   BitwardenEncryptedOrgJsonExport,
@@ -34,12 +35,13 @@ export class OrganizationVaultExportService
   constructor(
     private cipherService: CipherService,
     private apiService: ApiService,
+    pinService: PinServiceAbstraction,
     cryptoService: CryptoService,
     cryptoFunctionService: CryptoFunctionService,
     stateService: StateService,
     private collectionService: CollectionService,
   ) {
-    super(cryptoService, cryptoFunctionService, stateService);
+    super(pinService, cryptoService, cryptoFunctionService, stateService);
   }
 
   async getPasswordProtectedExport(

@@ -571,6 +571,8 @@ export class Main {
     this.pinService = new PinService(
       this.stateProvider,
       this.stateService,
+      this.keyGenerationService,
+      this.encryptService,
       this.cryptoService,
       this.vaultTimeoutSettingsService,
       this.logService,
@@ -651,6 +653,7 @@ export class Main {
     this.individualExportService = new IndividualVaultExportService(
       this.folderService,
       this.cipherService,
+      this.pinService,
       this.cryptoService,
       this.cryptoFunctionService,
       this.stateService,
@@ -659,6 +662,7 @@ export class Main {
     this.organizationExportService = new OrganizationVaultExportService(
       this.cipherService,
       this.apiService,
+      this.pinService,
       this.cryptoService,
       this.cryptoFunctionService,
       this.stateService,

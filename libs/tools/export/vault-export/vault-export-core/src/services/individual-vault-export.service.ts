@@ -13,6 +13,7 @@ import { Folder } from "@bitwarden/common/vault/models/domain/folder";
 import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { FolderView } from "@bitwarden/common/vault/models/view/folder.view";
 
+import { PinServiceAbstraction } from "../../../../../../auth/src/common/abstractions";
 import {
   BitwardenCsvIndividualExportType,
   BitwardenEncryptedIndividualJsonExport,
@@ -30,11 +31,12 @@ export class IndividualVaultExportService
   constructor(
     private folderService: FolderService,
     private cipherService: CipherService,
+    pinService: PinServiceAbstraction,
     cryptoService: CryptoService,
     cryptoFunctionService: CryptoFunctionService,
     stateService: StateService,
   ) {
-    super(cryptoService, cryptoFunctionService, stateService);
+    super(pinService, cryptoService, cryptoFunctionService, stateService);
   }
 
   async getExport(format: ExportFormat = "csv"): Promise<string> {

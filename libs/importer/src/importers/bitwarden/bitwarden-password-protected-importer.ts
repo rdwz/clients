@@ -7,6 +7,7 @@ import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/sym
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { BitwardenPasswordProtectedFileFormat } from "@bitwarden/vault-export-core";
 
+import { PinServiceAbstraction } from "../../../../auth/src/common/abstractions";
 import { ImportResult } from "../../models/import-result";
 import { Importer } from "../importer";
 
@@ -19,9 +20,10 @@ export class BitwardenPasswordProtectedImporter extends BitwardenJsonImporter im
     cryptoService: CryptoService,
     i18nService: I18nService,
     cipherService: CipherService,
+    pinService: PinServiceAbstraction,
     private promptForPassword_callback: () => Promise<string>,
   ) {
-    super(cryptoService, i18nService, cipherService);
+    super(cryptoService, i18nService, cipherService, pinService);
   }
 
   async parse(data: string): Promise<ImportResult> {
@@ -69,7 +71,7 @@ export class BitwardenPasswordProtectedImporter extends BitwardenJsonImporter im
       return false;
     }
 
-    this.key = await this.cryptoService.makePinKey(
+    this.key = await this.pinService.makePinKey(
       password,
       jdoc.salt,
       jdoc.kdfType,

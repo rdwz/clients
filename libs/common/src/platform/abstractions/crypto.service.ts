@@ -5,7 +5,7 @@ import { ProfileProviderOrganizationResponse } from "../../admin-console/models/
 import { ProfileProviderResponse } from "../../admin-console/models/response/profile-provider.response";
 import { KdfConfig } from "../../auth/models/domain/kdf-config";
 import { OrganizationId, ProviderId, UserId } from "../../types/guid";
-import { UserKey, MasterKey, OrgKey, ProviderKey, PinKey, CipherKey } from "../../types/key";
+import { UserKey, MasterKey, OrgKey, ProviderKey, CipherKey } from "../../types/key";
 import { KeySuffixOptions, KdfType, HashPurpose } from "../enums";
 import { EncArrayBuffer } from "../models/domain/enc-array-buffer";
 import { EncString } from "../models/domain/enc-string";
@@ -255,19 +255,7 @@ export abstract class CryptoService {
    * @returns A new keypair: [publicKey in Base64, encrypted privateKey]
    */
   abstract makeKeyPair(key?: SymmetricCryptoKey): Promise<[string, EncString]>;
-  /**
-   * @param pin The user's pin
-   * @param salt The user's salt
-   * @param kdf The user's kdf
-   * @param kdfConfig The user's kdf config
-   * @returns A key derived from the user's pin
-   */
-  abstract makePinKey(
-    pin: string,
-    salt: string,
-    kdf: KdfType,
-    kdfConfig: KdfConfig,
-  ): Promise<PinKey>;
+
   /**
    * Clears the user's pin keys from storage
    * Note: This will remove the stored pin and as a result,
@@ -275,23 +263,6 @@ export abstract class CryptoService {
    * @param userId The desired user
    */
   abstract clearPinKeys(userId?: string): Promise<void>;
-  /**
-   * Decrypts the user key with their pin
-   * @param pin The user's PIN
-   * @param salt The user's salt
-   * @param kdf The user's KDF
-   * @param kdfConfig The user's KDF config
-   * @param pinKeyEncryptedUserKey The user's PIN protected symmetric key, if not provided
-   * it will be retrieved from storage
-   * @returns The decrypted user key
-   */
-  abstract decryptUserKeyWithPin(
-    pin: string,
-    salt: string,
-    kdf: KdfType,
-    kdfConfig: KdfConfig,
-    pinKeyEncryptedUserKey?: EncString,
-  ): Promise<UserKey>;
   /**
    * Creates a new Pin key that encrypts the user key instead of the
    * master key. Clears the old Pin key from state.

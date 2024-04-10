@@ -3,10 +3,13 @@ import { firstValueFrom } from "rxjs";
 import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
 import { KdfConfig } from "@bitwarden/common/auth/models/domain/kdf-config";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
+import { EncryptService } from "@bitwarden/common/platform/abstractions/encrypt.service";
+import { KeyGenerationService } from "@bitwarden/common/platform/abstractions/key-generation.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
 import { KdfType } from "@bitwarden/common/platform/enums";
 import { EncString, EncryptedString } from "@bitwarden/common/platform/models/domain/enc-string";
+import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
 import {
   CRYPTO_DISK,
   CRYPTO_MEMORY,
@@ -15,7 +18,7 @@ import {
 } from "@bitwarden/common/platform/state";
 import { PinLockType } from "@bitwarden/common/services/vault-timeout/vault-timeout-settings.service";
 import { UserId } from "@bitwarden/common/types/guid";
-import { UserKey } from "@bitwarden/common/types/key";
+import { PinKey, UserKey } from "@bitwarden/common/types/key";
 
 import { PinServiceAbstraction } from "../../abstractions/pin.service.abstraction";
 
@@ -46,6 +49,8 @@ export class PinService implements PinServiceAbstraction {
   constructor(
     private stateProvider: StateProvider,
     private stateService: StateService,
+    private keyGenerationService: KeyGenerationService,
+    private encryptService: EncryptService,
     private cryptoService: CryptoService,
     private vaultTimeoutSettingsService: VaultTimeoutSettingsService,
     private logService: LogService,
@@ -111,13 +116,7 @@ export class PinService implements PinServiceAbstraction {
           oldPinKeyEncryptedMasterKey,
         );
       } else {
-        userKey = await this.cryptoService.decryptUserKeyWithPin(
-          pin,
-          email,
-          kdf,
-          kdfConfig,
-          pinKeyEncryptedUserKey,
-        );
+        userKey = await this.decryptUserKey(pin, email, kdf, kdfConfig, pinKeyEncryptedUserKey);
       }
 
       if (!userKey) {
@@ -166,6 +165,31 @@ export class PinService implements PinServiceAbstraction {
         return _exhaustiveCheck;
       }
     }
+  }
+
+  async decryptUserKey(
+    pin: string,
+    salt: string,
+    kdf: KdfType,
+    kdfConfig: KdfConfig,
+    pinKeyEncryptedUserKey?: EncString,
+  ): Promise<UserKey> {
+    pinKeyEncryptedUserKey ||= await this.getPinKeyEncryptedUserKey();
+    pinKeyEncryptedUserKey ||= await this.getPinKeyEncryptedUserKeyEphemeral();
+
+    if (!pinKeyEncryptedUserKey) {
+      throw new Error("No PIN encrypted key found.");
+    }
+
+    const pinKey = await this.makePinKey(pin, salt, kdf, kdfConfig);
+    const userKey = await this.encryptService.decryptToBytes(pinKeyEncryptedUserKey, pinKey);
+
+    return new SymmetricCryptoKey(userKey) as UserKey;
+  }
+
+  async makePinKey(pin: string, salt: string, kdf: KdfType, kdfConfig: KdfConfig): Promise<PinKey> {
+    const pinKey = await this.keyGenerationService.deriveKeyFromPassword(pin, salt, kdf, kdfConfig);
+    return (await this.keyGenerationService.stretchKey(pinKey)) as PinKey;
   }
 
   private async validatePin(userKey: UserKey, pin: string): Promise<boolean> {

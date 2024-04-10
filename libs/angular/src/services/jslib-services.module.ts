@@ -703,6 +703,7 @@ const safeProviders: SafeProvider[] = [
     deps: [
       FolderServiceAbstraction,
       CipherServiceAbstraction,
+      PinServiceAbstraction,
       CryptoServiceAbstraction,
       CryptoFunctionServiceAbstraction,
       StateServiceAbstraction,
@@ -714,6 +715,7 @@ const safeProviders: SafeProvider[] = [
     deps: [
       CipherServiceAbstraction,
       ApiServiceAbstraction,
+      PinServiceAbstraction,
       CryptoServiceAbstraction,
       CryptoFunctionServiceAbstraction,
       StateServiceAbstraction,
@@ -973,6 +975,8 @@ const safeProviders: SafeProvider[] = [
     deps: [
       StateProvider,
       StateServiceAbstraction,
+      KeyGenerationServiceAbstraction,
+      EncryptService,
       CryptoServiceAbstraction,
       VaultTimeoutSettingsServiceAbstraction,
       LogService,
