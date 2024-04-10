@@ -16,6 +16,10 @@ import {
   OffboardingSurveyDialogResultType,
   openOffboardingSurvey,
 } from "../shared/offboarding-survey.component";
+import {
+  UpdateLicenseDialogComponent,
+  UpdateLicenseDialogResult,
+} from "../shared/update-license-dialog.component";
 
 @Component({
   templateUrl: "user-subscription.component.html",
@@ -128,12 +132,19 @@ export class UserSubscriptionComponent implements OnInit {
     });
   }
 
-  updateLicense() {
+  updateLicense = async () => {
     if (this.loading) {
       return;
     }
+    const dialogRef = UpdateLicenseDialogComponent.open(this.dialogService);
+    const result = await lastValueFrom(dialogRef.closed);
+    if (result === UpdateLicenseDialogResult.Updated) {
+      this.closeUpdateLicense(true);
+    } else if (result === UpdateLicenseDialogResult.Cancelled) {
+      this.closeUpdateLicense(false);
+    }
     this.showUpdateLicense = true;
-  }
+  };
 
   closeUpdateLicense(load: boolean) {
     this.showUpdateLicense = false;
