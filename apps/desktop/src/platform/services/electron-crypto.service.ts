@@ -19,8 +19,11 @@ import { CsprngString } from "@bitwarden/common/types/csprng";
 import { UserId } from "@bitwarden/common/types/guid";
 import { UserKey, MasterKey } from "@bitwarden/common/types/key";
 
+import { PinServiceAbstraction } from "../../../../../libs/auth/src/common/abstractions";
+
 export class ElectronCryptoService extends CryptoService {
   constructor(
+    pinService: PinServiceAbstraction,
     masterPasswordService: InternalMasterPasswordServiceAbstraction,
     keyGenerationService: KeyGenerationService,
     cryptoFunctionService: CryptoFunctionService,
@@ -33,6 +36,7 @@ export class ElectronCryptoService extends CryptoService {
     private biometricStateService: BiometricStateService,
   ) {
     super(
+      pinService,
       masterPasswordService,
       keyGenerationService,
       cryptoFunctionService,

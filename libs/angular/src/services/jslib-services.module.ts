@@ -695,6 +695,7 @@ const safeProviders: SafeProvider[] = [
       I18nServiceAbstraction,
       CollectionServiceAbstraction,
       CryptoServiceAbstraction,
+      PinServiceAbstraction,
     ],
   }),
   safeProvider({

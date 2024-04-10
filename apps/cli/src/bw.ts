@@ -648,6 +648,7 @@ export class Main {
       this.i18nService,
       this.collectionService,
       this.cryptoService,
+      this.pinService,
     );
 
     this.individualExportService = new IndividualVaultExportService(

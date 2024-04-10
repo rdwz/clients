@@ -807,6 +807,7 @@ export default class MainBackground {
       this.i18nService,
       this.collectionService,
       this.cryptoService,
+      this.pinService,
     );
 
     this.individualVaultExportService = new IndividualVaultExportService(
