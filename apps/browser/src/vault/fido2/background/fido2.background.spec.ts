@@ -17,7 +17,7 @@ import {
   triggerRuntimeOnConnectEvent,
 } from "../../../autofill/spec/testing-utils";
 import { BrowserApi } from "../../../platform/browser/browser-api";
-import { ScriptInjectorService } from "../../../platform/services/script-injector.service";
+import { BrowserScriptInjectorService } from "../../../platform/services/browser-script-injector.service";
 import { AbortManager } from "../../background/abort-manager";
 import { Fido2ContentScript, Fido2ContentScriptId } from "../enums/fido2-content-script.enum";
 import { Fido2PortName } from "../enums/fido2-port-name.enum";
@@ -53,7 +53,7 @@ describe("Fido2Background", () => {
   let fido2ClientService!: MockProxy<Fido2ClientService>;
   let vaultSettingsService!: MockProxy<VaultSettingsService>;
   let enablePasskeysMock$!: BehaviorSubject<boolean>;
-  let scriptInjectorService!: ScriptInjectorService;
+  let scriptInjectorService!: BrowserScriptInjectorService;
   let fido2Background!: Fido2Background;
 
   beforeEach(() => {
@@ -66,7 +66,7 @@ describe("Fido2Background", () => {
     logService = mock<LogService>();
     fido2ClientService = mock<Fido2ClientService>();
     vaultSettingsService = mock<VaultSettingsService>();
-    scriptInjectorService = new ScriptInjectorService();
+    scriptInjectorService = new BrowserScriptInjectorService();
     enablePasskeysMock$ = new BehaviorSubject(true);
     vaultSettingsService.enablePasskeys$ = enablePasskeysMock$;
     fido2ClientService.isFido2FeatureEnabled.mockResolvedValue(true);

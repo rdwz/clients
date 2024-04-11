@@ -214,12 +214,12 @@ import BrowserLocalStorageService from "../platform/services/browser-local-stora
 import BrowserMemoryStorageService from "../platform/services/browser-memory-storage.service";
 import BrowserMessagingPrivateModeBackgroundService from "../platform/services/browser-messaging-private-mode-background.service";
 import BrowserMessagingService from "../platform/services/browser-messaging.service";
+import { BrowserScriptInjectorService } from "../platform/services/browser-script-injector.service";
 import { DefaultBrowserStateService } from "../platform/services/default-browser-state.service";
 import I18nService from "../platform/services/i18n.service";
 import { LocalBackedSessionStorageService } from "../platform/services/local-backed-session-storage.service";
 import { BackgroundPlatformUtilsService } from "../platform/services/platform-utils/background-platform-utils.service";
 import { BrowserPlatformUtilsService } from "../platform/services/platform-utils/browser-platform-utils.service";
-import { ScriptInjectorService } from "../platform/services/script-injector.service";
 import { BackgroundDerivedStateProvider } from "../platform/state/background-derived-state.provider";
 import { BackgroundMemoryStorageService } from "../platform/storage/background-memory-storage.service";
 import VaultTimeoutService from "../services/vault-timeout/vault-timeout.service";
@@ -325,7 +325,7 @@ export default class MainBackground {
   stateEventRunnerService: StateEventRunnerService;
   ssoLoginService: SsoLoginServiceAbstraction;
   billingAccountProfileStateService: BillingAccountProfileStateService;
-  scriptInjectorService: ScriptInjectorService;
+  scriptInjectorService: BrowserScriptInjectorService;
 
   onUpdatedRan: boolean;
   onReplacedRan: boolean;
@@ -792,7 +792,7 @@ export default class MainBackground {
     );
     this.totpService = new TotpService(this.cryptoFunctionService, this.logService);
 
-    this.scriptInjectorService = new ScriptInjectorService();
+    this.scriptInjectorService = new BrowserScriptInjectorService();
     this.autofillService = new AutofillService(
       this.cipherService,
       this.autofillSettingsService,

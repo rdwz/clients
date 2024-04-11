@@ -1,7 +1,7 @@
 import { BrowserApi } from "../browser/browser-api";
 
-import { ScriptInjectionConfig } from "./abstractions/script-injector.service";
-import { ScriptInjectorService } from "./script-injector.service";
+import { ScriptInjectionConfig } from "./abstractions/browser-script-injector.service";
+import { BrowserScriptInjectorService } from "./browser-script-injector.service";
 
 describe("ScriptInjectorService", () => {
   const tabId = 1;
@@ -17,12 +17,12 @@ describe("ScriptInjectorService", () => {
     runAt: "document_start",
   };
   const manifestVersionSpy = jest.spyOn(BrowserApi, "manifestVersion", "get");
-  let scriptInjectorService: ScriptInjectorService;
+  let scriptInjectorService: BrowserScriptInjectorService;
   jest.spyOn(BrowserApi, "executeScriptInTab").mockImplementation();
   jest.spyOn(BrowserApi, "isManifestVersion");
 
   beforeEach(() => {
-    scriptInjectorService = new ScriptInjectorService();
+    scriptInjectorService = new BrowserScriptInjectorService();
   });
 
   describe("inject", () => {

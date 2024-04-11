@@ -93,15 +93,16 @@ import { Account } from "../../models/account";
 import { BrowserApi } from "../../platform/browser/browser-api";
 import BrowserPopupUtils from "../../platform/popup/browser-popup-utils";
 import { BrowserFileDownloadService } from "../../platform/popup/services/browser-file-download.service";
+import { ScriptInjectorService } from "../../platform/services/abstractions/browser-script-injector.service";
 import { BrowserStateService as StateServiceAbstraction } from "../../platform/services/abstractions/browser-state.service";
 import { BrowserEnvironmentService } from "../../platform/services/browser-environment.service";
 import BrowserLocalStorageService from "../../platform/services/browser-local-storage.service";
 import BrowserMessagingPrivateModePopupService from "../../platform/services/browser-messaging-private-mode-popup.service";
 import BrowserMessagingService from "../../platform/services/browser-messaging.service";
+import { BrowserScriptInjectorService } from "../../platform/services/browser-script-injector.service";
 import { DefaultBrowserStateService } from "../../platform/services/default-browser-state.service";
 import I18nService from "../../platform/services/i18n.service";
 import { ForegroundPlatformUtilsService } from "../../platform/services/platform-utils/foreground-platform-utils.service";
-import { ScriptInjectorService } from "../../platform/services/script-injector.service";
 import { ForegroundDerivedStateProvider } from "../../platform/state/foreground-derived-state.provider";
 import { ForegroundMemoryStorageService } from "../../platform/storage/foreground-memory-storage.service";
 import { BrowserSendStateService } from "../../tools/popup/services/browser-send-state.service";
@@ -325,6 +326,7 @@ const safeProviders: SafeProvider[] = [
   }),
   safeProvider({
     provide: ScriptInjectorService,
+    useClass: BrowserScriptInjectorService,
     deps: [],
   }),
   safeProvider({

@@ -32,7 +32,7 @@ import { CipherService } from "@bitwarden/common/vault/services/cipher.service";
 import { TotpService } from "@bitwarden/common/vault/services/totp.service";
 
 import { BrowserApi } from "../../platform/browser/browser-api";
-import { ScriptInjectorService } from "../../platform/services/script-injector.service";
+import { BrowserScriptInjectorService } from "../../platform/services/browser-script-injector.service";
 import { AutofillPort } from "../enums/autofill-port.enums";
 import AutofillField from "../models/autofill-field";
 import AutofillPageDetails from "../models/autofill-page-details";
@@ -68,7 +68,7 @@ describe("AutofillService", () => {
   const accountService: FakeAccountService = mockAccountServiceWith(mockUserId);
   const fakeStateProvider: FakeStateProvider = new FakeStateProvider(accountService);
   let domainSettingsService: DomainSettingsService;
-  let scriptInjectorService: ScriptInjectorService;
+  let scriptInjectorService: BrowserScriptInjectorService;
   const totpService = mock<TotpService>();
   const eventCollectionService = mock<EventCollectionService>();
   const logService = mock<LogService>();
@@ -76,7 +76,7 @@ describe("AutofillService", () => {
   const billingAccountProfileStateService = mock<BillingAccountProfileStateService>();
 
   beforeEach(() => {
-    scriptInjectorService = new ScriptInjectorService();
+    scriptInjectorService = new BrowserScriptInjectorService();
     autofillService = new AutofillService(
       cipherService,
       autofillSettingsService,
