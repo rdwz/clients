@@ -205,7 +205,7 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
     currentVaultTimeoutAction: VaultTimeoutAction | null,
     maxVaultTimeoutPolicy: Policy | null,
   ): Promise<VaultTimeoutAction> {
-    const availableVaultTimeoutActions = await this.getAvailableVaultTimeoutActions();
+    const availableVaultTimeoutActions = await this.getAvailableVaultTimeoutActions(userId);
     if (availableVaultTimeoutActions.length === 1) {
       return availableVaultTimeoutActions[0];
     }
