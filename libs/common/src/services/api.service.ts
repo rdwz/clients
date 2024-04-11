@@ -1,6 +1,5 @@
 import { firstValueFrom } from "rxjs";
 
-import { ProviderVerifyDeleteRecoverRequest } from "@bitwarden/common/admin-console/models/request/provider/provider-verify-delete-recover.request";
 import { ApiService as ApiServiceAbstraction } from "../abstractions/api.service";
 import { OrganizationConnectionType } from "../admin-console/enums";
 import { OrganizationSponsorshipCreateRequest } from "../admin-console/models/request/organization/organization-sponsorship-create.request";
@@ -16,6 +15,7 @@ import { ProviderUserBulkRequest } from "../admin-console/models/request/provide
 import { ProviderUserConfirmRequest } from "../admin-console/models/request/provider/provider-user-confirm.request";
 import { ProviderUserInviteRequest } from "../admin-console/models/request/provider/provider-user-invite.request";
 import { ProviderUserUpdateRequest } from "../admin-console/models/request/provider/provider-user-update.request";
+import { ProviderVerifyDeleteRecoverRequest } from "../admin-console/models/request/provider/provider-verify-delete-recover.request";
 import { SelectionReadOnlyRequest } from "../admin-console/models/request/selection-read-only.request";
 import {
   OrganizationConnectionConfigApis,
