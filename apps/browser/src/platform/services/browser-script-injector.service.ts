@@ -3,7 +3,7 @@ import { BrowserApi } from "../browser/browser-api";
 import {
   ScriptInjectionConfig,
   ScriptInjectorService,
-} from "./abstractions/browser-script-injector.service";
+} from "./abstractions/script-injector.service";
 
 export class BrowserScriptInjectorService implements ScriptInjectorService {
   /**

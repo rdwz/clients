@@ -1,6 +1,6 @@
 import { BrowserApi } from "../browser/browser-api";
 
-import { ScriptInjectionConfig } from "./abstractions/browser-script-injector.service";
+import { ScriptInjectionConfig } from "./abstractions/script-injector.service";
 import { BrowserScriptInjectorService } from "./browser-script-injector.service";
 
 describe("ScriptInjectorService", () => {

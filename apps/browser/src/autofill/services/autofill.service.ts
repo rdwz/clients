@@ -20,7 +20,7 @@ import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { FieldView } from "@bitwarden/common/vault/models/view/field.view";
 
 import { BrowserApi } from "../../platform/browser/browser-api";
-import { ScriptInjectorService } from "../../platform/services/abstractions/browser-script-injector.service";
+import { ScriptInjectorService } from "../../platform/services/abstractions/script-injector.service";
 import { openVaultItemPasswordRepromptPopout } from "../../vault/popup/utils/vault-popout-window";
 import { AutofillPort } from "../enums/autofill-port.enums";
 import AutofillField from "../models/autofill-field";

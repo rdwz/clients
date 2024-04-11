@@ -11,7 +11,7 @@ import { ImportServiceAbstraction } from "@bitwarden/importer/core";
 
 import NotificationBackground from "../../autofill/background/notification.background";
 import { BrowserApi } from "../../platform/browser/browser-api";
-import { ScriptInjectorService } from "../../platform/services/abstractions/browser-script-injector.service";
+import { ScriptInjectorService } from "../../platform/services/abstractions/script-injector.service";
 import { FilelessImporterInjectedScriptsConfig } from "../config/fileless-importer-injected-scripts";
 import {
   FilelessImportPort,

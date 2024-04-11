@@ -12,7 +12,7 @@ import {
 import { VaultSettingsService } from "@bitwarden/common/vault/abstractions/vault-settings/vault-settings.service";
 
 import { BrowserApi } from "../../../platform/browser/browser-api";
-import { ScriptInjectorService } from "../../../platform/services/abstractions/browser-script-injector.service";
+import { ScriptInjectorService } from "../../../platform/services/abstractions/script-injector.service";
 import { AbortManager } from "../../background/abort-manager";
 import { Fido2ContentScript, Fido2ContentScriptId } from "../enums/fido2-content-script.enum";
 import { Fido2PortName } from "../enums/fido2-port-name.enum";
