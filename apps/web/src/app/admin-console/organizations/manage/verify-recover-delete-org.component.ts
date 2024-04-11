@@ -7,6 +7,7 @@ import { OrganizationVerifyDeleteRecoverRequest } from "@bitwarden/common/admin-
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
+import { firstValueFrom } from "rxjs";
 
 @Component({
   selector: "app-verify-recover-delete-org",
@@ -28,19 +29,15 @@ export class VerifyRecoverDeleteOrgComponent implements OnInit {
     private logService: LogService,
   ) {}
 
-  ngOnInit() {
-    // eslint-disable-next-line rxjs-angular/prefer-takeuntil, rxjs/no-async-subscribe
-    this.route.queryParams.pipe(first()).subscribe(async (qParams) => {
-      if (qParams.orgId != null && qParams.token != null && qParams.name != null) {
-        this.orgId = qParams.orgId;
-        this.token = qParams.token;
-        this.name = qParams.name;
-      } else {
-        // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.router.navigate(["/"]);
-      }
-    });
+  async ngOnInit() {
+    const qParams = await firstValueFrom(this.route.queryParams);
+    if (qParams.orgId != null && qParams.token != null && qParams.name != null) {
+      this.orgId = qParams.orgId;
+      this.token = qParams.token;
+      this.name = qParams.name;
+    } else {
+      await this.router.navigate(["/"]);
+    }
   }
 
   async submit() {
@@ -53,9 +50,7 @@ export class VerifyRecoverDeleteOrgComponent implements OnInit {
         this.i18nService.t("organizationDeleted"),
         this.i18nService.t("organizationDeletedDesc"),
       );
-      // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.router.navigate(["/"]);
+      await this.router.navigate(["/"]);
     } catch (e) {
       this.logService.error(e);
     }
