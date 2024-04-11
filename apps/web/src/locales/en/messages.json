@@ -3366,7 +3366,7 @@
     "message": "You have requested to delete your Bitwarden account. Use the button below to confirm."
   },
   "deleteRecoverOrgConfirmDesc": {
-    "message": "You have requested to delete your Bitwarden organization. Use the button below to confirm."
+    "message": "You have requested to delete your Bitwarden organization."
   },
   "myOrganization": {
     "message": "My organization"
