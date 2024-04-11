@@ -56,6 +56,7 @@ export default class AutofillService implements AutofillServiceInterface {
     private domainSettingsService: DomainSettingsService,
     private userVerificationService: UserVerificationService,
     private billingAccountProfileStateService: BillingAccountProfileStateService,
+    private scriptInjectorService: ScriptInjectorService,
   ) {}
 
   /**
@@ -114,7 +115,7 @@ export default class AutofillService implements AutofillServiceInterface {
     if (triggeringOnPageLoad && autoFillOnPageLoadIsEnabled) {
       injectedScripts.push("autofiller.js");
     } else {
-      await ScriptInjectorService.inject({
+      await this.scriptInjectorService.inject({
         tabId: tab.id,
         injectDetails: { runAt: "document_start" },
         combinedManifestVersionDetails: { file: "content/content-message-handler.js" },
@@ -124,7 +125,7 @@ export default class AutofillService implements AutofillServiceInterface {
     injectedScripts.push("notificationBar.js", "contextMenuHandler.js");
 
     for (const injectedScript of injectedScripts) {
-      await ScriptInjectorService.inject({
+      await this.scriptInjectorService.inject({
         tabId: tab.id,
         injectDetails: { runAt: "document_start", frameId },
         combinedManifestVersionDetails: { file: `content/${injectedScript}` },

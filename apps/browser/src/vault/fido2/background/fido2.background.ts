@@ -49,6 +49,7 @@ export class Fido2Background implements Fido2BackgroundInterface {
     private logService: LogService,
     private fido2ClientService: Fido2ClientService,
     private vaultSettingsService: VaultSettingsService,
+    private scriptInjectorService: ScriptInjectorService,
   ) {}
 
   /**
@@ -172,14 +173,14 @@ export class Fido2Background implements Fido2BackgroundInterface {
    * @param tab - The current tab to inject the scripts into.
    */
   private async injectFido2ContentScripts(tab: chrome.tabs.Tab): Promise<void> {
-    void ScriptInjectorService.inject({
+    void this.scriptInjectorService.inject({
       tabId: tab.id,
       injectDetails: this.sharedInjectionDetails,
       mv2Details: { file: Fido2ContentScript.PageScriptAppend },
       mv3Details: { file: Fido2ContentScript.PageScript, world: "MAIN" },
     });
 
-    void ScriptInjectorService.inject({
+    void this.scriptInjectorService.inject({
       tabId: tab.id,
       injectDetails: this.sharedInjectionDetails,
       combinedManifestVersionDetails: { file: Fido2ContentScript.ContentScript },

@@ -16,3 +16,7 @@ export type ScriptInjectionConfig = {
     world?: chrome.scripting.ExecutionWorld;
   };
 };
+
+export interface ScriptInjectorService {
+  inject(config: ScriptInjectionConfig): Promise<void>;
+}

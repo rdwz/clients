@@ -53,6 +53,7 @@ class FilelessImporterBackground implements FilelessImporterBackgroundInterface 
    * @param notificationBackground - Used to inject the notification bar into the tab.
    * @param importService - Used to import the export data into the vault.
    * @param syncService - Used to trigger a full sync after the import is completed.
+   * @param scriptInjectorService - Used to inject content scripts that initialize the import process
    */
   constructor(
     private configService: ConfigService,
@@ -61,6 +62,7 @@ class FilelessImporterBackground implements FilelessImporterBackgroundInterface 
     private notificationBackground: NotificationBackground,
     private importService: ImportServiceAbstraction,
     private syncService: SyncService,
+    private scriptInjectorService: ScriptInjectorService,
   ) {}
 
   /**
@@ -202,7 +204,7 @@ class FilelessImporterBackground implements FilelessImporterBackgroundInterface 
     switch (port.name) {
       case FilelessImportPort.LpImporter:
         this.lpImporterPort = port;
-        await ScriptInjectorService.inject({
+        await this.scriptInjectorService.inject({
           tabId: port.sender.tab.id,
           injectDetails: { runAt: "document_start" },
           mv2Details: FilelessImporterInjectedScriptsConfig.LpSuppressImportDownload.mv2,

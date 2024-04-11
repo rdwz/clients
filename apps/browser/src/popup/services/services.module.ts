@@ -101,6 +101,7 @@ import BrowserMessagingService from "../../platform/services/browser-messaging.s
 import { DefaultBrowserStateService } from "../../platform/services/default-browser-state.service";
 import I18nService from "../../platform/services/i18n.service";
 import { ForegroundPlatformUtilsService } from "../../platform/services/platform-utils/foreground-platform-utils.service";
+import { ScriptInjectorService } from "../../platform/services/script-injector.service";
 import { ForegroundDerivedStateProvider } from "../../platform/state/foreground-derived-state.provider";
 import { ForegroundMemoryStorageService } from "../../platform/storage/foreground-memory-storage.service";
 import { BrowserSendStateService } from "../../tools/popup/services/browser-send-state.service";
@@ -319,7 +320,12 @@ const safeProviders: SafeProvider[] = [
       DomainSettingsService,
       UserVerificationService,
       BillingAccountProfileStateService,
+      ScriptInjectorService,
     ],
+  }),
+  safeProvider({
+    provide: ScriptInjectorService,
+    deps: [],
   }),
   safeProvider({
     provide: KeyConnectorService,

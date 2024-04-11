@@ -16,18 +16,21 @@ describe("ScriptInjectorService", () => {
     frameId: 0,
     runAt: "document_start",
   };
-
   const manifestVersionSpy = jest.spyOn(BrowserApi, "manifestVersion", "get");
+  let scriptInjectorService: ScriptInjectorService;
   jest.spyOn(BrowserApi, "executeScriptInTab").mockImplementation();
   jest.spyOn(BrowserApi, "isManifestVersion");
-  jest.spyOn(ScriptInjectorService, "inject");
+
+  beforeEach(() => {
+    scriptInjectorService = new ScriptInjectorService();
+  });
 
   describe("inject", () => {
     describe("injection of single scripts that function in both manifest v2 and v3", () => {
       it("injects the script in manifest v2", async () => {
         manifestVersionSpy.mockReturnValue(2);
 
-        await ScriptInjectorService.inject({
+        await scriptInjectorService.inject({
           combinedManifestVersionDetails,
           tabId,
           injectDetails,
@@ -42,7 +45,7 @@ describe("ScriptInjectorService", () => {
       it("injects the script in manifest v3", async () => {
         manifestVersionSpy.mockReturnValue(3);
 
-        await ScriptInjectorService.inject({
+        await scriptInjectorService.inject({
           combinedManifestVersionDetails,
           tabId,
           injectDetails,
@@ -59,7 +62,7 @@ describe("ScriptInjectorService", () => {
     it("injects a script that is meant to function within manifest v2 only", async () => {
       manifestVersionSpy.mockReturnValue(2);
 
-      await ScriptInjectorService.inject({
+      await scriptInjectorService.inject({
         mv2Details,
         tabId,
         injectDetails,
@@ -74,7 +77,7 @@ describe("ScriptInjectorService", () => {
     it("injects a script that is meant to function within manifest v32 only", async () => {
       manifestVersionSpy.mockReturnValue(3);
 
-      await ScriptInjectorService.inject({
+      await scriptInjectorService.inject({
         mv3Details,
         tabId,
         injectDetails,

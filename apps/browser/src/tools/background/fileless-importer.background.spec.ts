@@ -16,6 +16,7 @@ import {
   triggerRuntimeOnConnectEvent,
 } from "../../autofill/spec/testing-utils";
 import { BrowserApi } from "../../platform/browser/browser-api";
+import { ScriptInjectorService } from "../../platform/services/script-injector.service";
 import { FilelessImportPort, FilelessImportType } from "../enums/fileless-import.enums";
 
 import FilelessImporterBackground from "./fileless-importer.background";
@@ -37,8 +38,10 @@ describe("FilelessImporterBackground ", () => {
   const notificationBackground = mock<NotificationBackground>();
   const importService = mock<ImportServiceAbstraction>();
   const syncService = mock<SyncService>();
+  let scriptInjectorService: ScriptInjectorService;
 
   beforeEach(() => {
+    scriptInjectorService = new ScriptInjectorService();
     filelessImporterBackground = new FilelessImporterBackground(
       configService,
       authService,
@@ -46,6 +49,7 @@ describe("FilelessImporterBackground ", () => {
       notificationBackground,
       importService,
       syncService,
+      scriptInjectorService,
     );
     filelessImporterBackground.init();
   });
