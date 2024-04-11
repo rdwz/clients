@@ -1,4 +1,5 @@
 import { Component, OnInit } from "@angular/core";
+import { FormBuilder } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { firstValueFrom } from "rxjs";
 
@@ -17,8 +18,10 @@ import { SharedModule } from "../../../shared/shared.module";
   imports: [SharedModule],
 })
 export class VerifyRecoverDeleteOrgComponent implements OnInit {
+  loading = true;
   name: string;
-  formPromise: Promise<any>;
+
+  protected formGroup = this.formBuilder.group({});
 
   private orgId: string;
   private token: string;
@@ -30,6 +33,7 @@ export class VerifyRecoverDeleteOrgComponent implements OnInit {
     private i18nService: I18nService,
     private route: ActivatedRoute,
     private logService: LogService,
+    private formBuilder: FormBuilder,
   ) {}
 
   async ngOnInit() {
@@ -38,16 +42,16 @@ export class VerifyRecoverDeleteOrgComponent implements OnInit {
       this.orgId = qParams.orgId;
       this.token = qParams.token;
       this.name = qParams.name;
+      this.loading = false;
     } else {
       await this.router.navigate(["/"]);
     }
   }
 
-  async submit() {
+  submit = async () => {
     try {
       const request = new OrganizationVerifyDeleteRecoverRequest(this.token);
-      this.formPromise = this.apiService.recoverDeleteToken(this.orgId, request);
-      await this.formPromise;
+      await this.apiService.recoverDeleteToken(this.orgId, request);
       this.platformUtilsService.showToast(
         "success",
         this.i18nService.t("organizationDeleted"),
@@ -57,5 +61,5 @@ export class VerifyRecoverDeleteOrgComponent implements OnInit {
     } catch (e) {
       this.logService.error(e);
     }
-  }
+  };
 }
