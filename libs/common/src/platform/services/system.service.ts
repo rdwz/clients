@@ -63,11 +63,15 @@ export class SystemService implements SystemServiceAbstraction {
       clearInterval(this.reloadInterval);
       this.reloadInterval = null;
 
-      const currentUser = await firstValueFrom(this.stateService.activeAccount$.pipe(timeout(500)));
+      const currentUserId = await firstValueFrom(
+        this.stateService.activeAccount$.pipe(timeout(500)),
+      );
       // Replace current active user if they will be logged out on reload
-      if (currentUser != null) {
+      if (currentUserId != null) {
         const timeoutAction = await firstValueFrom(
-          this.vaultTimeoutSettingsService.vaultTimeoutAction$().pipe(timeout(500)),
+          this.vaultTimeoutSettingsService
+            .getVaultTimeoutActionByUserId$(currentUserId)
+            .pipe(timeout(500)),
         );
         if (timeoutAction === VaultTimeoutAction.LogOut) {
           const nextUser = await this.stateService.nextUpActiveUser();
