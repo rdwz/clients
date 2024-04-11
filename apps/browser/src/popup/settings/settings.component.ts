@@ -21,6 +21,7 @@ import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vaul
 import { VaultTimeoutService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout.service";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { PolicyType } from "@bitwarden/common/admin-console/enums";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
 import { DeviceType } from "@bitwarden/common/enums";
 import { VaultTimeoutAction } from "@bitwarden/common/enums/vault-timeout-action.enum";
@@ -101,6 +102,7 @@ export class SettingsComponent implements OnInit {
     private dialogService: DialogService,
     private changeDetectorRef: ChangeDetectorRef,
     private biometricStateService: BiometricStateService,
+    private accountService: AccountService,
   ) {
     this.accountSwitcherEnabled = enableAccountSwitching();
   }
@@ -143,7 +145,11 @@ export class SettingsComponent implements OnInit {
     this.vaultTimeoutOptions.push({ name: this.i18nService.t("onRestart"), value: -1 });
     this.vaultTimeoutOptions.push({ name: this.i18nService.t("never"), value: null });
 
-    let timeout = await this.vaultTimeoutSettingsService.getVaultTimeout();
+    const activeAccount = await firstValueFrom(this.accountService.activeAccount$);
+
+    let timeout = await firstValueFrom(
+      this.vaultTimeoutSettingsService.getVaultTimeoutByUserId$(activeAccount.id),
+    );
     if (timeout === -2 && !showOnLocked) {
       timeout = -1;
     }
@@ -172,7 +178,7 @@ export class SettingsComponent implements OnInit {
     const initialValues = {
       vaultTimeout: timeout,
       vaultTimeoutAction: await firstValueFrom(
-        this.vaultTimeoutSettingsService.vaultTimeoutAction$(),
+        this.vaultTimeoutSettingsService.getVaultTimeoutActionByUserId$(activeAccount.id),
       ),
       pin: pinStatus !== "DISABLED",
       biometric: await this.vaultTimeoutSettingsService.isBiometricLockSet(),
@@ -216,7 +222,7 @@ export class SettingsComponent implements OnInit {
         switchMap(() =>
           combineLatest([
             this.vaultTimeoutSettingsService.availableVaultTimeoutActions$(),
-            this.vaultTimeoutSettingsService.vaultTimeoutAction$(),
+            this.vaultTimeoutSettingsService.getVaultTimeoutActionByUserId$(activeAccount.id),
           ]),
         ),
         takeUntil(this.destroy$),
@@ -275,9 +281,14 @@ export class SettingsComponent implements OnInit {
       return;
     }
 
+    const activeAccount = await firstValueFrom(this.accountService.activeAccount$);
+
     await this.vaultTimeoutSettingsService.setVaultTimeoutOptions(
+      activeAccount.id,
       newValue,
-      await firstValueFrom(this.vaultTimeoutSettingsService.vaultTimeoutAction$()),
+      await firstValueFrom(
+        this.vaultTimeoutSettingsService.getVaultTimeoutActionByUserId$(activeAccount.id),
+      ),
     );
     if (newValue == null) {
       this.messagingService.send("bgReseedStorage");
@@ -309,7 +320,10 @@ export class SettingsComponent implements OnInit {
       return;
     }
 
+    const activeAccount = await firstValueFrom(this.accountService.activeAccount$);
+
     await this.vaultTimeoutSettingsService.setVaultTimeoutOptions(
+      activeAccount.id,
       this.form.value.vaultTimeout,
       newValue,
     );

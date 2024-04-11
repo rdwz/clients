@@ -6,6 +6,7 @@ import { concatMap, debounceTime, filter, map, switchMap, takeUntil, tap } from 
 import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { PolicyType } from "@bitwarden/common/admin-console/enums";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { UserVerificationService as UserVerificationServiceAbstraction } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
 import { AutofillSettingsServiceAbstraction } from "@bitwarden/common/autofill/services/autofill-settings.service";
 import { DomainSettingsService } from "@bitwarden/common/autofill/services/domain-settings.service";
@@ -123,6 +124,7 @@ export class SettingsComponent implements OnInit {
     private desktopSettingsService: DesktopSettingsService,
     private biometricStateService: BiometricStateService,
     private desktopAutofillSettingsService: DesktopAutofillSettingsService,
+    private accountService: AccountService,
   ) {
     const isMac = this.platformUtilsService.getDevice() === DeviceType.MacOsDesktop;
 
@@ -239,10 +241,14 @@ export class SettingsComponent implements OnInit {
     const pinStatus = await this.vaultTimeoutSettingsService.isPinLockSet();
     this.userHasPinSet = pinStatus !== "DISABLED";
 
+    const activeAccount = await firstValueFrom(this.accountService.activeAccount$);
+
     const initialValues = {
-      vaultTimeout: await this.vaultTimeoutSettingsService.getVaultTimeout(),
+      vaultTimeout: await firstValueFrom(
+        this.vaultTimeoutSettingsService.getVaultTimeoutByUserId$(activeAccount.id),
+      ),
       vaultTimeoutAction: await firstValueFrom(
-        this.vaultTimeoutSettingsService.vaultTimeoutAction$(),
+        this.vaultTimeoutSettingsService.getVaultTimeoutActionByUserId$(activeAccount.id),
       ),
       pin: this.userHasPinSet,
       biometric: await this.vaultTimeoutSettingsService.isBiometricLockSet(),
@@ -286,7 +292,9 @@ export class SettingsComponent implements OnInit {
 
     this.refreshTimeoutSettings$
       .pipe(
-        switchMap(() => this.vaultTimeoutSettingsService.vaultTimeoutAction$()),
+        switchMap(() =>
+          this.vaultTimeoutSettingsService.getVaultTimeoutActionByUserId$(activeAccount.id),
+        ),
         takeUntil(this.destroy$),
       )
       .subscribe((action) => {
@@ -374,7 +382,10 @@ export class SettingsComponent implements OnInit {
 
     this.previousVaultTimeout = this.form.value.vaultTimeout;
 
+    const activeAccount = await firstValueFrom(this.accountService.activeAccount$);
+
     await this.vaultTimeoutSettingsService.setVaultTimeoutOptions(
+      activeAccount.id,
       newValue,
       this.form.value.vaultTimeoutAction,
     );
@@ -405,7 +416,10 @@ export class SettingsComponent implements OnInit {
       return;
     }
 
+    const activeAccount = await firstValueFrom(this.accountService.activeAccount$);
+
     await this.vaultTimeoutSettingsService.setVaultTimeoutOptions(
+      activeAccount.id,
       this.form.value.vaultTimeout,
       newValue,
     );
