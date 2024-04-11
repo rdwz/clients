@@ -36,12 +36,14 @@ describe("TrialInitiationComponent", () => {
   let stateServiceMock: MockProxy<StateService>;
   let policyApiServiceMock: MockProxy<PolicyApiServiceAbstraction>;
   let policyServiceMock: MockProxy<PolicyService>;
+  let routerServiceMock: MockProxy<RouterService>;
 
   beforeEach(() => {
     // only define services directly that we want to mock return values in this component
     stateServiceMock = mock<StateService>();
     policyApiServiceMock = mock<PolicyApiServiceAbstraction>();
     policyServiceMock = mock<PolicyService>();
+    routerServiceMock = mock<RouterService>();
 
     // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -81,7 +83,7 @@ describe("TrialInitiationComponent", () => {
         },
         {
           provide: RouterService,
-          useValue: mock<RouterService>(),
+          useValue: routerServiceMock,
         },
       ],
       schemas: [NO_ERRORS_SCHEMA], // Allows child components to be ignored (such as register component)
@@ -100,8 +102,8 @@ describe("TrialInitiationComponent", () => {
 
   // These tests demonstrate mocking service calls
   describe("onInit() enforcedPolicyOptions", () => {
-    it("should not set enforcedPolicyOptions if state service returns no invite", async () => {
-      stateServiceMock.getOrganizationInvitation.mockReturnValueOnce(null);
+    it("should not set enforcedPolicyOptions if there isn't an org invite in deep linked url", async () => {
+      routerServiceMock.getLoginRedirectUrlQueryParams.mockResolvedValueOnce(null);
       // Need to recreate component with new service mock
       fixture = TestBed.createComponent(TrialInitiationComponent);
       component = fixture.componentInstance;
@@ -109,16 +111,14 @@ describe("TrialInitiationComponent", () => {
 
       expect(component.enforcedPolicyOptions).toBe(undefined);
     });
-    it("should set enforcedPolicyOptions if state service returns an invite", async () => {
+    it("should set enforcedPolicyOptions if the deep linked url has an org invite", async () => {
       // Set up service method mocks
-      stateServiceMock.getOrganizationInvitation.mockReturnValueOnce(
-        Promise.resolve({
-          organizationId: testOrgId,
-          token: "token",
-          email: "testEmail",
-          organizationUserId: "123",
-        }),
-      );
+      routerServiceMock.getLoginRedirectUrlQueryParams.mockResolvedValueOnce({
+        organizationId: testOrgId,
+        token: "token",
+        email: "testEmail",
+        organizationUserId: "123",
+      });
       policyApiServiceMock.getPoliciesByToken.mockReturnValueOnce(
         Promise.resolve({
           data: [

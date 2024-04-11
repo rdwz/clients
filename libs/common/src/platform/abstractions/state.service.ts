@@ -182,8 +182,6 @@ export abstract class StateService<T extends Account = Account> {
   ) => Promise<void>;
   getMinimizeOnCopyToClipboard: (options?: StorageOptions) => Promise<boolean>;
   setMinimizeOnCopyToClipboard: (value: boolean, options?: StorageOptions) => Promise<void>;
-  getOrganizationInvitation: (options?: StorageOptions) => Promise<any>;
-  setOrganizationInvitation: (value: any, options?: StorageOptions) => Promise<void>;
   getPasswordGenerationOptions: (options?: StorageOptions) => Promise<PasswordGeneratorOptions>;
   setPasswordGenerationOptions: (
     value: PasswordGeneratorOptions,

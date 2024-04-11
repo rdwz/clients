@@ -2,7 +2,7 @@ import { StepperSelectionEvent } from "@angular/cdk/stepper";
 import { TitleCasePipe } from "@angular/common";
 import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { UntypedFormBuilder, Validators } from "@angular/forms";
-import { ActivatedRoute, Router } from "@angular/router";
+import { ActivatedRoute, Params, Router } from "@angular/router";
 import { Subject, takeUntil } from "rxjs";
 
 import { PolicyApiServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/policy/policy-api.service.abstraction";
@@ -180,30 +180,10 @@ export class TrialInitiationComponent implements OnInit, OnDestroy {
         : "Password Manager trial from marketing website";
     });
 
-    const invite = await this.stateService.getOrganizationInvitation();
-    if (invite != null) {
-      try {
-        const policies = await this.policyApiService.getPoliciesByToken(
-          invite.organizationId,
-          invite.token,
-          invite.email,
-          invite.organizationUserId,
-        );
-        if (policies.data != null) {
-          this.policies = Policy.fromListResponse(policies);
-        }
-      } catch (e) {
-        this.logService.error(e);
-      }
-    }
-
-    if (this.policies != null) {
-      this.policyService
-        .masterPasswordPolicyOptions$(this.policies)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe((enforcedPasswordPolicyOptions) => {
-          this.enforcedPolicyOptions = enforcedPasswordPolicyOptions;
-        });
+    // If there's a deep linked org invite, use it to get the password policies
+    const deepLinkedParams = await this.routerService.getLoginRedirectUrlQueryParams();
+    if (deepLinkedParams != null) {
+      await this.initPasswordPolicies(deepLinkedParams);
     }
 
     this.orgInfoFormGroup.controls.name.valueChanges
@@ -301,6 +281,44 @@ export class TrialInitiationComponent implements OnInit, OnDestroy {
         queryParams: { plan: sponsorshipToken },
       });
       this.routerService.setPreviousUrl(route.toString());
+    }
+  }
+
+  private async initPasswordPolicies(invite: Params): Promise<void> {
+    // Verify that the deep link is an organization invite
+    const isOrgInvite =
+      invite.organizationId != null &&
+      invite.token != null &&
+      invite.email != null &&
+      invite.organizationUserId != null;
+
+    if (!isOrgInvite) {
+      return;
+    }
+
+    if (invite != null) {
+      try {
+        const policies = await this.policyApiService.getPoliciesByToken(
+          invite.organizationId,
+          invite.token,
+          invite.email,
+          invite.organizationUserId,
+        );
+        if (policies.data != null) {
+          this.policies = Policy.fromListResponse(policies);
+        }
+      } catch (e) {
+        this.logService.error(e);
+      }
+    }
+
+    if (this.policies != null) {
+      this.policyService
+        .masterPasswordPolicyOptions$(this.policies)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((enforcedPasswordPolicyOptions) => {
+          this.enforcedPolicyOptions = enforcedPasswordPolicyOptions;
+        });
     }
   }
 
