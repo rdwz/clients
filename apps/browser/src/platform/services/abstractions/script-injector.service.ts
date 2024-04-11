@@ -22,6 +22,7 @@ export type ScriptInjectionConfig = {
   mv2Details?: Mv2ScriptInjectionDetails;
   mv3Details?: Mv3ScriptInjectionDetails;
 };
+
 export abstract class ScriptInjectorService {
   inject: (config: ScriptInjectionConfig) => Promise<void>;
 }
