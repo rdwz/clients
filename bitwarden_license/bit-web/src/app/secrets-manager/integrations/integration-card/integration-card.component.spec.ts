@@ -46,4 +46,39 @@ describe("IntegrationCardComponent", () => {
 
     expect(link.rel).toBe("noopener noreferrer");
   });
+
+  describe("new badge", () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date("2023-09-01"));
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it("shows when expiration is in the future", () => {
+      component.newBadgeExpiration = "2023-09-02";
+      expect(component.showNewBadge()).toBe(true);
+    });
+
+    it("does not show when expiration is not set", () => {
+      expect(component.showNewBadge()).toBe(false);
+    });
+
+    it("does not show when expiration is in the past", () => {
+      component.newBadgeExpiration = "2023-08-31";
+      expect(component.showNewBadge()).toBe(false);
+    });
+
+    it("does not show when expiration is today", () => {
+      component.newBadgeExpiration = "2023-09-01";
+      expect(component.showNewBadge()).toBe(false);
+    });
+
+    it("does not show when expiration is invalid", () => {
+      component.newBadgeExpiration = "not-a-date";
+      expect(component.showNewBadge()).toBe(false);
+    });
+  });
 });

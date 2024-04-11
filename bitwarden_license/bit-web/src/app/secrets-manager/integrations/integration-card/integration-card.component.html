@@ -11,11 +11,14 @@
   <div class="tw-p-5">
     <h3 class="tw-mb-4 tw-text-lg tw-font-semibold">{{ name }}</h3>
     <a
-      class="tw-mb-0 tw-font-bold hover:tw-no-underline focus:tw-outline-none after:tw-content-[''] after:tw-block after:tw-absolute after:tw-w-full after:tw-h-full after:tw-left-0 after:tw-top-0"
+      class="tw-block tw-mb-0 tw-font-bold hover:tw-no-underline focus:tw-outline-none after:tw-content-[''] after:tw-block after:tw-absolute after:tw-w-full after:tw-h-full after:tw-left-0 after:tw-top-0"
       [href]="linkURL"
       [rel]="[externalURL ? 'noopener noreferrer' : null]"
     >
       {{ linkText }}
     </a>
+    <span *ngIf="showNewBadge()" bitBadge class="tw-mt-3" variant="secondary">
+      {{ "new" | i18n }}
+    </span>
   </div>
 </div>
