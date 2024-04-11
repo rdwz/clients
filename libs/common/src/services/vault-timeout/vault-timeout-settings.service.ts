@@ -15,13 +15,6 @@ import { StateService } from "../../platform/abstractions/state.service";
 import { BiometricStateService } from "../../platform/biometrics/biometric-state.service";
 import { UserId } from "../../types/guid";
 
-/**
- * - DISABLED: No Pin set
- * - PERSISTENT: Pin is set and survives client reset
- * - TRANSIENT: Pin is set and requires password unlock after client reset
- */
-export type PinLockType = "DISABLED" | "PERSISTANT" | "TRANSIENT";
-
 export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceAbstraction {
   constructor(
     private pinService: PinServiceAbstraction,
@@ -66,29 +59,6 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
 
   availableVaultTimeoutActions$(userId?: string) {
     return defer(() => this.getAvailableVaultTimeoutActions(userId));
-  }
-
-  async isPinLockSet(userId?: string): Promise<PinLockType> {
-    // we can't check the protected pin for both because old accounts only
-    // used it for MP on Restart
-    const aUserKeyEncryptedPinIsSet = !!(await this.pinService.getProtectedPin(userId as UserId));
-    const aPinKeyEncryptedUserKeyIsSet =
-      !!(await this.pinService.getPinKeyEncryptedUserKey(userId));
-    const anOldPinKeyEncryptedMasterKeyIsSet = !!(await this.stateService.getEncryptedPinProtected({
-      userId,
-    }));
-
-    if (aPinKeyEncryptedUserKeyIsSet || anOldPinKeyEncryptedMasterKeyIsSet) {
-      return "PERSISTANT";
-    } else if (
-      aUserKeyEncryptedPinIsSet &&
-      !aPinKeyEncryptedUserKeyIsSet &&
-      !anOldPinKeyEncryptedMasterKeyIsSet
-    ) {
-      return "TRANSIENT";
-    } else {
-      return "DISABLED";
-    }
   }
 
   async isBiometricLockSet(userId?: string): Promise<boolean> {
@@ -172,7 +142,7 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
 
     const canLock =
       (await this.userHasMasterPassword(userId)) ||
-      (await this.isPinLockSet(userId)) !== "DISABLED" ||
+      (await this.pinService.isPinLockSet(userId)) !== "DISABLED" ||
       (await this.isBiometricLockSet(userId));
 
     if (canLock) {

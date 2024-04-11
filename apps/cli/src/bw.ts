@@ -574,7 +574,6 @@ export class Main {
       this.masterPasswordService,
       this.keyGenerationService,
       this.encryptService,
-      this.vaultTimeoutSettingsService,
       this.logService,
     );
 

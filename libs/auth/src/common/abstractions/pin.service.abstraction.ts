@@ -4,6 +4,8 @@ import { EncString } from "@bitwarden/common/platform/models/domain/enc-string";
 import { UserId } from "@bitwarden/common/types/guid";
 import { MasterKey, PinKey, UserKey } from "@bitwarden/common/types/key";
 
+import { PinLockType } from "../services";
+
 export abstract class PinServiceAbstraction {
   /**
    * Gets the user key encrypted by the PIN key.
@@ -95,6 +97,13 @@ export abstract class PinServiceAbstraction {
     kdfConfig: KdfConfig,
     protectedKeyCs?: EncString,
   ): Promise<MasterKey>;
+
+  /**
+   * Has the user enabled unlock with Pin.
+   * @param userId The user id to check. If not provided, the current user is used
+   * @returns PinLockType
+   */
+  isPinLockSet: (userId?: string) => Promise<PinLockType>;
 
   decryptUserKeyWithPin: (pin: string) => Promise<UserKey | null>;
 }

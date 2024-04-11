@@ -56,7 +56,7 @@ export class UserVerificationService implements UserVerificationServiceAbstracti
       const [userHasMasterPassword, pinLockType, biometricsLockSet, biometricsUserKeyStored] =
         await Promise.all([
           this.hasMasterPasswordAndMasterKeyHash(),
-          this.vaultTimeoutSettingsService.isPinLockSet(),
+          this.pinService.isPinLockSet(),
           this.vaultTimeoutSettingsService.isBiometricLockSet(),
           this.cryptoService.hasUserKeyStored(KeySuffixOptions.Biometric),
         ]);

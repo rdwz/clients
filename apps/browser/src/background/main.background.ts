@@ -685,7 +685,6 @@ export default class MainBackground {
       this.masterPasswordService,
       this.keyGenerationService,
       this.encryptService,
-      this.vaultTimeoutSettingsService,
       this.logService,
     );
 

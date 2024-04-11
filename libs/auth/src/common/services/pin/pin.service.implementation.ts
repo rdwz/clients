@@ -1,6 +1,5 @@
 import { firstValueFrom } from "rxjs";
 
-import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
 import { InternalMasterPasswordServiceAbstraction } from "@bitwarden/common/auth/abstractions/master-password.service.abstraction";
 import { KdfConfig } from "@bitwarden/common/auth/models/domain/kdf-config";
 import { EncryptService } from "@bitwarden/common/platform/abstractions/encrypt.service";
@@ -16,7 +15,6 @@ import {
   StateProvider,
   UserKeyDefinition,
 } from "@bitwarden/common/platform/state";
-import { PinLockType } from "@bitwarden/common/services/vault-timeout/vault-timeout-settings.service";
 import { UserId } from "@bitwarden/common/types/guid";
 import { MasterKey, PinKey, UserKey } from "@bitwarden/common/types/key";
 
@@ -45,6 +43,13 @@ const PROTECTED_PIN = new UserKeyDefinition<string>(CRYPTO_DISK, "protectedPin",
   clearOn: [], // TODO: verify
 });
 
+/**
+ * - DISABLED: No Pin set
+ * - PERSISTENT: Pin is set and survives client reset
+ * - TRANSIENT: Pin is set and requires password unlock after client reset
+ */
+export type PinLockType = "DISABLED" | "PERSISTANT" | "TRANSIENT";
+
 export class PinService implements PinServiceAbstraction {
   constructor(
     private stateProvider: StateProvider,
@@ -52,7 +57,6 @@ export class PinService implements PinServiceAbstraction {
     private masterPasswordService: InternalMasterPasswordServiceAbstraction,
     private keyGenerationService: KeyGenerationService,
     private encryptService: EncryptService,
-    private vaultTimeoutSettingsService: VaultTimeoutSettingsService,
     private logService: LogService,
   ) {}
 
@@ -165,7 +169,7 @@ export class PinService implements PinServiceAbstraction {
 
   async decryptUserKeyWithPin(pin: string): Promise<UserKey | null> {
     try {
-      const pinLockType: PinLockType = await this.vaultTimeoutSettingsService.isPinLockSet();
+      const pinLockType: PinLockType = await this.isPinLockSet();
 
       const { pinKeyEncryptedUserKey, oldPinKeyEncryptedMasterKey } =
         await this.getPinKeyEncryptedKeys(pinLockType);
@@ -259,6 +263,28 @@ export class PinService implements PinServiceAbstraction {
   async makePinKey(pin: string, salt: string, kdf: KdfType, kdfConfig: KdfConfig): Promise<PinKey> {
     const pinKey = await this.keyGenerationService.deriveKeyFromPassword(pin, salt, kdf, kdfConfig);
     return (await this.keyGenerationService.stretchKey(pinKey)) as PinKey;
+  }
+
+  async isPinLockSet(userId?: string): Promise<PinLockType> {
+    // we can't check the protected pin for both because old accounts only
+    // used it for MP on Restart
+    const aUserKeyEncryptedPinIsSet = !!(await this.getProtectedPin(userId as UserId));
+    const aPinKeyEncryptedUserKeyIsSet = !!(await this.getPinKeyEncryptedUserKey(userId as UserId));
+    const anOldPinKeyEncryptedMasterKeyIsSet = !!(await this.stateService.getEncryptedPinProtected({
+      userId,
+    }));
+
+    if (aPinKeyEncryptedUserKeyIsSet || anOldPinKeyEncryptedMasterKeyIsSet) {
+      return "PERSISTANT";
+    } else if (
+      aUserKeyEncryptedPinIsSet &&
+      !aPinKeyEncryptedUserKeyIsSet &&
+      !anOldPinKeyEncryptedMasterKeyIsSet
+    ) {
+      return "TRANSIENT";
+    } else {
+      return "DISABLED";
+    }
   }
 
   private async validatePin(userKey: UserKey, pin: string): Promise<boolean> {
