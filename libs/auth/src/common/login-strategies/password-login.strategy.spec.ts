@@ -10,6 +10,7 @@ import { ForceSetPasswordReason } from "@bitwarden/common/auth/models/domain/for
 import { IdentityTokenResponse } from "@bitwarden/common/auth/models/response/identity-token.response";
 import { IdentityTwoFactorResponse } from "@bitwarden/common/auth/models/response/identity-two-factor.response";
 import { MasterPasswordPolicyResponse } from "@bitwarden/common/auth/models/response/master-password-policy.response";
+import { FakeMasterPasswordService } from "@bitwarden/common/auth/services/master-password/fake-master-password.service";
 import { BillingAccountProfileStateService } from "@bitwarden/common/billing/abstractions/account/billing-account-profile-state.service";
 import { VaultTimeoutAction } from "@bitwarden/common/enums/vault-timeout-action.enum";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
@@ -22,11 +23,13 @@ import { HashPurpose } from "@bitwarden/common/platform/enums";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
 import { VaultTimeoutSettingsService } from "@bitwarden/common/services/vault-timeout/vault-timeout-settings.service";
+import { FakeAccountService, mockAccountServiceWith } from "@bitwarden/common/spec";
 import {
   PasswordStrengthServiceAbstraction,
   PasswordStrengthService,
 } from "@bitwarden/common/tools/password-strength";
 import { CsprngArray } from "@bitwarden/common/types/csprng";
+import { UserId } from "@bitwarden/common/types/guid";
 import { MasterKey, UserKey } from "@bitwarden/common/types/key";
 
 import { LoginStrategyServiceAbstraction } from "../abstractions";
@@ -45,6 +48,7 @@ const masterKey = new SymmetricCryptoKey(
     "N2KWjlLpfi5uHjv+YcfUKIpZ1l+W+6HRensmIqD+BFYBf6N/dvFpJfWwYnVBdgFCK2tJTAIMLhqzIQQEUmGFgg==",
   ),
 ) as MasterKey;
+const userId = Utils.newGuid() as UserId;
 const deviceId = Utils.newGuid();
 const masterPasswordPolicy = new MasterPasswordPolicyResponse({
   EnforceOnLogin: true,
@@ -53,6 +57,8 @@ const masterPasswordPolicy = new MasterPasswordPolicyResponse({
 
 describe("PasswordLoginStrategy", () => {
   let cache: PasswordLoginStrategyData;
+  let accountService: FakeAccountService;
+  let masterPasswordService: FakeMasterPasswordService;
 
   let loginStrategyService: MockProxy<LoginStrategyServiceAbstraction>;
   let cryptoService: MockProxy<CryptoService>;
@@ -75,6 +81,9 @@ describe("PasswordLoginStrategy", () => {
   let tokenResponse: IdentityTokenResponse;
 
   beforeEach(async () => {
+    accountService = mockAccountServiceWith(userId);
+    masterPasswordService = new FakeMasterPasswordService();
+
     loginStrategyService = mock<LoginStrategyServiceAbstraction>();
     cryptoService = mock<CryptoService>();
     apiService = mock<ApiService>();
@@ -107,6 +116,8 @@ describe("PasswordLoginStrategy", () => {
 
     passwordLoginStrategy = new PasswordLoginStrategy(
       cache,
+      accountService,
+      masterPasswordService,
       cryptoService,
       apiService,
       tokenService,
@@ -166,13 +177,16 @@ describe("PasswordLoginStrategy", () => {
   it("sets keys after a successful authentication", async () => {
     const userKey = new SymmetricCryptoKey(new Uint8Array(64).buffer as CsprngArray) as UserKey;
 
-    cryptoService.getMasterKey.mockResolvedValue(masterKey);
+    masterPasswordService.masterKeySubject.next(masterKey);
     cryptoService.decryptUserKeyWithMasterKey.mockResolvedValue(userKey);
 
     await passwordLoginStrategy.logIn(credentials);
 
-    expect(cryptoService.setMasterKey).toHaveBeenCalledWith(masterKey);
-    expect(cryptoService.setMasterKeyHash).toHaveBeenCalledWith(localHashedPassword);
+    expect(masterPasswordService.mock.setMasterKey).toHaveBeenCalledWith(masterKey, userId);
+    expect(masterPasswordService.mock.setMasterKeyHash).toHaveBeenCalledWith(
+      localHashedPassword,
+      userId,
+    );
     expect(cryptoService.setMasterKeyEncryptedUserKey).toHaveBeenCalledWith(tokenResponse.key);
     expect(cryptoService.setUserKey).toHaveBeenCalledWith(userKey);
     expect(cryptoService.setPrivateKey).toHaveBeenCalledWith(tokenResponse.privateKey);
@@ -204,8 +218,9 @@ describe("PasswordLoginStrategy", () => {
     const result = await passwordLoginStrategy.logIn(credentials);
 
     expect(policyService.evaluateMasterPassword).toHaveBeenCalled();
-    expect(stateService.setForceSetPasswordReason).toHaveBeenCalledWith(
+    expect(masterPasswordService.mock.setForceSetPasswordReason).toHaveBeenCalledWith(
       ForceSetPasswordReason.WeakMasterPassword,
+      userId,
     );
     expect(result.forcePasswordReset).toEqual(ForceSetPasswordReason.WeakMasterPassword);
   });
@@ -243,8 +258,9 @@ describe("PasswordLoginStrategy", () => {
     expect(firstResult.forcePasswordReset).toEqual(ForceSetPasswordReason.None);
 
     // Second login attempt should save the force password reset options and return in result
-    expect(stateService.setForceSetPasswordReason).toHaveBeenCalledWith(
+    expect(masterPasswordService.mock.setForceSetPasswordReason).toHaveBeenCalledWith(
       ForceSetPasswordReason.WeakMasterPassword,
+      userId,
     );
     expect(secondResult.forcePasswordReset).toEqual(ForceSetPasswordReason.WeakMasterPassword);
   });

@@ -10,8 +10,10 @@ import {
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { DeviceTrustCryptoServiceAbstraction } from "@bitwarden/common/auth/abstractions/device-trust-crypto.service.abstraction";
 import { KeyConnectorService } from "@bitwarden/common/auth/abstractions/key-connector.service";
+import { InternalMasterPasswordServiceAbstraction } from "@bitwarden/common/auth/abstractions/master-password.service.abstraction";
 import { TokenService } from "@bitwarden/common/auth/abstractions/token.service";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
 import { AuthenticationType } from "@bitwarden/common/auth/enums/authentication-type";
@@ -82,6 +84,8 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
   currentAuthType$: Observable<AuthenticationType | null>;
 
   constructor(
+    protected accountService: AccountService,
+    protected masterPasswordService: InternalMasterPasswordServiceAbstraction,
     protected cryptoService: CryptoService,
     protected apiService: ApiService,
     protected tokenService: TokenService,
@@ -259,7 +263,8 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
   ): Promise<AuthRequestResponse> {
     const pubKey = Utils.fromB64ToArray(key);
 
-    const masterKey = await this.cryptoService.getMasterKey();
+    const userId = (await firstValueFrom(this.accountService.activeAccount$)).id;
+    const masterKey = await firstValueFrom(this.masterPasswordService.masterKey$(userId));
     let keyToEncrypt;
     let encryptedMasterKeyHash = null;
 
@@ -268,7 +273,7 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
 
       // Only encrypt the master password hash if masterKey exists as
       // we won't have a masterKeyHash without a masterKey
-      const masterKeyHash = await this.stateService.getKeyHash();
+      const masterKeyHash = await firstValueFrom(this.masterPasswordService.masterKeyHash$(userId));
       if (masterKeyHash != null) {
         encryptedMasterKeyHash = await this.cryptoService.rsaEncrypt(
           Utils.fromUtf8ToArray(masterKeyHash),
@@ -335,6 +340,8 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
           case AuthenticationType.Password:
             return new PasswordLoginStrategy(
               data?.password,
+              this.accountService,
+              this.masterPasswordService,
               this.cryptoService,
               this.apiService,
               this.tokenService,
@@ -354,6 +361,8 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
           case AuthenticationType.Sso:
             return new SsoLoginStrategy(
               data?.sso,
+              this.accountService,
+              this.masterPasswordService,
               this.cryptoService,
               this.apiService,
               this.tokenService,
@@ -374,6 +383,8 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
           case AuthenticationType.UserApiKey:
             return new UserApiLoginStrategy(
               data?.userApiKey,
+              this.accountService,
+              this.masterPasswordService,
               this.cryptoService,
               this.apiService,
               this.tokenService,
@@ -392,6 +403,8 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
           case AuthenticationType.AuthRequest:
             return new AuthRequestLoginStrategy(
               data?.authRequest,
+              this.accountService,
+              this.masterPasswordService,
               this.cryptoService,
               this.apiService,
               this.tokenService,
@@ -409,6 +422,8 @@ export class LoginStrategyService implements LoginStrategyServiceAbstraction {
           case AuthenticationType.WebAuthn:
             return new WebAuthnLoginStrategy(
               data?.webAuthn,
+              this.accountService,
+              this.masterPasswordService,
               this.cryptoService,
               this.apiService,
               this.tokenService,

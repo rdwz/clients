@@ -13,6 +13,7 @@ import { AuthResult } from "@bitwarden/common/auth/models/domain/auth-result";
 import { TokenTwoFactorRequest } from "@bitwarden/common/auth/models/request/identity-token/token-two-factor.request";
 import { IdentityTokenResponse } from "@bitwarden/common/auth/models/response/identity-token.response";
 import { IdentityTwoFactorResponse } from "@bitwarden/common/auth/models/response/identity-two-factor.response";
+import { FakeMasterPasswordService } from "@bitwarden/common/auth/services/master-password/fake-master-password.service";
 import { BillingAccountProfileStateService } from "@bitwarden/common/billing/abstractions/account/billing-account-profile-state.service";
 import { VaultTimeoutAction } from "@bitwarden/common/enums/vault-timeout-action.enum";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
@@ -25,8 +26,14 @@ import { MessagingService } from "@bitwarden/common/platform/abstractions/messag
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
 import { KdfType } from "@bitwarden/common/platform/enums";
-import { FakeGlobalState, FakeGlobalStateProvider } from "@bitwarden/common/spec";
+import {
+  FakeAccountService,
+  FakeGlobalState,
+  FakeGlobalStateProvider,
+  mockAccountServiceWith,
+} from "@bitwarden/common/spec";
 import { PasswordStrengthServiceAbstraction } from "@bitwarden/common/tools/password-strength";
+import { UserId } from "@bitwarden/common/types/guid";
 
 import {
   AuthRequestServiceAbstraction,
@@ -41,6 +48,8 @@ import { CACHE_EXPIRATION_KEY } from "./login-strategy.state";
 describe("LoginStrategyService", () => {
   let sut: LoginStrategyService;
 
+  let accountService: FakeAccountService;
+  let masterPasswordService: FakeMasterPasswordService;
   let cryptoService: MockProxy<CryptoService>;
   let apiService: MockProxy<ApiService>;
   let tokenService: MockProxy<TokenService>;
@@ -65,7 +74,11 @@ describe("LoginStrategyService", () => {
   let stateProvider: FakeGlobalStateProvider;
   let loginStrategyCacheExpirationState: FakeGlobalState<Date | null>;
 
+  const userId = "USER_ID" as UserId;
+
   beforeEach(() => {
+    accountService = mockAccountServiceWith(userId);
+    masterPasswordService = new FakeMasterPasswordService();
     cryptoService = mock<CryptoService>();
     apiService = mock<ApiService>();
     tokenService = mock<TokenService>();
@@ -89,6 +102,8 @@ describe("LoginStrategyService", () => {
     vaultTimeoutSettingsService = mock<VaultTimeoutSettingsService>();
 
     sut = new LoginStrategyService(
+      accountService,
+      masterPasswordService,
       cryptoService,
       apiService,
       tokenService,

@@ -16,6 +16,7 @@ import { IdentityTokenResponse } from "@bitwarden/common/auth/models/response/id
 import { IdentityTwoFactorResponse } from "@bitwarden/common/auth/models/response/identity-two-factor.response";
 import { MasterPasswordPolicyResponse } from "@bitwarden/common/auth/models/response/master-password-policy.response";
 import { IUserDecryptionOptionsServerResponse } from "@bitwarden/common/auth/models/response/user-decryption-options/user-decryption-options.response";
+import { FakeMasterPasswordService } from "@bitwarden/common/auth/services/master-password/fake-master-password.service";
 import { BillingAccountProfileStateService } from "@bitwarden/common/billing/abstractions/account/billing-account-profile-state.service";
 import { VaultTimeoutAction } from "@bitwarden/common/enums/vault-timeout-action.enum";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
@@ -33,6 +34,7 @@ import {
 } from "@bitwarden/common/platform/models/domain/account";
 import { EncString } from "@bitwarden/common/platform/models/domain/enc-string";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
+import { FakeAccountService, mockAccountServiceWith } from "@bitwarden/common/spec";
 import {
   PasswordStrengthServiceAbstraction,
   PasswordStrengthService,
@@ -101,6 +103,8 @@ export function identityTokenResponseFactory(
 // TODO: add tests for latest changes to base class for TDE
 describe("LoginStrategy", () => {
   let cache: PasswordLoginStrategyData;
+  let accountService: FakeAccountService;
+  let masterPasswordService: FakeMasterPasswordService;
 
   let loginStrategyService: MockProxy<LoginStrategyServiceAbstraction>;
   let cryptoService: MockProxy<CryptoService>;
@@ -122,6 +126,9 @@ describe("LoginStrategy", () => {
   let credentials: PasswordLoginCredentials;
 
   beforeEach(async () => {
+    accountService = mockAccountServiceWith(userId);
+    masterPasswordService = new FakeMasterPasswordService();
+
     loginStrategyService = mock<LoginStrategyServiceAbstraction>();
     cryptoService = mock<CryptoService>();
     apiService = mock<ApiService>();
@@ -145,6 +152,8 @@ describe("LoginStrategy", () => {
     // The base class is abstract so we test it via PasswordLoginStrategy
     passwordLoginStrategy = new PasswordLoginStrategy(
       cache,
+      accountService,
+      masterPasswordService,
       cryptoService,
       apiService,
       tokenService,
@@ -272,7 +281,7 @@ describe("LoginStrategy", () => {
       });
 
       apiService.postIdentityToken.mockResolvedValue(tokenResponse);
-      cryptoService.getMasterKey.mockResolvedValue(masterKey);
+      masterPasswordService.masterKeySubject.next(masterKey);
       cryptoService.decryptUserKeyWithMasterKey.mockResolvedValue(userKey);
 
       const result = await passwordLoginStrategy.logIn(credentials);
@@ -291,7 +300,7 @@ describe("LoginStrategy", () => {
       cryptoService.makeKeyPair.mockResolvedValue(["PUBLIC_KEY", new EncString("PRIVATE_KEY")]);
 
       apiService.postIdentityToken.mockResolvedValue(tokenResponse);
-      cryptoService.getMasterKey.mockResolvedValue(masterKey);
+      masterPasswordService.masterKeySubject.next(masterKey);
       cryptoService.decryptUserKeyWithMasterKey.mockResolvedValue(userKey);
 
       await passwordLoginStrategy.logIn(credentials);
@@ -429,6 +438,8 @@ describe("LoginStrategy", () => {
 
       passwordLoginStrategy = new PasswordLoginStrategy(
         cache,
+        accountService,
+        masterPasswordService,
         cryptoService,
         apiService,
         tokenService,
