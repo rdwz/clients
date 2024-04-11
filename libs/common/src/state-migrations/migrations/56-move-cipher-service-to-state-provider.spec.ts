@@ -7,7 +7,7 @@ import {
   CIPHERS_DISK,
   CIPHERS_DISK_LOCAL,
   CipherServiceMigrator,
-} from "./55-move-cipher-service-to-state-provider";
+} from "./56-move-cipher-service-to-state-provider";
 
 function exampleJSON() {
   return {
@@ -88,8 +88,8 @@ describe("CipherServiceMigrator", () => {
 
   describe("migrate", () => {
     beforeEach(() => {
-      helper = mockMigrationHelper(exampleJSON(), 54);
-      sut = new CipherServiceMigrator(54, 55);
+      helper = mockMigrationHelper(exampleJSON(), 55);
+      sut = new CipherServiceMigrator(55, 56);
     });
 
     it("should remove local data and ciphers from all accounts", async () => {
@@ -126,8 +126,8 @@ describe("CipherServiceMigrator", () => {
 
   describe("rollback", () => {
     beforeEach(() => {
-      helper = mockMigrationHelper(rollbackJSON(), 55);
-      sut = new CipherServiceMigrator(54, 55);
+      helper = mockMigrationHelper(rollbackJSON(), 56);
+      sut = new CipherServiceMigrator(55, 56);
     });
 
     it.each(["user1", "user2"])("should null out new values", async (userId) => {

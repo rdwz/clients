@@ -1,19 +1,16 @@
 import { Observable } from "rxjs";
 
 import { AdminAuthRequestStorable } from "../../auth/models/domain/admin-auth-req-storable";
-import { ForceSetPasswordReason } from "../../auth/models/domain/force-set-password-reason";
 import { KdfConfig } from "../../auth/models/domain/kdf-config";
 import { BiometricKey } from "../../auth/types/biometric-key";
 import { GeneratorOptions } from "../../tools/generator/generator-options";
 import { GeneratedPasswordHistory, PasswordGeneratorOptions } from "../../tools/generator/password";
 import { UsernameGeneratorOptions } from "../../tools/generator/username";
 import { UserId } from "../../types/guid";
-import { MasterKey } from "../../types/key";
 import { KdfType } from "../enums";
 import { Account } from "../models/domain/account";
 import { EncString } from "../models/domain/enc-string";
 import { StorageOptions } from "../models/domain/storage-options";
-import { SymmetricCryptoKey } from "../models/domain/symmetric-crypto-key";
 
 /**
  * Options for customizing the initiation behavior.
@@ -42,22 +39,6 @@ export abstract class StateService<T extends Account = Account> {
   clean: (options?: StorageOptions) => Promise<UserId>;
   init: (initOptions?: InitOptions) => Promise<void>;
 
-  /**
-   * Gets the user's master key
-   */
-  getMasterKey: (options?: StorageOptions) => Promise<MasterKey>;
-  /**
-   * Sets the user's master key
-   */
-  setMasterKey: (value: MasterKey, options?: StorageOptions) => Promise<void>;
-  /**
-   * Gets the user key encrypted by the master key
-   */
-  getMasterKeyEncryptedUserKey: (options?: StorageOptions) => Promise<string>;
-  /**
-   * Sets the user key encrypted by the master key
-   */
-  setMasterKeyEncryptedUserKey: (value: string, options?: StorageOptions) => Promise<void>;
   /**
    * Gets the user's auto key
    */
@@ -102,10 +83,6 @@ export abstract class StateService<T extends Account = Account> {
    * @deprecated For migration purposes only, use getUserKeyMasterKey instead
    */
   getEncryptedCryptoSymmetricKey: (options?: StorageOptions) => Promise<string>;
-  /**
-   * @deprecated For legacy purposes only, use getMasterKey instead
-   */
-  getCryptoMasterKey: (options?: StorageOptions) => Promise<SymmetricCryptoKey>;
   /**
    * @deprecated For migration purposes only, use getUserKeyAuto instead
    */
@@ -176,18 +153,11 @@ export abstract class StateService<T extends Account = Account> {
   setEncryptedPinProtected: (value: string, options?: StorageOptions) => Promise<void>;
   getEverBeenUnlocked: (options?: StorageOptions) => Promise<boolean>;
   setEverBeenUnlocked: (value: boolean, options?: StorageOptions) => Promise<void>;
-  getForceSetPasswordReason: (options?: StorageOptions) => Promise<ForceSetPasswordReason>;
-  setForceSetPasswordReason: (
-    value: ForceSetPasswordReason,
-    options?: StorageOptions,
-  ) => Promise<void>;
   getIsAuthenticated: (options?: StorageOptions) => Promise<boolean>;
   getKdfConfig: (options?: StorageOptions) => Promise<KdfConfig>;
   setKdfConfig: (kdfConfig: KdfConfig, options?: StorageOptions) => Promise<void>;
   getKdfType: (options?: StorageOptions) => Promise<KdfType>;
   setKdfType: (value: KdfType, options?: StorageOptions) => Promise<void>;
-  getKeyHash: (options?: StorageOptions) => Promise<string>;
-  setKeyHash: (value: string, options?: StorageOptions) => Promise<void>;
   getLastActive: (options?: StorageOptions) => Promise<number>;
   setLastActive: (value: number, options?: StorageOptions) => Promise<void>;
   getLastSync: (options?: StorageOptions) => Promise<string>;
