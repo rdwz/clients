@@ -820,7 +820,6 @@ const safeProviders: SafeProvider[] = [
       CryptoServiceAbstraction,
       AccountServiceAbstraction,
       InternalMasterPasswordServiceAbstraction,
-      KeyConnectorServiceAbstraction,
       I18nServiceAbstraction,
       UserVerificationApiServiceAbstraction,
       UserDecryptionOptionsServiceAbstraction,
