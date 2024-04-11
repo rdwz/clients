@@ -113,6 +113,7 @@ import { SharedModule } from "./shared.module";
     OrganizationLayoutComponent,
     UserLayoutComponent,
     PaymentMethodWarningsModule,
+    VerifyRecoverDeleteOrgComponent,
   ],
   declarations: [
     AcceptFamilySponsorshipComponent,
@@ -185,7 +186,6 @@ import { SharedModule } from "./shared.module";
     VerifyEmailComponent,
     VerifyEmailTokenComponent,
     VerifyRecoverDeleteComponent,
-    VerifyRecoverDeleteOrgComponent,
     LowKdfComponent,
   ],
   exports: [
@@ -263,7 +263,6 @@ import { SharedModule } from "./shared.module";
     VerifyEmailComponent,
     VerifyEmailTokenComponent,
     VerifyRecoverDeleteComponent,
-    VerifyRecoverDeleteOrgComponent,
     LowKdfComponent,
     HeaderModule,
     DangerZoneComponent,

@@ -1,17 +1,20 @@
 import { Component, OnInit } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
-import { first } from "rxjs/operators";
+import { firstValueFrom } from "rxjs";
 
 import { OrganizationApiServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/organization/organization-api.service.abstraction";
 import { OrganizationVerifyDeleteRecoverRequest } from "@bitwarden/common/admin-console/models/request/organization-verify-delete-recover.request";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
-import { firstValueFrom } from "rxjs";
+
+import { SharedModule } from "../../../shared/shared.module";
 
 @Component({
   selector: "app-verify-recover-delete-org",
   templateUrl: "verify-recover-delete-org.component.html",
+  standalone: true,
+  imports: [SharedModule],
 })
 export class VerifyRecoverDeleteOrgComponent implements OnInit {
   name: string;
