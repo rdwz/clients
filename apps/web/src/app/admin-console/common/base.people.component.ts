@@ -1,5 +1,5 @@
 import { Directive, ViewChild, ViewContainerRef } from "@angular/core";
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom, lastValueFrom } from "rxjs";
 
 import { SearchPipe } from "@bitwarden/angular/pipes/search.pipe";
 import { UserNamePipe } from "@bitwarden/angular/pipes/user-name.pipe";
@@ -24,7 +24,10 @@ import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { DialogService } from "@bitwarden/components";
 
 import { OrganizationUserView } from "../organizations/core/views/organization-user.view";
-import { UserConfirmComponent } from "../organizations/manage/user-confirm.component";
+import {
+  UserConfirmComponent,
+  UserConfirmDialogResult,
+} from "../organizations/manage/user-confirm.component";
 
 type StatusType = OrganizationUserStatusType | ProviderUserStatusType;
 
@@ -356,25 +359,22 @@ export abstract class BasePeopleComponent<
         this.organizationManagementPreferencesService.autoConfirmFingerPrints.state$,
       );
       if (autoConfirm == null || !autoConfirm) {
-        const [modal] = await this.modalService.openViewRef(
-          UserConfirmComponent,
-          this.confirmModalRef,
-          (comp) => {
-            comp.name = this.userNamePipe.transform(user);
-            comp.userId = user != null ? user.userId : null;
-            comp.publicKey = publicKey;
-            // eslint-disable-next-line rxjs/no-async-subscribe
-            comp.onConfirmedUser.subscribe(async () => {
-              try {
-                comp.formPromise = confirmUser(publicKey);
-                await comp.formPromise;
-                modal.close();
-              } catch (e) {
-                this.logService.error(e);
-              }
-            });
+        const dialogRef = UserConfirmComponent.open(this.dialogService, {
+          data: {
+            name: this.userNamePipe.transform(user),
+            userId: user != null ? user.userId : null,
+            publicKey: publicKey,
           },
-        );
+        });
+        const result = await lastValueFrom(dialogRef.closed);
+        if (result === UserConfirmDialogResult.Confirmed) {
+          try {
+            const response = confirmUser(publicKey);
+            await response;
+          } catch (e) {
+            this.logService.error(e);
+          }
+        }
         return;
       }
 
