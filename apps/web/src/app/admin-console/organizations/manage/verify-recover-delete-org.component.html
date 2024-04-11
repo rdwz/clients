@@ -4,7 +4,9 @@
       <p class="lead text-center mb-4">{{ "deleteOrganization" | i18n }}</p>
       <div class="card">
         <div class="card-body">
-          <app-callout type="warning">{{ "deleteOrganizationWarning" | i18n }}</app-callout>
+          <app-callout type="warning">{{
+            "deletingOrganizationIsPermanentWarning" | i18n: name
+          }}</app-callout>
           <p class="text-center">
             <strong>{{ name }}</strong>
           </p>
