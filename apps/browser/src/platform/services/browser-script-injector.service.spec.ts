@@ -6,12 +6,11 @@ import { BrowserScriptInjectorService } from "./browser-script-injector.service"
 describe("ScriptInjectorService", () => {
   const tabId = 1;
   const combinedManifestVersionFile = "content/autofill-init.js";
-  const combinedManifestVersionDetails = { file: combinedManifestVersionFile };
   const mv2SpecificFile = "content/autofill-init-mv2.js";
   const mv2Details = { file: mv2SpecificFile };
   const mv3SpecificFile = "content/autofill-init-mv3.js";
   const mv3Details: ScriptInjectionConfig["mv3Details"] = { file: mv3SpecificFile, world: "MAIN" };
-  const injectDetails: ScriptInjectionConfig["injectDetails"] = {
+  const sharedInjectDetails: ScriptInjectionConfig["injectDetails"] = {
     allFrames: false,
     frameId: 0,
     runAt: "document_start",
@@ -31,13 +30,15 @@ describe("ScriptInjectorService", () => {
         manifestVersionSpy.mockReturnValue(2);
 
         await scriptInjectorService.inject({
-          combinedManifestVersionDetails,
           tabId,
-          injectDetails,
+          injectDetails: {
+            file: combinedManifestVersionFile,
+            ...sharedInjectDetails,
+          },
         });
 
         expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(tabId, {
-          ...injectDetails,
+          ...sharedInjectDetails,
           file: combinedManifestVersionFile,
         });
       });
@@ -46,14 +47,16 @@ describe("ScriptInjectorService", () => {
         manifestVersionSpy.mockReturnValue(3);
 
         await scriptInjectorService.inject({
-          combinedManifestVersionDetails,
           tabId,
-          injectDetails,
+          injectDetails: {
+            file: combinedManifestVersionFile,
+            ...sharedInjectDetails,
+          },
         });
 
         expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(
           tabId,
-          { ...injectDetails, file: combinedManifestVersionFile },
+          { ...sharedInjectDetails, file: combinedManifestVersionFile },
           { world: "ISOLATED" },
         );
       });
@@ -65,11 +68,11 @@ describe("ScriptInjectorService", () => {
       await scriptInjectorService.inject({
         mv2Details,
         tabId,
-        injectDetails,
+        injectDetails: sharedInjectDetails,
       });
 
       expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(tabId, {
-        ...injectDetails,
+        ...sharedInjectDetails,
         file: mv2SpecificFile,
       });
     });
@@ -80,12 +83,12 @@ describe("ScriptInjectorService", () => {
       await scriptInjectorService.inject({
         mv3Details,
         tabId,
-        injectDetails,
+        injectDetails: sharedInjectDetails,
       });
 
       expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(
         tabId,
-        { ...injectDetails, file: mv3SpecificFile },
+        { ...sharedInjectDetails, file: mv3SpecificFile },
         { world: "MAIN" },
       );
     });

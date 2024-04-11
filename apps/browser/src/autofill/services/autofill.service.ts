@@ -117,8 +117,7 @@ export default class AutofillService implements AutofillServiceInterface {
     } else {
       await this.scriptInjectorService.inject({
         tabId: tab.id,
-        injectDetails: { runAt: "document_start" },
-        combinedManifestVersionDetails: { file: "content/content-message-handler.js" },
+        injectDetails: { file: "content/content-message-handler.js", runAt: "document_start" },
       });
     }
 
@@ -127,8 +126,7 @@ export default class AutofillService implements AutofillServiceInterface {
     for (const injectedScript of injectedScripts) {
       await this.scriptInjectorService.inject({
         tabId: tab.id,
-        injectDetails: { runAt: "document_start", frameId },
-        combinedManifestVersionDetails: { file: `content/${injectedScript}` },
+        injectDetails: { file: `content/${injectedScript}`, runAt: "document_start", frameId },
       });
     }
   }

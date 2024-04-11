@@ -41,12 +41,12 @@ export class BrowserScriptInjectorService implements ScriptInjectorService {
    * @param config - The configuration for the script injection.
    */
   private getScriptFile(config: ScriptInjectionConfig): string {
-    const { combinedManifestVersionDetails, mv2Details, mv3Details } = config;
+    const { injectDetails, mv2Details, mv3Details } = config;
 
     if (BrowserApi.isManifestVersion(3)) {
-      return mv3Details?.file ?? combinedManifestVersionDetails?.file;
+      return mv3Details?.file ?? injectDetails?.file;
     }
 
-    return mv2Details?.file ?? combinedManifestVersionDetails?.file;
+    return mv2Details?.file ?? injectDetails?.file;
   }
 }

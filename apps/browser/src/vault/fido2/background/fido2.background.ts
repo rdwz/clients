@@ -182,8 +182,7 @@ export class Fido2Background implements Fido2BackgroundInterface {
 
     void this.scriptInjectorService.inject({
       tabId: tab.id,
-      injectDetails: this.sharedInjectionDetails,
-      combinedManifestVersionDetails: { file: Fido2ContentScript.ContentScript },
+      injectDetails: { file: Fido2ContentScript.ContentScript, ...this.sharedInjectionDetails },
     });
   }
 
