@@ -1,9 +1,12 @@
-import { ScriptInjectionConfig } from "../../platform/services/abstractions/script-injector.service";
+import {
+  mv2ScriptInjectionDetails,
+  mv3ScriptInjectionDetails,
+} from "../../platform/services/abstractions/script-injector.service";
 
 type FilelessImporterInjectedScriptsConfigurations = {
   LpSuppressImportDownload: {
-    mv2: ScriptInjectionConfig["mv2Details"];
-    mv3: ScriptInjectionConfig["mv3Details"];
+    mv2: mv2ScriptInjectionDetails;
+    mv3: mv3ScriptInjectionDetails;
   };
 };
 
