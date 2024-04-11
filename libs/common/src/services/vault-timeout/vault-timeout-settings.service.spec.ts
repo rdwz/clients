@@ -6,14 +6,23 @@ import {
   UserDecryptionOptionsServiceAbstraction,
 } from "@bitwarden/auth/common";
 
+import { Utils } from "../..//platform/misc/utils";
+import { FakeAccountService, mockAccountServiceWith, FakeStateProvider } from "../../../spec";
+import { VaultTimeoutSettingsService as VaultTimeoutSettingsServiceAbstraction } from "../../abstractions/vault-timeout/vault-timeout-settings.service";
 import { PolicyService } from "../../admin-console/abstractions/policy/policy.service.abstraction";
 import { Policy } from "../../admin-console/models/domain/policy";
 import { TokenService } from "../../auth/abstractions/token.service";
 import { VaultTimeoutAction } from "../../enums/vault-timeout-action.enum";
 import { CryptoService } from "../../platform/abstractions/crypto.service";
+import { LogService } from "../../platform/abstractions/log.service";
 import { StateService } from "../../platform/abstractions/state.service";
 import { BiometricStateService } from "../../platform/biometrics/biometric-state.service";
 import { EncString } from "../../platform/models/domain/enc-string";
+import {
+  VAULT_TIMEOUT,
+  VAULT_TIMEOUT_ACTION,
+} from "../../services/vault-timeout/vault-timeout-settings.state";
+import { UserId } from "../../types/guid";
 
 import { VaultTimeoutSettingsService } from "./vault-timeout-settings.service";
 
@@ -24,9 +33,15 @@ describe("VaultTimeoutSettingsService", () => {
   let policyService: MockProxy<PolicyService>;
   let stateService: MockProxy<StateService>;
   const biometricStateService = mock<BiometricStateService>();
-  let service: VaultTimeoutSettingsService;
+  let vaultTimeoutSettingsService: VaultTimeoutSettingsServiceAbstraction;
 
   let userDecryptionOptionsSubject: BehaviorSubject<UserDecryptionOptions>;
+
+  const mockUserId = Utils.newGuid() as UserId;
+  let accountService: FakeAccountService;
+  let stateProvider: FakeStateProvider;
+
+  let logService: MockProxy<LogService>;
 
   beforeEach(() => {
     userDecryptionOptionsService = mock<UserDecryptionOptionsServiceAbstraction>();
@@ -44,13 +59,20 @@ describe("VaultTimeoutSettingsService", () => {
       userDecryptionOptionsSubject,
     );
 
-    service = new VaultTimeoutSettingsService(
+    accountService = mockAccountServiceWith(mockUserId);
+    stateProvider = new FakeStateProvider(accountService);
+
+    logService = mock<LogService>();
+
+    vaultTimeoutSettingsService = new VaultTimeoutSettingsService(
       userDecryptionOptionsService,
       cryptoService,
       tokenService,
       policyService,
       stateService,
       biometricStateService,
+      stateProvider,
+      logService,
     );
 
     biometricStateService.biometricUnlockEnabled$ = of(false);
@@ -62,7 +84,9 @@ describe("VaultTimeoutSettingsService", () => {
 
   describe("availableVaultTimeoutActions$", () => {
     it("always returns LogOut", async () => {
-      const result = await firstValueFrom(service.availableVaultTimeoutActions$());
+      const result = await firstValueFrom(
+        vaultTimeoutSettingsService.availableVaultTimeoutActions$(),
+      );
 
       expect(result).toContain(VaultTimeoutAction.LogOut);
     });
@@ -70,7 +94,9 @@ describe("VaultTimeoutSettingsService", () => {
     it("contains Lock when the user has a master password", async () => {
       userDecryptionOptionsSubject.next(new UserDecryptionOptions({ hasMasterPassword: true }));
 
-      const result = await firstValueFrom(service.availableVaultTimeoutActions$());
+      const result = await firstValueFrom(
+        vaultTimeoutSettingsService.availableVaultTimeoutActions$(),
+      );
 
       expect(result).toContain(VaultTimeoutAction.Lock);
     });
@@ -78,7 +104,9 @@ describe("VaultTimeoutSettingsService", () => {
     it("contains Lock when the user has a persistent PIN configured", async () => {
       stateService.getPinKeyEncryptedUserKey.mockResolvedValue(createEncString());
 
-      const result = await firstValueFrom(service.availableVaultTimeoutActions$());
+      const result = await firstValueFrom(
+        vaultTimeoutSettingsService.availableVaultTimeoutActions$(),
+      );
 
       expect(result).toContain(VaultTimeoutAction.Lock);
     });
@@ -86,7 +114,9 @@ describe("VaultTimeoutSettingsService", () => {
     it("contains Lock when the user has a transient/ephemeral PIN configured", async () => {
       stateService.getProtectedPin.mockResolvedValue("some-key");
 
-      const result = await firstValueFrom(service.availableVaultTimeoutActions$());
+      const result = await firstValueFrom(
+        vaultTimeoutSettingsService.availableVaultTimeoutActions$(),
+      );
 
       expect(result).toContain(VaultTimeoutAction.Lock);
     });
@@ -94,7 +124,9 @@ describe("VaultTimeoutSettingsService", () => {
     it("contains Lock when the user has biometrics configured", async () => {
       biometricStateService.biometricUnlockEnabled$ = of(true);
 
-      const result = await firstValueFrom(service.availableVaultTimeoutActions$());
+      const result = await firstValueFrom(
+        vaultTimeoutSettingsService.availableVaultTimeoutActions$(),
+      );
 
       expect(result).toContain(VaultTimeoutAction.Lock);
     });
@@ -105,13 +137,15 @@ describe("VaultTimeoutSettingsService", () => {
       stateService.getProtectedPin.mockResolvedValue(null);
       biometricStateService.biometricUnlockEnabled$ = of(false);
 
-      const result = await firstValueFrom(service.availableVaultTimeoutActions$());
+      const result = await firstValueFrom(
+        vaultTimeoutSettingsService.availableVaultTimeoutActions$(),
+      );
 
       expect(result).not.toContain(VaultTimeoutAction.Lock);
     });
   });
 
-  describe("vaultTimeoutAction$", () => {
+  describe("getVaultTimeoutActionByUserId$", () => {
     describe("given the user has a master password", () => {
       it.each`
         policy                       | userPreference               | expected
@@ -126,9 +160,12 @@ describe("VaultTimeoutSettingsService", () => {
           policyService.getAll$.mockReturnValue(
             of(policy === null ? [] : ([{ data: { action: policy } }] as unknown as Policy[])),
           );
-          stateService.getVaultTimeoutAction.mockResolvedValue(userPreference);
 
-          const result = await firstValueFrom(service.vaultTimeoutAction$());
+          await stateProvider.setUserState(VAULT_TIMEOUT_ACTION, userPreference, mockUserId);
+
+          const result = await firstValueFrom(
+            vaultTimeoutSettingsService.getVaultTimeoutActionByUserId$(mockUserId),
+          );
 
           expect(result).toBe(expected);
         },
@@ -155,14 +192,42 @@ describe("VaultTimeoutSettingsService", () => {
           policyService.getAll$.mockReturnValue(
             of(policy === null ? [] : ([{ data: { action: policy } }] as unknown as Policy[])),
           );
-          stateService.getVaultTimeoutAction.mockResolvedValue(userPreference);
 
-          const result = await firstValueFrom(service.vaultTimeoutAction$());
+          await stateProvider.setUserState(VAULT_TIMEOUT_ACTION, userPreference, mockUserId);
+
+          const result = await firstValueFrom(
+            vaultTimeoutSettingsService.getVaultTimeoutActionByUserId$(mockUserId),
+          );
 
           expect(result).toBe(expected);
         },
       );
     });
+  });
+
+  describe("getVaultTimeoutByUserId$", () => {
+    it.each([
+      // policy, vaultTimeout, expected
+      [null, null, null],
+      [30, 90, 30], // policy overrides vault timeout
+      [30, 15, 15], // policy doesn't override vault timeout when it's within acceptable range
+    ])(
+      "when policy is %s, and vault timeout is %s, returns %s",
+      async (policy, vaultTimeout, expected) => {
+        userDecryptionOptionsSubject.next(new UserDecryptionOptions({ hasMasterPassword: true }));
+        policyService.getAll$.mockReturnValue(
+          of(policy === null ? [] : ([{ data: { minutes: policy } }] as unknown as Policy[])),
+        );
+
+        await stateProvider.setUserState(VAULT_TIMEOUT, vaultTimeout, mockUserId);
+
+        const result = await firstValueFrom(
+          vaultTimeoutSettingsService.getVaultTimeoutByUserId$(mockUserId),
+        );
+
+        expect(result).toBe(expected);
+      },
+    );
   });
 });
 
