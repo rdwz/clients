@@ -383,21 +383,28 @@ export class VaultComponent implements OnInit, OnDestroy {
 
         let collectionsToReturn = [];
         if (filter.collectionId === undefined || filter.collectionId === All) {
-          collectionsToReturn = collections.map((c) => {
-            const groupsCanManage = c.node.groupsCanManage();
-            const usersCanManage = c.node.usersCanManage(this.orgRevokedUsers);
-            if (
-              groupsCanManage.length === 0 &&
-              usersCanManage.length === 0 &&
-              c.node.id !== Unassigned
-            ) {
-              c.node.addAccess = true;
-              this.showAddAccessToggle = true;
-            } else {
-              c.node.addAccess = false;
-            }
-            return c.node;
-          });
+          if (
+            this._flexibleCollectionsV1FlagEnabled &&
+            !this.organization.canEditAllCiphers(this._flexibleCollectionsV1FlagEnabled)
+          ) {
+            collectionsToReturn = collections.map((c) => {
+              const groupsCanManage = c.node.groupsCanManage();
+              const usersCanManage = c.node.usersCanManage(this.orgRevokedUsers);
+              if (
+                groupsCanManage.length === 0 &&
+                usersCanManage.length === 0 &&
+                c.node.id !== Unassigned
+              ) {
+                c.node.addAccess = true;
+                this.showAddAccessToggle = true;
+              } else {
+                c.node.addAccess = false;
+              }
+              return c.node;
+            });
+          } else {
+            collectionsToReturn = collections.map((c) => c.node);
+          }
         } else {
           const selectedCollection = ServiceUtils.getTreeNodeObjectFromList(
             collections,
