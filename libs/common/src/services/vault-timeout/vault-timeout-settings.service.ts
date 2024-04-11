@@ -63,15 +63,9 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
 
     await this.setVaultTimeout(userId, timeout);
 
-    // TODO: ask why we even need to get the current action
-    const currentAction = await firstValueFrom(this.getVaultTimeoutActionByUserId$(null));
-
-    if (
-      (timeout != null || timeout === 0) &&
-      action === VaultTimeoutAction.LogOut &&
-      action !== currentAction
-    ) {
+    if (timeout != null && action === VaultTimeoutAction.LogOut) {
       // if we have a vault timeout and the action is log out, reset tokens
+      // as the tokens were stored on disk and now should be stored in memory
       await this.tokenService.clearTokens();
     }
 
