@@ -1,19 +1,15 @@
 import { VaultTimeoutAction } from "../../enums/vault-timeout-action.enum";
-import { KeyDefinition } from "../../platform/state";
+import { UserKeyDefinition } from "../../platform/state";
 
-import { VAULT_TIMEOUT_ACTION, EVER_BEEN_UNLOCKED } from "./vault-timeout-settings.state";
+import { VAULT_TIMEOUT, VAULT_TIMEOUT_ACTION } from "./vault-timeout-settings.state";
 
 describe.each([
   [VAULT_TIMEOUT_ACTION, VaultTimeoutAction.Lock],
-  [VAULT_TIMEOUT_ACTION, 5],
-  [EVER_BEEN_UNLOCKED, true],
+  [VAULT_TIMEOUT, 5],
 ])(
   "deserializes state key definitions",
   (
-    keyDefinition:
-      | KeyDefinition<VaultTimeoutAction>
-      | KeyDefinition<number>
-      | KeyDefinition<boolean>,
+    keyDefinition: UserKeyDefinition<VaultTimeoutAction> | UserKeyDefinition<number>,
     state: VaultTimeoutAction | number | boolean,
   ) => {
     function getTypeDescription(value: any): string {
@@ -27,7 +23,7 @@ describe.each([
       return typeof value;
     }
 
-    function testDeserialization<T>(keyDefinition: KeyDefinition<T>, state: T) {
+    function testDeserialization<T>(keyDefinition: UserKeyDefinition<T>, state: T) {
       const deserialized = keyDefinition.deserializer(JSON.parse(JSON.stringify(state)));
       expect(deserialized).toEqual(state);
     }
