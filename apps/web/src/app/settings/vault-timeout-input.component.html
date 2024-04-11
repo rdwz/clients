@@ -8,7 +8,7 @@
         [label]="o.name"
       ></bit-option>
     </bit-select>
-    <bit-hint>{{
+    <bit-hint class="tw-text-sm">{{
       ((canLockVault$ | async) ? "vaultTimeoutDesc" : "vaultTimeoutLogoutDesc") | i18n
     }}</bit-hint>
   </bit-form-field>
