@@ -3,6 +3,7 @@ import { FormBuilder } from "@angular/forms";
 import { BehaviorSubject, firstValueFrom, Observable, Subject } from "rxjs";
 import { concatMap, debounceTime, filter, map, switchMap, takeUntil, tap } from "rxjs/operators";
 
+import { PinServiceAbstraction } from "@bitwarden/auth/common";
 import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { PolicyType } from "@bitwarden/common/admin-console/enums";
@@ -122,6 +123,7 @@ export class SettingsComponent implements OnInit {
     private desktopSettingsService: DesktopSettingsService,
     private biometricStateService: BiometricStateService,
     private desktopAutofillSettingsService: DesktopAutofillSettingsService,
+    private pinService: PinServiceAbstraction,
   ) {
     const isMac = this.platformUtilsService.getDevice() === DeviceType.MacOsDesktop;
 
@@ -235,7 +237,7 @@ export class SettingsComponent implements OnInit {
     );
 
     // Load initial values
-    const pinStatus = await this.vaultTimeoutSettingsService.isPinLockSet();
+    const pinStatus = await this.pinService.isPinLockSet();
     this.userHasPinSet = pinStatus !== "DISABLED";
 
     const initialValues = {
