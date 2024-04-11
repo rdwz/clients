@@ -106,12 +106,16 @@ import {
 } from "@bitwarden/common/autofill/services/domain-settings.service";
 import { BillingAccountProfileStateService } from "@bitwarden/common/billing/abstractions/account/billing-account-profile-state.service";
 import { BillingApiServiceAbstraction } from "@bitwarden/common/billing/abstractions/billilng-api.service.abstraction";
+import { BillingKeyGenerationServiceAbstraction } from "@bitwarden/common/billing/abstractions/billing-key-generation-service.abstraction";
 import { OrganizationBillingServiceAbstraction } from "@bitwarden/common/billing/abstractions/organization-billing.service";
 import { PaymentMethodWarningsServiceAbstraction } from "@bitwarden/common/billing/abstractions/payment-method-warnings-service.abstraction";
+import { ProviderBillingServiceAbstraction } from "@bitwarden/common/billing/abstractions/provider-billing.service.abstraction";
 import { DefaultBillingAccountProfileStateService } from "@bitwarden/common/billing/services/account/billing-account-profile-state.service";
 import { BillingApiService } from "@bitwarden/common/billing/services/billing-api.service";
+import { BillingKeyGenerationService } from "@bitwarden/common/billing/services/billing-key-generation.service";
 import { OrganizationBillingService } from "@bitwarden/common/billing/services/organization-billing.service";
 import { PaymentMethodWarningsService } from "@bitwarden/common/billing/services/payment-method-warnings.service";
+import { ProviderBillingService } from "@bitwarden/common/billing/services/provider-billing.service";
 import { AppIdService as AppIdServiceAbstraction } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { BroadcasterService as BroadcasterServiceAbstraction } from "@bitwarden/common/platform/abstractions/broadcaster.service";
 import { ConfigApiServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config-api.service.abstraction";
@@ -1042,13 +1046,28 @@ const safeProviders: SafeProvider[] = [
     ],
   }),
   safeProvider({
+    provide: BillingKeyGenerationServiceAbstraction,
+    useClass: BillingKeyGenerationService,
+    deps: [CryptoServiceAbstraction, EncryptService, I18nServiceAbstraction],
+  }),
+  safeProvider({
     provide: OrganizationBillingServiceAbstraction,
     useClass: OrganizationBillingService,
     deps: [
-      CryptoServiceAbstraction,
-      EncryptService,
-      I18nServiceAbstraction,
+      BillingKeyGenerationServiceAbstraction,
+      ApiServiceAbstraction,
       OrganizationApiServiceAbstraction,
+      SyncServiceAbstraction,
+    ],
+  }),
+  safeProvider({
+    provide: ProviderBillingServiceAbstraction,
+    useClass: ProviderBillingService,
+    deps: [
+      ApiServiceAbstraction,
+      BillingApiServiceAbstraction,
+      BillingKeyGenerationServiceAbstraction,
+      SyncServiceAbstraction,
     ],
   }),
   safeProvider({

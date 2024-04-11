@@ -1,12 +1,13 @@
+import { ApiService } from "../../abstractions/api.service";
 import { OrganizationApiServiceAbstraction as OrganizationApiService } from "../../admin-console/abstractions/organization/organization-api.service.abstraction";
 import { OrganizationCreateRequest } from "../../admin-console/models/request/organization-create.request";
 import { OrganizationKeysRequest } from "../../admin-console/models/request/organization-keys.request";
 import { OrganizationResponse } from "../../admin-console/models/response/organization.response";
-import { CryptoService } from "../../platform/abstractions/crypto.service";
-import { EncryptService } from "../../platform/abstractions/encrypt.service";
-import { I18nService } from "../../platform/abstractions/i18n.service";
-import { EncString } from "../../platform/models/domain/enc-string";
-import { OrgKey } from "../../types/key";
+import { SyncService } from "../../vault/abstractions/sync/sync.service.abstraction";
+import {
+  BillingKeyGenerationServiceAbstraction,
+  GeneratedKeys,
+} from "../abstractions/billing-key-generation-service.abstraction";
 import {
   OrganizationBillingServiceAbstraction,
   OrganizationInformation,
@@ -16,25 +17,18 @@ import {
 } from "../abstractions/organization-billing.service";
 import { PlanType } from "../enums";
 
-interface OrganizationKeys {
-  encryptedKey: EncString;
-  publicKey: string;
-  encryptedPrivateKey: EncString;
-  encryptedCollectionName: EncString;
-}
-
 export class OrganizationBillingService implements OrganizationBillingServiceAbstraction {
   constructor(
-    private cryptoService: CryptoService,
-    private encryptService: EncryptService,
-    private i18nService: I18nService,
+    private billingKeyGenerationService: BillingKeyGenerationServiceAbstraction,
+    private apiService: ApiService,
     private organizationApiService: OrganizationApiService,
+    private syncService: SyncService,
   ) {}
 
   async purchaseSubscription(subscription: SubscriptionInformation): Promise<OrganizationResponse> {
     const request = new OrganizationCreateRequest();
 
-    const organizationKeys = await this.makeOrganizationKeys();
+    const organizationKeys = await this.billingKeyGenerationService.generateOrganizationKeys();
 
     this.setOrganizationKeys(request, organizationKeys);
 
@@ -44,13 +38,13 @@ export class OrganizationBillingService implements OrganizationBillingServiceAbs
 
     this.setPaymentInformation(request, subscription.payment);
 
-    return await this.organizationApiService.create(request);
+    return await this.createOrganization(request);
   }
 
   async startFree(subscription: SubscriptionInformation): Promise<OrganizationResponse> {
     const request = new OrganizationCreateRequest();
 
-    const organizationKeys = await this.makeOrganizationKeys();
+    const organizationKeys = await this.billingKeyGenerationService.generateOrganizationKeys();
 
     this.setOrganizationKeys(request, organizationKeys);
 
@@ -58,22 +52,17 @@ export class OrganizationBillingService implements OrganizationBillingServiceAbs
 
     this.setPlanInformation(request, subscription.plan);
 
-    return await this.organizationApiService.create(request);
+    return await this.createOrganization(request);
   }
 
-  private async makeOrganizationKeys(): Promise<OrganizationKeys> {
-    const [encryptedKey, key] = await this.cryptoService.makeOrgKey<OrgKey>();
-    const [publicKey, encryptedPrivateKey] = await this.cryptoService.makeKeyPair(key);
-    const encryptedCollectionName = await this.encryptService.encrypt(
-      this.i18nService.t("defaultCollection"),
-      key,
-    );
-    return {
-      encryptedKey,
-      publicKey,
-      encryptedPrivateKey,
-      encryptedCollectionName,
-    };
+  private async createOrganization(request: OrganizationCreateRequest) {
+    const response = await this.organizationApiService.create(request);
+
+    await this.apiService.refreshIdentityToken();
+
+    await this.syncService.fullSync(true);
+
+    return response;
   }
 
   private prohibitsAdditionalSeats(planType: PlanType) {
@@ -99,7 +88,7 @@ export class OrganizationBillingService implements OrganizationBillingServiceAbs
     request.initiationPath = information.initiationPath;
   }
 
-  private setOrganizationKeys(request: OrganizationCreateRequest, keys: OrganizationKeys): void {
+  private setOrganizationKeys(request: OrganizationCreateRequest, keys: GeneratedKeys): void {
     request.key = keys.encryptedKey.encryptedString;
     request.keys = new OrganizationKeysRequest(
       keys.publicKey,

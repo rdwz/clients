@@ -7905,5 +7905,26 @@
   },
   "unassignedItemsBannerSelfHost": {
     "message": "Notice: On May 2, 2024, unassigned organization items will no longer be visible in your All Vaults view across devices and will only be accessible via the Admin Console. Assign these items to a collection from the Admin Console to make them visible."
+  },
+  "createNewClientToManageAsProvider": {
+    "message": "Create a new client organization to manage as a Provider. Additional seats will be reflected in the next billing cycle."
+  },
+  "selectAPlan": {
+    "message": "Select a plan"
+  },
+  "thirtyFivePercentDiscount": {
+    "message": "35% Discount"
+  },
+  "monthPerMember": {
+    "message": "month per member"
+  },
+  "seats": {
+    "message": "Seats"
+  },
+  "addOrganization": {
+    "message": "Add organization"
+  },
+  "createdNewClient": {
+    "message": "Successfully created new client"
   }
 }
