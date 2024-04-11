@@ -14,6 +14,8 @@ import { StateService } from "@bitwarden/common/platform/abstractions/state.serv
 import { PasswordGenerationServiceAbstraction } from "@bitwarden/common/tools/generator/password";
 import { DialogService } from "@bitwarden/components";
 
+import { RouterService } from "../core";
+
 @Component({
   selector: "app-update-password",
   templateUrl: "update-password.component.html",
@@ -32,6 +34,7 @@ export class UpdatePasswordComponent extends BaseUpdatePasswordComponent {
     stateService: StateService,
     userVerificationService: UserVerificationService,
     dialogService: DialogService,
+    private routerService: RouterService,
   ) {
     super(
       router,
@@ -47,5 +50,12 @@ export class UpdatePasswordComponent extends BaseUpdatePasswordComponent {
       logService,
       dialogService,
     );
+  }
+
+  override async cancel() {
+    // clearing the login redirect url so that the user
+    // does not join the organization if they cancel
+    await this.routerService.getAndClearLoginRedirectUrl();
+    await super.cancel();
   }
 }

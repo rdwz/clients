@@ -1,6 +1,6 @@
 import { Component, NgZone, OnInit } from "@angular/core";
 import { FormBuilder } from "@angular/forms";
-import { ActivatedRoute, Router } from "@angular/router";
+import { ActivatedRoute, Params, Router } from "@angular/router";
 import { takeUntil } from "rxjs";
 import { first } from "rxjs/operators";
 
@@ -112,37 +112,10 @@ export class LoginComponent extends BaseLoginComponent implements OnInit {
       await super.ngOnInit();
     });
 
-    const invite = await this.stateService.getOrganizationInvitation();
-    if (invite != null) {
-      let policyList: Policy[] = null;
-      try {
-        this.policies = await this.policyApiService.getPoliciesByToken(
-          invite.organizationId,
-          invite.token,
-          invite.email,
-          invite.organizationUserId,
-        );
-        policyList = Policy.fromListResponse(this.policies);
-      } catch (e) {
-        this.logService.error(e);
-      }
-
-      if (policyList != null) {
-        const resetPasswordPolicy = this.policyService.getResetPasswordPolicyOptions(
-          policyList,
-          invite.organizationId,
-        );
-        // Set to true if policy enabled and auto-enroll enabled
-        this.showResetPasswordAutoEnrollWarning =
-          resetPasswordPolicy[1] && resetPasswordPolicy[0].autoEnrollEnabled;
-
-        this.policyService
-          .masterPasswordPolicyOptions$(policyList)
-          .pipe(takeUntil(this.destroy$))
-          .subscribe((enforcedPasswordPolicyOptions) => {
-            this.enforcedPasswordPolicyOptions = enforcedPasswordPolicyOptions;
-          });
-      }
+    // If there's a deep linked org invite, use it to get the password policies
+    const deepLinkedParams = await this.routerService.getLoginRedirectUrlQueryParams();
+    if (deepLinkedParams != null) {
+      await this.initPasswordPolicies(deepLinkedParams);
     }
   }
 
@@ -211,5 +184,49 @@ export class LoginComponent extends BaseLoginComponent implements OnInit {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.router.navigate(["migrate-legacy-encryption"]);
     return true;
+  }
+
+  private async initPasswordPolicies(invite: Params): Promise<void> {
+    // Verify that the deep link is an organization invite
+    const isOrgInvite =
+      invite.organizationId != null &&
+      invite.token != null &&
+      invite.email != null &&
+      invite.organizationUserId != null;
+
+    if (!isOrgInvite) {
+      return;
+    }
+
+    // Get organization policies by the org invite token
+    let policyList: Policy[] = null;
+    try {
+      this.policies = await this.policyApiService.getPoliciesByToken(
+        invite.organizationId,
+        invite.token,
+        invite.email,
+        invite.organizationUserId,
+      );
+      policyList = Policy.fromListResponse(this.policies);
+    } catch (e) {
+      this.logService.error(e);
+    }
+
+    if (policyList != null) {
+      const resetPasswordPolicy = this.policyService.getResetPasswordPolicyOptions(
+        policyList,
+        invite.organizationId,
+      );
+      // Set to true if policy enabled and auto-enroll enabled
+      this.showResetPasswordAutoEnrollWarning =
+        resetPasswordPolicy[1] && resetPasswordPolicy[0].autoEnrollEnabled;
+
+      this.policyService
+        .masterPasswordPolicyOptions$(policyList)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((enforcedPasswordPolicyOptions) => {
+          this.enforcedPasswordPolicyOptions = enforcedPasswordPolicyOptions;
+        });
+    }
   }
 }

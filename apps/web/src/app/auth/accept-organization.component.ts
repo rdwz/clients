@@ -12,16 +12,17 @@ import { PolicyApiServiceAbstraction } from "@bitwarden/common/admin-console/abs
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { Policy } from "@bitwarden/common/admin-console/models/domain/policy";
 import { OrganizationKeysRequest } from "@bitwarden/common/admin-console/models/request/organization-keys.request";
+import { AuthService } from "@bitwarden/common/auth/abstractions/auth.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
-import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { OrgKey } from "@bitwarden/common/types/key";
 
 import { BaseAcceptComponent } from "../common/base.accept.component";
+import { RouterService } from "../core";
 
 @Component({
   selector: "app-accept-organization",
@@ -37,7 +38,8 @@ export class AcceptOrganizationComponent extends BaseAcceptComponent {
     platformUtilsService: PlatformUtilsService,
     i18nService: I18nService,
     route: ActivatedRoute,
-    stateService: StateService,
+    authService: AuthService,
+    private routerService: RouterService,
     private cryptoService: CryptoService,
     private policyApiService: PolicyApiServiceAbstraction,
     private policyService: PolicyService,
@@ -47,7 +49,7 @@ export class AcceptOrganizationComponent extends BaseAcceptComponent {
     private messagingService: MessagingService,
     private apiService: ApiService,
   ) {
-    super(router, platformUtilsService, i18nService, route, stateService);
+    super(router, platformUtilsService, i18nService, route, authService);
   }
 
   async authedHandler(qParams: Params): Promise<void> {
@@ -56,11 +58,11 @@ export class AcceptOrganizationComponent extends BaseAcceptComponent {
     if (initOrganization) {
       this.actionPromise = this.acceptInitOrganizationFlow(qParams);
     } else {
-      const needsReAuth = (await this.stateService.getOrganizationInvitation()) == null;
-      if (needsReAuth) {
-        // Accepting an org invite requires authentication from a logged out state
+      if (qParams.policyChecked !== "true") {
+        // We must check the MP policy before accepting the invite
+        const currentUrl = this.router.url;
+        await this.addPolicyCheckedQueryParam(currentUrl);
         this.messagingService.send("logout", { redirect: false });
-        await this.prepareOrganizationInvitation(qParams);
         return;
       }
 
@@ -70,7 +72,6 @@ export class AcceptOrganizationComponent extends BaseAcceptComponent {
 
     await this.actionPromise;
     await this.apiService.refreshIdentityToken();
-    await this.stateService.setOrganizationInvitation(null);
     this.platformUtilService.showToast(
       "success",
       this.i18nService.t("inviteAccepted"),
@@ -85,7 +86,8 @@ export class AcceptOrganizationComponent extends BaseAcceptComponent {
   }
 
   async unauthedHandler(qParams: Params): Promise<void> {
-    await this.prepareOrganizationInvitation(qParams);
+    const persistedUrl = await this.routerService.getAndClearLoginRedirectUrl();
+    await this.addPolicyCheckedQueryParam(persistedUrl);
 
     // In certain scenarios, we want to accelerate the user through the accept org invite process
     // For example, if the user has a BW account already, we want them to be taken to login instead of creation.
@@ -184,15 +186,6 @@ export class AcceptOrganizationComponent extends BaseAcceptComponent {
     return false;
   }
 
-  private async prepareOrganizationInvitation(qParams: Params): Promise<void> {
-    this.orgName = qParams.organizationName;
-    if (this.orgName != null) {
-      // Fix URL encoding of space issue with Angular
-      this.orgName = this.orgName.replace(/\+/g, " ");
-    }
-    await this.stateService.setOrganizationInvitation(qParams);
-  }
-
   private async accelerateInviteAcceptIfPossible(qParams: Params): Promise<void> {
     // Extract the query params we need to make routing acceleration decisions
     const orgSsoIdentifier = qParams.orgSsoIdentifier;
@@ -240,5 +233,15 @@ export class AcceptOrganizationComponent extends BaseAcceptComponent {
       return null;
     }
     return s.toLowerCase() === "true";
+  }
+
+  // Abusing the deep link redirect url here to store the policy checked state.
+  // This is necessary to ensure that authenticated users that accept org invites
+  // have their MP checked against policy.
+  // TODO: Refactor this to avoid using login for MP check on authenticated users.
+  private async addPolicyCheckedQueryParam(url: string): Promise<void> {
+    const deepLinkRedirectUrl = this.router.parseUrl(url);
+    deepLinkRedirectUrl.queryParams.policyChecked = "true";
+    await this.routerService.persistLoginRedirectUrl(deepLinkRedirectUrl.toString());
   }
 }
