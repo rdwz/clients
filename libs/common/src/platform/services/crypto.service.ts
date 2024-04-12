@@ -8,7 +8,6 @@ import { ProfileProviderResponse } from "../../admin-console/models/response/pro
 import { AccountService } from "../../auth/abstractions/account.service";
 import { KdfConfigService } from "../../auth/abstractions/kdf-config.service";
 import { InternalMasterPasswordServiceAbstraction } from "../../auth/abstractions/master-password.service.abstraction";
-import { AuthenticationStatus } from "../../auth/enums/authentication-status";
 import { KdfConfig } from "../../auth/models/domain/kdf-config";
 import { Utils } from "../../platform/misc/utils";
 import { CsprngArray } from "../../types/csprng";
@@ -145,8 +144,6 @@ export class CryptoService implements CryptoServiceAbstraction {
     [userId, key] = await this.stateProvider.setUserState(USER_KEY, key, userId);
     await this.stateProvider.setUserState(USER_EVER_HAD_USER_KEY, true, userId);
 
-    await this.accountService.setAccountStatus(userId, AuthenticationStatus.Unlocked);
-
     await this.storeAdditionalKeys(key, userId);
   }
 
@@ -249,14 +246,13 @@ export class CryptoService implements CryptoServiceAbstraction {
    * Clears the user key. Clears all stored versions of the user keys as well, such as the biometrics key
    * @param userId The desired user
    */
-  async clearUserKey(userId: UserId): Promise<void> {
+  private async clearUserKey(userId: UserId): Promise<void> {
     if (userId == null) {
       // nothing to do
       return;
     }
     // Set userId to ensure we have one for the account status update
     await this.stateProvider.setUserState(USER_KEY, null, userId);
-    await this.accountService.setMaxAccountStatus(userId, AuthenticationStatus.Locked);
     await this.clearAllStoredUserKeys(userId);
   }
 

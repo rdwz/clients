@@ -684,7 +684,7 @@ export class Main {
       this.apiService,
       this.stateProvider,
       this.logService,
-      this.accountService,
+      this.authService,
     );
 
     this.eventCollectionService = new EventCollectionService(
@@ -692,7 +692,7 @@ export class Main {
       this.stateProvider,
       this.organizationService,
       this.eventUploadService,
-      this.accountService,
+      this.authService,
     );
   }
 

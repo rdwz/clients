@@ -5,7 +5,6 @@ import { FakeAccountService, mockAccountServiceWith } from "../../../spec/fake-a
 import { FakeActiveUserState, FakeSingleUserState } from "../../../spec/fake-state";
 import { FakeStateProvider } from "../../../spec/fake-state-provider";
 import { KdfConfigService } from "../../auth/abstractions/kdf-config.service";
-import { AuthenticationStatus } from "../../auth/enums/authentication-status";
 import { FakeMasterPasswordService } from "../../auth/services/master-password/fake-master-password.service";
 import { CsprngArray } from "../../types/csprng";
 import { UserId } from "../../types/guid";
@@ -276,15 +275,6 @@ describe("cryptoService", () => {
       await expect(cryptoService.setUserKey(null, mockUserId)).rejects.toThrow("No key provided.");
     });
 
-    it("should update the user's lock state", async () => {
-      await cryptoService.setUserKey(mockUserKey, mockUserId);
-
-      expect(accountService.mock.setAccountStatus).toHaveBeenCalledWith(
-        mockUserId,
-        AuthenticationStatus.Unlocked,
-      );
-    });
-
     describe("Pin Key refresh", () => {
       let cryptoSvcMakePinKey: jest.SpyInstance;
       const protectedPin =
@@ -354,23 +344,6 @@ describe("cryptoService", () => {
 
       // revert to the original state
       accountService.activeAccount$ = accountService.activeAccountSubject.asObservable();
-    });
-
-    it("sets the maximum account status of the active user id to locked when user id is not specified", async () => {
-      await cryptoService.clearKeys();
-      expect(accountService.mock.setMaxAccountStatus).toHaveBeenCalledWith(
-        mockUserId,
-        AuthenticationStatus.Locked,
-      );
-    });
-
-    it("sets the maximum account status of the specified user id to locked when user id is specified", async () => {
-      const userId = "someOtherUser" as UserId;
-      await cryptoService.clearKeys(userId);
-      expect(accountService.mock.setMaxAccountStatus).toHaveBeenCalledWith(
-        userId,
-        AuthenticationStatus.Locked,
-      );
     });
 
     describe.each([
