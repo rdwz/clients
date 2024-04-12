@@ -1,10 +1,11 @@
 import { DatePipe } from "@angular/common";
 import { Directive, EventEmitter, Input, OnDestroy, OnInit, Output } from "@angular/core";
 import { FormBuilder, Validators } from "@angular/forms";
-import { BehaviorSubject, Subject, concatMap, firstValueFrom, map, takeUntil } from "rxjs";
+import { Subject, firstValueFrom, takeUntil, map, BehaviorSubject, concatMap } from "rxjs";
 
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { PolicyType } from "@bitwarden/common/admin-console/enums";
+import { BillingAccountProfileStateService } from "@bitwarden/common/billing/abstractions/account/billing-account-profile-state.service";
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
@@ -116,12 +117,12 @@ export class AddEditComponent implements OnInit, OnDestroy {
     protected sendApiService: SendApiService,
     protected dialogService: DialogService,
     protected formBuilder: FormBuilder,
+    protected billingAccountProfileStateService: BillingAccountProfileStateService,
   ) {
     this.typeOptions = [
       { name: i18nService.t("sendTypeFile"), value: SendType.File, premium: true },
       { name: i18nService.t("sendTypeText"), value: SendType.Text, premium: false },
     ];
-    this.sendLinkBaseUrl = this.environmentService.getSendUrl();
   }
 
   get link(): string {
@@ -188,6 +189,15 @@ export class AddEditComponent implements OnInit, OnDestroy {
         }
       });
 
+    const env = await firstValueFrom(this.environmentService.environment$);
+    this.sendLinkBaseUrl = env.getSendUrl();
+
+    this.billingAccountProfileStateService.hasPremiumFromAnySource$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((hasPremiumFromAnySource) => {
+        this.canAccessPremium = hasPremiumFromAnySource;
+      });
+
     await this.load();
   }
 
@@ -205,7 +215,6 @@ export class AddEditComponent implements OnInit, OnDestroy {
   }
 
   async load() {
-    this.canAccessPremium = await this.stateService.getCanAccessPremium();
     this.emailVerified = await this.stateService.getEmailVerified();
 
     this.type = !this.canAccessPremium || !this.emailVerified ? SendType.Text : SendType.File;

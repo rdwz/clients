@@ -9,6 +9,8 @@ import { AdminAuthRequestStorable } from "@bitwarden/common/auth/models/domain/a
 import { AuthRequestResponse } from "@bitwarden/common/auth/models/response/auth-request.response";
 import { IdentityTokenResponse } from "@bitwarden/common/auth/models/response/identity-token.response";
 import { IUserDecryptionOptionsServerResponse } from "@bitwarden/common/auth/models/response/user-decryption-options/user-decryption-options.response";
+import { FakeMasterPasswordService } from "@bitwarden/common/auth/services/master-password/fake-master-password.service";
+import { BillingAccountProfileStateService } from "@bitwarden/common/billing/abstractions/account/billing-account-profile-state.service";
 import { ErrorResponse } from "@bitwarden/common/models/response/error.response";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
@@ -19,16 +21,24 @@ import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/pl
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
+import { FakeAccountService, mockAccountServiceWith } from "@bitwarden/common/spec";
 import { CsprngArray } from "@bitwarden/common/types/csprng";
+import { UserId } from "@bitwarden/common/types/guid";
 import { DeviceKey, UserKey, MasterKey } from "@bitwarden/common/types/key";
 
-import { AuthRequestServiceAbstraction } from "../abstractions";
+import {
+  AuthRequestServiceAbstraction,
+  InternalUserDecryptionOptionsServiceAbstraction,
+} from "../abstractions";
 import { SsoLoginCredentials } from "../models/domain/login-credentials";
 
 import { identityTokenResponseFactory } from "./login.strategy.spec";
 import { SsoLoginStrategy } from "./sso-login.strategy";
 
 describe("SsoLoginStrategy", () => {
+  let accountService: FakeAccountService;
+  let masterPasswordService: FakeMasterPasswordService;
+
   let cryptoService: MockProxy<CryptoService>;
   let apiService: MockProxy<ApiService>;
   let tokenService: MockProxy<TokenService>;
@@ -38,14 +48,17 @@ describe("SsoLoginStrategy", () => {
   let logService: MockProxy<LogService>;
   let stateService: MockProxy<StateService>;
   let twoFactorService: MockProxy<TwoFactorService>;
+  let userDecryptionOptionsService: MockProxy<InternalUserDecryptionOptionsServiceAbstraction>;
   let keyConnectorService: MockProxy<KeyConnectorService>;
   let deviceTrustCryptoService: MockProxy<DeviceTrustCryptoServiceAbstraction>;
   let authRequestService: MockProxy<AuthRequestServiceAbstraction>;
   let i18nService: MockProxy<I18nService>;
+  let billingAccountProfileStateService: MockProxy<BillingAccountProfileStateService>;
 
   let ssoLoginStrategy: SsoLoginStrategy;
   let credentials: SsoLoginCredentials;
 
+  const userId = Utils.newGuid() as UserId;
   const deviceId = Utils.newGuid();
   const keyConnectorUrl = "KEY_CONNECTOR_URL";
 
@@ -55,6 +68,9 @@ describe("SsoLoginStrategy", () => {
   const ssoOrgId = "SSO_ORG_ID";
 
   beforeEach(async () => {
+    accountService = mockAccountServiceWith(userId);
+    masterPasswordService = new FakeMasterPasswordService();
+
     cryptoService = mock<CryptoService>();
     apiService = mock<ApiService>();
     tokenService = mock<TokenService>();
@@ -64,17 +80,21 @@ describe("SsoLoginStrategy", () => {
     logService = mock<LogService>();
     stateService = mock<StateService>();
     twoFactorService = mock<TwoFactorService>();
+    userDecryptionOptionsService = mock<InternalUserDecryptionOptionsServiceAbstraction>();
     keyConnectorService = mock<KeyConnectorService>();
     deviceTrustCryptoService = mock<DeviceTrustCryptoServiceAbstraction>();
     authRequestService = mock<AuthRequestServiceAbstraction>();
     i18nService = mock<I18nService>();
+    billingAccountProfileStateService = mock<BillingAccountProfileStateService>();
 
     tokenService.getTwoFactorToken.mockResolvedValue(null);
     appIdService.getAppId.mockResolvedValue(deviceId);
-    tokenService.decodeToken.mockResolvedValue({});
+    tokenService.decodeAccessToken.mockResolvedValue({});
 
     ssoLoginStrategy = new SsoLoginStrategy(
       null,
+      accountService,
+      masterPasswordService,
       cryptoService,
       apiService,
       tokenService,
@@ -84,10 +104,12 @@ describe("SsoLoginStrategy", () => {
       logService,
       stateService,
       twoFactorService,
+      userDecryptionOptionsService,
       keyConnectorService,
       deviceTrustCryptoService,
       authRequestService,
       i18nService,
+      billingAccountProfileStateService,
     );
     credentials = new SsoLoginCredentials(ssoCode, ssoCodeVerifier, ssoRedirectUrl, ssoOrgId);
   });
@@ -120,7 +142,7 @@ describe("SsoLoginStrategy", () => {
 
     await ssoLoginStrategy.logIn(credentials);
 
-    expect(cryptoService.setMasterKey).not.toHaveBeenCalled();
+    expect(masterPasswordService.mock.setMasterKey).not.toHaveBeenCalled();
     expect(cryptoService.setUserKey).not.toHaveBeenCalled();
     expect(cryptoService.setPrivateKey).not.toHaveBeenCalled();
   });
@@ -385,7 +407,7 @@ describe("SsoLoginStrategy", () => {
       ) as MasterKey;
 
       apiService.postIdentityToken.mockResolvedValue(tokenResponse);
-      cryptoService.getMasterKey.mockResolvedValue(masterKey);
+      masterPasswordService.masterKeySubject.next(masterKey);
 
       await ssoLoginStrategy.logIn(credentials);
 
@@ -412,7 +434,7 @@ describe("SsoLoginStrategy", () => {
       ) as MasterKey;
 
       apiService.postIdentityToken.mockResolvedValue(tokenResponse);
-      cryptoService.getMasterKey.mockResolvedValue(masterKey);
+      masterPasswordService.masterKeySubject.next(masterKey);
       cryptoService.decryptUserKeyWithMasterKey.mockResolvedValue(userKey);
 
       await ssoLoginStrategy.logIn(credentials);
@@ -436,7 +458,7 @@ describe("SsoLoginStrategy", () => {
       ) as MasterKey;
 
       apiService.postIdentityToken.mockResolvedValue(tokenResponse);
-      cryptoService.getMasterKey.mockResolvedValue(masterKey);
+      masterPasswordService.masterKeySubject.next(masterKey);
 
       await ssoLoginStrategy.logIn(credentials);
 
@@ -463,7 +485,7 @@ describe("SsoLoginStrategy", () => {
       ) as MasterKey;
 
       apiService.postIdentityToken.mockResolvedValue(tokenResponse);
-      cryptoService.getMasterKey.mockResolvedValue(masterKey);
+      masterPasswordService.masterKeySubject.next(masterKey);
       cryptoService.decryptUserKeyWithMasterKey.mockResolvedValue(userKey);
 
       await ssoLoginStrategy.logIn(credentials);

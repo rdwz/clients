@@ -2,6 +2,7 @@ import { DIALOG_DATA, DialogConfig, DialogRef } from "@angular/cdk/dialog";
 import { Component, OnDestroy, Inject } from "@angular/core";
 
 import { CollectionsComponent as BaseCollectionsComponent } from "@bitwarden/angular/admin-console/components/collections.component";
+import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
@@ -20,11 +21,19 @@ export class CollectionsComponent extends BaseCollectionsComponent implements On
     platformUtilsService: PlatformUtilsService,
     i18nService: I18nService,
     cipherService: CipherService,
+    organizationSerivce: OrganizationService,
     logService: LogService,
     protected dialogRef: DialogRef,
     @Inject(DIALOG_DATA) params: CollectionsDialogParams,
   ) {
-    super(collectionService, platformUtilsService, i18nService, cipherService, logService);
+    super(
+      collectionService,
+      platformUtilsService,
+      i18nService,
+      cipherService,
+      organizationSerivce,
+      logService,
+    );
     this.cipherId = params?.cipherId;
   }
 
@@ -38,6 +47,9 @@ export class CollectionsComponent extends BaseCollectionsComponent implements On
   }
 
   check(c: CollectionView, select?: boolean) {
+    if (!c.canEditItems(this.organization, this.flexibleCollectionsV1Enabled)) {
+      return;
+    }
     (c as any).checked = select == null ? !(c as any).checked : select;
   }
 

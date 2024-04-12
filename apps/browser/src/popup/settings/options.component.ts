@@ -1,8 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { firstValueFrom } from "rxjs";
 
-import { AbstractThemingService } from "@bitwarden/angular/platform/services/theming/theming.service.abstraction";
-import { SettingsService } from "@bitwarden/common/abstractions/settings.service";
 import { AutofillSettingsServiceAbstraction } from "@bitwarden/common/autofill/services/autofill-settings.service";
 import { BadgeSettingsServiceAbstraction } from "@bitwarden/common/autofill/services/badge-settings.service";
 import { DomainSettingsService } from "@bitwarden/common/autofill/services/domain-settings.service";
@@ -14,8 +12,8 @@ import {
 } from "@bitwarden/common/models/domain/domain-service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
-import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
 import { ThemeType } from "@bitwarden/common/platform/enums";
+import { ThemeStateService } from "@bitwarden/common/platform/theming/theme-state.service";
 import { VaultSettingsService } from "@bitwarden/common/vault/abstractions/vault-settings/vault-settings.service";
 
 import { enableAccountSwitching } from "../../platform/flags";
@@ -51,14 +49,12 @@ export class OptionsComponent implements OnInit {
 
   constructor(
     private messagingService: MessagingService,
-    private stateService: StateService,
     private userNotificationSettingsService: UserNotificationSettingsServiceAbstraction,
     private autofillSettingsService: AutofillSettingsServiceAbstraction,
     private domainSettingsService: DomainSettingsService,
     private badgeSettingsService: BadgeSettingsServiceAbstraction,
     i18nService: I18nService,
-    private themingService: AbstractThemingService,
-    private settingsService: SettingsService,
+    private themeStateService: ThemeStateService,
     private vaultSettingsService: VaultSettingsService,
   ) {
     this.themeOptions = [
@@ -114,18 +110,20 @@ export class OptionsComponent implements OnInit {
       this.autofillSettingsService.enableContextMenu$,
     );
 
-    this.showCardsCurrentTab = !(await this.stateService.getDontShowCardsCurrentTab());
-    this.showIdentitiesCurrentTab = !(await this.stateService.getDontShowIdentitiesCurrentTab());
+    this.showCardsCurrentTab = await firstValueFrom(this.vaultSettingsService.showCardsCurrentTab$);
+    this.showIdentitiesCurrentTab = await firstValueFrom(
+      this.vaultSettingsService.showIdentitiesCurrentTab$,
+    );
 
     this.enableAutoTotpCopy = await firstValueFrom(this.autofillSettingsService.autoCopyTotp$);
 
-    this.enableFavicon = !this.settingsService.getDisableFavicon();
+    this.enableFavicon = await firstValueFrom(this.domainSettingsService.showFavicons$);
 
     this.enableBadgeCounter = await firstValueFrom(this.badgeSettingsService.enableBadgeCounter$);
 
     this.enablePasskeys = await firstValueFrom(this.vaultSettingsService.enablePasskeys$);
 
-    this.theme = await this.stateService.getTheme();
+    this.theme = await firstValueFrom(this.themeStateService.selectedTheme$);
 
     const defaultUriMatch = await firstValueFrom(
       this.domainSettingsService.defaultUriMatchStrategy$,
@@ -169,7 +167,7 @@ export class OptionsComponent implements OnInit {
   }
 
   async updateFavicon() {
-    await this.settingsService.setDisableFavicon(!this.enableFavicon);
+    await this.domainSettingsService.setShowFavicons(this.enableFavicon);
   }
 
   async updateBadgeCounter() {
@@ -178,15 +176,15 @@ export class OptionsComponent implements OnInit {
   }
 
   async updateShowCardsCurrentTab() {
-    await this.stateService.setDontShowCardsCurrentTab(!this.showCardsCurrentTab);
+    await this.vaultSettingsService.setShowCardsCurrentTab(this.showCardsCurrentTab);
   }
 
   async updateShowIdentitiesCurrentTab() {
-    await this.stateService.setDontShowIdentitiesCurrentTab(!this.showIdentitiesCurrentTab);
+    await this.vaultSettingsService.setShowIdentitiesCurrentTab(this.showIdentitiesCurrentTab);
   }
 
   async saveTheme() {
-    await this.themingService.updateConfiguredTheme(this.theme);
+    await this.themeStateService.setSelectedTheme(this.theme);
   }
 
   async saveClearClipboard() {

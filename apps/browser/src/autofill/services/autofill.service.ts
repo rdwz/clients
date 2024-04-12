@@ -5,6 +5,7 @@ import { UserVerificationService } from "@bitwarden/common/auth/abstractions/use
 import { AutofillSettingsServiceAbstraction } from "@bitwarden/common/autofill/services/autofill-settings.service";
 import { DomainSettingsService } from "@bitwarden/common/autofill/services/domain-settings.service";
 import { InlineMenuVisibilitySetting } from "@bitwarden/common/autofill/types";
+import { BillingAccountProfileStateService } from "@bitwarden/common/billing/abstractions/account/billing-account-profile-state.service";
 import { EventType } from "@bitwarden/common/enums";
 import {
   UriMatchStrategySetting,
@@ -19,7 +20,6 @@ import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { FieldView } from "@bitwarden/common/vault/models/view/field.view";
 
 import { BrowserApi } from "../../platform/browser/browser-api";
-import { BrowserStateService } from "../../platform/services/abstractions/browser-state.service";
 import { openVaultItemPasswordRepromptPopout } from "../../vault/popup/utils/vault-popout-window";
 import { AutofillPort } from "../enums/autofill-port.enums";
 import AutofillField from "../models/autofill-field";
@@ -41,19 +41,20 @@ import {
 
 export default class AutofillService implements AutofillServiceInterface {
   private openVaultItemPasswordRepromptPopout = openVaultItemPasswordRepromptPopout;
-  private openPasswordRepromptPopoutDebounce: NodeJS.Timeout;
+  private openPasswordRepromptPopoutDebounce: number | NodeJS.Timeout;
   private currentlyOpeningPasswordRepromptPopout = false;
   private autofillScriptPortsSet = new Set<chrome.runtime.Port>();
+  static searchFieldNamesSet = new Set(AutoFillConstants.SearchFieldNames);
 
   constructor(
     private cipherService: CipherService,
-    private stateService: BrowserStateService,
     private autofillSettingsService: AutofillSettingsServiceAbstraction,
     private totpService: TotpService,
     private eventCollectionService: EventCollectionService,
     private logService: LogService,
     private domainSettingsService: DomainSettingsService,
     private userVerificationService: UserVerificationService,
+    private billingAccountProfileStateService: BillingAccountProfileStateService,
   ) {}
 
   /**
@@ -239,7 +240,9 @@ export default class AutofillService implements AutofillServiceInterface {
 
     let totp: string | null = null;
 
-    const canAccessPremium = await this.stateService.getCanAccessPremium();
+    const canAccessPremium = await firstValueFrom(
+      this.billingAccountProfileStateService.hasPremiumFromAnySource$,
+    );
     const defaultUriMatch = await this.getDefaultUriMatchStrategy();
 
     if (!canAccessPremium) {
@@ -1380,11 +1383,33 @@ export default class AutofillService implements AutofillServiceInterface {
     return excludedTypes.indexOf(type) > -1;
   }
 
+  /**
+   * Identifies if a passed field contains text artifacts that identify it as a search field.
+   *
+   * @param field - The autofill field that we are validating as a search field
+   */
   private static isSearchField(field: AutofillField) {
     const matchFieldAttributeValues = [field.type, field.htmlName, field.htmlID, field.placeholder];
-    const matchPattern = new RegExp(AutoFillConstants.SearchFieldNames.join("|"), "gi");
+    for (let attrIndex = 0; attrIndex < matchFieldAttributeValues.length; attrIndex++) {
+      if (!matchFieldAttributeValues[attrIndex]) {
+        continue;
+      }
 
-    return Boolean(matchFieldAttributeValues.join(" ").match(matchPattern));
+      // Separate camel case words and case them to lower case values
+      const camelCaseSeparatedFieldAttribute = matchFieldAttributeValues[attrIndex]
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .toLowerCase();
+      // Split the attribute by non-alphabetical characters to get the keywords
+      const attributeKeywords = camelCaseSeparatedFieldAttribute.split(/[^a-z]/gi);
+
+      for (let keywordIndex = 0; keywordIndex < attributeKeywords.length; keywordIndex++) {
+        if (AutofillService.searchFieldNamesSet.has(attributeKeywords[keywordIndex])) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   static isExcludedFieldType(field: AutofillField, excludedTypes: string[]) {
@@ -1397,11 +1422,7 @@ export default class AutofillService implements AutofillServiceInterface {
     }
 
     // Check if the input is an untyped/mistyped search input
-    if (this.isSearchField(field)) {
-      return true;
-    }
-
-    return false;
+    return this.isSearchField(field);
   }
 
   /**
@@ -1525,11 +1546,7 @@ export default class AutofillService implements AutofillServiceInterface {
       return false;
     }
 
-    if (AutoFillConstants.PasswordFieldExcludeList.some((i) => cleanedValue.indexOf(i) > -1)) {
-      return false;
-    }
-
-    return true;
+    return !AutoFillConstants.PasswordFieldExcludeList.some((i) => cleanedValue.indexOf(i) > -1);
   }
 
   static fieldHasDisqualifyingAttributeValue(field: AutofillField) {
@@ -1572,7 +1589,11 @@ export default class AutofillService implements AutofillServiceInterface {
     const arr: AutofillField[] = [];
 
     pageDetails.fields.forEach((f) => {
-      if (AutofillService.isExcludedFieldType(f, AutoFillConstants.ExcludedAutofillLoginTypes)) {
+      const isPassword = f.type === "password";
+      if (
+        !isPassword &&
+        AutofillService.isExcludedFieldType(f, AutoFillConstants.ExcludedAutofillLoginTypes)
+      ) {
         return;
       }
 
@@ -1581,23 +1602,16 @@ export default class AutofillService implements AutofillServiceInterface {
         return;
       }
 
-      const isPassword = f.type === "password";
-
       const isLikePassword = () => {
         if (f.type !== "text") {
           return false;
         }
 
-        if (AutofillService.valueIsLikePassword(f.htmlID)) {
-          return true;
-        }
-
-        if (AutofillService.valueIsLikePassword(f.htmlName)) {
-          return true;
-        }
-
-        if (AutofillService.valueIsLikePassword(f.placeholder)) {
-          return true;
+        const testedValues = [f.htmlID, f.htmlName, f.placeholder];
+        for (let i = 0; i < testedValues.length; i++) {
+          if (AutofillService.valueIsLikePassword(testedValues[i])) {
+            return true;
+          }
         }
 
         return false;

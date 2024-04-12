@@ -7063,12 +7063,6 @@
   "enforceOnLoginDesc": {
     "message": "要求现有成员更改他们的密码"
   },
-  "usDomain": {
-    "message": "bitwarden.com"
-  },
-  "euDomain": {
-    "message": "bitwarden.eu"
-  },
   "smProjectDeleteAccessRestricted": {
     "message": "您无权删除此工程",
     "description": "The individual description shown to the user when the user doesn't have access to delete a project."
@@ -7484,7 +7478,7 @@
     "message": "安装浏览器扩展"
   },
   "installBrowserExtensionDetails": {
-    "message": "使用扩展快速保存登录信息和自动填充表单，而无需打开网页应用程序。"
+    "message": "使用扩展快速保存登录信息和自动填充表单，而无需打开网页 App。"
   },
   "projectAccessUpdated": {
     "message": "工程访问权限已更新"
@@ -7517,7 +7511,7 @@
     "message": "服务账户访问权限已更新"
   },
   "commonImportFormats": {
-    "message": "通用格式",
+    "message": "常规格式",
     "description": "Label indicating the most common import formats"
   },
   "maintainYourSubscription": {
@@ -7539,7 +7533,7 @@
     "description": "This describes new features and improvements for user roles and collections"
   },
   "collectionEnhancementsLearnMore": {
-    "message": "了解更多关于集合管理"
+    "message": "了解更多关于集合管理的信息"
   },
   "organizationInformation": {
     "message": "组织信息"
@@ -7595,7 +7589,7 @@
     "message": "免费 1 年"
   },
   "newWebApp": {
-    "message": "欢迎来到全新改进的网页应用。了解更多更新信息。"
+    "message": "欢迎使用全新改进的网页 App。了解更多有关变更的信息。"
   },
   "releaseBlog": {
     "message": "阅读发布博客"
@@ -7605,5 +7599,48 @@
   },
   "providerPortal": {
     "message": "提供商门户"
+  },
+  "restrictedGroupAccess": {
+    "message": "您不能将自己添加到群组。"
+  },
+  "restrictedCollectionAccess": {
+    "message": "您不能将自己添加到集合。"
+  },
+  "assign": {
+    "message": "分配"
+  },
+  "assignToCollections": {
+    "message": "分配到集合"
+  },
+  "assignToTheseCollections": {
+    "message": "分配到这些集合"
+  },
+  "bulkCollectionAssignmentDialogDescription": {
+    "message": "选择要共享项目的集合。当一个项目在某个集合中更新后，它将反映在所有集合中。只有能够访问这些集合的组织成员才能看到此项目。"
+  },
+  "selectCollectionsToAssign": {
+    "message": "选择要分配的集合"
+  },
+  "noCollectionsAssigned": {
+    "message": "没有分配任何集合"
+  },
+  "successfullyAssignedCollections": {
+    "message": "成功分配了集合"
+  },
+  "bulkCollectionAssignmentWarning": {
+    "message": "您选择了 $TOTAL_COUNT$ 个项目。其中的 $READONLY_COUNT$ 个项目由于您没有编辑权限，您将无法更新它们。",
+    "placeholders": {
+      "total_count": {
+        "content": "$1",
+        "example": "10"
+      },
+      "readonly_count": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "items": {
+    "message": "项目"
   }
 }

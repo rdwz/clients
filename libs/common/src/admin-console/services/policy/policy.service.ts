@@ -1,7 +1,6 @@
 import { combineLatest, firstValueFrom, map, Observable, of } from "rxjs";
 
-import { ListResponse } from "../../../models/response/list.response";
-import { KeyDefinition, POLICIES_DISK, StateProvider } from "../../../platform/state";
+import { UserKeyDefinition, POLICIES_DISK, StateProvider } from "../../../platform/state";
 import { PolicyId, UserId } from "../../../types/guid";
 import { OrganizationService } from "../../abstractions/organization/organization.service.abstraction";
 import { InternalPolicyService as InternalPolicyServiceAbstraction } from "../../abstractions/policy/policy.service.abstraction";
@@ -11,13 +10,13 @@ import { MasterPasswordPolicyOptions } from "../../models/domain/master-password
 import { Organization } from "../../models/domain/organization";
 import { Policy } from "../../models/domain/policy";
 import { ResetPasswordPolicyOptions } from "../../models/domain/reset-password-policy-options";
-import { PolicyResponse } from "../../models/response/policy.response";
 
 const policyRecordToArray = (policiesMap: { [id: string]: PolicyData }) =>
   Object.values(policiesMap || {}).map((f) => new Policy(f));
 
-export const POLICIES = KeyDefinition.record<PolicyData, PolicyId>(POLICIES_DISK, "policies", {
+export const POLICIES = UserKeyDefinition.record<PolicyData, PolicyId>(POLICIES_DISK, "policies", {
   deserializer: (policyData) => policyData,
+  clearOn: ["logout"],
 });
 
 export class PolicyService implements InternalPolicyServiceAbstraction {
@@ -212,19 +211,6 @@ export class PolicyService implements InternalPolicyServiceAbstraction {
     return [resetPasswordPolicyOptions, policy?.enabled ?? false];
   }
 
-  mapPolicyFromResponse(policyResponse: PolicyResponse): Policy {
-    const policyData = new PolicyData(policyResponse);
-    return new Policy(policyData);
-  }
-
-  mapPoliciesFromToken(policiesResponse: ListResponse<PolicyResponse>): Policy[] {
-    if (policiesResponse?.data == null) {
-      return null;
-    }
-
-    return policiesResponse.data.map((response) => this.mapPolicyFromResponse(response));
-  }
-
   async upsert(policy: PolicyData): Promise<void> {
     await this.activeUserPolicyState.update((policies) => {
       policies ??= {};
@@ -235,10 +221,6 @@ export class PolicyService implements InternalPolicyServiceAbstraction {
 
   async replace(policies: { [id: string]: PolicyData }): Promise<void> {
     await this.activeUserPolicyState.update(() => policies);
-  }
-
-  async clear(userId?: UserId): Promise<void> {
-    await this.stateProvider.setUserState(POLICIES, null, userId);
   }
 
   /**

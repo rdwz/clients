@@ -1,20 +1,23 @@
 import { mock } from "jest-mock-extended";
-import { firstValueFrom } from "rxjs";
+import { BehaviorSubject, firstValueFrom } from "rxjs";
 
 import { PolicyService } from "@bitwarden/common/admin-console/services/policy/policy.service";
 import { AuthenticationStatus } from "@bitwarden/common/auth/enums/authentication-status";
 import { AuthService } from "@bitwarden/common/auth/services/auth.service";
 import { DomainSettingsService } from "@bitwarden/common/autofill/services/domain-settings.service";
 import { UserNotificationSettingsService } from "@bitwarden/common/autofill/services/user-notification-settings.service";
+import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
+import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
-import { EnvironmentService } from "@bitwarden/common/platform/services/environment.service";
+import { SelfHostedEnvironment } from "@bitwarden/common/platform/services/default-environment.service";
+import { ThemeStateService } from "@bitwarden/common/platform/theming/theme-state.service";
 import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { FolderView } from "@bitwarden/common/vault/models/view/folder.view";
 import { CipherService } from "@bitwarden/common/vault/services/cipher.service";
 import { FolderService } from "@bitwarden/common/vault/services/folder/folder.service";
 
 import { BrowserApi } from "../../platform/browser/browser-api";
-import { BrowserStateService } from "../../platform/services/browser-state.service";
+import { DefaultBrowserStateService } from "../../platform/services/default-browser-state.service";
 import { NotificationQueueMessageType } from "../enums/notification-queue-message-type.enum";
 import { FormData } from "../services/abstractions/autofill.service";
 import AutofillService from "../services/autofill.service";
@@ -46,11 +49,13 @@ describe("NotificationBackground", () => {
   const authService = mock<AuthService>();
   const policyService = mock<PolicyService>();
   const folderService = mock<FolderService>();
-  const stateService = mock<BrowserStateService>();
+  const stateService = mock<DefaultBrowserStateService>();
   const userNotificationSettingsService = mock<UserNotificationSettingsService>();
   const domainSettingsService = mock<DomainSettingsService>();
   const environmentService = mock<EnvironmentService>();
   const logService = mock<LogService>();
+  const themeStateService = mock<ThemeStateService>();
+  const configService = mock<ConfigService>();
 
   beforeEach(() => {
     notificationBackground = new NotificationBackground(
@@ -64,6 +69,8 @@ describe("NotificationBackground", () => {
       domainSettingsService,
       environmentService,
       logService,
+      themeStateService,
+      configService,
     );
   });
 
@@ -1345,16 +1352,21 @@ describe("NotificationBackground", () => {
         const message: NotificationBackgroundExtensionMessage = {
           command: "getWebVaultUrlForNotification",
         };
-        const webVaultUrl = "https://example.com";
+        const env = new SelfHostedEnvironment({ webVault: "https://example.com" });
+
+        Object.defineProperty(environmentService, "environment$", {
+          configurable: true,
+          get: () => null,
+        });
+
         const environmentServiceSpy = jest
-          .spyOn(environmentService, "getWebVaultUrl")
-          .mockReturnValueOnce(webVaultUrl);
+          .spyOn(environmentService as any, "environment$", "get")
+          .mockReturnValue(new BehaviorSubject(env).asObservable());
 
         sendExtensionRuntimeMessage(message);
         await flushPromises();
 
         expect(environmentServiceSpy).toHaveBeenCalled();
-        expect(environmentServiceSpy).toHaveReturnedWith(webVaultUrl);
       });
     });
   });
