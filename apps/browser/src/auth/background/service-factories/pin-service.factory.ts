@@ -1,10 +1,6 @@
 import { PinServiceAbstraction, PinService } from "@bitwarden/auth/common";
 
 import {
-  VaultTimeoutSettingsServiceInitOptions,
-  vaultTimeoutSettingsServiceFactory,
-} from "../../../background/service-factories/vault-timeout-settings-service.factory";
-import {
   EncryptServiceInitOptions,
   encryptServiceFactory,
 } from "../../../platform/background/service-factories/encrypt-service.factory";
@@ -43,7 +39,6 @@ export type PinServiceInitOptions = PinServiceFactoryOptions &
   MasterPasswordServiceInitOptions &
   KeyGenerationServiceInitOptions &
   EncryptServiceInitOptions &
-  VaultTimeoutSettingsServiceInitOptions &
   LogServiceInitOptions;
 
 export function pinServiceFactory(
@@ -61,7 +56,6 @@ export function pinServiceFactory(
         await internalMasterPasswordServiceFactory(cache, opts),
         await keyGenerationServiceFactory(cache, opts),
         await encryptServiceFactory(cache, opts),
-        await vaultTimeoutSettingsServiceFactory(cache, opts),
         await logServiceFactory(cache, opts),
       ),
   );

@@ -17,6 +17,7 @@ import {
 } from "rxjs";
 
 import { FingerprintDialogComponent } from "@bitwarden/auth/angular";
+import { PinServiceAbstraction } from "@bitwarden/auth/common";
 import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
 import { VaultTimeoutService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout.service";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
@@ -86,6 +87,7 @@ export class SettingsComponent implements OnInit {
   private destroy$ = new Subject<void>();
 
   constructor(
+    private pinService: PinServiceAbstraction,
     private policyService: PolicyService,
     private formBuilder: FormBuilder,
     private platformUtilsService: PlatformUtilsService,
@@ -147,7 +149,7 @@ export class SettingsComponent implements OnInit {
     if (timeout === -2 && !showOnLocked) {
       timeout = -1;
     }
-    const pinStatus = await this.vaultTimeoutSettingsService.isPinLockSet();
+    const pinStatus = await this.pinService.isPinLockSet();
 
     this.form.controls.vaultTimeout.valueChanges
       .pipe(
