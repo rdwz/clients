@@ -381,6 +381,7 @@ export class VaultComponent implements OnInit, OnDestroy {
           return [];
         }
 
+        this.showAddAccessToggle = false;
         let collectionsToReturn = [];
         if (filter.collectionId === undefined || filter.collectionId === All) {
           if (

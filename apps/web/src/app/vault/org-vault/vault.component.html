@@ -27,7 +27,7 @@
   </div>
   <div class="col-9">
     <bit-toggle-group
-      *ngIf="showAddAccessToggle"
+      *ngIf="showAddAccessToggle && activeFilter.selectedCollectionNode"
       [selected]="addAccessStatus"
       (selectedChange)="addAccessToggle($event)"
       [attr.aria-label]="'addAccessFilter' | i18n"
