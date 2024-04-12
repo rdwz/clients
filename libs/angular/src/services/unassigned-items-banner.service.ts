@@ -57,7 +57,7 @@ export class UnassignedItemsBannerService {
         return "#";
       }
 
-      return environment.getWebVaultUrl() + "/#/organizations/" + org.id + "/vault";
+      return environment.getWebVaultUrl() + "/#/organizations/" + org.id;
     }),
   );
 
