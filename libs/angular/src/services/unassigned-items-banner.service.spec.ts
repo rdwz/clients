@@ -1,5 +1,5 @@
 import { MockProxy, mock } from "jest-mock-extended";
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom, of } from "rxjs";
 
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { FakeStateProvider, mockAccountServiceWith } from "@bitwarden/common/spec";
@@ -21,6 +21,7 @@ describe("UnassignedItemsBanner", () => {
     stateProvider = new FakeStateProvider(fakeAccountService);
     apiService = mock();
     environmentService = mock();
+    environmentService.environment$ = of(null);
   });
 
   it("shows the banner if showBanner local state is true", async () => {
