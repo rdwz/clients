@@ -32,7 +32,7 @@ export class VerifyRecoverDeleteProviderComponent implements OnInit {
   ngOnInit() {
     // eslint-disable-next-line rxjs-angular/prefer-takeuntil, rxjs/no-async-subscribe
     this.route.queryParams.pipe(first()).subscribe(async (qParams) => {
-      if (qParams.orgId != null && qParams.token != null && qParams.name != null) {
+      if (qParams.providerId != null && qParams.token != null && qParams.name != null) {
         this.providerId = qParams.providerId;
         this.token = qParams.token;
         this.name = qParams.name;
