@@ -40,7 +40,7 @@ const PIN_KEY_ENCRYPTED_USER_KEY_EPHEMERAL = new UserKeyDefinition<EncryptedStri
 
 const PROTECTED_PIN = new UserKeyDefinition<string>(CRYPTO_DISK, "protectedPin", {
   deserializer: (value) => value,
-  clearOn: [], // TODO: verify
+  clearOn: [], // TODO-rr-bw: verify
 });
 
 /**
@@ -263,6 +263,31 @@ export class PinService implements PinServiceAbstraction {
   async makePinKey(pin: string, salt: string, kdf: KdfType, kdfConfig: KdfConfig): Promise<PinKey> {
     const pinKey = await this.keyGenerationService.deriveKeyFromPassword(pin, salt, kdf, kdfConfig);
     return (await this.keyGenerationService.stretchKey(pinKey)) as PinKey;
+  }
+
+  /**
+   * Stores the pin key if needed. If MP on Reset is enabled, stores the
+   * ephemeral version.
+   * @param key The user key
+   */
+  async storePinKey(key: UserKey, userId?: UserId) {
+    const pin = await this.encryptService.decryptToUtf8(
+      new EncString(await this.getProtectedPin(userId)),
+      key,
+    );
+    const pinKey = await this.makePinKey(
+      pin,
+      await this.stateService.getEmail({ userId: userId }),
+      await this.stateService.getKdfType({ userId: userId }),
+      await this.stateService.getKdfConfig({ userId: userId }),
+    );
+    const encPin = await this.encryptService.encrypt(key.key, pinKey);
+
+    if ((await this.getPinKeyEncryptedUserKey(userId)) != null) {
+      await this.setPinKeyEncryptedUserKey(encPin, userId);
+    } else {
+      await this.setPinKeyEncryptedUserKeyEphemeral(encPin, userId);
+    }
   }
 
   async isPinLockSet(userId?: string): Promise<PinLockType> {

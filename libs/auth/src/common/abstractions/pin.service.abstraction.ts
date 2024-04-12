@@ -99,6 +99,13 @@ export abstract class PinServiceAbstraction {
   ): Promise<MasterKey>;
 
   /**
+   * Stores the pin key if needed. If MP on Reset is enabled, stores the
+   * ephemeral version.
+   * @param key The user key
+   */
+  abstract storePinKey: (key: UserKey, userId?: UserId) => Promise<void>;
+
+  /**
    * Has the user enabled unlock with Pin.
    * @param userId The user id to check. If not provided, the current user is used
    * @returns PinLockType

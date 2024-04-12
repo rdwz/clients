@@ -540,10 +540,11 @@ export class CryptoService implements CryptoServiceAbstraction {
   }
 
   async clearPinKeys(userId?: UserId): Promise<void> {
-    await this.pinService.setPinKeyEncryptedUserKey(null, userId);
-    await this.pinService.setPinKeyEncryptedUserKeyEphemeral(null, userId);
-    await this.pinService.setProtectedPin(null, userId);
-    await this.clearDeprecatedKeys(KeySuffixOptions.Pin, userId);
+    // TODO-rr-bw
+    // await this.pinService.setPinKeyEncryptedUserKey(null, userId);
+    // await this.pinService.setPinKeyEncryptedUserKeyEphemeral(null, userId);
+    // await this.pinService.setProtectedPin(null, userId);
+    // await this.clearDeprecatedKeys(KeySuffixOptions.Pin, userId);
   }
 
   async makeSendKey(keyMaterial: CsprngArray): Promise<SymmetricCryptoKey> {
@@ -745,39 +746,16 @@ export class CryptoService implements CryptoServiceAbstraction {
 
     const storePin = await this.shouldStoreKey(KeySuffixOptions.Pin, userId);
     if (storePin) {
-      await this.storePinKey(key, userId);
+      await this.pinService.storePinKey(key, userId);
       // We can't always clear deprecated keys because the pin is only
       // migrated once used to unlock
       await this.clearDeprecatedKeys(KeySuffixOptions.Pin, userId);
-    } else {
-      await this.pinService.setPinKeyEncryptedUserKey(null, userId);
-      await this.pinService.setPinKeyEncryptedUserKeyEphemeral(null, userId);
     }
-  }
-
-  /**
-   * Stores the pin key if needed. If MP on Reset is enabled, stores the
-   * ephemeral version.
-   * @param key The user key
-   */
-  protected async storePinKey(key: UserKey, userId?: UserId) {
-    const pin = await this.encryptService.decryptToUtf8(
-      new EncString(await this.pinService.getProtectedPin(userId)),
-      key,
-    );
-    const pinKey = await this.pinService.makePinKey(
-      pin,
-      await this.stateService.getEmail({ userId: userId }),
-      await this.stateService.getKdfType({ userId: userId }),
-      await this.stateService.getKdfConfig({ userId: userId }),
-    );
-    const encPin = await this.encryptService.encrypt(key.key, pinKey);
-
-    if ((await this.pinService.getPinKeyEncryptedUserKey(userId)) != null) {
-      await this.pinService.setPinKeyEncryptedUserKey(encPin, userId);
-    } else {
-      await this.pinService.setPinKeyEncryptedUserKeyEphemeral(encPin, userId);
-    }
+    // TODO-rr-bw
+    // else {
+    //   await this.pinService.setPinKeyEncryptedUserKey(null, userId);
+    //   await this.pinService.setPinKeyEncryptedUserKeyEphemeral(null, userId);
+    // }
   }
 
   protected async shouldStoreKey(keySuffix: KeySuffixOptions, userId?: UserId) {
