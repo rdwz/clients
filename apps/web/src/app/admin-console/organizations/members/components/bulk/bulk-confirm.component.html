@@ -31,19 +31,19 @@
         </ng-container>
         <ng-template body>
           <tr bitRow *ngFor="let user of filteredUsers" alignContent="middle">
-            <td bitCell>
+            <td bitCell class="tw-w-5">
               <bit-avatar [text]="user | userName" [id]="user.id" size="small"></bit-avatar>
             </td>
             <td bitCell>
               {{ user.email }}
               <p class="tw-text-muted tw-text-sm" *ngIf="user.name">{{ user.name }}</p>
             </td>
-            <td>
+            <td bitCell>
               {{ fingerprints.get(user.id) }}
             </td>
           </tr>
           <tr *ngFor="let user of excludedUsers" alignContent="middle">
-            <td bitCell>
+            <td bitCell class="tw-w-5">
               <bit-avatar [text]="user | userName" [id]="user.id" size="small"></bit-avatar>
             </td>
             <td bitCell>
@@ -67,7 +67,7 @@
         </ng-container>
         <ng-template body>
           <tr bitRow *ngFor="let user of filteredUsers" alignContent="middle">
-            <td bitCell>
+            <td bitCell class="tw-w-5">
               <bit-avatar [text]="user | userName" [id]="user.id" size="small"></bit-avatar>
             </td>
             <td bitCell>
