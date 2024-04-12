@@ -29,8 +29,6 @@ const ComponentId = "SendComponent";
 export class SendGroupingsComponent extends BaseSendComponent {
   // Header
   showLeftHeader = true;
-  // Send Type Calculations
-  typeCounts = new Map<SendType, number>();
   // State Handling
   state: BrowserSendComponentState;
   private loadedTimeout: number;
@@ -65,7 +63,6 @@ export class SendGroupingsComponent extends BaseSendComponent {
       dialogService,
     );
     super.onSuccessfulLoad = async () => {
-      this.calculateTypeCounts();
       this.selectAll();
     };
   }
@@ -176,17 +173,8 @@ export class SendGroupingsComponent extends BaseSendComponent {
     );
   }
 
-  private calculateTypeCounts() {
-    // Create type counts
-    const typeCounts = new Map<SendType, number>();
-    this.sends.forEach((s) => {
-      if (typeCounts.has(s.type)) {
-        typeCounts.set(s.type, typeCounts.get(s.type) + 1);
-      } else {
-        typeCounts.set(s.type, 1);
-      }
-    });
-    this.typeCounts = typeCounts;
+  getSendCount(sends: SendView[], type: SendType): number {
+    return sends.filter((s) => s.type === type).length;
   }
 
   private async saveState() {
@@ -194,7 +182,6 @@ export class SendGroupingsComponent extends BaseSendComponent {
       scrollY: BrowserPopupUtils.getContentScrollY(window),
       searchText: this.searchText,
       sends: this.sends,
-      typeCounts: this.typeCounts,
     });
     await this.stateService.setBrowserSendComponentState(this.state);
   }
@@ -207,9 +194,6 @@ export class SendGroupingsComponent extends BaseSendComponent {
 
     if (this.state.sends != null) {
       this.sends = this.state.sends;
-    }
-    if (this.state.typeCounts != null) {
-      this.typeCounts = this.state.typeCounts;
     }
 
     return true;
