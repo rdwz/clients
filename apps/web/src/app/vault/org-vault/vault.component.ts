@@ -384,69 +384,26 @@ export class VaultComponent implements OnInit, OnDestroy {
         this.showAddAccessToggle = false;
         let collectionsToReturn = [];
         if (filter.collectionId === undefined || filter.collectionId === All) {
-          if (
-            this._flexibleCollectionsV1FlagEnabled &&
-            !this.organization.canEditAllCiphers(this._flexibleCollectionsV1FlagEnabled)
-          ) {
-            collectionsToReturn = collections.map((c) => {
-              const groupsCanManage = c.node.groupsCanManage();
-              const usersCanManage = c.node.usersCanManage(this.orgRevokedUsers);
-              if (
-                groupsCanManage.length === 0 &&
-                usersCanManage.length === 0 &&
-                c.node.id !== Unassigned
-              ) {
-                c.node.addAccess = true;
-                this.showAddAccessToggle = true;
-              } else {
-                c.node.addAccess = false;
-              }
-              return c.node;
-            });
-          } else {
-            collectionsToReturn = collections.map((c) => c.node);
-          }
+          collectionsToReturn = await this.addAccessCollectionsMap(collections);
         } else {
           const selectedCollection = ServiceUtils.getTreeNodeObjectFromList(
             collections,
             filter.collectionId,
           );
-          if (
-            this._flexibleCollectionsV1FlagEnabled &&
-            !this.organization.canEditAllCiphers(this._flexibleCollectionsV1FlagEnabled)
-          ) {
-            collectionsToReturn =
-              selectedCollection?.children.map((c) => {
-                const groupsCanManage = c.node.groupsCanManage();
-                const usersCanManage = c.node.usersCanManage(this.orgRevokedUsers);
-                if (
-                  groupsCanManage.length === 0 &&
-                  usersCanManage.length === 0 &&
-                  c.node.id !== Unassigned
-                ) {
-                  c.node.addAccess = true;
-                  this.showAddAccessToggle = true;
-                } else {
-                  c.node.addAccess = false;
-                }
-                return c.node;
-              }) ?? [];
-          } else {
-            collectionsToReturn = selectedCollection?.children.map((c) => c.node) ?? [];
-          }
+          collectionsToReturn = await this.addAccessCollectionsMap(selectedCollection?.children);
         }
 
         if (await this.searchService.isSearchable(searchText)) {
           collectionsToReturn = this.searchPipe.transform(
             collectionsToReturn,
             searchText,
-            (collection) => collection.name,
-            (collection) => collection.id,
+            (collection: CollectionAdminView) => collection.name,
+            (collection: CollectionAdminView) => collection.id,
           );
         }
 
         if (addAccessStatus === 1) {
-          collectionsToReturn = collectionsToReturn.filter((c) => c.addAccess);
+          collectionsToReturn = collectionsToReturn.filter((c: any) => c.addAccess);
         }
         return collectionsToReturn;
       }),
@@ -654,6 +611,33 @@ export class VaultComponent implements OnInit, OnDestroy {
           this.performingInitialLoad = false;
         },
       );
+  }
+
+  async addAccessCollectionsMap(collections: TreeNode<CollectionAdminView>[]) {
+    let mappedCollections;
+    if (
+      this._flexibleCollectionsV1FlagEnabled &&
+      !this.organization.canEditAllCiphers(this._flexibleCollectionsV1FlagEnabled)
+    ) {
+      mappedCollections = collections.map((c: TreeNode<CollectionAdminView>) => {
+        const groupsCanManage = c.node.groupsCanManage();
+        const usersCanManage = c.node.usersCanManage(this.orgRevokedUsers);
+        if (
+          groupsCanManage.length === 0 &&
+          usersCanManage.length === 0 &&
+          c.node.id !== Unassigned
+        ) {
+          c.node.addAccess = true;
+          this.showAddAccessToggle = true;
+        } else {
+          c.node.addAccess = false;
+        }
+        return c.node;
+      });
+    } else {
+      mappedCollections = collections.map((c: TreeNode<CollectionAdminView>) => c.node);
+    }
+    return mappedCollections;
   }
 
   addAccessToggle(e: any) {
