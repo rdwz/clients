@@ -1,3 +1,4 @@
+import { PinServiceAbstraction } from "@bitwarden/auth/common";
 import { ImportCiphersRequest } from "@bitwarden/common/models/request/import-ciphers.request";
 import { ImportOrganizationCiphersRequest } from "@bitwarden/common/models/request/import-organization-ciphers.request";
 import { KvpRequest } from "@bitwarden/common/models/request/kvp.request";
@@ -16,7 +17,6 @@ import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { CollectionView } from "@bitwarden/common/vault/models/view/collection.view";
 import { FolderView } from "@bitwarden/common/vault/models/view/folder.view";
 
-import { PinServiceAbstraction } from "../../../auth/src/common/abstractions";
 import {
   AscendoCsvImporter,
   AvastCsvImporter,

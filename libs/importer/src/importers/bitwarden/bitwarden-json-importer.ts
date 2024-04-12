@@ -1,3 +1,4 @@
+import { PinServiceAbstraction } from "@bitwarden/auth/common";
 import {
   CipherWithIdExport,
   CollectionWithIdExport,
@@ -17,7 +18,6 @@ import {
   BitwardenUnEncryptedOrgJsonExport,
 } from "@bitwarden/vault-export-core";
 
-import { PinServiceAbstraction } from "../../../../auth/src/common/abstractions";
 import { ImportResult } from "../../models/import-result";
 import { BaseImporter } from "../base-importer";
 import { Importer } from "../importer";

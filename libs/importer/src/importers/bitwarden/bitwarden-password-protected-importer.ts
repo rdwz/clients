@@ -1,3 +1,4 @@
+import { PinServiceAbstraction } from "@bitwarden/auth/common";
 import { KdfConfig } from "@bitwarden/common/auth/models/domain/kdf-config";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
@@ -7,7 +8,6 @@ import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/sym
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { BitwardenPasswordProtectedFileFormat } from "@bitwarden/vault-export-core";
 
-import { PinServiceAbstraction } from "../../../../auth/src/common/abstractions";
 import { ImportResult } from "../../models/import-result";
 import { Importer } from "../importer";
 

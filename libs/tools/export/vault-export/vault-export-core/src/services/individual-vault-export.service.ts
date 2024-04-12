@@ -1,5 +1,6 @@
 import * as papa from "papaparse";
 
+import { PinServiceAbstraction } from "@bitwarden/auth/common";
 import { CipherWithIdExport, FolderWithIdExport } from "@bitwarden/common/models/export";
 import { CryptoFunctionService } from "@bitwarden/common/platform/abstractions/crypto-function.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
@@ -13,7 +14,6 @@ import { Folder } from "@bitwarden/common/vault/models/domain/folder";
 import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { FolderView } from "@bitwarden/common/vault/models/view/folder.view";
 
-import { PinServiceAbstraction } from "../../../../../../auth/src/common/abstractions";
 import {
   BitwardenCsvIndividualExportType,
   BitwardenEncryptedIndividualJsonExport,

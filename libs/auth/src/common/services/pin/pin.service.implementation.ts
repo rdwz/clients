@@ -190,6 +190,44 @@ export class PinService implements PinServiceAbstraction {
     }
   }
 
+  /**
+   * Gets the user's `pinKeyEncryptedUserKey` and `oldPinKeyEncryptedMasterKey` (if one exists) based
+   * on the user's PinLockType.
+   * @remarks The `oldPinKeyEncryptedMasterKey` (also known as `pinProtected`) is only used for
+   *          migrating old PinKeys and will be null for all migrated accounts
+   * @throws If PinLockType is 'DISABLED'
+   */
+  private async getPinKeyEncryptedKeys(
+    pinLockType: PinLockType,
+  ): Promise<{ pinKeyEncryptedUserKey: EncString; oldPinKeyEncryptedMasterKey?: EncString }> {
+    switch (pinLockType) {
+      case "PERSISTANT": {
+        const pinKeyEncryptedUserKey = await this.getPinKeyEncryptedUserKey();
+        const oldPinKeyEncryptedMasterKey = await this.stateService.getEncryptedPinProtected();
+
+        return {
+          pinKeyEncryptedUserKey,
+          oldPinKeyEncryptedMasterKey: oldPinKeyEncryptedMasterKey
+            ? new EncString(oldPinKeyEncryptedMasterKey)
+            : undefined,
+        };
+      }
+      case "TRANSIENT": {
+        const pinKeyEncryptedUserKey = await this.getPinKeyEncryptedUserKeyEphemeral();
+        const oldPinKeyEncryptedMasterKey = await this.stateService.getDecryptedPinProtected();
+
+        return { pinKeyEncryptedUserKey, oldPinKeyEncryptedMasterKey };
+      }
+      case "DISABLED":
+        throw new Error("Pin is disabled");
+      default: {
+        // Compile-time check for exhaustive switch
+        const _exhaustiveCheck: never = pinLockType;
+        return _exhaustiveCheck;
+      }
+    }
+  }
+
   async decryptAndMigrateOldPinKey(
     masterPasswordOnRestart: boolean,
     pin: string,
@@ -257,37 +295,6 @@ export class PinService implements PinServiceAbstraction {
     const masterKey = await this.encryptService.decryptToBytes(pinKeyEncryptedMasterKey, pinKey);
 
     return new SymmetricCryptoKey(masterKey) as MasterKey;
-  }
-
-  // Note: oldPinKeyEncryptedMasterKey (aka "pinProtected") is only used for migrating old pin keys
-  // and will be null for all migrated accounts
-  private async getPinKeyEncryptedKeys(
-    pinLockType: PinLockType,
-  ): Promise<{ pinKeyEncryptedUserKey: EncString; oldPinKeyEncryptedMasterKey?: EncString }> {
-    switch (pinLockType) {
-      case "PERSISTANT": {
-        const pinKeyEncryptedUserKey = await this.getPinKeyEncryptedUserKey();
-        const oldPinKeyEncryptedMasterKey = await this.stateService.getEncryptedPinProtected();
-        return {
-          pinKeyEncryptedUserKey,
-          oldPinKeyEncryptedMasterKey: oldPinKeyEncryptedMasterKey
-            ? new EncString(oldPinKeyEncryptedMasterKey)
-            : undefined,
-        };
-      }
-      case "TRANSIENT": {
-        const pinKeyEncryptedUserKey = await this.getPinKeyEncryptedUserKeyEphemeral();
-        const oldPinKeyEncryptedMasterKey = await this.stateService.getDecryptedPinProtected();
-        return { pinKeyEncryptedUserKey, oldPinKeyEncryptedMasterKey };
-      }
-      case "DISABLED":
-        throw new Error("Pin is disabled");
-      default: {
-        // Compile-time check for exhaustive switch
-        const _exhaustiveCheck: never = pinLockType;
-        return _exhaustiveCheck;
-      }
-    }
   }
 
   async decryptUserKey(
