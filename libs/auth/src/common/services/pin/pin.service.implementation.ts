@@ -95,8 +95,8 @@ export class PinService implements PinServiceAbstraction {
     return await firstValueFrom(this.stateProvider.getUserState$(PROTECTED_PIN, userId));
   }
 
-  async setProtectedPin(value: string, userId?: UserId): Promise<void> {
-    await this.stateProvider.setUserState(PROTECTED_PIN, value, userId);
+  async setProtectedPin(protectedPin: string, userId?: UserId): Promise<void> {
+    await this.stateProvider.setUserState(PROTECTED_PIN, protectedPin, userId);
   }
 
   async storePinKeyEncryptedUserKey(userKey: UserKey, userId?: UserId) {
@@ -145,6 +145,48 @@ export class PinService implements PinServiceAbstraction {
       return "TRANSIENT";
     } else {
       return "DISABLED";
+    }
+  }
+
+  async decryptUserKeyWithPin(pin: string): Promise<UserKey | null> {
+    try {
+      const pinLockType: PinLockType = await this.isPinLockSet();
+
+      const { pinKeyEncryptedUserKey, oldPinKeyEncryptedMasterKey } =
+        await this.getPinKeyEncryptedKeys(pinLockType);
+
+      const kdf: KdfType = await this.stateService.getKdfType();
+      const kdfConfig: KdfConfig = await this.stateService.getKdfConfig();
+      let userKey: UserKey;
+      const email = await this.stateService.getEmail();
+
+      if (oldPinKeyEncryptedMasterKey) {
+        userKey = await this.decryptAndMigrateOldPinKey(
+          pinLockType === "TRANSIENT",
+          pin,
+          email,
+          kdf,
+          kdfConfig,
+          oldPinKeyEncryptedMasterKey,
+        );
+      } else {
+        userKey = await this.decryptUserKey(pin, email, kdf, kdfConfig, pinKeyEncryptedUserKey);
+      }
+
+      if (!userKey) {
+        this.logService.warning(`User key null after pin key decryption.`);
+        return null;
+      }
+
+      if (!(await this.validatePin(userKey, pin))) {
+        this.logService.warning(`Pin key decryption successful but pin validation failed.`);
+        return null;
+      }
+
+      return userKey;
+    } catch (error) {
+      this.logService.error(`Error decrypting user key with pin: ${error}`);
+      return null;
     }
   }
 
@@ -215,48 +257,6 @@ export class PinService implements PinServiceAbstraction {
     const masterKey = await this.encryptService.decryptToBytes(pinKeyEncryptedMasterKey, pinKey);
 
     return new SymmetricCryptoKey(masterKey) as MasterKey;
-  }
-
-  async decryptUserKeyWithPin(pin: string): Promise<UserKey | null> {
-    try {
-      const pinLockType: PinLockType = await this.isPinLockSet();
-
-      const { pinKeyEncryptedUserKey, oldPinKeyEncryptedMasterKey } =
-        await this.getPinKeyEncryptedKeys(pinLockType);
-
-      const kdf: KdfType = await this.stateService.getKdfType();
-      const kdfConfig: KdfConfig = await this.stateService.getKdfConfig();
-      let userKey: UserKey;
-      const email = await this.stateService.getEmail();
-
-      if (oldPinKeyEncryptedMasterKey) {
-        userKey = await this.decryptAndMigrateOldPinKey(
-          pinLockType === "TRANSIENT",
-          pin,
-          email,
-          kdf,
-          kdfConfig,
-          oldPinKeyEncryptedMasterKey,
-        );
-      } else {
-        userKey = await this.decryptUserKey(pin, email, kdf, kdfConfig, pinKeyEncryptedUserKey);
-      }
-
-      if (!userKey) {
-        this.logService.warning(`User key null after pin key decryption.`);
-        return null;
-      }
-
-      if (!(await this.validatePin(userKey, pin))) {
-        this.logService.warning(`Pin key decryption successful but pin validation failed.`);
-        return null;
-      }
-
-      return userKey;
-    } catch (error) {
-      this.logService.error(`Error decrypting user key with pin: ${error}`);
-      return null;
-    }
   }
 
   // Note: oldPinKeyEncryptedMasterKey (aka "pinProtected") is only used for migrating old pin keys
