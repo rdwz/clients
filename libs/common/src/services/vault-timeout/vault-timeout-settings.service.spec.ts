@@ -174,18 +174,28 @@ describe("VaultTimeoutSettingsService", () => {
 
     describe("given the user does not have a master password", () => {
       it.each`
-        unlockMethod | policy                     | userPreference               | expected
-        ${false}     | ${null}                    | ${null}                      | ${VaultTimeoutAction.LogOut}
-        ${false}     | ${null}                    | ${VaultTimeoutAction.Lock}   | ${VaultTimeoutAction.LogOut}
-        ${false}     | ${VaultTimeoutAction.Lock} | ${null}                      | ${VaultTimeoutAction.LogOut}
-        ${true}      | ${null}                    | ${null}                      | ${VaultTimeoutAction.LogOut}
-        ${true}      | ${null}                    | ${VaultTimeoutAction.Lock}   | ${VaultTimeoutAction.Lock}
-        ${true}      | ${VaultTimeoutAction.Lock} | ${null}                      | ${VaultTimeoutAction.Lock}
-        ${true}      | ${VaultTimeoutAction.Lock} | ${VaultTimeoutAction.LogOut} | ${VaultTimeoutAction.Lock}
+        hasPinUnlock | hasBiometricUnlock | policy                     | userPreference               | expected
+        ${false}     | ${false}           | ${null}                    | ${null}                      | ${VaultTimeoutAction.LogOut}
+        ${false}     | ${false}           | ${null}                    | ${VaultTimeoutAction.Lock}   | ${VaultTimeoutAction.LogOut}
+        ${false}     | ${false}           | ${VaultTimeoutAction.Lock} | ${null}                      | ${VaultTimeoutAction.LogOut}
+        ${false}     | ${true}            | ${null}                    | ${null}                      | ${VaultTimeoutAction.LogOut}
+        ${false}     | ${true}            | ${null}                    | ${VaultTimeoutAction.Lock}   | ${VaultTimeoutAction.Lock}
+        ${false}     | ${true}            | ${VaultTimeoutAction.Lock} | ${null}                      | ${VaultTimeoutAction.Lock}
+        ${false}     | ${true}            | ${VaultTimeoutAction.Lock} | ${VaultTimeoutAction.LogOut} | ${VaultTimeoutAction.Lock}
+        ${true}      | ${false}           | ${null}                    | ${null}                      | ${VaultTimeoutAction.LogOut}
+        ${true}      | ${false}           | ${null}                    | ${VaultTimeoutAction.Lock}   | ${VaultTimeoutAction.Lock}
+        ${true}      | ${false}           | ${VaultTimeoutAction.Lock} | ${null}                      | ${VaultTimeoutAction.Lock}
+        ${true}      | ${false}           | ${VaultTimeoutAction.Lock} | ${VaultTimeoutAction.LogOut} | ${VaultTimeoutAction.Lock}
       `(
-        "returns $expected when policy is $policy, has unlock method is $unlockMethod, and user preference is $userPreference",
-        async ({ unlockMethod, policy, userPreference, expected }) => {
-          biometricStateService.biometricUnlockEnabled$ = of(unlockMethod);
+        "returns $expected when policy is $policy, has PIN unlock method: $hasPinUnlock or Biometric unlock method: $hasBiometricUnlock, and user preference is $userPreference",
+        async ({ hasPinUnlock, hasBiometricUnlock, policy, userPreference, expected }) => {
+          biometricStateService.getBiometricUnlockEnabled.mockResolvedValue(hasBiometricUnlock);
+
+          if (hasPinUnlock) {
+            stateService.getProtectedPin.mockResolvedValue("PIN");
+            stateService.getPinKeyEncryptedUserKey.mockResolvedValue(new EncString("PIN"));
+          }
+
           userDecryptionOptionsSubject.next(
             new UserDecryptionOptions({ hasMasterPassword: false }),
           );
