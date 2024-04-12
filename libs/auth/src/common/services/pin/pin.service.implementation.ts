@@ -20,6 +20,14 @@ import { MasterKey, PinKey, UserKey } from "@bitwarden/common/types/key";
 
 import { PinServiceAbstraction } from "../../abstractions/pin.service.abstraction";
 
+/**
+ * - DISABLED   : No PIN set.
+ * - PERSISTENT : PIN is set and persists through client reset.
+ * - TRANSIENT  : PIN is set, but does not persist through client reset.
+ *                After client reset the master password is required to unlock.
+ */
+export type PinLockType = "DISABLED" | "PERSISTANT" | "TRANSIENT";
+
 const PIN_KEY_ENCRYPTED_USER_KEY = new UserKeyDefinition<EncryptedString>(
   CRYPTO_DISK,
   "pinKeyEncryptedUserKey",
@@ -42,13 +50,6 @@ const PROTECTED_PIN = new UserKeyDefinition<string>(CRYPTO_DISK, "protectedPin",
   deserializer: (value) => value,
   clearOn: [], // TODO-rr-bw: verify
 });
-
-/**
- * - DISABLED: No Pin set
- * - PERSISTENT: Pin is set and survives client reset
- * - TRANSIENT: Pin is set and requires password unlock after client reset
- */
-export type PinLockType = "DISABLED" | "PERSISTANT" | "TRANSIENT";
 
 export class PinService implements PinServiceAbstraction {
   constructor(
@@ -96,6 +97,55 @@ export class PinService implements PinServiceAbstraction {
 
   async setProtectedPin(value: string, userId?: UserId): Promise<void> {
     await this.stateProvider.setUserState(PROTECTED_PIN, value, userId);
+  }
+
+  async storePinKeyEncryptedUserKey(userKey: UserKey, userId?: UserId) {
+    const pin = await this.encryptService.decryptToUtf8(
+      new EncString(await this.getProtectedPin(userId)),
+      userKey,
+    );
+
+    const pinKey = await this.makePinKey(
+      pin,
+      await this.stateService.getEmail({ userId: userId }),
+      await this.stateService.getKdfType({ userId: userId }),
+      await this.stateService.getKdfConfig({ userId: userId }),
+    );
+
+    const pinKeyEncryptedUserKey = await this.encryptService.encrypt(userKey.key, pinKey);
+
+    if ((await this.getPinKeyEncryptedUserKey(userId)) != null) {
+      await this.setPinKeyEncryptedUserKey(pinKeyEncryptedUserKey, userId);
+    } else {
+      await this.setPinKeyEncryptedUserKeyEphemeral(pinKeyEncryptedUserKey, userId);
+    }
+  }
+
+  async makePinKey(pin: string, salt: string, kdf: KdfType, kdfConfig: KdfConfig): Promise<PinKey> {
+    const pinKey = await this.keyGenerationService.deriveKeyFromPassword(pin, salt, kdf, kdfConfig);
+    return (await this.keyGenerationService.stretchKey(pinKey)) as PinKey;
+  }
+
+  async isPinLockSet(userId?: string): Promise<PinLockType> {
+    // we can't check the protected pin for both because old accounts only
+    // used it for MP on Restart
+    const aUserKeyEncryptedPinIsSet = !!(await this.getProtectedPin(userId as UserId));
+    const aPinKeyEncryptedUserKeyIsSet = !!(await this.getPinKeyEncryptedUserKey(userId as UserId));
+    const anOldPinKeyEncryptedMasterKeyIsSet = !!(await this.stateService.getEncryptedPinProtected({
+      userId,
+    }));
+
+    if (aPinKeyEncryptedUserKeyIsSet || anOldPinKeyEncryptedMasterKeyIsSet) {
+      return "PERSISTANT";
+    } else if (
+      aUserKeyEncryptedPinIsSet &&
+      !aPinKeyEncryptedUserKeyIsSet &&
+      !anOldPinKeyEncryptedMasterKeyIsSet
+    ) {
+      return "TRANSIENT";
+    } else {
+      return "DISABLED";
+    }
   }
 
   async decryptAndMigrateOldPinKey(
@@ -260,58 +310,7 @@ export class PinService implements PinServiceAbstraction {
     return new SymmetricCryptoKey(userKey) as UserKey;
   }
 
-  async makePinKey(pin: string, salt: string, kdf: KdfType, kdfConfig: KdfConfig): Promise<PinKey> {
-    const pinKey = await this.keyGenerationService.deriveKeyFromPassword(pin, salt, kdf, kdfConfig);
-    return (await this.keyGenerationService.stretchKey(pinKey)) as PinKey;
-  }
-
-  /**
-   * Stores the pin key if needed. If MP on Reset is enabled, stores the
-   * ephemeral version.
-   * @param key The user key
-   */
-  async storePinKey(key: UserKey, userId?: UserId) {
-    const pin = await this.encryptService.decryptToUtf8(
-      new EncString(await this.getProtectedPin(userId)),
-      key,
-    );
-    const pinKey = await this.makePinKey(
-      pin,
-      await this.stateService.getEmail({ userId: userId }),
-      await this.stateService.getKdfType({ userId: userId }),
-      await this.stateService.getKdfConfig({ userId: userId }),
-    );
-    const encPin = await this.encryptService.encrypt(key.key, pinKey);
-
-    if ((await this.getPinKeyEncryptedUserKey(userId)) != null) {
-      await this.setPinKeyEncryptedUserKey(encPin, userId);
-    } else {
-      await this.setPinKeyEncryptedUserKeyEphemeral(encPin, userId);
-    }
-  }
-
-  async isPinLockSet(userId?: string): Promise<PinLockType> {
-    // we can't check the protected pin for both because old accounts only
-    // used it for MP on Restart
-    const aUserKeyEncryptedPinIsSet = !!(await this.getProtectedPin(userId as UserId));
-    const aPinKeyEncryptedUserKeyIsSet = !!(await this.getPinKeyEncryptedUserKey(userId as UserId));
-    const anOldPinKeyEncryptedMasterKeyIsSet = !!(await this.stateService.getEncryptedPinProtected({
-      userId,
-    }));
-
-    if (aPinKeyEncryptedUserKeyIsSet || anOldPinKeyEncryptedMasterKeyIsSet) {
-      return "PERSISTANT";
-    } else if (
-      aUserKeyEncryptedPinIsSet &&
-      !aPinKeyEncryptedUserKeyIsSet &&
-      !anOldPinKeyEncryptedMasterKeyIsSet
-    ) {
-      return "TRANSIENT";
-    } else {
-      return "DISABLED";
-    }
-  }
-
+  // TODO-rr-bw: add jsdocs
   private async validatePin(userKey: UserKey, pin: string): Promise<boolean> {
     const protectedPin = await this.getProtectedPin();
     const decryptedPin = await this.encryptService.decryptToUtf8(
