@@ -28,10 +28,18 @@ function preMigrationJson() {
     },
     user2: {
       settings: {
-        // no vault timeout data to migrate
+        vaultTimeout: null as any,
+        vaultTimeoutAction: "logOut",
         otherStuff: "overStuff4",
       },
       otherStuff: "otherStuff5",
+    },
+    user3: {
+      settings: {
+        // no vault timeout data to migrate
+        otherStuff: "overStuff6",
+      },
+      otherStuff: "otherStuff7",
     },
   };
 }
@@ -47,7 +55,11 @@ function rollbackJSON() {
 
     // User2 migrated data
     user_user2_vaultTimeoutSettings_vaultTimeou: null as any,
-    user_user2_vaultTimeoutSettings_vaultTimeoutAction: null as any,
+    user_user2_vaultTimeoutSettings_vaultTimeoutAction: "logOut",
+
+    // User3 migrated data
+    user_user3_vaultTimeoutSettings_vaultTimeout: null as any,
+    user_user3_vaultTimeoutSettings_vaultTimeoutAction: null as any,
 
     // Global state provider data
     // use pattern global_{stateDefinitionName}_{keyDefinitionKey} for global data
@@ -69,6 +81,12 @@ function rollbackJSON() {
         otherStuff: "otherStuff4",
       },
       otherStuff: "otherStuff5",
+    },
+    user3: {
+      settings: {
+        otherStuff: "otherStuff6",
+      },
+      otherStuff: "otherStuff7",
     },
   };
 }
@@ -100,8 +118,7 @@ describe("VaultTimeoutSettingsServiceStateProviderMigrator", () => {
         otherStuff: "otherStuff3",
       });
 
-      expect(helper.set).toHaveBeenCalledTimes(2);
-      expect(helper.set).not.toHaveBeenCalledWith("user2", any());
+      expect(helper.set).toHaveBeenCalledTimes(3);
       expect(helper.set).not.toHaveBeenCalledWith("user3", any());
     });
 
@@ -111,12 +128,14 @@ describe("VaultTimeoutSettingsServiceStateProviderMigrator", () => {
       expect(helper.setToUser).toHaveBeenCalledWith("user1", VAULT_TIMEOUT, 30);
       expect(helper.setToUser).toHaveBeenCalledWith("user1", VAULT_TIMEOUT_ACTION, "lock");
 
-      expect(helper.setToUser).not.toHaveBeenCalledWith("user2", VAULT_TIMEOUT, any());
-      expect(helper.setToUser).not.toHaveBeenCalledWith("user2", VAULT_TIMEOUT_ACTION, any());
+      expect(helper.setToUser).toHaveBeenCalledWith("user2", VAULT_TIMEOUT, null);
+      expect(helper.setToUser).toHaveBeenCalledWith("user2", VAULT_TIMEOUT_ACTION, "logOut");
 
-      // Expect that we didn't migrate anything to user 3
+      // Expect that we didn't migrate anything to user 3 or 4
       expect(helper.setToUser).not.toHaveBeenCalledWith("user3", VAULT_TIMEOUT, any());
       expect(helper.setToUser).not.toHaveBeenCalledWith("user3", VAULT_TIMEOUT_ACTION, any());
+      expect(helper.setToUser).not.toHaveBeenCalledWith("user4", VAULT_TIMEOUT, any());
+      expect(helper.setToUser).not.toHaveBeenCalledWith("user4", VAULT_TIMEOUT_ACTION, any());
     });
   });
 
@@ -161,9 +180,9 @@ describe("VaultTimeoutSettingsServiceStateProviderMigrator", () => {
     it("should not add data back if data wasn't migrated or acct doesn't exist", async () => {
       await sut.rollback(helper);
 
-      // no data to add back for user2 (acct exists but no migrated data) and user3 (no acct)
-      expect(helper.set).not.toHaveBeenCalledWith("user2", any());
+      // no data to add back for user3 (acct exists but no migrated data) and user4 (no acct)
       expect(helper.set).not.toHaveBeenCalledWith("user3", any());
+      expect(helper.set).not.toHaveBeenCalledWith("user4", any());
     });
   });
 });

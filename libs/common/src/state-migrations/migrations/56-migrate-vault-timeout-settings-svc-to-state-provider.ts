@@ -42,7 +42,8 @@ export class VaultTimeoutSettingsServiceStateProviderMigrator extends Migrator<5
       // Migrate vault timeout
       const existingVaultTimeout = account?.settings?.vaultTimeout;
 
-      if (existingVaultTimeout != null) {
+      if (existingVaultTimeout !== undefined) {
+        // check undefined so that we persist null values
         // Only migrate data that exists
         await helper.setToUser(userId, VAULT_TIMEOUT, existingVaultTimeout);
 
