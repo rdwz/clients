@@ -7,7 +7,7 @@ import {
   VAULT_TIMEOUT,
   VAULT_TIMEOUT_ACTION,
   VaultTimeoutSettingsServiceStateProviderMigrator,
-} from "./55-migrate-vault-timeout-settings-svc-to-state-provider";
+} from "./56-migrate-vault-timeout-settings-svc-to-state-provider";
 
 // Represents data in state service pre-migration
 function preMigrationJson() {
