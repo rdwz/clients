@@ -29,7 +29,7 @@ const kdfConfigKeyDefinition: KeyDefinitionLike = {
   },
 };
 
-export class KdfConfigMigrator extends Migrator<54, 55> {
+export class KdfConfigMigrator extends Migrator<55, 56> {
   async migrate(helper: MigrationHelper): Promise<void> {
     const accounts = await helper.getAccounts<ExpectedAccountType>();
     async function migrateAccount(userId: string, account: ExpectedAccountType): Promise<void> {
