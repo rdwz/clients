@@ -52,7 +52,7 @@ import { DeleteInstalledVersion } from "./migrations/52-delete-installed-version
 import { DeviceTrustCryptoServiceStateProviderMigrator } from "./migrations/53-migrate-device-trust-crypto-svc-to-state-providers";
 import { SendMigrator } from "./migrations/54-move-encrypted-sends";
 import { MoveMasterKeyStateToProviderMigrator } from "./migrations/55-move-master-key-state-to-provider";
-import { PinKeyEncryptedUserKeyMigrator } from "./migrations/56-move-pin-key-encrypted-user-key-to-state-providers";
+import { PinMigrator } from "./migrations/56-move-pin-state-to-providers";
 import { RemoveLegacyEtmKeyMigrator } from "./migrations/6-remove-legacy-etm-key";
 import { MoveBiometricAutoPromptToAccount } from "./migrations/7-move-biometric-auto-prompt-to-account";
 import { MoveStateVersionMigrator } from "./migrations/8-move-state-version";
@@ -119,7 +119,7 @@ export function createMigrationBuilder() {
     .with(DeviceTrustCryptoServiceStateProviderMigrator, 52, 53)
     .with(SendMigrator, 53, 54)
     .with(MoveMasterKeyStateToProviderMigrator, 54, 55)
-    .with(PinKeyEncryptedUserKeyMigrator, 55, CURRENT_VERSION);
+    .with(PinMigrator, 55, CURRENT_VERSION);
 }
 
 export async function currentVersion(
