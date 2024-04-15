@@ -168,9 +168,7 @@ export class SendGroupingsComponent extends BaseSendComponent {
   }
 
   showSearching() {
-    return (
-      this.hasSearched || (!this.searchPending && this.searchService.isSearchable(this.searchText))
-    );
+    return this.hasSearched || (!this.searchPending && this.isSearchable);
   }
 
   getSendCount(sends: SendView[], type: SendType): number {
