@@ -217,22 +217,36 @@ export class MemberDialogComponent implements OnDestroy {
         ({ organization, collections, userDetails, groups, flexibleCollectionsV1Enabled }) => {
           this.setFormValidators(organization);
 
+          // Groups tab: populate available groups
           this.groupAccessItems = [].concat(
             groups.map<AccessItemView>((g) => mapGroupToAccessItemView(g)),
           );
 
-          if (this.params.organizationUserId) {
+          // Collections tab: Populate all available collections (including current user access where applicable)
+          this.collectionAccessItems = collections
+            .map((c) =>
+              mapCollectionToAccessItemView(
+                c,
+                organization,
+                flexibleCollectionsV1Enabled,
+                userDetails == null
+                  ? undefined
+                  : c.users.find((access) => access.id === userDetails.id),
+              ),
+            )
+            // But remove collections that we can't assign access to, unless the user is already assigned
+            .filter(
+              (item) =>
+                !item.readonly || userDetails?.collections.some((access) => access.id == item.id),
+            );
+
+          if (userDetails != null) {
             this.loadOrganizationUser(
               userDetails,
               groups,
               collections,
               organization,
               flexibleCollectionsV1Enabled,
-            );
-          } else {
-            // Populate all available collections, without any user details
-            this.collectionAccessItems = collections.map((c) =>
-              mapCollectionToAccessItemView(c, organization, flexibleCollectionsV1Enabled),
             );
           }
 
@@ -309,21 +323,6 @@ export class MemberDialogComponent implements OnDestroy {
           const collection = collections.find((c) => c.id === accessSelection.id);
           return { group, collection, accessSelection };
         }),
-      );
-
-    // Populate all available collections (including current user access where applicable)
-    this.collectionAccessItems = collections
-      .map((c) =>
-        mapCollectionToAccessItemView(
-          c,
-          organization,
-          flexibleCollectionsV1Enabled,
-          c.users.find((access) => access.id === userDetails.id),
-        ),
-      )
-      // But remove collections that we can't assign access to, unless the user is already assigned
-      .filter(
-        (item) => !item.readonly || userDetails.collections.some((access) => access.id == item.id),
       );
 
     // Populate additional collection access via groups (rendered as separate rows from user access)
