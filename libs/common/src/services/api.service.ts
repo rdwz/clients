@@ -569,8 +569,13 @@ export class ApiService implements ApiServiceAbstraction {
     id: string,
     request: CipherCollectionsRequest,
   ): Promise<CipherResponse> {
-    const response = await this.send("PUT", "/ciphers/" + id + "/collections", request, true, true);
-    return new CipherResponse(response);
+    // If the put request results in the user losing access to that cipher we will return null
+    try {
+      const response = await this.send("PUT", `/ciphers/${id}/collections`, request, true, true);
+      return new CipherResponse(response);
+    } catch (e) {
+      return null;
+    }
   }
 
   putCipherCollectionsAdmin(id: string, request: CipherCollectionsRequest): Promise<any> {

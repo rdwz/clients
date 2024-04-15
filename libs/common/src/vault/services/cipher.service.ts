@@ -684,7 +684,8 @@ export class CipherService implements CipherServiceAbstraction {
   async saveCollectionsWithServer(cipher: Cipher): Promise<any> {
     const request = new CipherCollectionsRequest(cipher.collectionIds);
     const response = await this.apiService.putCipherCollections(cipher.id, request);
-    const data = new CipherData(response);
+    // The response will return null if the user can no longer access the cipher after the PUT request.
+    const data = response != null ? new CipherData(response) : cipher.toCipherData();
     await this.upsert(data);
   }
 

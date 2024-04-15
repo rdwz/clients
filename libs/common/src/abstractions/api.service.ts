@@ -220,7 +220,10 @@ export abstract class ApiService {
   putMoveCiphers: (request: CipherBulkMoveRequest) => Promise<any>;
   putShareCipher: (id: string, request: CipherShareRequest) => Promise<CipherResponse>;
   putShareCiphers: (request: CipherBulkShareRequest) => Promise<any>;
-  putCipherCollections: (id: string, request: CipherCollectionsRequest) => Promise<CipherResponse>;
+  putCipherCollections: (
+    id: string,
+    request: CipherCollectionsRequest,
+  ) => Promise<CipherResponse | null>;
   putCipherCollectionsAdmin: (id: string, request: CipherCollectionsRequest) => Promise<any>;
   postPurgeCiphers: (request: SecretVerificationRequest, organizationId?: string) => Promise<any>;
   putDeleteCipher: (id: string) => Promise<any>;
