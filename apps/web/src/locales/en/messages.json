@@ -7941,5 +7941,13 @@
   },
   "providerDeletedDesc": {
     "message": "The Provider and all associated data has been deleted."
+  },
+  "deleteProviderRecoverConfirmDesc": {
+    "message": "You have requested to delete this Provider. Use the button below to confirm."
+  },
+
+ "deleteProviderWarning": {
+    "message": "Deleting your provider is permanent. It cannot be undone."
   }
+
 }
