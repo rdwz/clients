@@ -48,6 +48,12 @@ export class BrowserScriptInjectorService implements ScriptInjectorService {
     return mv2Details?.file ?? injectDetails?.file;
   }
 
+  /**
+   * Builds the injection details for the script injection.
+   *
+   * @param injectDetails - The details for the script injection.
+   * @param file - The file to inject.
+   */
   private buildInjectionDetails(
     injectDetails: CommonScriptInjectionDetails,
     file: string,

@@ -1,6 +1,9 @@
 import { BrowserApi } from "../browser/browser-api";
 
-import { ScriptInjectionConfig } from "./abstractions/script-injector.service";
+import {
+  CommonScriptInjectionDetails,
+  Mv3ScriptInjectionDetails,
+} from "./abstractions/script-injector.service";
 import { BrowserScriptInjectorService } from "./browser-script-injector.service";
 
 describe("ScriptInjectorService", () => {
@@ -9,8 +12,8 @@ describe("ScriptInjectorService", () => {
   const mv2SpecificFile = "content/autofill-init-mv2.js";
   const mv2Details = { file: mv2SpecificFile };
   const mv3SpecificFile = "content/autofill-init-mv3.js";
-  const mv3Details: ScriptInjectionConfig["mv3Details"] = { file: mv3SpecificFile, world: "MAIN" };
-  const sharedInjectDetails: ScriptInjectionConfig["injectDetails"] = {
+  const mv3Details: Mv3ScriptInjectionDetails = { file: mv3SpecificFile, world: "MAIN" };
+  const sharedInjectDetails: CommonScriptInjectionDetails = {
     runAt: "document_start",
   };
   const manifestVersionSpy = jest.spyOn(BrowserApi, "manifestVersion", "get");
@@ -23,8 +26,8 @@ describe("ScriptInjectorService", () => {
   });
 
   describe("inject", () => {
-    describe("injection of single scripts that function in both manifest v2 and v3", () => {
-      it("injects the script in manifest v2", async () => {
+    describe("injection of a single script that functions in both manifest v2 and v3", () => {
+      it("injects the script in manifest v2 when given combined injection details", async () => {
         manifestVersionSpy.mockReturnValue(2);
 
         await scriptInjectorService.inject({
@@ -43,7 +46,7 @@ describe("ScriptInjectorService", () => {
         });
       });
 
-      it("injects the script in manifest v3", async () => {
+      it("injects the script in manifest v3 when given combined injection details", async () => {
         manifestVersionSpy.mockReturnValue(3);
 
         await scriptInjectorService.inject({
@@ -63,36 +66,108 @@ describe("ScriptInjectorService", () => {
       });
     });
 
-    it("injects a script that is meant to function within manifest v2 only", async () => {
-      manifestVersionSpy.mockReturnValue(2);
+    describe("injection of mv2 specific details", () => {
+      describe("given the extension is running manifest v2", () => {
+        it("injects the mv2 script injection details file", async () => {
+          manifestVersionSpy.mockReturnValue(2);
 
-      await scriptInjectorService.inject({
-        mv2Details,
-        tabId,
-        injectDetails: sharedInjectDetails,
+          await scriptInjectorService.inject({
+            mv2Details,
+            tabId,
+            injectDetails: sharedInjectDetails,
+          });
+
+          expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(tabId, {
+            ...sharedInjectDetails,
+            frameId: 0,
+            file: mv2SpecificFile,
+          });
+        });
       });
 
-      expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(tabId, {
-        ...sharedInjectDetails,
-        frameId: 0,
-        file: mv2SpecificFile,
+      describe("given the extension is running manifest v3", () => {
+        it("injects the common script injection details file", async () => {
+          manifestVersionSpy.mockReturnValue(3);
+
+          await scriptInjectorService.inject({
+            mv2Details,
+            tabId,
+            injectDetails: { ...sharedInjectDetails, file: combinedManifestVersionFile },
+          });
+
+          expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(
+            tabId,
+            {
+              ...sharedInjectDetails,
+              frameId: 0,
+              file: combinedManifestVersionFile,
+            },
+            { world: "ISOLATED" },
+          );
+        });
+
+        it("throws an error if no common script injection details file is specified", async () => {
+          manifestVersionSpy.mockReturnValue(3);
+
+          await expect(
+            scriptInjectorService.inject({
+              mv2Details,
+              tabId,
+              injectDetails: { ...sharedInjectDetails, file: null },
+            }),
+          ).rejects.toThrow("No file specified for script injection");
+        });
       });
     });
 
-    it("injects a script that is meant to function within manifest v32 only", async () => {
-      manifestVersionSpy.mockReturnValue(3);
+    describe("injection of mv3 specific details", () => {
+      describe("given the extension is running manifest v3", () => {
+        it("injects the mv3 script injection details file", async () => {
+          manifestVersionSpy.mockReturnValue(3);
 
-      await scriptInjectorService.inject({
-        mv3Details,
-        tabId,
-        injectDetails: sharedInjectDetails,
+          await scriptInjectorService.inject({
+            mv3Details,
+            tabId,
+            injectDetails: sharedInjectDetails,
+          });
+
+          expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(
+            tabId,
+            { ...sharedInjectDetails, frameId: 0, file: mv3SpecificFile },
+            { world: "MAIN" },
+          );
+        });
       });
 
-      expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(
-        tabId,
-        { ...sharedInjectDetails, frameId: 0, file: mv3SpecificFile },
-        { world: "MAIN" },
-      );
+      describe("given the extension is running manifest v2", () => {
+        it("injects the common script injection details file", async () => {
+          manifestVersionSpy.mockReturnValue(2);
+
+          await scriptInjectorService.inject({
+            mv3Details,
+            tabId,
+            injectDetails: { ...sharedInjectDetails, file: combinedManifestVersionFile },
+          });
+
+          expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(tabId, {
+            ...sharedInjectDetails,
+            frameId: 0,
+            file: combinedManifestVersionFile,
+          });
+        });
+
+        it("throws an error if no common script injection details file is specified", async () => {
+          manifestVersionSpy.mockReturnValue(2);
+
+          await expect(
+            scriptInjectorService.inject({
+              mv3Details,
+              tabId,
+              injectDetails: { ...sharedInjectDetails, file: "" },
+            }),
+          ).rejects.toThrow("No file specified for script injection");
+        });
+      });
     });
   });
 });
