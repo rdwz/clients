@@ -45,6 +45,9 @@ export const LOGIN_EMAIL_DISK = new StateDefinition("loginEmail", "disk", {
   web: "disk-local",
 });
 export const LOGIN_STRATEGY_MEMORY = new StateDefinition("loginStrategy", "memory");
+export const AUTH_REQUEST_DISK_LOCAL = new StateDefinition("authRequestLocal", "disk", {
+  web: "disk-local",
+});
 export const SSO_DISK = new StateDefinition("ssoLogin", "disk");
 export const TOKEN_DISK = new StateDefinition("token", "disk");
 export const TOKEN_DISK_LOCAL = new StateDefinition("tokenDiskLocal", "disk", {
@@ -73,6 +76,10 @@ export const AUTOFILL_SETTINGS_DISK_LOCAL = new StateDefinition("autofillSetting
 // Components
 
 export const NEW_WEB_LAYOUT_BANNER_DISK = new StateDefinition("newWebLayoutBanner", "disk", {
+  web: "disk-local",
+});
+
+export const UNASSIGNED_ITEMS_BANNER_DISK = new StateDefinition("unassignedItemsBanner", "disk", {
   web: "disk-local",
 });
 
@@ -127,3 +134,4 @@ export const VAULT_SETTINGS_DISK = new StateDefinition("vaultSettings", "disk", 
   web: "disk-local",
 });
 export const VAULT_BROWSER_MEMORY = new StateDefinition("vaultBrowser", "memory");
+export const VAULT_SEARCH_MEMORY = new StateDefinition("vaultSearch", "memory");
