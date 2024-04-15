@@ -58,19 +58,19 @@ export class BrowserScriptInjectorService extends ScriptInjectorService {
     injectDetails: CommonScriptInjectionDetails,
     file: string,
   ): chrome.tabs.InjectDetails {
-    const { frameContext, runAt } = injectDetails;
+    const { frame, runAt } = injectDetails;
     const injectionDetails: chrome.tabs.InjectDetails = { file };
 
     if (runAt) {
       injectionDetails.runAt = runAt;
     }
 
-    if (!frameContext) {
+    if (!frame) {
       return { ...injectionDetails, frameId: 0 };
     }
 
-    if (frameContext !== "all_frames") {
-      return { ...injectionDetails, frameId: frameContext };
+    if (frame !== "all_frames") {
+      return { ...injectionDetails, frameId: frame };
     }
 
     return { ...injectionDetails, allFrames: true };

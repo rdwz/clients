@@ -34,7 +34,7 @@ describe("ScriptInjectorService", () => {
           tabId,
           injectDetails: {
             file: combinedManifestVersionFile,
-            frameContext: "all_frames",
+            frame: "all_frames",
             ...sharedInjectDetails,
           },
         });
@@ -53,7 +53,7 @@ describe("ScriptInjectorService", () => {
           tabId,
           injectDetails: {
             file: combinedManifestVersionFile,
-            frameContext: 10,
+            frame: 10,
             ...sharedInjectDetails,
           },
         });

@@ -8,7 +8,7 @@ export type CommonScriptInjectionDetails = {
    * Identifies the frame targeted for script injection. Defaults to the top level frame (0).
    * Can also be set to "all_frames" to inject into all frames in a tab.
    */
-  frameContext?: "all_frames" | number;
+  frame?: "all_frames" | number;
   /**
    * When the script executes. Defaults to "document_start".
    * @see https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/content_scripts

@@ -26,7 +26,7 @@ import { Fido2ExtensionMessage } from "./abstractions/fido2.background";
 import { Fido2Background } from "./fido2.background";
 
 const sharedExecuteScriptOptions = { runAt: "document_start" };
-const sharedScriptInjectionDetails = { frameContext: "all_frames", ...sharedExecuteScriptOptions };
+const sharedScriptInjectionDetails = { frame: "all_frames", ...sharedExecuteScriptOptions };
 const contentScriptDetails = {
   file: Fido2ContentScript.ContentScript,
   ...sharedScriptInjectionDetails,

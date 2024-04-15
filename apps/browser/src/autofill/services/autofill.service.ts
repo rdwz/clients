@@ -129,7 +129,7 @@ export default class AutofillService implements AutofillServiceInterface {
         injectDetails: {
           file: `content/${injectedScript}`,
           runAt: "document_start",
-          frameContext: frameId,
+          frame: frameId,
         },
       });
     }
