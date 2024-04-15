@@ -254,6 +254,7 @@ describe("AutofillService", () => {
 
       expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(tabMock.id, {
         file: "content/content-message-handler.js",
+        frameId: 0,
         ...defaultExecuteScriptOptions,
       });
     });

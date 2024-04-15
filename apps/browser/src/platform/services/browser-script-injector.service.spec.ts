@@ -11,8 +11,6 @@ describe("ScriptInjectorService", () => {
   const mv3SpecificFile = "content/autofill-init-mv3.js";
   const mv3Details: ScriptInjectionConfig["mv3Details"] = { file: mv3SpecificFile, world: "MAIN" };
   const sharedInjectDetails: ScriptInjectionConfig["injectDetails"] = {
-    allFrames: false,
-    frameId: 0,
     runAt: "document_start",
   };
   const manifestVersionSpy = jest.spyOn(BrowserApi, "manifestVersion", "get");
@@ -33,12 +31,14 @@ describe("ScriptInjectorService", () => {
           tabId,
           injectDetails: {
             file: combinedManifestVersionFile,
+            frameContext: "all_frames",
             ...sharedInjectDetails,
           },
         });
 
         expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(tabId, {
           ...sharedInjectDetails,
+          allFrames: true,
           file: combinedManifestVersionFile,
         });
       });
@@ -50,13 +50,14 @@ describe("ScriptInjectorService", () => {
           tabId,
           injectDetails: {
             file: combinedManifestVersionFile,
+            frameContext: 10,
             ...sharedInjectDetails,
           },
         });
 
         expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(
           tabId,
-          { ...sharedInjectDetails, file: combinedManifestVersionFile },
+          { ...sharedInjectDetails, frameId: 10, file: combinedManifestVersionFile },
           { world: "ISOLATED" },
         );
       });
@@ -73,6 +74,7 @@ describe("ScriptInjectorService", () => {
 
       expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(tabId, {
         ...sharedInjectDetails,
+        frameId: 0,
         file: mv2SpecificFile,
       });
     });
@@ -88,7 +90,7 @@ describe("ScriptInjectorService", () => {
 
       expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(
         tabId,
-        { ...sharedInjectDetails, file: mv3SpecificFile },
+        { ...sharedInjectDetails, frameId: 0, file: mv3SpecificFile },
         { world: "MAIN" },
       );
     });

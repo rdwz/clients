@@ -1,3 +1,9 @@
+export type CommonScriptInjectionDetails = {
+  file?: string; // Should only be set if the script should be called in both manifest versions. If the mv2Details or mv3Details are set, the file will be pulled from those details.
+  frameContext?: "all_frames" | number; // Optional, defaults to 0, which is the id of the top level frame in a tab. Can also be set to "all_frames" to inject into all frames in a tab.
+  runAt?: "document_start" | "document_end" | "document_idle"; // Optional, defaults to "document_start"
+};
+
 export type Mv2ScriptInjectionDetails = {
   file: string;
 };
@@ -13,12 +19,7 @@ export type Mv3ScriptInjectionDetails = {
  */
 export type ScriptInjectionConfig = {
   tabId: number;
-  injectDetails: {
-    file?: string; // Should only be set if the script should be called in both manifest versions. If the mv2Details or mv3Details are set, the file will be pulled from those details.
-    allFrames?: boolean; // Optional, defaults to false. If set to true, the script will injection into all frames in the tab
-    frameId?: number; // Optional, defaults to 0, which is the id of the top level frame in a tab
-    runAt?: "document_start" | "document_end" | "document_idle"; // Optional, defaults to "document_start"
-  };
+  injectDetails: CommonScriptInjectionDetails;
   mv2Details?: Mv2ScriptInjectionDetails;
   mv3Details?: Mv3ScriptInjectionDetails;
 };

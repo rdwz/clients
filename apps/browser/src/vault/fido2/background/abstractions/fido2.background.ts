@@ -6,13 +6,13 @@ import {
 } from "@bitwarden/common/vault/abstractions/fido2/fido2-client.service.abstraction";
 
 type SharedFido2ScriptInjectionDetails = {
-  allFrames: boolean;
   runAt: browser.contentScripts.RegisteredContentScriptOptions["runAt"];
 };
 
 type SharedFido2ScriptRegistrationOptions = SharedFido2ScriptInjectionDetails & {
   matches: string[];
   excludeMatches: string[];
+  allFrames: true;
 };
 
 type Fido2ExtensionMessage = {

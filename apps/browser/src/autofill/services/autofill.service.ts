@@ -126,7 +126,11 @@ export default class AutofillService implements AutofillServiceInterface {
     for (const injectedScript of injectedScripts) {
       await this.scriptInjectorService.inject({
         tabId: tab.id,
-        injectDetails: { file: `content/${injectedScript}`, runAt: "document_start", frameId },
+        injectDetails: {
+          file: `content/${injectedScript}`,
+          runAt: "document_start",
+          frameContext: frameId,
+        },
       });
     }
   }

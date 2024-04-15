@@ -142,7 +142,7 @@ describe("FilelessImporterBackground ", () => {
 
       expect(executeScriptInTabSpy).toHaveBeenCalledWith(
         lpImporterPort.sender.tab.id,
-        { file: "content/lp-suppress-import-download.js", runAt: "document_start" },
+        { file: "content/lp-suppress-import-download.js", runAt: "document_start", frameId: 0 },
         { world: "MAIN" },
       );
     });
@@ -156,6 +156,7 @@ describe("FilelessImporterBackground ", () => {
       expect(executeScriptInTabSpy).toHaveBeenCalledWith(lpImporterPort.sender.tab.id, {
         file: "content/lp-suppress-import-download-script-append-mv2.js",
         runAt: "document_start",
+        frameId: 0,
       });
     });
   });

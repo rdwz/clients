@@ -30,12 +30,12 @@ export class Fido2Background implements Fido2BackgroundInterface {
   private fido2ContentScriptPortsSet = new Set<chrome.runtime.Port>();
   private registeredContentScripts: browser.contentScripts.RegisteredContentScript;
   private readonly sharedInjectionDetails: SharedFido2ScriptInjectionDetails = {
-    allFrames: true,
     runAt: "document_start",
   };
   private readonly sharedRegistrationOptions: SharedFido2ScriptRegistrationOptions = {
     matches: ["https://*/*"],
     excludeMatches: ["https://*/*.xml*"],
+    allFrames: true,
     ...this.sharedInjectionDetails,
   };
   private readonly extensionMessageHandlers: Fido2BackgroundExtensionMessageHandlers = {
@@ -175,14 +175,18 @@ export class Fido2Background implements Fido2BackgroundInterface {
   private async injectFido2ContentScripts(tab: chrome.tabs.Tab): Promise<void> {
     void this.scriptInjectorService.inject({
       tabId: tab.id,
-      injectDetails: this.sharedInjectionDetails,
+      injectDetails: { frameContext: "all_frames", ...this.sharedInjectionDetails },
       mv2Details: { file: Fido2ContentScript.PageScriptAppend },
       mv3Details: { file: Fido2ContentScript.PageScript, world: "MAIN" },
     });
 
     void this.scriptInjectorService.inject({
       tabId: tab.id,
-      injectDetails: { file: Fido2ContentScript.ContentScript, ...this.sharedInjectionDetails },
+      injectDetails: {
+        file: Fido2ContentScript.ContentScript,
+        frameContext: "all_frames",
+        ...this.sharedInjectionDetails,
+      },
     });
   }
 

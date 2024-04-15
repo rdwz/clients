@@ -1,6 +1,7 @@
 import { BrowserApi } from "../browser/browser-api";
 
 import {
+  CommonScriptInjectionDetails,
   ScriptInjectionConfig,
   ScriptInjectorService,
 } from "./abstractions/script-injector.service";
@@ -19,20 +20,17 @@ export class BrowserScriptInjectorService implements ScriptInjectorService {
       throw new Error("No file specified for script injection");
     }
 
+    const injectionDetails = this.buildInjectionDetails(injectDetails, file);
+
     if (BrowserApi.isManifestVersion(3)) {
-      await BrowserApi.executeScriptInTab(
-        tabId,
-        { ...injectDetails, file },
-        { world: mv3Details?.world ?? "ISOLATED" },
-      );
+      await BrowserApi.executeScriptInTab(tabId, injectionDetails, {
+        world: mv3Details?.world ?? "ISOLATED",
+      });
 
       return;
     }
 
-    await BrowserApi.executeScriptInTab(tabId, {
-      ...injectDetails,
-      file,
-    });
+    await BrowserApi.executeScriptInTab(tabId, injectionDetails);
   }
 
   /**
@@ -48,5 +46,27 @@ export class BrowserScriptInjectorService implements ScriptInjectorService {
     }
 
     return mv2Details?.file ?? injectDetails?.file;
+  }
+
+  private buildInjectionDetails(
+    injectDetails: CommonScriptInjectionDetails,
+    file: string,
+  ): chrome.tabs.InjectDetails {
+    const { frameContext, runAt } = injectDetails;
+    const injectionDetails: chrome.tabs.InjectDetails = { file };
+
+    if (runAt) {
+      injectionDetails.runAt = runAt;
+    }
+
+    if (!frameContext) {
+      return { ...injectionDetails, frameId: 0 };
+    }
+
+    if (frameContext !== "all_frames") {
+      return { ...injectionDetails, frameId: frameContext };
+    }
+
+    return { ...injectionDetails, allFrames: true };
   }
 }
