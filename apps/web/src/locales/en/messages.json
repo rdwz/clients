@@ -7922,69 +7922,35 @@
   "sdksDesc": {
     "message": "Use Bitwarden Secrets Manager SDK in the following programming languages to build your own applications."
   },
-  "githubActions": {
-    "message": "GitHub Actions"
-  },
   "setUpGithubActions": {
     "message": "Set up Github Actions"
-  },
-  "gitlabCICD": {
-    "message": "GitLab CI/CD"
   },
   "setUpGitlabCICD": {
     "message": "Set up GitLab CI/CD"
   },
-  "ansible": {
-    "message": "Ansible"
-  },
   "setUpAnsible": {
     "message": "Set up Ansible"
-  },
-  "cSharp": {
-    "message": "C#"
   },
   "cSharpSDKRepo": {
     "message": "View C# repository"
   },
-  "cPlusPlus": {
-    "message": "C++"
-  },
   "cPlusPlusSDKRepo": {
     "message": "View C++ repository"
-  },
-  "jsWebAssembly": {
-    "message": "JS WebAssembly"
   },
   "jsWebAssemblySDKRepo": {
     "message": "View JS WebAssembly repository"
   },
-  "java": {
-    "message": "Java"
-  },
   "javaSDKRepo": {
     "message": "View Java repository"
-  },
-  "python": {
-    "message": "Python"
   },
   "pythonSDKRepo": {
     "message": "View Python repository"
   },
-  "php": {
-    "message": "php"
-  },
   "phpSDKRepo": {
     "message": "View php repository"
   },
-  "ruby": {
-    "message": "Ruby"
-  },
   "rubySDKRepo": {
     "message": "View Ruby repository"
-  },
-  "go": {
-    "message": "Go",
-    "description": "The Go programming language, used within Secrets Manager SDKs."
   },
   "goSDKRepo": {
     "message": "View Go repository"

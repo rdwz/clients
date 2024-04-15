@@ -56,10 +56,10 @@ describe("IntegrationsComponent", () => {
       (integrationList.componentInstance as IntegrationGridComponent).integrations.map(
         (i) => i.name,
       ),
-    ).toEqual(["githubActions", "gitlabCICD", "ansible"]);
+    ).toEqual(["GitHub Actions", "GitLab CI/CD", "Ansible"]);
 
     expect(
       (sdkList.componentInstance as IntegrationGridComponent).integrations.map((i) => i.name),
-    ).toEqual(["cSharp", "cPlusPlus", "go", "java", "jsWebAssembly", "php", "python", "ruby"]);
+    ).toEqual(["C#", "C++", "Go", "Java", "JS WebAssembly", "php", "Python", "Ruby"]);
   });
 });
