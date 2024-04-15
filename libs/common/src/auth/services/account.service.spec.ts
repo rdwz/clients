@@ -1,3 +1,8 @@
+/**
+ * need to update test environment so structuredClone works appropriately
+ * @jest-environment ../../libs/shared/test.environment.ts
+ */
+
 import { MockProxy, mock } from "jest-mock-extended";
 import { firstValueFrom } from "rxjs";
 
@@ -126,6 +131,19 @@ describe("accountService", () => {
       const currentValue = await firstValueFrom(sut.accounts$);
 
       expect(currentValue).toEqual({ [userId]: userInfo });
+    });
+
+    it("sets the last active date of the account to now", async () => {
+      const emissions = trackEmissions(sut.accountActivity$);
+      await sut.addAccount(userId, userInfo);
+
+      expect(emissions).toEqual([
+        null, // initial data
+        {
+          [userId]: expect.anything(),
+        },
+      ]);
+      expect(emissions[1][userId]).toAlmostEqual(new Date(), 100);
     });
   });
 

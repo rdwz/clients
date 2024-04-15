@@ -902,6 +902,7 @@ export default class MainBackground {
       this.logService,
       this.configService,
       this.fido2Service,
+      this.accountService,
     );
     this.nativeMessagingBackground = new NativeMessagingBackground(
       this.accountService,
@@ -990,10 +991,10 @@ export default class MainBackground {
         },
         this.authService,
         this.cipherService,
-        this.stateService,
         this.totpService,
         this.eventCollectionService,
         this.userVerificationService,
+        this.accountService,
       );
 
       this.contextMenusBackground = new ContextMenusBackground(contextMenuClickedHandler);

@@ -122,10 +122,6 @@ describe("VaultTimeoutService", () => {
       return Promise.resolve(accounts[userId]?.vaultTimeout);
     });
 
-    stateService.getLastActive.mockImplementation((options) => {
-      return Promise.resolve(accounts[options.userId]?.lastActive);
-    });
-
     stateService.getUserId.mockResolvedValue(globalSetups?.userId);
 
     // Set desired user active and known users on accounts service : note the only thing that matters here is that the ID are set
@@ -148,6 +144,15 @@ describe("VaultTimeoutService", () => {
           return agg;
         },
         {} as Record<string, AccountInfo>,
+      ),
+    );
+    accountService.accountActivity$ = of(
+      Object.entries(accounts).reduce(
+        (agg, [id, info]) => {
+          agg[id] = info.lastActive ? new Date(info.lastActive) : null;
+          return agg;
+        },
+        {} as Record<string, Date>,
       ),
     );
 

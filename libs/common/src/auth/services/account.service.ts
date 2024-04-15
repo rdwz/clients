@@ -73,6 +73,7 @@ export class AccountServiceImplementation implements InternalAccountService {
       accounts[userId] = accountData;
       return accounts;
     });
+    await this.setAccountActivity(userId, new Date());
   }
 
   async setAccountName(userId: UserId, name: string): Promise<void> {

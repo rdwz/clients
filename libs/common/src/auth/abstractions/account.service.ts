@@ -33,6 +33,8 @@ export abstract class AccountService {
   accountActivity$: Observable<Record<UserId, Date>>;
   /**
    * Updates the `accounts$` observable with the new account data.
+   *
+   * @note Also sets the last active date of the account to `now`.
    * @param userId
    * @param accountData
    */
@@ -62,6 +64,8 @@ export abstract class AccountService {
   abstract switchAccount(userId: UserId): Promise<void>;
   /**
    * Cleans personal information for the given account from the `accounts$` observable. Does not remove the userId from the observable.
+   *
+   * @note Also sets the last active date of the account to `null`.
    * @param userId
    */
   abstract clean(userId: UserId): Promise<void>;
