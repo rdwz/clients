@@ -8,11 +8,23 @@ import { UserId } from "../../types/guid";
  */
 export type AccountInfo = {
   email: string;
+  emailVerified: boolean;
   name: string | undefined;
 };
 
 export function accountInfoEqual(a: AccountInfo, b: AccountInfo) {
-  return a?.email === b?.email && a?.name === b?.name;
+  if (a == null && b == null) {
+    return true;
+  }
+  const keys = new Set([...Object.keys(a ?? {}), ...Object.keys(b ?? {})]) as Set<
+    keyof AccountInfo
+  >;
+  for (const key of keys) {
+    if (a?.[key] !== b?.[key]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export abstract class AccountService {
@@ -36,6 +48,12 @@ export abstract class AccountService {
    * @param email
    */
   abstract setAccountEmail(userId: UserId, email: string): Promise<void>;
+  /**
+   * updates the `accounts$` observable with the new email verification status for the account.
+   * @param userId
+   * @param emailVerified
+   */
+  abstract setAccountEmailVerified(userId: UserId, emailVerified: boolean): Promise<void>;
   /**
    * Updates the `activeAccount$` observable with the new active account.
    * @param userId

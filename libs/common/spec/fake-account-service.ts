@@ -13,6 +13,7 @@ export function mockAccountServiceWith(
     ...{
       name: "name",
       email: "email",
+      emailVerified: true,
     },
   };
   const service = new FakeAccountService({ [userId]: fullInfo });
@@ -51,6 +52,10 @@ export class FakeAccountService implements AccountService {
 
   async setAccountEmail(userId: UserId, email: string): Promise<void> {
     await this.mock.setAccountEmail(userId, email);
+  }
+
+  async setAccountEmailVerified(userId: UserId, emailVerified: boolean): Promise<void> {
+    await this.mock.setAccountEmailVerified(userId, emailVerified);
   }
 
   async switchAccount(userId: UserId): Promise<void> {

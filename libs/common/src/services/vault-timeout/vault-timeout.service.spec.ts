@@ -133,6 +133,7 @@ describe("VaultTimeoutService", () => {
       accountService.activeAccountSubject.next({
         id: globalSetups.userId as UserId,
         email: null,
+        emailVerified: false,
         name: null,
       });
     }
@@ -141,6 +142,7 @@ describe("VaultTimeoutService", () => {
         (agg, [id]) => {
           agg[id] = {
             email: "",
+            emailVerified: true,
             name: "",
           };
           return agg;

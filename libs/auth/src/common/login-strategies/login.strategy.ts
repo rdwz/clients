@@ -175,6 +175,7 @@ export abstract class LoginStrategy {
     await this.accountService.addAccount(userId, {
       name: accountInformation.name,
       email: accountInformation.email,
+      emailVerified: accountInformation.email_verified,
     });
 
     // set access token and refresh token before account initialization so authN status can be accurate

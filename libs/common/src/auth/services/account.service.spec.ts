@@ -7,13 +7,53 @@ import { trackEmissions } from "../../../spec/utils";
 import { LogService } from "../../platform/abstractions/log.service";
 import { MessagingService } from "../../platform/abstractions/messaging.service";
 import { UserId } from "../../types/guid";
-import { AccountInfo } from "../abstractions/account.service";
+import { AccountInfo, accountInfoEqual } from "../abstractions/account.service";
 
 import {
   ACCOUNT_ACCOUNTS,
   ACCOUNT_ACTIVE_ACCOUNT_ID,
   AccountServiceImplementation,
 } from "./account.service";
+
+describe("accountInfoEqual", () => {
+  const accountInfo: AccountInfo = { name: "name", email: "email", emailVerified: true };
+
+  it("compares nulls", () => {
+    expect(accountInfoEqual(null, null)).toBe(true);
+    expect(accountInfoEqual(null, accountInfo)).toBe(false);
+    expect(accountInfoEqual(accountInfo, null)).toBe(false);
+  });
+
+  it("compares all keys, not just those defined in AccountInfo", () => {
+    const different = { ...accountInfo, extra: "extra" };
+
+    expect(accountInfoEqual(accountInfo, different)).toBe(false);
+  });
+
+  it("compares name", () => {
+    const same = { ...accountInfo };
+    const different = { ...accountInfo, name: "name2" };
+
+    expect(accountInfoEqual(accountInfo, same)).toBe(true);
+    expect(accountInfoEqual(accountInfo, different)).toBe(false);
+  });
+
+  it("compares email", () => {
+    const same = { ...accountInfo };
+    const different = { ...accountInfo, email: "email2" };
+
+    expect(accountInfoEqual(accountInfo, same)).toBe(true);
+    expect(accountInfoEqual(accountInfo, different)).toBe(false);
+  });
+
+  it("compares emailVerified", () => {
+    const same = { ...accountInfo };
+    const different = { ...accountInfo, emailVerified: false };
+
+    expect(accountInfoEqual(accountInfo, same)).toBe(true);
+    expect(accountInfoEqual(accountInfo, different)).toBe(false);
+  });
+});
 
 describe("accountService", () => {
   let messagingService: MockProxy<MessagingService>;
@@ -23,7 +63,7 @@ describe("accountService", () => {
   let accountsState: FakeGlobalState<Record<UserId, AccountInfo>>;
   let activeAccountIdState: FakeGlobalState<UserId>;
   const userId = "userId" as UserId;
-  const userInfo = { email: "email", name: "name" };
+  const userInfo = { email: "email", name: "name", emailVerified: true };
 
   beforeEach(() => {
     messagingService = mock();
@@ -128,6 +168,30 @@ describe("accountService", () => {
 
     it("should not update if the email is the same", async () => {
       await sut.setAccountEmail(userId, "email");
+      const currentState = await firstValueFrom(accountsState.state$);
+
+      expect(currentState).toEqual(initialState);
+    });
+  });
+
+  describe("setAccountEmailVerified", () => {
+    const initialState = { [userId]: userInfo };
+    initialState[userId].emailVerified = false;
+    beforeEach(() => {
+      accountsState.stateSubject.next(initialState);
+    });
+
+    it("should update the account", async () => {
+      await sut.setAccountEmailVerified(userId, true);
+      const currentState = await firstValueFrom(accountsState.state$);
+
+      expect(currentState).toEqual({
+        [userId]: { ...userInfo, emailVerified: true },
+      });
+    });
+
+    it("should not update if the email is the same", async () => {
+      await sut.setAccountEmailVerified(userId, false);
       const currentState = await firstValueFrom(accountsState.state$);
 
       expect(currentState).toEqual(initialState);
