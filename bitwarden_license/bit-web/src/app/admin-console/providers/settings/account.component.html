@@ -50,7 +50,7 @@
     </button>
   </form>
 
-  <app-danger-zone>
+  <app-danger-zone *ngIf="enableDeleteProvider$ | async">
     <button type="button" bitButton buttonType="danger" (click)="deleteProvider()">
       {{ "deleteProvider" | i18n }}
     </button>

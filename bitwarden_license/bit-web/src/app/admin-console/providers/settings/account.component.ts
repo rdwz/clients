@@ -1,11 +1,12 @@
 import { Component } from "@angular/core";
-import { ActivatedRoute, Router } from "@angular/router";
+import { ActivatedRoute } from "@angular/router";
 
 import { UserVerificationDialogComponent } from "@bitwarden/auth/angular";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { ProviderUpdateRequest } from "@bitwarden/common/admin-console/models/request/provider/provider-update.request";
 import { ProviderResponse } from "@bitwarden/common/admin-console/models/response/provider/provider.response";
-import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
+import { FeatureFlag } from "@bitwarden/common/enums/feature-flag.enum";
+import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
@@ -26,16 +27,20 @@ export class AccountComponent {
 
   private providerId: string;
 
+  protected enableDeleteProvider$ = this.configService.getFeatureFlag$(
+    FeatureFlag.EnableDeleteProvider,
+    false,
+  );
+
   constructor(
     private apiService: ApiService,
     private i18nService: I18nService,
     private route: ActivatedRoute,
     private syncService: SyncService,
     private platformUtilsService: PlatformUtilsService,
-    userVerificationService: UserVerificationService,
     private logService: LogService,
     private dialogService: DialogService,
-    private router: Router,
+    private configService: ConfigService,
   ) {}
 
   async ngOnInit() {
