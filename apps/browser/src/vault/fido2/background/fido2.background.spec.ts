@@ -82,7 +82,6 @@ describe("Fido2Background", () => {
       scriptInjectorServiceMock,
     );
     fido2Background["abortManager"] = abortManagerMock;
-    fido2Background.init();
     abortManagerMock.runWithAbortController.mockImplementation((_requestId, runner) =>
       runner(abortController),
     );
@@ -148,6 +147,7 @@ describe("Fido2Background", () => {
     let portMock!: MockProxy<chrome.runtime.Port>;
 
     beforeEach(() => {
+      fido2Background.init();
       jest.spyOn(BrowserApi, "registerContentScriptsMv2");
       jest.spyOn(BrowserApi, "registerContentScriptsMv3");
       jest.spyOn(BrowserApi, "unregisterContentScriptsMv3");
@@ -256,6 +256,10 @@ describe("Fido2Background", () => {
   });
 
   describe("extension message handlers", () => {
+    beforeEach(() => {
+      fido2Background.init();
+    });
+
     it("ignores messages that do not have a handler associated with a command within the message", () => {
       const message = mock<Fido2ExtensionMessage>({ command: "nonexistentCommand" });
 
@@ -337,6 +341,7 @@ describe("Fido2Background", () => {
     let portMock!: MockProxy<chrome.runtime.Port>;
 
     beforeEach(() => {
+      fido2Background.init();
       portMock = createPortSpyMock(Fido2PortName.InjectedScript);
       fido2ClientService.isFido2FeatureEnabled.mockResolvedValue(true);
     });
@@ -390,6 +395,7 @@ describe("Fido2Background", () => {
     let portMock!: MockProxy<chrome.runtime.Port>;
 
     beforeEach(() => {
+      fido2Background.init();
       portMock = createPortSpyMock(Fido2PortName.InjectedScript);
       triggerRuntimeOnConnectEvent(portMock);
       fido2Background["fido2ContentScriptPortsSet"].add(portMock);
