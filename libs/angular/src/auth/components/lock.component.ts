@@ -49,7 +49,7 @@ export class LockComponent implements OnInit, OnDestroy {
   protected onSuccessfulSubmit: () => Promise<void>;
 
   private invalidPinAttempts = 0;
-  private pinStatus: PinLockType;
+  private pinLockType: PinLockType;
 
   private enforcedMasterPasswordOptions: MasterPasswordPolicyOptions = undefined;
 
@@ -340,12 +340,12 @@ export class LockComponent implements OnInit, OnDestroy {
       return await this.vaultTimeoutService.logOut();
     }
 
-    this.pinStatus = await this.pinService.isPinLockSet();
+    this.pinLockType = await this.pinService.getPinLockType();
 
     let ephemeralPinSet = await this.pinService.getPinKeyEncryptedUserKeyEphemeral();
     ephemeralPinSet ||= await this.stateService.getDecryptedPinProtected();
     this.pinEnabled =
-      (this.pinStatus === "TRANSIENT" && !!ephemeralPinSet) || this.pinStatus === "PERSISTANT";
+      (this.pinLockType === "TRANSIENT" && !!ephemeralPinSet) || this.pinLockType === "PERSISTANT";
     this.masterPasswordEnabled = await this.userVerificationService.hasMasterPassword();
 
     this.supportsBiometric = await this.platformUtilsService.supportsBiometric();

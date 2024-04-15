@@ -126,7 +126,7 @@ export class PinService implements PinServiceAbstraction {
     return (await this.keyGenerationService.stretchKey(pinKey)) as PinKey;
   }
 
-  async isPinLockSet(userId?: string): Promise<PinLockType> {
+  async getPinLockType(userId?: UserId): Promise<PinLockType> {
     // we can't check the protected pin for both because old accounts only
     // used it for MP on Restart
     const aUserKeyEncryptedPinIsSet = !!(await this.getProtectedPin(userId as UserId));
@@ -148,9 +148,13 @@ export class PinService implements PinServiceAbstraction {
     }
   }
 
+  async isPinSet(userId?: UserId): Promise<boolean> {
+    return (await this.getPinLockType(userId)) !== "DISABLED"; // TODO-rr-bw: verify
+  }
+
   async decryptUserKeyWithPin(pin: string): Promise<UserKey | null> {
     try {
-      const pinLockType: PinLockType = await this.isPinLockSet();
+      const pinLockType: PinLockType = await this.getPinLockType();
 
       const { pinKeyEncryptedUserKey, oldPinKeyEncryptedMasterKey } =
         await this.getPinKeyEncryptedKeys(pinLockType);

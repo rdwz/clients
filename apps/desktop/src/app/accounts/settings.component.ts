@@ -237,8 +237,7 @@ export class SettingsComponent implements OnInit {
     );
 
     // Load initial values
-    const pinStatus = await this.pinService.isPinLockSet();
-    this.userHasPinSet = pinStatus !== "DISABLED";
+    this.userHasPinSet = await this.pinService.isPinSet();
 
     const initialValues = {
       vaultTimeout: await this.vaultTimeoutSettingsService.getVaultTimeout(),

@@ -64,11 +64,18 @@ export abstract class PinServiceAbstraction {
   makePinKey: (pin: string, salt: string, kdf: KdfType, kdfConfig: KdfConfig) => Promise<PinKey>;
 
   /**
-   * Has the user enabled unlock with Pin.
+   * Gets the user's PinLockType
    * @param userId The user id to check. If not provided, the current user is used
-   * @returns PinLockType
+   * TODO-rr-bw: verify
    */
-  isPinLockSet: (userId?: string) => Promise<PinLockType>; // TODO-rr-bw: consider renaming to getPinLockType() since it doesn't actually return true/false
+  getPinLockType: (userId?: UserId) => Promise<PinLockType>;
+
+  /**
+   * Declares whether or not the user has a PIN set (either persistant or ephemeral)
+   * @param userId The user id to check. If not provided, the current user is used
+   * TODO-rr-bw: verify
+   */
+  isPinSet: (userId?: UserId) => Promise<boolean>;
 
   // TODO-rr-bw: add jsdocs
   decryptUserKeyWithPin: (pin: string) => Promise<UserKey | null>;

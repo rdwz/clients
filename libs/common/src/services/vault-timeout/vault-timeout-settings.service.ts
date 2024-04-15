@@ -142,7 +142,7 @@ export class VaultTimeoutSettingsService implements VaultTimeoutSettingsServiceA
 
     const canLock =
       (await this.userHasMasterPassword(userId)) ||
-      (await this.pinService.isPinLockSet(userId)) !== "DISABLED" ||
+      (await this.pinService.isPinSet(userId as UserId)) ||
       (await this.isBiometricLockSet(userId));
 
     if (canLock) {

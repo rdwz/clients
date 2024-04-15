@@ -149,7 +149,6 @@ export class SettingsComponent implements OnInit {
     if (timeout === -2 && !showOnLocked) {
       timeout = -1;
     }
-    const pinStatus = await this.pinService.isPinLockSet();
 
     this.form.controls.vaultTimeout.valueChanges
       .pipe(
@@ -176,7 +175,7 @@ export class SettingsComponent implements OnInit {
       vaultTimeoutAction: await firstValueFrom(
         this.vaultTimeoutSettingsService.vaultTimeoutAction$(),
       ),
-      pin: pinStatus !== "DISABLED",
+      pin: await this.pinService.isPinSet(),
       biometric: await this.vaultTimeoutSettingsService.isBiometricLockSet(),
       enableAutoBiometricsPrompt: await firstValueFrom(
         this.biometricStateService.promptAutomatically$,
