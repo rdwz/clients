@@ -85,7 +85,7 @@ export class ImportCommand {
       if (err.message) {
         return Response.badRequest(err.message);
       }
-      return Response.badRequest(err);
+      return Response.badRequest("There was a problem with the data you tried to import.");
     }
   }
 
