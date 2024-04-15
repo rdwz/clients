@@ -8,9 +8,6 @@ import { ButtonModule } from "../button";
 import { LinkModule } from "../link";
 import { TypographyModule } from "../typography";
 
-// passing in header and footer separately means it's possible to combine them in ways that are not supported
-// in the design (i.e. have a top level header with a sub page footer). TBD on this decision
-
 @Component({
   selector: "popup-layout",
   template: `
@@ -18,9 +15,9 @@ import { TypographyModule } from "../typography";
       class="tw-border tw-border-secondary-300 tw-border-solid tw-h-[640px] tw-w-[380px] tw-flex tw-flex-col"
     >
       <ng-content select="[popupHeader]"></ng-content>
-      <div class="tw-bg-background-alt tw-p-3 tw-flex-1 tw-overflow-scroll">
+      <main class="tw-bg-background-alt tw-p-3 tw-flex-1 tw-overflow-y-scroll">
         <ng-content></ng-content>
-      </div>
+      </main>
       <ng-content select="[popupFooter]"></ng-content>
     </div>
   `,
@@ -42,7 +39,7 @@ export class PopupLayoutComponent {}
           *ngIf="variant === 'sub-page'"
         ></i>
         <!-- see if this doesnt need the ! override -->
-        <h1 bitTypography="h3" class="!tw-mb-0 tw-text-headers">{{ title }}</h1>
+        <h1 bitTypography="h3" class="!tw-mb-0 tw-text-headers">{{ pageTitle }}</h1>
       </div>
       <div class="tw-inline-flex tw-items-center tw-gap-4 tw-h-9">
         <button bitButton *ngIf="variant === 'top-level-action'" buttonType="primary">
@@ -64,7 +61,7 @@ export class PopupLayoutComponent {}
 })
 export class PopupHeaderComponent {
   @Input() variant: "top-level" | "top-level-action" | "sub-page" = "top-level-action";
-  @Input() title: string;
+  @Input() pageTitle: string;
   // TODO avatar Input
   // TODO button functionality
 }
@@ -72,15 +69,23 @@ export class PopupHeaderComponent {
 @Component({
   selector: "popup-footer",
   template: `
-    <footer
-      class="tw-p-3 tw-border-0 tw-border-solid tw-border-t tw-border-secondary-300 tw-flex"
-      *ngIf="variant !== 'sub-page'"
-    >
+    <footer class="tw-p-3 tw-border-0 tw-border-solid tw-border-t tw-border-secondary-300 tw-flex">
+      <div class="tw-flex tw-justify-start">
+        <ng-content select="[actionFooter]"></ng-content>
+      </div>
+    </footer>
+  `,
+  standalone: true,
+  imports: [],
+})
+export class PopupFooterComponent {}
+
+@Component({
+  selector: "popup-bottom-navigation",
+  template: `
+    <footer class="tw-p-3 tw-border-0 tw-border-solid tw-border-t tw-border-secondary-300 tw-flex">
       <!-- top margin is offset for large font icons, look into better fix -->
-      <div class="tw-flex tw-justify-around tw-flex-1 tw-mt-1" *ngIf="variant === 'top-level'">
-        <!-- should this be an ng-content like the action footer? do we want callers to have
-        to construct these 4 buttons every time? or should they be their own sub-component then? 
-        should the icon button with text also become a component? -->
+      <div class="tw-flex tw-justify-around tw-flex-1 tw-mt-1">
         <a
           class="tw-flex tw-flex-col tw-items-center tw-gap-1"
           [ngClass]="activePage === 'vault' ? 'tw-font-bold tw-text-primary-600' : 'tw-text-muted'"
@@ -126,20 +131,13 @@ export class PopupHeaderComponent {
           Settings
         </a>
       </div>
-      <div class="tw-flex tw-justify-start" *ngIf="variant === 'sub-page-action'">
-        <!-- Follows dialog footer pattern -->
-        <ng-content select="[actionFooter]"></ng-content>
-      </div>
     </footer>
   `,
   standalone: true,
   imports: [CommonModule, LinkModule],
 })
-export class PopupFooterComponent {
-  @Input() variant: "top-level" | "sub-page" | "sub-page-action" = "top-level";
-  // can we grab it from the route instead of passing it in??
-  // this input is technically required for a top-level variant but not needed for other variants,
-  // which feels weird
+export class PopupBottomNavigationComponent {
+  // TODO change implementation to router link active
   @Input() activePage: "vault" | "generator" | "send" | "settings";
   // TODO button functionality
   // TODO icon button states
