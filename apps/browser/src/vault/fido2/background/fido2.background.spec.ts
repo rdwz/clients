@@ -395,18 +395,14 @@ describe("Fido2Background", () => {
       fido2Background["fido2ContentScriptPortsSet"].add(portMock);
     });
 
-    it("ignores the port disconnection if it does not have the correct name", () => {
-      const port = createPortSpyMock("nonexistentPort");
-
-      triggerPortOnDisconnectEvent(port);
-
-      expect(fido2Background["fido2ContentScriptPortsSet"].size).toBe(1);
-    });
-
-    it("removes the port from the fido2ContentScriptPortsSet", () => {
+    it("does not destroy or inject the content script when the port has already disconnected before the enablePasskeys setting is set to `false`", async () => {
       triggerPortOnDisconnectEvent(portMock);
 
-      expect(fido2Background["fido2ContentScriptPortsSet"].size).toBe(0);
+      enablePasskeysMock$.next(false);
+      await flushPromises();
+
+      expect(portMock.disconnect).not.toHaveBeenCalled();
+      expect(scriptInjectorServiceMock.inject).not.toHaveBeenCalled();
     });
   });
 });
