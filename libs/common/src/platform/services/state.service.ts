@@ -488,29 +488,6 @@ export class StateService<
     );
   }
 
-  /**
-   * @deprecated Use getPinKeyEncryptedUserKeyEphemeral instead
-   */
-  async getDecryptedPinProtected(options?: StorageOptions): Promise<EncString> {
-    return (
-      await this.getAccount(this.reconcileOptions(options, await this.defaultInMemoryOptions()))
-    )?.settings?.pinProtected?.decrypted;
-  }
-
-  /**
-   * @deprecated Use setPinKeyEncryptedUserKeyEphemeral instead
-   */
-  async setDecryptedPinProtected(value: EncString, options?: StorageOptions): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultInMemoryOptions()),
-    );
-    account.settings.pinProtected.decrypted = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultInMemoryOptions()),
-    );
-  }
-
   async getDuckDuckGoSharedKey(options?: StorageOptions): Promise<string> {
     options = this.reconcileOptions(options, await this.defaultSecureStorageOptions());
     if (options?.userId == null) {
@@ -687,6 +664,7 @@ export class StateService<
     );
   }
 
+  // DISK
   async getEncryptedPinProtected(options?: StorageOptions): Promise<string> {
     return (
       await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskOptions()))
@@ -701,6 +679,30 @@ export class StateService<
     await this.saveAccount(
       account,
       this.reconcileOptions(options, await this.defaultOnDiskOptions()),
+    );
+  }
+
+  // MEMORY
+  /**
+   * @deprecated Use getPinKeyEncryptedUserKeyEphemeral instead
+   */
+  async getDecryptedPinProtected(options?: StorageOptions): Promise<EncString> {
+    return (
+      await this.getAccount(this.reconcileOptions(options, await this.defaultInMemoryOptions()))
+    )?.settings?.pinProtected?.decrypted;
+  }
+
+  /**
+   * @deprecated Use setPinKeyEncryptedUserKeyEphemeral instead
+   */
+  async setDecryptedPinProtected(value: EncString, options?: StorageOptions): Promise<void> {
+    const account = await this.getAccount(
+      this.reconcileOptions(options, await this.defaultInMemoryOptions()),
+    );
+    account.settings.pinProtected.decrypted = value;
+    await this.saveAccount(
+      account,
+      this.reconcileOptions(options, await this.defaultInMemoryOptions()),
     );
   }
 

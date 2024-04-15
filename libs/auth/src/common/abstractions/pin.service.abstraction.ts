@@ -64,7 +64,7 @@ export abstract class PinServiceAbstraction {
   makePinKey: (pin: string, salt: string, kdf: KdfType, kdfConfig: KdfConfig) => Promise<PinKey>;
 
   /**
-   * Gets the user's PinLockType
+   * Gets the user's PinLockType {@link PinLockType}
    * @param userId The user id to check. If not provided, the current user is used
    * TODO-rr-bw: verify
    */

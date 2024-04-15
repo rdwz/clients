@@ -10,8 +10,8 @@ import { KdfType } from "@bitwarden/common/platform/enums";
 import { EncString, EncryptedString } from "@bitwarden/common/platform/models/domain/enc-string";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
 import {
-  CRYPTO_DISK,
-  CRYPTO_MEMORY,
+  PIN_DISK,
+  PIN_MEMORY,
   StateProvider,
   UserKeyDefinition,
 } from "@bitwarden/common/platform/state";
@@ -29,7 +29,7 @@ import { PinServiceAbstraction } from "../../abstractions/pin.service.abstractio
 export type PinLockType = "DISABLED" | "PERSISTANT" | "TRANSIENT";
 
 const PIN_KEY_ENCRYPTED_USER_KEY = new UserKeyDefinition<EncryptedString>(
-  CRYPTO_DISK,
+  PIN_DISK,
   "pinKeyEncryptedUserKey",
   {
     deserializer: (value) => value,
@@ -38,7 +38,7 @@ const PIN_KEY_ENCRYPTED_USER_KEY = new UserKeyDefinition<EncryptedString>(
 );
 
 const PIN_KEY_ENCRYPTED_USER_KEY_EPHEMERAL = new UserKeyDefinition<EncryptedString>(
-  CRYPTO_MEMORY,
+  PIN_MEMORY,
   "pinKeyEncryptedUserKeyEphemeral",
   {
     deserializer: (value) => value,
@@ -46,7 +46,7 @@ const PIN_KEY_ENCRYPTED_USER_KEY_EPHEMERAL = new UserKeyDefinition<EncryptedStri
   },
 );
 
-const PROTECTED_PIN = new UserKeyDefinition<string>(CRYPTO_DISK, "protectedPin", {
+const PROTECTED_PIN = new UserKeyDefinition<string>(PIN_DISK, "protectedPin", {
   deserializer: (value) => value,
   clearOn: [], // TODO-rr-bw: verify
 });
@@ -194,42 +194,24 @@ export class PinService implements PinServiceAbstraction {
     }
   }
 
-  /**
-   * Gets the user's `pinKeyEncryptedUserKey` and `oldPinKeyEncryptedMasterKey` (if one exists) based
-   * on the user's PinLockType.
-   * @remarks The `oldPinKeyEncryptedMasterKey` (also known as `pinProtected`) is only used for
-   *          migrating old PinKeys and will be null for all migrated accounts
-   * @throws If PinLockType is 'DISABLED'
-   */
-  private async getPinKeyEncryptedKeys(
-    pinLockType: PinLockType,
-  ): Promise<{ pinKeyEncryptedUserKey: EncString; oldPinKeyEncryptedMasterKey?: EncString }> {
-    switch (pinLockType) {
-      case "PERSISTANT": {
-        const pinKeyEncryptedUserKey = await this.getPinKeyEncryptedUserKey();
-        const oldPinKeyEncryptedMasterKey = await this.stateService.getEncryptedPinProtected();
+  async decryptUserKey(
+    pin: string,
+    salt: string,
+    kdf: KdfType,
+    kdfConfig: KdfConfig,
+    pinKeyEncryptedUserKey?: EncString,
+  ): Promise<UserKey> {
+    pinKeyEncryptedUserKey ||= await this.getPinKeyEncryptedUserKey();
+    pinKeyEncryptedUserKey ||= await this.getPinKeyEncryptedUserKeyEphemeral();
 
-        return {
-          pinKeyEncryptedUserKey,
-          oldPinKeyEncryptedMasterKey: oldPinKeyEncryptedMasterKey
-            ? new EncString(oldPinKeyEncryptedMasterKey)
-            : undefined,
-        };
-      }
-      case "TRANSIENT": {
-        const pinKeyEncryptedUserKey = await this.getPinKeyEncryptedUserKeyEphemeral();
-        const oldPinKeyEncryptedMasterKey = await this.stateService.getDecryptedPinProtected();
-
-        return { pinKeyEncryptedUserKey, oldPinKeyEncryptedMasterKey };
-      }
-      case "DISABLED":
-        throw new Error("Pin is disabled");
-      default: {
-        // Compile-time check for exhaustive switch
-        const _exhaustiveCheck: never = pinLockType;
-        return _exhaustiveCheck;
-      }
+    if (!pinKeyEncryptedUserKey) {
+      throw new Error("No PIN encrypted key found.");
     }
+
+    const pinKey = await this.makePinKey(pin, salt, kdf, kdfConfig);
+    const userKey = await this.encryptService.decryptToBytes(pinKeyEncryptedUserKey, pinKey);
+
+    return new SymmetricCryptoKey(userKey) as UserKey;
   }
 
   async decryptAndMigrateOldPinKey(
@@ -301,24 +283,42 @@ export class PinService implements PinServiceAbstraction {
     return new SymmetricCryptoKey(masterKey) as MasterKey;
   }
 
-  async decryptUserKey(
-    pin: string,
-    salt: string,
-    kdf: KdfType,
-    kdfConfig: KdfConfig,
-    pinKeyEncryptedUserKey?: EncString,
-  ): Promise<UserKey> {
-    pinKeyEncryptedUserKey ||= await this.getPinKeyEncryptedUserKey();
-    pinKeyEncryptedUserKey ||= await this.getPinKeyEncryptedUserKeyEphemeral();
+  /**
+   * Gets the user's `pinKeyEncryptedUserKey` and `oldPinKeyEncryptedMasterKey` (if one exists) based
+   * on the user's PinLockType.
+   * @remarks The `oldPinKeyEncryptedMasterKey` (also known as `pinProtected`) is only used for
+   *          migrating old PinKeys and will be null for all migrated accounts
+   * @throws If PinLockType is 'DISABLED'
+   */
+  private async getPinKeyEncryptedKeys(
+    pinLockType: PinLockType,
+  ): Promise<{ pinKeyEncryptedUserKey: EncString; oldPinKeyEncryptedMasterKey?: EncString }> {
+    switch (pinLockType) {
+      case "PERSISTANT": {
+        const pinKeyEncryptedUserKey = await this.getPinKeyEncryptedUserKey();
+        const oldPinKeyEncryptedMasterKey = await this.stateService.getEncryptedPinProtected();
 
-    if (!pinKeyEncryptedUserKey) {
-      throw new Error("No PIN encrypted key found.");
+        return {
+          pinKeyEncryptedUserKey,
+          oldPinKeyEncryptedMasterKey: oldPinKeyEncryptedMasterKey
+            ? new EncString(oldPinKeyEncryptedMasterKey)
+            : undefined,
+        };
+      }
+      case "TRANSIENT": {
+        const pinKeyEncryptedUserKey = await this.getPinKeyEncryptedUserKeyEphemeral();
+        const oldPinKeyEncryptedMasterKey = await this.stateService.getDecryptedPinProtected();
+
+        return { pinKeyEncryptedUserKey, oldPinKeyEncryptedMasterKey };
+      }
+      case "DISABLED":
+        throw new Error("Pin is disabled");
+      default: {
+        // Compile-time check for exhaustive switch
+        const _exhaustiveCheck: never = pinLockType;
+        return _exhaustiveCheck;
+      }
     }
-
-    const pinKey = await this.makePinKey(pin, salt, kdf, kdfConfig);
-    const userKey = await this.encryptService.decryptToBytes(pinKeyEncryptedUserKey, pinKey);
-
-    return new SymmetricCryptoKey(userKey) as UserKey;
   }
 
   // TODO-rr-bw: add jsdocs

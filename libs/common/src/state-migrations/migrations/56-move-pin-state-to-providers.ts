@@ -8,15 +8,15 @@ type ExpectedAccountState = {
   };
 };
 
-const CRYPTO_STATE: StateDefinitionLike = { name: "crypto" };
+const PIN_STATE: StateDefinitionLike = { name: "pin" };
 
 const PIN_KEY_ENCRYPTED_USER_KEY: KeyDefinitionLike = {
-  stateDefinition: CRYPTO_STATE,
+  stateDefinition: PIN_STATE,
   key: "pinKeyEncryptedUserKey",
 };
 
 const PROTECTED_PIN: KeyDefinitionLike = {
-  stateDefinition: CRYPTO_STATE,
+  stateDefinition: PIN_STATE,
   key: "protectedPin",
 };
 

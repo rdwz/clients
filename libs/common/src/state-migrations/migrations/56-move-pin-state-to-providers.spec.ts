@@ -8,8 +8,8 @@ import { PinMigrator } from "./56-move-pin-state-to-providers";
 function rollbackJSON() {
   return {
     authenticatedAccounts: ["user-1", "user-2"],
-    "user_user-1_crypto_pinKeyEncryptedUserKey": "example1",
-    "user_user-2_crypto_pinKeyEncryptedUserKey": "example2",
+    "user_user-1_pin_pinKeyEncryptedUserKey": "example1",
+    "user_user-2_pin_pinKeyEncryptedUserKey": "example2",
     "user-1": {
       settings: {
         extra: "data",
@@ -49,8 +49,8 @@ describe("PinMigrator", () => {
 
     expect(output).toEqual({
       authenticatedAccounts: ["user-1", "user-2"],
-      "user_user-1_crypto_pinKeyEncryptedUserKey": "example1",
-      "user_user-2_crypto_pinKeyEncryptedUserKey": "example2",
+      "user_user-1_pin_pinKeyEncryptedUserKey": "example1",
+      "user_user-2_pin_pinKeyEncryptedUserKey": "example2",
       "user-1": {
         settings: {
           extra: "data",
@@ -103,7 +103,7 @@ describe("PinMigrator", () => {
     const keyDefinitionLike = {
       key: "pinKeyEncryptedUserKey",
       stateDefinition: {
-        name: "crypto",
+        name: "pin",
       },
     };
 
