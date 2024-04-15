@@ -25,20 +25,21 @@ import { Fido2PortName } from "../enums/fido2-port-name.enum";
 import { Fido2ExtensionMessage } from "./abstractions/fido2.background";
 import { Fido2Background } from "./fido2.background";
 
-const sharedExecuteScriptOptions = { runAt: "document_start", allFrames: true };
+const sharedExecuteScriptOptions = { runAt: "document_start" };
+const sharedScriptInjectionDetails = { frameContext: "all_frames", ...sharedExecuteScriptOptions };
 const contentScriptDetails = {
   file: Fido2ContentScript.ContentScript,
-  ...sharedExecuteScriptOptions,
+  ...sharedScriptInjectionDetails,
 };
 const sharedRegistrationOptions = {
   matches: ["https://*/*"],
   excludeMatches: ["https://*/*.xml*"],
+  allFrames: true,
   ...sharedExecuteScriptOptions,
 };
 
 describe("Fido2Background", () => {
   const tabsQuerySpy: jest.SpyInstance = jest.spyOn(BrowserApi, "tabsQuery");
-  const executeTabsSpy: jest.SpyInstance = jest.spyOn(BrowserApi, "executeScriptInTab");
   const isManifestVersionSpy: jest.SpyInstance = jest.spyOn(BrowserApi, "isManifestVersion");
   const focusTabSpy: jest.SpyInstance = jest.spyOn(BrowserApi, "focusTab").mockResolvedValue();
   const focusWindowSpy: jest.SpyInstance = jest
@@ -52,8 +53,8 @@ describe("Fido2Background", () => {
   let logService!: MockProxy<LogService>;
   let fido2ClientService!: MockProxy<Fido2ClientService>;
   let vaultSettingsService!: MockProxy<VaultSettingsService>;
+  let scriptInjectorServiceMock!: MockProxy<BrowserScriptInjectorService>;
   let enablePasskeysMock$!: BehaviorSubject<boolean>;
-  let scriptInjectorService!: BrowserScriptInjectorService;
   let fido2Background!: Fido2Background;
 
   beforeEach(() => {
@@ -66,7 +67,11 @@ describe("Fido2Background", () => {
     logService = mock<LogService>();
     fido2ClientService = mock<Fido2ClientService>();
     vaultSettingsService = mock<VaultSettingsService>();
-    scriptInjectorService = new BrowserScriptInjectorService();
+    abortManagerMock = mock<AbortManager>();
+    abortController = mock<AbortController>();
+    registeredContentScripsMock = mock<browser.contentScripts.RegisteredContentScript>();
+    scriptInjectorServiceMock = mock<BrowserScriptInjectorService>();
+
     enablePasskeysMock$ = new BehaviorSubject(true);
     vaultSettingsService.enablePasskeys$ = enablePasskeysMock$;
     fido2ClientService.isFido2FeatureEnabled.mockResolvedValue(true);
@@ -74,14 +79,10 @@ describe("Fido2Background", () => {
       logService,
       fido2ClientService,
       vaultSettingsService,
-      scriptInjectorService,
+      scriptInjectorServiceMock,
     );
-    abortManagerMock = mock<AbortManager>();
-    abortController = mock<AbortController>();
     fido2Background["abortManager"] = abortManagerMock;
-    registeredContentScripsMock = mock<browser.contentScripts.RegisteredContentScript>();
     fido2Background.init();
-    executeTabsSpy.mockImplementation();
     abortManagerMock.runWithAbortController.mockImplementation((_requestId, runner) =>
       runner(abortController),
     );
@@ -100,7 +101,7 @@ describe("Fido2Background", () => {
 
       await fido2Background.injectFido2ContentScriptsInAllTabs();
 
-      expect(executeTabsSpy).not.toHaveBeenCalled();
+      expect(scriptInjectorServiceMock.inject).not.toHaveBeenCalled();
     });
 
     it("only injects the FIDO2 content script into tabs that contain a secure url protocol", async () => {
@@ -111,60 +112,34 @@ describe("Fido2Background", () => {
 
       await fido2Background.injectFido2ContentScriptsInAllTabs();
 
-      expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(tabMock.id, contentScriptDetails);
-      expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(
-        secondTabMock.id,
-        contentScriptDetails,
-      );
-      expect(BrowserApi.executeScriptInTab).not.toHaveBeenCalledWith(
-        insecureTab.id,
-        contentScriptDetails,
-      );
-      expect(BrowserApi.executeScriptInTab).not.toHaveBeenCalledWith(
-        noUrlTab.id,
-        contentScriptDetails,
-      );
-    });
-
-    describe("given manifest v2", () => {
-      it("injects the page-script-mv2-append content script into the provided tab", async () => {
-        tabsQuerySpy.mockResolvedValueOnce([tabMock]);
-
-        await fido2Background.injectFido2ContentScriptsInAllTabs();
-
-        expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(tabMock.id, {
-          file: Fido2ContentScript.PageScriptAppend,
-          ...sharedExecuteScriptOptions,
-        });
+      expect(scriptInjectorServiceMock.inject).toHaveBeenCalledWith({
+        tabId: tabMock.id,
+        injectDetails: contentScriptDetails,
       });
-
-      it("injects the fido2 content-script into the provided tab", async () => {
-        tabsQuerySpy.mockResolvedValueOnce([tabMock]);
-
-        await fido2Background.injectFido2ContentScriptsInAllTabs();
-
-        expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(
-          tabMock.id,
-          contentScriptDetails,
-        );
+      expect(scriptInjectorServiceMock.inject).toHaveBeenCalledWith({
+        tabId: secondTabMock.id,
+        injectDetails: contentScriptDetails,
+      });
+      expect(scriptInjectorServiceMock.inject).not.toHaveBeenCalledWith({
+        tabId: insecureTab.id,
+        injectDetails: contentScriptDetails,
+      });
+      expect(scriptInjectorServiceMock.inject).not.toHaveBeenCalledWith({
+        tabId: noUrlTab.id,
+        injectDetails: contentScriptDetails,
       });
     });
 
-    describe("given manifest v3", () => {
-      beforeEach(() => {
-        isManifestVersionSpy.mockImplementation((manifestVersion) => manifestVersion === 3);
-      });
+    it("injects the `page-script.js` content script into the provided tab", async () => {
+      tabsQuerySpy.mockResolvedValueOnce([tabMock]);
 
-      it("injects the fido2 default page-script content script into the provided tab", async () => {
-        tabsQuerySpy.mockResolvedValueOnce([tabMock]);
+      await fido2Background.injectFido2ContentScriptsInAllTabs();
 
-        await fido2Background.injectFido2ContentScriptsInAllTabs();
-
-        expect(BrowserApi.executeScriptInTab).toHaveBeenCalledWith(
-          tabMock.id,
-          { file: Fido2ContentScript.PageScript, ...sharedExecuteScriptOptions },
-          { world: "MAIN" },
-        );
+      expect(scriptInjectorServiceMock.inject).toHaveBeenCalledWith({
+        tabId: tabMock.id,
+        injectDetails: sharedScriptInjectionDetails,
+        mv2Details: { file: Fido2ContentScript.PageScriptAppend },
+        mv3Details: { file: Fido2ContentScript.PageScript, world: "MAIN" },
       });
     });
   });
@@ -187,7 +162,7 @@ describe("Fido2Background", () => {
       await flushPromises();
 
       expect(portMock.disconnect).not.toHaveBeenCalled();
-      expect(executeTabsSpy).not.toHaveBeenCalled();
+      expect(scriptInjectorServiceMock.inject).not.toHaveBeenCalled();
     });
 
     it("destroys the content scripts but skips re-injecting them when the enablePasskeys setting is set to `false`", async () => {
@@ -195,7 +170,7 @@ describe("Fido2Background", () => {
       await flushPromises();
 
       expect(portMock.disconnect).toHaveBeenCalled();
-      expect(executeTabsSpy).not.toHaveBeenCalled();
+      expect(scriptInjectorServiceMock.inject).not.toHaveBeenCalled();
     });
 
     it("destroys and re-injects the content scripts when the enablePasskeys setting is set to `true`", async () => {
@@ -203,7 +178,16 @@ describe("Fido2Background", () => {
       await flushPromises();
 
       expect(portMock.disconnect).toHaveBeenCalled();
-      expect(executeTabsSpy).toHaveBeenCalledWith(tabMock.id, contentScriptDetails);
+      expect(scriptInjectorServiceMock.inject).toHaveBeenCalledWith({
+        tabId: tabMock.id,
+        injectDetails: sharedScriptInjectionDetails,
+        mv2Details: { file: Fido2ContentScript.PageScriptAppend },
+        mv3Details: { file: Fido2ContentScript.PageScript, world: "MAIN" },
+      });
+      expect(scriptInjectorServiceMock.inject).toHaveBeenCalledWith({
+        tabId: tabMock.id,
+        injectDetails: contentScriptDetails,
+      });
     });
 
     describe("given manifest v2", () => {
