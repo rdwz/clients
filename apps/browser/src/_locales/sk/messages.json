@@ -2386,12 +2386,6 @@
     "message": "EÚ",
     "description": "European Union"
   },
-  "usDomain": {
-    "message": "bitwarden.com"
-  },
-  "euDomain": {
-    "message": "bitwarden.eu"
-  },
   "accessDenied": {
     "message": "Prístup zamietnutý. Nemáte oprávnenie na zobrazenie tejto stránky."
   },
@@ -3005,5 +2999,14 @@
   "saveCipherAttemptFailed": {
     "message": "Chyba pri ukladaní prihlasovacích údajov. Viac informácii nájdete v konzole.",
     "description": "Notification message for when saving credentials has failed."
+  },
+  "removePasskey": {
+    "message": "Odstrániť prístupový kľúč"
+  },
+  "passkeyRemoved": {
+    "message": "Prístupový kľúč bol odstránený"
+  },
+  "unassignedItemsBanner": {
+    "message": "Upozornenie: Nepriradené položky organizácie už nie sú viditeľné v zobrazení Všetky Trezory a sú prístupné len cez administrátorskú konzolu. Aby boli viditeľné, priraďte tieto položky do kolekcie z konzoly administrátora."
   }
 }

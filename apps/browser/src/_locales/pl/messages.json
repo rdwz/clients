@@ -2386,12 +2386,6 @@
     "message": "UE",
     "description": "European Union"
   },
-  "usDomain": {
-    "message": "bitwarden.com"
-  },
-  "euDomain": {
-    "message": "bitwarden.eu"
-  },
   "accessDenied": {
     "message": "Odmowa dostępu. Nie masz uprawnień do przeglądania tej strony."
   },
@@ -3005,5 +2999,14 @@
   "saveCipherAttemptFailed": {
     "message": "Błąd podczas zapisywania danych logowania. Sprawdź konsolę, aby uzyskać szczegóły.",
     "description": "Notification message for when saving credentials has failed."
+  },
+  "removePasskey": {
+    "message": "Usuń passkey"
+  },
+  "passkeyRemoved": {
+    "message": "Passkey został usunięty"
+  },
+  "unassignedItemsBanner": {
+    "message": "Uwaga: Nieprzypisane elementy w organizacji nie są już widoczne w widoku Wszystkie sejfy i są dostępne tylko przez Konsolę Administracyjną. Przypisz te elementy do kolekcji z konsoli administracyjnej, aby były one widoczne."
   }
 }

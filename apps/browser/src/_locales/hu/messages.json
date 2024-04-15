@@ -2386,12 +2386,6 @@
     "message": "EU",
     "description": "European Union"
   },
-  "usDomain": {
-    "message": "bitwarden.com"
-  },
-  "euDomain": {
-    "message": "bitwarden.eu"
-  },
   "accessDenied": {
     "message": "A hozzáférés megtagadásra került. Nincs jogosultság az oldal megtekintésére."
   },
@@ -3005,5 +2999,14 @@
   "saveCipherAttemptFailed": {
     "message": "Hiba történt a hitelesítések mentésekor.  A részletekért ellenőrizzük a konzolt.",
     "description": "Notification message for when saving credentials has failed."
+  },
+  "removePasskey": {
+    "message": "Jelszó eltávolítása"
+  },
+  "passkeyRemoved": {
+    "message": "A jelszó eltávolításra került."
+  },
+  "unassignedItemsBanner": {
+    "message": "Megjegyzés: A nem hozzá nem rendelt szervezeti elemek már nem láthatók az Összes széf nézetben és csak az Adminisztrátori konzolon keresztül érhetők el. Rendeljük ezeket az elemeket egy gyűjteményhez az Adminisztrátor konzolból, hogy láthatóvá tegyük azokat."
   }
 }

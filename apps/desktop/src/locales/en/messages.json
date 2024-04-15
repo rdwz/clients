@@ -1647,6 +1647,12 @@
   "enableBrowserIntegrationFingerprintDesc": {
     "message": "Add an additional layer of security by requiring fingerprint phrase confirmation when establishing a link between your desktop and browser. This requires user action and verification each time a connection is created."
   },
+  "enableHardwareAcceleration": {
+    "message": "Use hardware acceleration"
+  },
+  "enableHardwareAccelerationDesc": {
+    "message": "By default this setting is ON. Turn OFF only if you experience graphical issues. Restart is required."
+  },
   "approve": {
     "message": "Approve"
   },
@@ -2343,12 +2349,6 @@
   "loggingInOn": {
     "message": "Logging in on"
   },
-  "usDomain": {
-    "message": "bitwarden.com"
-  },
-  "euDomain": {
-    "message": "bitwarden.eu"
-  },
   "selfHostedServer": {
     "message": "self-hosted"
   },
@@ -2690,5 +2690,20 @@
   "commonImportFormats": {
     "message": "Common formats",
     "description": "Label indicating the most common import formats"
+  },
+  "troubleshooting": {
+    "message": "Troubleshooting"
+  },
+  "disableHardwareAccelerationRestart": {
+    "message": "Disable hardware acceleration and restart"
+  },
+  "enableHardwareAccelerationRestart": {
+    "message": "Enable hardware acceleration and restart"
+  },
+  "removePasskey": {
+    "message": "Remove passkey"
+  },
+  "passkeyRemoved": {
+    "message": "Passkey removed"
   }
 }

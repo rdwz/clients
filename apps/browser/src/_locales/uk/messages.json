@@ -2386,12 +2386,6 @@
     "message": "ЄС",
     "description": "European Union"
   },
-  "usDomain": {
-    "message": "bitwarden.com"
-  },
-  "euDomain": {
-    "message": "bitwarden.eu"
-  },
   "accessDenied": {
     "message": "Доступ заборонено. У вас немає дозволу на перегляд цієї сторінки."
   },
@@ -3005,5 +2999,14 @@
   "saveCipherAttemptFailed": {
     "message": "Помилка збереження облікових даних. Перегляньте подробиці в консолі.",
     "description": "Notification message for when saving credentials has failed."
+  },
+  "removePasskey": {
+    "message": "Вилучити ключ доступу"
+  },
+  "passkeyRemoved": {
+    "message": "Ключ доступу вилучено"
+  },
+  "unassignedItemsBanner": {
+    "message": "Увага: непризначені елементи організації більше не видимі у поданні \"Усі сховища\" і доступні лише в консолі адміністратора. Щоб зробити їх видимими, призначте ці елементи збірці в консолі адміністратора."
   }
 }

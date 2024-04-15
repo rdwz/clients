@@ -1,5 +1,5 @@
 import { EncryptedString } from "../models/domain/enc-string";
-import { KeyDefinition } from "../state";
+import { KeyDefinition, UserKeyDefinition } from "../state";
 
 import {
   BIOMETRIC_UNLOCK_ENABLED,
@@ -14,7 +14,7 @@ import {
 describe.each([
   [ENCRYPTED_CLIENT_KEY_HALF, "encryptedClientKeyHalf"],
   [DISMISSED_REQUIRE_PASSWORD_ON_START_CALLOUT, true],
-  [PROMPT_CANCELLED, true],
+  [PROMPT_CANCELLED, { userId1: true, userId2: false }],
   [PROMPT_AUTOMATICALLY, true],
   [REQUIRE_PASSWORD_ON_START, true],
   [BIOMETRIC_UNLOCK_ENABLED, true],
@@ -22,9 +22,15 @@ describe.each([
 ])(
   "deserializes state %s",
   (
-    ...args: [KeyDefinition<EncryptedString>, EncryptedString] | [KeyDefinition<boolean>, boolean]
+    ...args:
+      | [UserKeyDefinition<EncryptedString>, EncryptedString]
+      | [UserKeyDefinition<boolean>, boolean]
+      | [KeyDefinition<boolean>, boolean]
   ) => {
-    function testDeserialization<T>(keyDefinition: KeyDefinition<T>, state: T) {
+    function testDeserialization<T>(
+      keyDefinition: UserKeyDefinition<T> | KeyDefinition<T>,
+      state: T,
+    ) {
       const deserialized = keyDefinition.deserializer(JSON.parse(JSON.stringify(state)));
       expect(deserialized).toEqual(state);
     }

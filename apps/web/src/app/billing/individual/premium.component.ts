@@ -44,11 +44,11 @@ export class PremiumComponent implements OnInit {
     private billingAccountProfileStateService: BillingAccountProfileStateService,
   ) {
     this.selfHosted = platformUtilsService.isSelfHost();
-    this.cloudWebVaultUrl = this.environmentService.getCloudWebVaultUrl();
     this.canAccessPremium$ = billingAccountProfileStateService.hasPremiumFromAnySource$;
   }
 
   async ngOnInit() {
+    this.cloudWebVaultUrl = await firstValueFrom(this.environmentService.cloudWebVaultUrl$);
     if (await firstValueFrom(this.billingAccountProfileStateService.hasPremiumPersonally$)) {
       // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -124,10 +124,7 @@ export class PremiumComponent implements OnInit {
     await this.apiService.refreshIdentityToken();
     await this.syncService.fullSync(true);
     this.platformUtilsService.showToast("success", null, this.i18nService.t("premiumUpdated"));
-    this.messagingService.send("purchasedPremium");
-    // FIXME: Verify that this floating promise is intentional. If it is, add an explanatory comment and ensure there is proper error handling.
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.router.navigate(["/settings/subscription/user-subscription"]);
+    await this.router.navigate(["/settings/subscription/user-subscription"]);
   }
 
   get additionalStorageTotal(): number {

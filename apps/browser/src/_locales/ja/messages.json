@@ -2386,12 +2386,6 @@
     "message": "EU",
     "description": "European Union"
   },
-  "usDomain": {
-    "message": "bitwarden.com"
-  },
-  "euDomain": {
-    "message": "bitwarden.eu"
-  },
   "accessDenied": {
     "message": "アクセスが拒否されました。このページを表示する権限がありません。"
   },
@@ -3005,5 +2999,14 @@
   "saveCipherAttemptFailed": {
     "message": "資格情報の保存中にエラーが発生しました。詳細はコンソールを確認してください。",
     "description": "Notification message for when saving credentials has failed."
+  },
+  "removePasskey": {
+    "message": "パスキーを削除"
+  },
+  "passkeyRemoved": {
+    "message": "パスキーを削除しました"
+  },
+  "unassignedItemsBanner": {
+    "message": "注意: 割り当てられていない組織項目は、すべての保管庫のビューでは表示されなくなり、管理コンソールからのみアクセスできます。 管理コンソールからコレクションにこれらのアイテムを割り当てると、表示するようにできます。"
   }
 }

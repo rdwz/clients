@@ -2386,12 +2386,6 @@
     "message": "EU",
     "description": "European Union"
   },
-  "usDomain": {
-    "message": "bitwarden.com"
-  },
-  "euDomain": {
-    "message": "bitwarden.eu"
-  },
   "accessDenied": {
     "message": "Přístup byl odepřen. Nemáte oprávnění k zobrazení této stránky."
   },
@@ -3005,5 +2999,14 @@
   "saveCipherAttemptFailed": {
     "message": "Chyba při ukládání přihlašovacích údajů. Podrobnosti naleznete v konzoli.",
     "description": "Notification message for when saving credentials has failed."
+  },
+  "removePasskey": {
+    "message": "Odebrat přístupový klíč"
+  },
+  "passkeyRemoved": {
+    "message": "Přístupový klíč byl odebrán"
+  },
+  "unassignedItemsBanner": {
+    "message": "Upozornění: Nepřiřazené položky organizace již nejsou viditelné ve Vašem zobrazení všech trezorů a jsou nyní přístupné jen v konzoli správce. Přiřaďte tyto položky do kolekce z konzole pro správce, aby byly viditelné."
   }
 }

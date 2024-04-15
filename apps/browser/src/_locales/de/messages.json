@@ -327,7 +327,7 @@
     "message": "Passwort"
   },
   "totp": {
-    "message": "Authenticator secret"
+    "message": "Authentifikator-Geheimnis"
   },
   "passphrase": {
     "message": "Passphrase"
@@ -522,16 +522,16 @@
     "message": "Die Felder dieser Seite konnten nicht automatisch ausgefüllt werden. Bitte Nutzernamen und/oder Passwort manuell kopieren."
   },
   "totpCaptureError": {
-    "message": "Unable to scan QR code from the current webpage"
+    "message": "QR-Code kann nicht von der aktuellen Webseite gescannt werden"
   },
   "totpCaptureSuccess": {
-    "message": "Authenticator key added"
+    "message": "Authentifizierungsschlüssel hinzugefügt"
   },
   "totpCapture": {
-    "message": "Scan authenticator QR code from current webpage"
+    "message": "Den Authentifizierungs-QR-Code von der aktuellen Webseite scannen"
   },
   "copyTOTP": {
-    "message": "Copy Authenticator key (TOTP)"
+    "message": "Authentifizierungsschlüssel kopieren (TOTP)"
   },
   "loggedOut": {
     "message": "Ausgeloggt"
@@ -2386,12 +2386,6 @@
     "message": "EU",
     "description": "European Union"
   },
-  "usDomain": {
-    "message": "bitwarden.com"
-  },
-  "euDomain": {
-    "message": "bitwarden.eu"
-  },
   "accessDenied": {
     "message": "Zugriff verweigert. Du hast keine Berechtigung, diese Seite anzuzeigen."
   },
@@ -2712,7 +2706,7 @@
     "message": "Für dein Konto ist die Duo Zwei-Faktor-Authentifizierung erforderlich."
   },
   "popoutTheExtensionToCompleteLogin": {
-    "message": "Popout the extension to complete login."
+    "message": "Koppel die Erweiterung ab, um die Anmeldung abzuschließen."
   },
   "popoutExtension": {
     "message": "Popout-Erweiterung"
@@ -3005,5 +2999,14 @@
   "saveCipherAttemptFailed": {
     "message": "Fehler beim Speichern der Zugangsdaten. Details in der Konsole.",
     "description": "Notification message for when saving credentials has failed."
+  },
+  "removePasskey": {
+    "message": "Passkey löschen"
+  },
+  "passkeyRemoved": {
+    "message": "Passkey gelöscht"
+  },
+  "unassignedItemsBanner": {
+    "message": "Hinweis: Nicht zugeordnete Organisationseinträge sind nicht mehr in der Ansicht aller Tresore sichtbar und nur über die Administrator-Konsole zugänglich. Weise diese Einträge einer Sammlung aus der Administrator-Konsole zu, um sie sichtbar zu machen."
   }
 }

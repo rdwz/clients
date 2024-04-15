@@ -2386,12 +2386,6 @@
     "message": "ES",
     "description": "European Union"
   },
-  "usDomain": {
-    "message": "bitwarden.com"
-  },
-  "euDomain": {
-    "message": "bitwarden.eu"
-  },
   "accessDenied": {
     "message": "Piekļuve liegta. Nav nepieciešamo atļauju, lai skatītu šo lapu."
   },
@@ -3005,5 +2999,14 @@
   "saveCipherAttemptFailed": {
     "message": "Kļūda piekļuves informācijas saglabāšanā. Jāpārbauda, vai konsolē ir izvērstāka informācija.",
     "description": "Notification message for when saving credentials has failed."
+  },
+  "removePasskey": {
+    "message": "Noņemt piekļuves atslēgu"
+  },
+  "passkeyRemoved": {
+    "message": "Piekļuves atslēga noņemta"
+  },
+  "unassignedItemsBanner": {
+    "message": "Jāņem vērā: nepiešķirti apvienības vienumi vairs nav redzami skatā \"Visas glabātavas\" un ir sasniedzami tikai no pārvaldības konsoles, kur šie vienumi jāpiešķir krājumam, lai padarītu tos redzamus."
   }
 }

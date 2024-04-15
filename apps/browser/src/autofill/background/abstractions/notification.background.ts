@@ -1,4 +1,5 @@
 import { NeverDomains } from "@bitwarden/common/models/domain/domain-service";
+import { ServerConfig } from "@bitwarden/common/platform/abstractions/config/server-config";
 import { FolderView } from "@bitwarden/common/vault/models/view/folder.view";
 
 import { NotificationQueueMessageTypes } from "../../enums/notification-queue-message-type.enum";
@@ -113,7 +114,8 @@ type NotificationBackgroundExtensionMessageHandlers = {
   bgGetEnableChangedPasswordPrompt: () => Promise<boolean>;
   bgGetEnableAddedLoginPrompt: () => Promise<boolean>;
   bgGetExcludedDomains: () => Promise<NeverDomains>;
-  getWebVaultUrlForNotification: () => string;
+  bgGetActiveUserServerConfig: () => Promise<ServerConfig>;
+  getWebVaultUrlForNotification: () => Promise<string>;
 };
 
 export {
