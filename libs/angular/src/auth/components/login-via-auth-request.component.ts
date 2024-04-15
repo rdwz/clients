@@ -1,6 +1,6 @@
 import { Directive, OnDestroy, OnInit } from "@angular/core";
 import { IsActiveMatchOptions, Router } from "@angular/router";
-import { Subject, firstValueFrom, takeUntil } from "rxjs";
+import { Subject, firstValueFrom, map, takeUntil } from "rxjs";
 
 import {
   AuthRequestLoginCredentials,
@@ -130,7 +130,9 @@ export class LoginViaAuthRequestComponent
       // Pull email from state for admin auth reqs b/c it is available
       // This also prevents it from being lost on refresh as the
       // login service email does not persist.
-      this.email = await this.stateService.getEmail();
+      this.email = await firstValueFrom(
+        this.accountService.activeAccount$.pipe(map((a) => a?.email)),
+      );
 
       if (!this.email) {
         this.platformUtilsService.showToast("error", null, this.i18nService.t("userEmailMissing"));

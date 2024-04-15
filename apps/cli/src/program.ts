@@ -1,5 +1,6 @@
 import * as chalk from "chalk";
 import { program, Command, OptionValues } from "commander";
+import { firstValueFrom, map } from "rxjs";
 
 import { AuthenticationStatus } from "@bitwarden/common/auth/enums/authentication-status";
 
@@ -155,6 +156,7 @@ export class Program {
             this.main.keyConnectorService,
             this.main.policyApiService,
             this.main.organizationService,
+            this.main.accountService,
             async () => await this.main.logout(),
           );
           const response = await command.run(email, password, options);
@@ -467,6 +469,7 @@ export class Program {
           this.main.syncService,
           this.main.stateService,
           this.main.authService,
+          this.main.accountService,
         );
         const response = await command.run();
         this.processResponse(response);
@@ -589,7 +592,9 @@ export class Program {
   private async exitIfAuthed() {
     const authed = await this.main.stateService.getIsAuthenticated();
     if (authed) {
-      const email = await this.main.stateService.getEmail();
+      const email = await firstValueFrom(
+        this.main.accountService.activeAccount$.pipe(map((a) => a?.email)),
+      );
       this.processResponse(Response.error("You are already logged in as " + email + "."), true);
     }
   }

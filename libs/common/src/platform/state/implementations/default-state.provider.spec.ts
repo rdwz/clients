@@ -12,7 +12,6 @@ import {
   FakeGlobalStateProvider,
   FakeSingleUserStateProvider,
 } from "../../../../spec/fake-state-provider";
-import { AuthenticationStatus } from "../../../auth/enums/authentication-status";
 import { UserId } from "../../../types/guid";
 import { DeriveDefinition } from "../derive-definition";
 import { KeyDefinition } from "../key-definition";
@@ -69,7 +68,7 @@ describe("DefaultStateProvider", () => {
         userId?: UserId,
       ) => Observable<string>,
     ) => {
-      const accountInfo = { email: "email", name: "name", status: AuthenticationStatus.LoggedOut };
+      const accountInfo = { email: "email", name: "name", emailVerified: true };
       const keyDefinition = new KeyDefinition<string>(new StateDefinition("test", "disk"), "test", {
         deserializer: (s) => s,
       });
@@ -114,7 +113,7 @@ describe("DefaultStateProvider", () => {
   );
 
   describe("getUserState$", () => {
-    const accountInfo = { email: "email", name: "name", status: AuthenticationStatus.LoggedOut };
+    const accountInfo = { email: "email", name: "name", emailVerified: true };
     const keyDefinition = new KeyDefinition<string>(new StateDefinition("test", "disk"), "test", {
       deserializer: (s) => s,
     });

@@ -4,15 +4,19 @@ import { KdfConfig } from "@bitwarden/common/auth/models/domain/kdf-config";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
+import { Utils } from "@bitwarden/common/platform/misc/utils";
 import { EncString } from "@bitwarden/common/platform/models/domain/enc-string";
 import { SymmetricCryptoKey } from "@bitwarden/common/platform/models/domain/symmetric-crypto-key";
 import {
   VaultTimeoutSettingsService,
   PinLockType,
 } from "@bitwarden/common/services/vault-timeout/vault-timeout-settings.service";
+import { FakeAccountService, mockAccountServiceWith } from "@bitwarden/common/spec";
+import { UserId } from "@bitwarden/common/types/guid";
 import { UserKey } from "@bitwarden/common/types/key";
 
 import { PinCryptoService } from "./pin-crypto.service.implementation";
+
 describe("PinCryptoService", () => {
   let pinCryptoService: PinCryptoService;
 
@@ -20,15 +24,19 @@ describe("PinCryptoService", () => {
   const cryptoService = mock<CryptoService>();
   const vaultTimeoutSettingsService = mock<VaultTimeoutSettingsService>();
   const logService = mock<LogService>();
+  let accountService: FakeAccountService;
+  const userId = Utils.newGuid() as UserId;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    accountService = mockAccountServiceWith(userId);
 
     pinCryptoService = new PinCryptoService(
       stateService,
       cryptoService,
       vaultTimeoutSettingsService,
       logService,
+      accountService,
     );
   });
 
@@ -50,7 +58,9 @@ describe("PinCryptoService", () => {
       vaultTimeoutSettingsService.isPinLockSet.mockResolvedValue(pinLockType);
 
       stateService.getKdfConfig.mockResolvedValue(new KdfConfig(DEFAULT_PBKDF2_ITERATIONS));
-      stateService.getEmail.mockResolvedValue(mockUserEmail);
+      accountService.accountsSubject.next({
+        [userId]: { email: mockUserEmail, name: undefined, emailVerified: true },
+      });
 
       if (migrationStatus === "PRE") {
         cryptoService.decryptAndMigrateOldPinKey.mockResolvedValue(mockUserKey);

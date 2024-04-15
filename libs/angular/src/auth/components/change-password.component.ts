@@ -1,8 +1,9 @@
 import { Directive, OnDestroy, OnInit } from "@angular/core";
-import { Subject, takeUntil } from "rxjs";
+import { Subject, firstValueFrom, map, takeUntil } from "rxjs";
 
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { MasterPasswordPolicyOptions } from "@bitwarden/common/admin-console/models/domain/master-password-policy-options";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { KdfConfig } from "@bitwarden/common/auth/models/domain/kdf-config";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
@@ -45,10 +46,13 @@ export class ChangePasswordComponent implements OnInit, OnDestroy {
     protected policyService: PolicyService,
     protected stateService: StateService,
     protected dialogService: DialogService,
+    protected accountService: AccountService,
   ) {}
 
   async ngOnInit() {
-    this.email = await this.stateService.getEmail();
+    this.email = await firstValueFrom(
+      this.accountService.activeAccount$.pipe(map((a) => a?.email)),
+    );
     this.policyService
       .masterPasswordPolicyOptions$()
       .pipe(takeUntil(this.destroy$))
@@ -72,7 +76,9 @@ export class ChangePasswordComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const email = await this.stateService.getEmail();
+    const email = await firstValueFrom(
+      this.accountService.activeAccount$.pipe(map((a) => a?.email)),
+    );
     if (this.kdf == null) {
       this.kdf = await this.stateService.getKdfType();
     }

@@ -1,6 +1,6 @@
 import { Directive } from "@angular/core";
 import { Router } from "@angular/router";
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom, map } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
@@ -59,7 +59,7 @@ export class UpdateTempPasswordComponent extends BaseChangePasswordComponent {
     private userVerificationService: UserVerificationService,
     protected router: Router,
     dialogService: DialogService,
-    private accountService: AccountService,
+    accountService: AccountService,
     private masterPasswordService: InternalMasterPasswordServiceAbstraction,
   ) {
     super(
@@ -71,6 +71,7 @@ export class UpdateTempPasswordComponent extends BaseChangePasswordComponent {
       policyService,
       stateService,
       dialogService,
+      accountService,
     );
   }
 
@@ -103,7 +104,9 @@ export class UpdateTempPasswordComponent extends BaseChangePasswordComponent {
   }
 
   async setupSubmitActions(): Promise<boolean> {
-    this.email = await this.stateService.getEmail();
+    this.email = await firstValueFrom(
+      this.accountService.activeAccount$.pipe(map((a) => a?.email)),
+    );
     this.kdf = await this.stateService.getKdfType();
     this.kdfConfig = await this.stateService.getKdfConfig();
     return true;

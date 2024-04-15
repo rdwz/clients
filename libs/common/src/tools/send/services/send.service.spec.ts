@@ -63,6 +63,7 @@ describe("SendService", () => {
       id: mockUserId,
       email: "email",
       name: "name",
+      emailVerified: true,
     });
 
     // Initial encrypted state

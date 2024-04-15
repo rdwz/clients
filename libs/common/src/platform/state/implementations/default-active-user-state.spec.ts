@@ -83,6 +83,7 @@ describe("DefaultActiveUserState", () => {
       id: userId,
       email: `test${id}@example.com`,
       name: `Test User ${id}`,
+      emailVerified: true,
     });
     await awaitAsync();
   };

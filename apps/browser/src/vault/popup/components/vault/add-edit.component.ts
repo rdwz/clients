@@ -10,6 +10,7 @@ import { AuditService } from "@bitwarden/common/abstractions/audit.service";
 import { EventCollectionService } from "@bitwarden/common/abstractions/event/event-collection.service";
 import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { AutofillSettingsServiceAbstraction } from "@bitwarden/common/autofill/services/autofill-settings.service";
 import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
@@ -69,6 +70,7 @@ export class AddEditComponent extends BaseAddEditComponent {
     dialogService: DialogService,
     datePipe: DatePipe,
     configService: ConfigService,
+    accountService: AccountService,
   ) {
     super(
       cipherService,
@@ -89,6 +91,7 @@ export class AddEditComponent extends BaseAddEditComponent {
       window,
       datePipe,
       configService,
+      accountService,
     );
   }
 

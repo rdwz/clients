@@ -31,10 +31,12 @@ describe("EnvironmentService", () => {
       [testUser]: {
         name: "name",
         email: "email",
+        emailVerified: true,
       },
       [alternateTestUser]: {
         name: "name",
         email: "email",
+        emailVerified: true,
       },
     });
     stateProvider = new FakeStateProvider(accountService);
@@ -47,6 +49,7 @@ describe("EnvironmentService", () => {
       id: userId,
       email: "test@example.com",
       name: `Test Name ${userId}`,
+      emailVerified: true,
     });
     await awaitAsync();
   };

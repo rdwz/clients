@@ -7,10 +7,11 @@ import {
   Output,
   ViewChild,
 } from "@angular/core";
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom, map } from "rxjs";
 
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { PaymentMethodType } from "@bitwarden/common/billing/enums";
 import { BitPayInvoiceRequest } from "@bitwarden/common/billing/models/request/bit-pay-invoice.request";
 import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
@@ -58,6 +59,7 @@ export class AddCreditComponent implements OnInit {
     private organizationService: OrganizationService,
     private logService: LogService,
     private configService: ConfigService,
+    private accountService: AccountService,
   ) {
     const payPalConfig = process.env.PAYPAL_CONFIG as PayPalConfig;
     this.ppButtonFormAction = payPalConfig.buttonAction;
@@ -79,8 +81,9 @@ export class AddCreditComponent implements OnInit {
       if (this.creditAmount == null) {
         this.creditAmount = "10.00";
       }
-      this.userId = await this.stateService.getUserId();
-      this.subject = await this.stateService.getEmail();
+      [this.userId, this.subject] = await firstValueFrom(
+        this.accountService.activeAccount$.pipe(map((a) => [a?.id, a?.email])),
+      );
       this.email = this.subject;
       this.ppButtonCustomField = "user_id:" + this.userId;
     }

@@ -1,12 +1,14 @@
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom, map } from "rxjs";
 
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { PolicyType } from "@bitwarden/common/admin-console/enums";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { AuthService } from "@bitwarden/common/auth/abstractions/auth.service";
 import { AuthenticationStatus } from "@bitwarden/common/auth/enums/authentication-status";
 import { MessagingService } from "@bitwarden/common/platform/abstractions/messaging.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
 import { PasswordGenerationServiceAbstraction } from "@bitwarden/common/tools/generator/password";
+import { UserId } from "@bitwarden/common/types/guid";
 import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.service";
 import { CipherType } from "@bitwarden/common/vault/enums";
 import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
@@ -34,6 +36,7 @@ export class EncryptedMessageHandlerService {
     private policyService: PolicyService,
     private messagingService: MessagingService,
     private passwordGenerationService: PasswordGenerationServiceAbstraction,
+    private accountService: AccountService,
   ) {}
 
   async responseDataForCommand(commandData: DecryptedCommandData): Promise<MessageResponseData> {
@@ -87,7 +90,9 @@ export class EncryptedMessageHandlerService {
     return Promise.all(
       Object.keys(accounts).map(async (userId) => {
         const authStatus = await this.authService.getAuthStatus(userId);
-        const email = await this.stateService.getEmail({ userId });
+        const email = await firstValueFrom(
+          this.accountService.accounts$.pipe(map((accounts) => accounts?.[userId as UserId].email)),
+        );
 
         return {
           id: userId,

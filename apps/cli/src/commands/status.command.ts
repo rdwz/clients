@@ -1,5 +1,6 @@
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom, map } from "rxjs";
 
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { AuthService } from "@bitwarden/common/auth/abstractions/auth.service";
 import { AuthenticationStatus } from "@bitwarden/common/auth/enums/authentication-status";
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
@@ -15,6 +16,7 @@ export class StatusCommand {
     private syncService: SyncService,
     private stateService: StateService,
     private authService: AuthService,
+    private accountService: AccountService,
   ) {}
 
   async run(): Promise<Response> {
@@ -22,8 +24,9 @@ export class StatusCommand {
       const baseUrl = await this.baseUrl();
       const status = await this.status();
       const lastSync = await this.syncService.getLastSync();
-      const userId = await this.stateService.getUserId();
-      const email = await this.stateService.getEmail();
+      const [userId, email] = await firstValueFrom(
+        this.accountService.activeAccount$.pipe(map((a) => [a?.id, a?.email])),
+      );
 
       return Response.success(
         new TemplateResponse({

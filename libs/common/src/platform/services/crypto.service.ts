@@ -293,10 +293,13 @@ export class CryptoService implements CryptoServiceAbstraction {
   // TODO: Move to MasterPasswordService
   async getOrDeriveMasterKey(password: string, userId?: UserId) {
     userId ??= await firstValueFrom(this.stateProvider.activeUserId$);
+    const email = await firstValueFrom(
+      this.accountService.accounts$.pipe(map((a) => a?.[userId]?.email)),
+    );
     let masterKey = await firstValueFrom(this.masterPasswordService.masterKey$(userId));
     return (masterKey ||= await this.makeMasterKey(
       password,
-      await this.stateService.getEmail({ userId: userId }),
+      email,
       await this.stateService.getKdfType({ userId: userId }),
       await this.stateService.getKdfConfig({ userId: userId }),
     ));
@@ -838,13 +841,18 @@ export class CryptoService implements CryptoServiceAbstraction {
    * @param key The user key
    */
   protected async storePinKey(key: UserKey, userId?: UserId) {
+    userId ??= await firstValueFrom(this.stateProvider.activeUserId$);
+    const email = await firstValueFrom(
+      this.accountService.accounts$.pipe(map((a) => a?.[userId]?.email)),
+    );
+
     const pin = await this.encryptService.decryptToUtf8(
       new EncString(await this.stateService.getProtectedPin({ userId: userId })),
       key,
     );
     const pinKey = await this.makePinKey(
       pin,
-      await this.stateService.getEmail({ userId: userId }),
+      email,
       await this.stateService.getKdfType({ userId: userId }),
       await this.stateService.getKdfConfig({ userId: userId }),
     );

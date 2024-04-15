@@ -1,6 +1,10 @@
 import { PinCryptoServiceAbstraction, PinCryptoService } from "@bitwarden/auth/common";
 
 import {
+  AccountServiceInitOptions,
+  accountServiceFactory,
+} from "../../../auth/background/service-factories/account-service.factory";
+import {
   VaultTimeoutSettingsServiceInitOptions,
   vaultTimeoutSettingsServiceFactory,
 } from "../../../background/service-factories/vault-timeout-settings-service.factory";
@@ -28,7 +32,8 @@ export type PinCryptoServiceInitOptions = PinCryptoServiceFactoryOptions &
   StateServiceInitOptions &
   CryptoServiceInitOptions &
   VaultTimeoutSettingsServiceInitOptions &
-  LogServiceInitOptions;
+  LogServiceInitOptions &
+  AccountServiceInitOptions;
 
 export function pinCryptoServiceFactory(
   cache: { pinCryptoService?: PinCryptoServiceAbstraction } & CachedServices,
@@ -44,6 +49,7 @@ export function pinCryptoServiceFactory(
         await cryptoServiceFactory(cache, opts),
         await vaultTimeoutSettingsServiceFactory(cache, opts),
         await logServiceFactory(cache, opts),
+        await accountServiceFactory(cache, opts),
       ),
   );
 }

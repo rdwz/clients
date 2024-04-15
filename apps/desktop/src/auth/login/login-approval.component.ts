@@ -1,11 +1,12 @@
 import { DIALOG_DATA, DialogRef } from "@angular/cdk/dialog";
 import { CommonModule } from "@angular/common";
 import { Component, OnInit, OnDestroy, Inject } from "@angular/core";
-import { Subject, firstValueFrom } from "rxjs";
+import { Subject, firstValueFrom, map } from "rxjs";
 
 import { JslibModule } from "@bitwarden/angular/jslib.module";
 import { AuthRequestServiceAbstraction } from "@bitwarden/auth/common";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { AuthRequestResponse } from "@bitwarden/common/auth/models/response/auth-request.response";
 import { AppIdService } from "@bitwarden/common/platform/abstractions/app-id.service";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
@@ -47,6 +48,7 @@ export class LoginApprovalComponent implements OnInit, OnDestroy {
   constructor(
     @Inject(DIALOG_DATA) private params: LoginApprovalDialogParams,
     protected authRequestService: AuthRequestServiceAbstraction,
+    protected accountService: AccountService,
     protected stateService: StateService,
     protected platformUtilsService: PlatformUtilsService,
     protected i18nService: I18nService,
@@ -74,7 +76,9 @@ export class LoginApprovalComponent implements OnInit, OnDestroy {
     if (this.notificationId != null) {
       this.authRequestResponse = await this.apiService.getAuthRequest(this.notificationId);
       const publicKey = Utils.fromB64ToArray(this.authRequestResponse.publicKey);
-      this.email = await this.stateService.getEmail();
+      this.email = await firstValueFrom(
+        this.accountService.activeAccount$.pipe(map((a) => a?.email)),
+      );
       this.fingerprintPhrase = (
         await this.cryptoService.getFingerprint(this.email, publicKey)
       ).join("-");

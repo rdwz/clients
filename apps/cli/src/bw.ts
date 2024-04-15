@@ -574,6 +574,7 @@ export class Main {
       this.cryptoService,
       this.vaultTimeoutSettingsService,
       this.logService,
+      this.accountService,
     );
 
     this.userVerificationService = new UserVerificationService(

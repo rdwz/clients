@@ -3,7 +3,7 @@ import * as http from "http";
 import { OptionValues } from "commander";
 import * as inquirer from "inquirer";
 import Separator from "inquirer/lib/objects/separator";
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom, map } from "rxjs";
 
 import {
   LoginStrategyServiceAbstraction,
@@ -15,6 +15,7 @@ import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { OrganizationService } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 import { PolicyApiServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/policy/policy-api.service.abstraction";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { AuthService } from "@bitwarden/common/auth/abstractions/auth.service";
 import { KeyConnectorService } from "@bitwarden/common/auth/abstractions/key-connector.service";
 import { TwoFactorService } from "@bitwarden/common/auth/abstractions/two-factor.service";
@@ -67,6 +68,7 @@ export class LoginCommand {
     protected keyConnectorService: KeyConnectorService,
     protected policyApiService: PolicyApiServiceAbstraction,
     protected orgService: OrganizationService,
+    protected accountService: AccountService,
     protected logoutCallback: () => Promise<void>,
   ) {}
 
@@ -489,7 +491,9 @@ export class LoginCommand {
     hint?: string;
   }> {
     if (this.email == null || this.email === "undefined") {
-      this.email = await this.stateService.getEmail();
+      this.email = await firstValueFrom(
+        this.accountService.activeAccount$.pipe(map((a) => a?.email)),
+      );
     }
 
     // Get New Master Password

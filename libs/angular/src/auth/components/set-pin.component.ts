@@ -1,7 +1,9 @@
 import { DialogRef } from "@angular/cdk/dialog";
 import { Directive, OnInit } from "@angular/core";
 import { FormBuilder, Validators } from "@angular/forms";
+import { firstValueFrom, map } from "rxjs";
 
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
@@ -22,6 +24,7 @@ export class SetPinComponent implements OnInit {
     private userVerificationService: UserVerificationService,
     private stateService: StateService,
     private formBuilder: FormBuilder,
+    private accountService: AccountService,
   ) {}
 
   async ngOnInit() {
@@ -42,7 +45,7 @@ export class SetPinComponent implements OnInit {
 
     const pinKey = await this.cryptoService.makePinKey(
       pin,
-      await this.stateService.getEmail(),
+      await firstValueFrom(this.accountService.activeAccount$.pipe(map((a) => a?.email))),
       await this.stateService.getKdfType(),
       await this.stateService.getKdfConfig(),
     );

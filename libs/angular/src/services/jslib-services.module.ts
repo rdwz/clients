@@ -973,6 +973,7 @@ const safeProviders: SafeProvider[] = [
       CryptoServiceAbstraction,
       VaultTimeoutSettingsServiceAbstraction,
       LogService,
+      AccountServiceAbstraction,
     ],
   }),
   safeProvider({

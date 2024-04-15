@@ -53,9 +53,9 @@ describe("AuthService", () => {
 
   describe("activeAccountStatus$", () => {
     const accountInfo = {
-      status: AuthenticationStatus.Unlocked,
       id: userId,
       email: "email",
+      emailVerified: true,
       name: "name",
     };
 
@@ -106,10 +106,10 @@ describe("AuthService", () => {
 
     it("follows the current active user", async () => {
       const accountInfo2 = {
-        status: AuthenticationStatus.Unlocked,
         id: Utils.newGuid() as UserId,
         email: "email2",
         name: "name2",
+        emailVerified: true,
       };
 
       const emissions = trackEmissions(sut.activeAccountStatus$);
@@ -126,7 +126,11 @@ describe("AuthService", () => {
     it("requests auth status for all known users", async () => {
       const userId2 = Utils.newGuid() as UserId;
 
-      await accountService.addAccount(userId2, { email: "email2", name: "name2" });
+      await accountService.addAccount(userId2, {
+        email: "email2",
+        name: "name2",
+        emailVerified: true,
+      });
 
       const mockFn = jest.fn().mockReturnValue(of(AuthenticationStatus.Locked));
       sut.authStatusFor$ = mockFn;

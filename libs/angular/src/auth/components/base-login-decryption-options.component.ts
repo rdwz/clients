@@ -12,6 +12,7 @@ import {
   takeUntil,
   defer,
   throwError,
+  map,
 } from "rxjs";
 
 import {
@@ -178,6 +179,15 @@ export class BaseLoginDecryptionOptionsComponent implements OnInit, OnDestroy {
       .subscribe();
   }
 
+  private email$ = this.accountService.activeAccount$.pipe(
+    map((account) => account?.email),
+    catchError((err: unknown) => {
+      this.validationService.showError(err);
+      return of(undefined);
+    }),
+    takeUntil(this.destroy$),
+  );
+
   async loadNewUserData() {
     const autoEnrollStatus$ = defer(() =>
       this.ssoLoginService.getActiveUserOrganizationSsoIdentifier(),
@@ -195,16 +205,8 @@ export class BaseLoginDecryptionOptionsComponent implements OnInit, OnDestroy {
       }),
     );
 
-    const email$ = from(this.stateService.getEmail()).pipe(
-      catchError((err: unknown) => {
-        this.validationService.showError(err);
-        return of(undefined);
-      }),
-      takeUntil(this.destroy$),
-    );
-
     const autoEnrollStatus = await firstValueFrom(autoEnrollStatus$);
-    const email = await firstValueFrom(email$);
+    const email = await firstValueFrom(this.email$);
 
     this.data = { state: State.NewUser, organizationId: autoEnrollStatus.id, userEmail: email };
     this.loading = false;
@@ -213,15 +215,7 @@ export class BaseLoginDecryptionOptionsComponent implements OnInit, OnDestroy {
   loadUntrustedDeviceData(userDecryptionOptions: UserDecryptionOptions) {
     this.loading = true;
 
-    const email$ = from(this.stateService.getEmail()).pipe(
-      catchError((err: unknown) => {
-        this.validationService.showError(err);
-        return of(undefined);
-      }),
-      takeUntil(this.destroy$),
-    );
-
-    email$
+    this.email$
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {

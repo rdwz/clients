@@ -6,6 +6,7 @@ import { concatMap, debounceTime, filter, map, switchMap, takeUntil, tap } from 
 import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { PolicyType } from "@bitwarden/common/admin-console/enums";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { UserVerificationService as UserVerificationServiceAbstraction } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
 import { AutofillSettingsServiceAbstraction } from "@bitwarden/common/autofill/services/autofill-settings.service";
 import { DomainSettingsService } from "@bitwarden/common/autofill/services/domain-settings.service";
@@ -122,6 +123,7 @@ export class SettingsComponent implements OnInit {
     private desktopSettingsService: DesktopSettingsService,
     private biometricStateService: BiometricStateService,
     private desktopAutofillSettingsService: DesktopAutofillSettingsService,
+    private accountService: AccountService,
   ) {
     const isMac = this.platformUtilsService.getDevice() === DeviceType.MacOsDesktop;
 
@@ -206,7 +208,9 @@ export class SettingsComponent implements OnInit {
     if ((await this.stateService.getUserId()) == null) {
       return;
     }
-    this.currentUserEmail = await this.stateService.getEmail();
+    this.currentUserEmail = await firstValueFrom(
+      this.accountService.activeAccount$.pipe(map((a) => a?.email)),
+    );
 
     this.availableVaultTimeoutActions$ = this.refreshTimeoutSettings$.pipe(
       switchMap(() => this.vaultTimeoutSettingsService.availableVaultTimeoutActions$()),

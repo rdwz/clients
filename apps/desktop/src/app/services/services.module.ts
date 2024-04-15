@@ -169,6 +169,7 @@ const safeProviders: SafeProvider[] = [
       AutofillSettingsServiceAbstraction,
       VaultTimeoutSettingsService,
       BiometricStateService,
+      AccountServiceAbstraction,
     ],
   }),
   safeProvider({
@@ -206,6 +207,7 @@ const safeProviders: SafeProvider[] = [
       PolicyServiceAbstraction,
       MessagingServiceAbstraction,
       PasswordGenerationServiceAbstraction,
+      AccountServiceAbstraction,
     ],
   }),
   safeProvider({

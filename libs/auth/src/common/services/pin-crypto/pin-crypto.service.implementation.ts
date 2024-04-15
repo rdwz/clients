@@ -1,4 +1,7 @@
+import { firstValueFrom, map } from "rxjs";
+
 import { VaultTimeoutSettingsService } from "@bitwarden/common/abstractions/vault-timeout/vault-timeout-settings.service";
+import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
 import { KdfConfig } from "@bitwarden/common/auth/models/domain/kdf-config";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
@@ -16,6 +19,7 @@ export class PinCryptoService implements PinCryptoServiceAbstraction {
     private cryptoService: CryptoService,
     private vaultTimeoutSettingsService: VaultTimeoutSettingsService,
     private logService: LogService,
+    private accountService: AccountService,
   ) {}
   async decryptUserKeyWithPin(pin: string): Promise<UserKey | null> {
     try {
@@ -27,7 +31,9 @@ export class PinCryptoService implements PinCryptoServiceAbstraction {
       const kdf: KdfType = await this.stateService.getKdfType();
       const kdfConfig: KdfConfig = await this.stateService.getKdfConfig();
       let userKey: UserKey;
-      const email = await this.stateService.getEmail();
+      const email = await firstValueFrom(
+        this.accountService.activeAccount$.pipe(map((a) => a?.email)),
+      );
       if (oldPinKeyEncryptedMasterKey) {
         userKey = await this.cryptoService.decryptAndMigrateOldPinKey(
           pinLockType === "TRANSIENT",
