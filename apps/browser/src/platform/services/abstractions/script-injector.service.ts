@@ -1,7 +1,19 @@
 export type CommonScriptInjectionDetails = {
-  file?: string; // Should only be set if the script should be called in both manifest versions. If the mv2Details or mv3Details are set, the file will be pulled from those details.
-  frameContext?: "all_frames" | number; // Optional, defaults to 0, which is the id of the top level frame in a tab. Can also be set to "all_frames" to inject into all frames in a tab.
-  runAt?: "document_start" | "document_end" | "document_idle"; // Optional, defaults to "document_start"
+  /**
+   * Script injected into the document.
+   * Overridden by `mv2Details` and `mv3Details`.
+   */
+  file?: string;
+  /**
+   * Identifies the frame targeted for script injection. Defaults to the top level frame (0).
+   * Can also be set to "all_frames" to inject into all frames in a tab.
+   */
+  frameContext?: "all_frames" | number;
+  /**
+   * When the script executes. Defaults to "document_start".
+   * @see https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/content_scripts
+   */
+  runAt?: "document_start" | "document_end" | "document_idle";
 };
 
 export type Mv2ScriptInjectionDetails = {
@@ -10,7 +22,11 @@ export type Mv2ScriptInjectionDetails = {
 
 export type Mv3ScriptInjectionDetails = {
   file: string;
-  world?: chrome.scripting.ExecutionWorld; // Optional, defaults to "ISOLATED"
+  /**
+   * The world in which the script should be executed. Defaults to "ISOLATED".
+   * @see https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/scripting/ExecutionWorld
+   */
+  world?: chrome.scripting.ExecutionWorld;
 };
 
 /**
