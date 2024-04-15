@@ -41,5 +41,5 @@ export type ScriptInjectionConfig = {
 };
 
 export abstract class ScriptInjectorService {
-  inject: (config: ScriptInjectionConfig) => Promise<void>;
+  abstract inject(config: ScriptInjectionConfig): Promise<void>;
 }

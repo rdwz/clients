@@ -6,7 +6,7 @@ import {
   ScriptInjectorService,
 } from "./abstractions/script-injector.service";
 
-export class BrowserScriptInjectorService implements ScriptInjectorService {
+export class BrowserScriptInjectorService extends ScriptInjectorService {
   /**
    * Facilitates the injection of a script into a tab context. Will adjust
    * behavior between manifest v2 and v3 based on the passed configuration.
