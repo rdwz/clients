@@ -48,7 +48,7 @@ export default class NativeMessageService {
     );
   }
 
-  // Commands
+  // All Commands
 
   async sendHandshake(publicKey: string, applicationName: string): Promise<HandshakeResponse> {
     const rawResponse = await this.sendUnencryptedMessage(
