@@ -3,10 +3,10 @@
     <ng-container bitDialogContent>
       <p bitTypography="body1">{{ "deleteAccountDesc" | i18n }}</p>
       <app-callout type="warning">{{ "deleteAccountWarning" | i18n }}</app-callout>
-      <app-user-verification
+      <app-user-verification-form-input
         formControlName="verification"
         name="verification"
-      ></app-user-verification>
+      ></app-user-verification-form-input>
     </ng-container>
     <ng-container bitDialogFooter>
       <button bitButton bitFormButton type="submit" buttonType="danger">
