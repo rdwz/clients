@@ -52,8 +52,7 @@
         <bit-tab label="{{ 'collections' | i18n }}">
           <p>
             {{ "editGroupCollectionsDesc" | i18n }}
-            <!-- TODO: this is false if creating a new group, but this restriction still applies and we do want to show this wording -->
-            <span *ngIf="restrictGroupAccess$ | async">
+            <span *ngIf="!(allowAdminAccessToAllCollectionItems$ | async)">
               {{ "editGroupCollectionsRestrictionsDesc" | i18n }}
             </span>
           </p>

@@ -188,21 +188,23 @@ export class GroupAddEditComponent implements OnInit, OnDestroy {
     shareReplay({ refCount: false }),
   );
 
-  restrictGroupAccess$: Observable<boolean> = combineLatest([
+  allowAdminAccessToAllCollectionItems$ = combineLatest([
     this.organization$,
     this.flexibleCollectionsV1Enabled$,
-    this.groupDetails$,
   ]).pipe(
-    map(
-      ([organization, flexibleCollectionsV1Enabled, group]) =>
-        // Feature flag conditionals
-        flexibleCollectionsV1Enabled &&
-        organization.flexibleCollections &&
-        // Business logic conditionals
-        !organization.allowAdminAccessToAllCollectionItems &&
-        group !== undefined,
-    ),
+    map(([organization, flexibleCollectionsV1Enabled]) => {
+      if (!flexibleCollectionsV1Enabled || !organization.flexibleCollections) {
+        return true;
+      }
+
+      return organization.allowAdminAccessToAllCollectionItems;
+    }),
   );
+
+  restrictGroupAccess$ = combineLatest([
+    this.allowAdminAccessToAllCollectionItems$,
+    this.groupDetails$,
+  ]).pipe(map(([allowAdminAccess, groupDetails]) => !allowAdminAccess && groupDetails != null));
 
   constructor(
     @Inject(DIALOG_DATA) private params: GroupAddEditDialogParams,
