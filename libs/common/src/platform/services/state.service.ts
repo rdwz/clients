@@ -1,18 +1,14 @@
-import { BehaviorSubject, Observable, map } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { Jsonify, JsonValue } from "type-fest";
 
 import { AccountService } from "../../auth/abstractions/account.service";
 import { TokenService } from "../../auth/abstractions/token.service";
-import { AuthenticationStatus } from "../../auth/enums/authentication-status";
-import { AdminAuthRequestStorable } from "../../auth/models/domain/admin-auth-req-storable";
-import { ForceSetPasswordReason } from "../../auth/models/domain/force-set-password-reason";
 import { KdfConfig } from "../../auth/models/domain/kdf-config";
 import { BiometricKey } from "../../auth/types/biometric-key";
 import { GeneratorOptions } from "../../tools/generator/generator-options";
 import { GeneratedPasswordHistory, PasswordGeneratorOptions } from "../../tools/generator/password";
 import { UsernameGeneratorOptions } from "../../tools/generator/username";
 import { UserId } from "../../types/guid";
-import { MasterKey } from "../../types/key";
 import { CipherData } from "../../vault/models/data/cipher.data";
 import { LocalData } from "../../vault/models/data/local.data";
 import { CipherView } from "../../vault/models/view/cipher.view";
@@ -35,7 +31,6 @@ import { EncString } from "../models/domain/enc-string";
 import { GlobalState } from "../models/domain/global-state";
 import { State } from "../models/domain/state";
 import { StorageOptions } from "../models/domain/storage-options";
-import { SymmetricCryptoKey } from "../models/domain/symmetric-crypto-key";
 
 import { MigrationRunner } from "./migration-runner";
 
@@ -71,8 +66,6 @@ export class StateService<
   protected activeAccountSubject = new BehaviorSubject<string | null>(null);
   activeAccount$ = this.activeAccountSubject.asObservable();
 
-  activeAccountUnlocked$: Observable<boolean>;
-
   private hasBeenInited = false;
   protected isRecoveredSession = false;
 
@@ -92,13 +85,7 @@ export class StateService<
     protected tokenService: TokenService,
     private migrationRunner: MigrationRunner,
     protected useAccountCache: boolean = true,
-  ) {
-    this.activeAccountUnlocked$ = this.accountService.activeAccount$.pipe(
-      map((a) => {
-        return a?.status === AuthenticationStatus.Unlocked;
-      }),
-    );
-  }
+  ) {}
 
   async init(initOptions: InitOptions = {}): Promise<void> {
     // Deconstruct and apply defaults
@@ -154,7 +141,6 @@ export class StateService<
         await this.accountService.addAccount(state.activeUserId as UserId, {
           name: activeDiskAccount.profile.name,
           email: activeDiskAccount.profile.email,
-          status: AuthenticationStatus.LoggedOut,
         });
       }
       await this.accountService.switchAccount(state.activeUserId as UserId);
@@ -180,16 +166,7 @@ export class StateService<
 
     // TODO: Temporary update to avoid routing all account status changes through account service for now.
     // The determination of state should be handled by the various services that control those values.
-    const token = await this.tokenService.getAccessToken(userId as UserId);
-    const autoKey = await this.getUserKeyAutoUnlock({ userId: userId });
-    const accountStatus =
-      token == null
-        ? AuthenticationStatus.LoggedOut
-        : autoKey == null
-          ? AuthenticationStatus.Locked
-          : AuthenticationStatus.Unlocked;
     await this.accountService.addAccount(userId as UserId, {
-      status: accountStatus,
       name: diskAccount.profile.name,
       email: diskAccount.profile.email,
     });
@@ -209,7 +186,6 @@ export class StateService<
     await this.setLastActive(new Date().getTime(), { userId: account.profile.userId });
     // TODO: Temporary update to avoid routing all account status changes through account service for now.
     await this.accountService.addAccount(account.profile.userId as UserId, {
-      status: AuthenticationStatus.Locked,
       name: account.profile.name,
       email: account.profile.email,
     });
@@ -270,65 +246,6 @@ export class StateService<
     await this.saveAccount(
       account,
       this.reconcileOptions(options, await this.defaultInMemoryOptions()),
-    );
-  }
-
-  /**
-   * @deprecated Do not save the Master Key. Use the User Symmetric Key instead
-   */
-  async getCryptoMasterKey(options?: StorageOptions): Promise<SymmetricCryptoKey> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultInMemoryOptions()),
-    );
-    return account?.keys?.cryptoMasterKey;
-  }
-
-  /**
-   * User's master key derived from MP, saved only if we decrypted with MP
-   */
-  async getMasterKey(options?: StorageOptions): Promise<MasterKey> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultInMemoryOptions()),
-    );
-    return account?.keys?.masterKey;
-  }
-
-  /**
-   * User's master key derived from MP, saved only if we decrypted with MP
-   */
-  async setMasterKey(value: MasterKey, options?: StorageOptions): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultInMemoryOptions()),
-    );
-    account.keys.masterKey = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultInMemoryOptions()),
-    );
-  }
-
-  /**
-   * The master key encrypted User symmetric key, saved on every auth
-   * so we can unlock with MP offline
-   */
-  async getMasterKeyEncryptedUserKey(options?: StorageOptions): Promise<string> {
-    return (
-      await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskOptions()))
-    )?.keys.masterKeyEncryptedUserKey;
-  }
-
-  /**
-   * The master key encrypted User symmetric key, saved on every auth
-   * so we can unlock with MP offline
-   */
-  async setMasterKeyEncryptedUserKey(value: string, options?: StorageOptions): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-    account.keys.masterKeyEncryptedUserKey = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
     );
   }
 
@@ -630,37 +547,6 @@ export class StateService<
       : await this.secureStorageService.save(DDG_SHARED_KEY, value, options);
   }
 
-  async getAdminAuthRequest(options?: StorageOptions): Promise<AdminAuthRequestStorable | null> {
-    options = this.reconcileOptions(options, await this.defaultOnDiskLocalOptions());
-
-    if (options?.userId == null) {
-      return null;
-    }
-
-    const account = await this.getAccount(options);
-
-    return account?.adminAuthRequest
-      ? AdminAuthRequestStorable.fromJSON(account.adminAuthRequest)
-      : null;
-  }
-
-  async setAdminAuthRequest(
-    adminAuthRequest: AdminAuthRequestStorable,
-    options?: StorageOptions,
-  ): Promise<void> {
-    options = this.reconcileOptions(options, await this.defaultOnDiskLocalOptions());
-
-    if (options?.userId == null) {
-      return;
-    }
-
-    const account = await this.getAccount(options);
-
-    account.adminAuthRequest = adminAuthRequest?.toJSON();
-
-    await this.saveAccount(account, options);
-  }
-
   async getEmail(options?: StorageOptions): Promise<string> {
     return (
       await this.getAccount(this.reconcileOptions(options, await this.defaultInMemoryOptions()))
@@ -823,30 +709,6 @@ export class StateService<
     );
   }
 
-  async getForceSetPasswordReason(options?: StorageOptions): Promise<ForceSetPasswordReason> {
-    return (
-      (
-        await this.getAccount(
-          this.reconcileOptions(options, await this.defaultOnDiskMemoryOptions()),
-        )
-      )?.profile?.forceSetPasswordReason ?? ForceSetPasswordReason.None
-    );
-  }
-
-  async setForceSetPasswordReason(
-    value: ForceSetPasswordReason,
-    options?: StorageOptions,
-  ): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskMemoryOptions()),
-    );
-    account.profile.forceSetPasswordReason = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskMemoryOptions()),
-    );
-  }
-
   async getIsAuthenticated(options?: StorageOptions): Promise<boolean> {
     return (
       (await this.tokenService.getAccessToken(options?.userId as UserId)) != null &&
@@ -891,23 +753,6 @@ export class StateService<
       this.reconcileOptions(options, await this.defaultOnDiskOptions()),
     );
     account.profile.kdfType = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-  }
-
-  async getKeyHash(options?: StorageOptions): Promise<string> {
-    return (
-      await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskOptions()))
-    )?.profile?.keyHash;
-  }
-
-  async setKeyHash(value: string, options?: StorageOptions): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskOptions()),
-    );
-    account.profile.keyHash = value;
     await this.saveAccount(
       account,
       this.reconcileOptions(options, await this.defaultOnDiskOptions()),
@@ -1149,24 +994,6 @@ export class StateService<
       this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
     );
     account.settings.vaultTimeoutAction = value;
-    await this.saveAccount(
-      account,
-      this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
-    );
-  }
-
-  async getApproveLoginRequests(options?: StorageOptions): Promise<boolean> {
-    const approveLoginRequests = (
-      await this.getAccount(this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()))
-    )?.settings?.approveLoginRequests;
-    return approveLoginRequests;
-  }
-
-  async setApproveLoginRequests(value: boolean, options?: StorageOptions): Promise<void> {
-    const account = await this.getAccount(
-      this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
-    );
-    account.settings.approveLoginRequests = value;
     await this.saveAccount(
       account,
       this.reconcileOptions(options, await this.defaultOnDiskLocalOptions()),
@@ -1509,15 +1336,12 @@ export class StateService<
 
       return state;
     });
-    // TODO: Invert this logic, we should remove accounts based on logged out emit
-    await this.accountService.setAccountStatus(userId as UserId, AuthenticationStatus.LoggedOut);
   }
 
   // settings persist even on reset, and are not affected by this method
   protected resetAccount(account: TAccount) {
     const persistentAccountInformation = {
       settings: account.settings,
-      adminAuthRequest: account.adminAuthRequest,
     };
     return Object.assign(this.createAccount(), persistentAccountInformation);
   }
