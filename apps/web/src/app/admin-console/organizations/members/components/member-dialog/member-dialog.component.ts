@@ -339,7 +339,7 @@ export class MemberDialogComponent implements OnDestroy {
     );
 
     // Set current collections and groups the user has access to (excluding collections the current user doesn't have
-    // permissions to change - they are included as readonly via the CollectionAccessItems
+    // permissions to change - they are included as readonly via the CollectionAccessItems)
     const accessSelections = mapToAccessSelections(userDetails, this.collectionAccessItems);
     const groupAccessSelections = mapToGroupAccessSelections(userDetails.groups);
 
