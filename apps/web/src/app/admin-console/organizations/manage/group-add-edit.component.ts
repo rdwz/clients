@@ -173,7 +173,7 @@ export class GroupAddEditComponent implements OnInit, OnDestroy {
   private groupDetails$: Observable<GroupView | undefined> = of(this.editMode).pipe(
     concatMap((editMode) => {
       if (!editMode) {
-        return undefined;
+        return of(undefined);
       }
 
       return combineLatest([
