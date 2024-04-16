@@ -235,7 +235,7 @@ export class GroupAddEditComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.loading = this.editMode;
+    this.loading = true;
     this.title = this.i18nService.t(this.editMode ? "editGroup" : "newGroup");
 
     combineLatest([
