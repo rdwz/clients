@@ -5,11 +5,11 @@
       <small class="tw-text-muted">{{ dialogTitle }}</small>
     </span>
     <ng-container bitDialogContent>
-      <app-user-verification
+      <app-user-verification-form-input
         formControlName="secret"
         ngDefaultControl
         name="secret"
-      ></app-user-verification>
+      ></app-user-verification-form-input>
     </ng-container>
     <ng-container bitDialogFooter>
       <button bitButton bitFormButton type="submit" buttonType="primary">
